@@ -1,0 +1,29 @@
+{
+  "name": "riva-monorepo",
+  "version": "1.0.0",
+  "description": "Monorepo containing Ash backend and React frontend",
+  "private": true,
+  "workspaces": [
+    "frontend",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "pnpm run dev:backend",
+    "dev:backend": "cd riva_ash && mix phx.server",
+    "test": "pnpm run test:backend",
+    "test:backend": "cd riva_ash && mix test",
+    "setup": "pnpm run setup:backend && pnpm install",
+    "setup:backend": "cd riva_ash && mix deps.get && mix ecto.setup",
+    "db:migrate": "cd riva_ash && mix ecto.migrate",
+    "db:reset": "cd riva_ash && mix ecto.reset",
+    "db:seed": "cd riva_ash && mix run priv/repo/seeds.exs"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "pnpm": ">=8.0.0"
+  },
+  "packageManager": "pnpm@8.15.0"
+}

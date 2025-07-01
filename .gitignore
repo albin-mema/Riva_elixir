@@ -1,0 +1,56 @@
+# Dependencies
+node_modules/
+.pnpm-debug.log*
+
+# Frontend build outputs
+frontend/dist/
+frontend/build/
+frontend/.next/
+frontend/.nuxt/
+frontend/.vite/
+
+# Backend build outputs
+riva_ash/_build/
+riva_ash/deps/
+riva_ash/cover/
+riva_ash/doc/
+
+# Environment files
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Database
+riva_ash/priv/static/
+
+# Logs
+*.log
+logs/
+
+# OS generated files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Temporary files
+*.tmp
+*.temp
+
+# Elixir specific
+riva_ash/erl_crash.dump
+riva_ash/.elixir_ls/
+
+# Mix artifacts
+riva_ash/mix.lock.backup
