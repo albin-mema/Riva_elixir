@@ -1,0 +1,79 @@
+ASH FRAMEWORK EXTENSIONS REFERENCE
+==================================
+
+CURRENTLY INSTALLED:
+- ash - Core framework
+- ash_postgres - PostgreSQL data layer  
+- ash_json_api - JSON:API REST endpoints
+
+AVAILABLE EXTENSIONS TO INSTALL:
+
+Authentication & Authorization:
+- ash_authentication - Complete authentication system with password, OAuth, magic links
+- ash_authentication_phoenix - Phoenix integration for authentication
+
+Admin & Development Tools:
+- ash_admin - Auto-generated admin interface for your resources
+- ash_phoenix - Enhanced Phoenix integration with LiveView helpers
+
+API Extensions:
+- ash_graphql - GraphQL API (optional since you prefer REST)
+
+Background Jobs & Workflows:
+- ash_oban - Background job processing with Oban integration
+- reactor - Workflows and sagas (already in deps)
+
+Data & State Management:
+- ash_state_machine - Declarative state machines for your resources
+- ash_archival - Soft deletion (archive instead of hard delete)
+- ash_paper_trail - Audit logging and change tracking
+
+Security & Performance:
+- ash_cloak - Encryption at rest for sensitive data
+- ash_rate_limiter - Rate limiting for your APIs
+
+Specialized Data Types:
+- ash_money - Financial data types and calculations
+- ash_double_entry - Double-entry accounting system
+- ash_geo - Geospatial data support
+
+AI & Modern Features:
+- ash_ai - LLM integration and AI-powered actions (newly released!)
+
+Monitoring & Observability:
+- ash_appsignal - APM monitoring integration
+- opentelemetry_ash - Distributed tracing
+
+Alternative Data Layers:
+- ash_sqlite - SQLite support (alternative to Postgres)
+- ash_csv - CSV file data layer
+- ash_cubdb - CubDB embedded database
+
+INSTALLATION COMMANDS:
+
+# Authentication (highly recommended)
+mix deps.get ash_authentication ash_authentication_phoenix
+
+# Admin interface (great for development)
+mix deps.get ash_admin ash_phoenix
+
+# Background jobs
+mix deps.get ash_oban
+
+# State management
+mix deps.get ash_state_machine ash_archival ash_paper_trail
+
+# Security
+mix deps.get ash_cloak ash_rate_limiter
+
+# AI features (if interested)
+mix deps.get ash_ai
+
+PRIORITY RECOMMENDATIONS:
+1. ash_authentication - Essential for most applications
+2. ash_admin - Invaluable for development and content management
+3. ash_phoenix - Better Phoenix integration
+4. ash_oban - Background job processing
+5. ash_paper_trail - Audit logging for compliance
+
+For more information, visit: https://ash-hq.org/
