@@ -23,7 +23,6 @@ defmodule RivaAsh.Resources.Item do
       get :read
       index :read
       post :create
-      patch :update
       delete :destroy
     end
   end
