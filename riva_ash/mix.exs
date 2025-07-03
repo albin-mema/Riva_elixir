@@ -42,6 +42,10 @@ defmodule RivaAsh.MixProject do
       {:ash_admin, "~> 0.11"},
       # Audit logging
       {:ash_paper_trail, "~> 0.5.6"},
+      # Soft delete functionality
+      {:ash_archival, "~> 1.0"},
+      # Reactor for saga orchestration
+      {:reactor, "~> 0.15"},
       # Test dependencies
       {:mox, "~> 1.0", only: :test}
     ]
