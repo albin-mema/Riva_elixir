@@ -9,23 +9,24 @@ defmodule RivaAsh.Resources.Client do
     data_layer: AshPostgres.DataLayer,
     extensions: [
       AshJsonApi.Resource,
-      AshPaperTrail.Resource
+      AshPaperTrail.Resource,
+      AshArchival.Resource
     ]
-    
+
   # Configure versioning for this resource
   paper_trail do
     # Track all changes with full diffs
     change_tracking_mode :full_diff
-    
+
     # Don't store timestamps in the changes
     ignore_attributes [:inserted_at, :updated_at]
-    
+
     # Store action name for better auditing
     store_action_name? true
-    
+
     # Store action inputs for better auditing
     store_action_inputs? true
-    
+
     # Store resource identifier for better querying
     store_resource_identifier? true
   end
@@ -33,6 +34,14 @@ defmodule RivaAsh.Resources.Client do
   postgres do
     table "clients"
     repo RivaAsh.Repo
+  end
+
+  # Configure soft delete functionality
+  archive do
+    # Use archived_at field for soft deletes
+    attribute :archived_at
+    # Allow both soft and hard deletes
+    base_filter? false
   end
 
   json_api do
@@ -46,7 +55,7 @@ defmodule RivaAsh.Resources.Client do
       post :create
       patch :update
       delete :destroy
-      
+
       # Additional routes for client-specific actions
       get :by_email, route: "/by-email/:email"
       get :registered, route: "/registered"

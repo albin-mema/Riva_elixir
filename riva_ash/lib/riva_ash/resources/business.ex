@@ -7,11 +7,19 @@ defmodule RivaAsh.Resources.Business do
   use Ash.Resource,
     domain: RivaAsh.Domain,
     data_layer: AshPostgres.DataLayer,
-    extensions: [AshJsonApi.Resource]
+    extensions: [AshJsonApi.Resource, AshArchival.Resource]
 
   postgres do
     table "businesses"
     repo RivaAsh.Repo
+  end
+
+  # Configure soft delete functionality
+  archive do
+    # Use archived_at field for soft deletes
+    attribute :archived_at
+    # Allow both soft and hard deletes
+    base_filter? false
   end
 
   json_api do
@@ -48,6 +56,21 @@ defmodule RivaAsh.Resources.Business do
       argument :id, :uuid, allow_nil?: false
       get? true
       filter expr(id == ^arg(:id))
+    end
+
+    # Generic action that uses a reactor to create a complete business setup
+    action :create_complete_setup, :struct do
+      constraints instance_of: RivaAsh.Resources.Item
+
+      argument :business_name, :string, allow_nil?: false
+      argument :business_description, :string, allow_nil?: true
+      argument :section_name, :string, allow_nil?: false
+      argument :section_description, :string, allow_nil?: true
+      argument :item_name, :string, allow_nil?: false
+      argument :item_description, :string, allow_nil?: true
+      argument :item_capacity, :integer, allow_nil?: false, default: 1
+
+      run RivaAsh.Reactors.ExampleReactor
     end
   end
 

@@ -7,11 +7,19 @@ defmodule RivaAsh.Resources.ItemSchedule do
   use Ash.Resource,
     domain: RivaAsh.Domain,
     data_layer: AshPostgres.DataLayer,
-    extensions: [AshJsonApi.Resource]
+    extensions: [AshJsonApi.Resource, AshArchival.Resource]
 
   postgres do
     table "item_schedules"
     repo RivaAsh.Repo
+  end
+
+  # Configure soft delete functionality
+  archive do
+    # Use archived_at field for soft deletes
+    attribute :archived_at
+    # Allow both soft and hard deletes
+    base_filter? false
   end
 
   json_api do
@@ -25,7 +33,7 @@ defmodule RivaAsh.Resources.ItemSchedule do
       post :create
       patch :update
       delete :destroy
-      
+
       # Additional routes for schedule-specific actions
       get :by_item, route: "/by-item/:item_id"
       get :by_day, route: "/by-day/:day_of_week"

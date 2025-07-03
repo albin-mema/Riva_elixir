@@ -8,7 +8,8 @@ defmodule RivaAsh.Resources.Reservation do
     data_layer: AshPostgres.DataLayer,
     extensions: [
       AshJsonApi.Resource,
-      AshPaperTrail.Resource
+      AshPaperTrail.Resource,
+      AshArchival.Resource
     ]
 
   # Configure versioning for this resource
@@ -35,6 +36,14 @@ defmodule RivaAsh.Resources.Reservation do
   postgres do
     table "reservations"
     repo RivaAsh.Repo
+  end
+
+  # Configure soft delete functionality
+  archive do
+    # Use archived_at field for soft deletes
+    attribute :archived_at
+    # Allow both soft and hard deletes
+    base_filter? false
   end
 
   json_api do
@@ -143,6 +152,20 @@ defmodule RivaAsh.Resources.Reservation do
     update :complete do
       accept []
       change set_attribute(:status, :completed)
+    end
+
+    # Generic action that uses a reactor to create a reservation with validation
+    action :create_with_validation, :struct do
+      constraints instance_of: RivaAsh.Resources.Reservation
+
+      argument :client_id, :uuid, allow_nil?: false
+      argument :employee_id, :uuid, allow_nil?: false
+      argument :item_id, :uuid, allow_nil?: false
+      argument :start_datetime, :utc_datetime, allow_nil?: false
+      argument :end_datetime, :utc_datetime, allow_nil?: false
+      argument :notes, :string, allow_nil?: true
+
+      run RivaAsh.Reactors.ReservationReactor
     end
   end
 

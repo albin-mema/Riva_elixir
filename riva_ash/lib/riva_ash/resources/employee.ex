@@ -9,7 +9,8 @@ defmodule RivaAsh.Resources.Employee do
     data_layer: AshPostgres.DataLayer,
     extensions: [
       AshJsonApi.Resource,
-      AshPaperTrail.Resource
+      AshPaperTrail.Resource,
+      AshArchival.Resource
     ]
 
   # Configure versioning for this resource
@@ -35,6 +36,14 @@ defmodule RivaAsh.Resources.Employee do
     repo RivaAsh.Repo
 
     identity_wheres_to_sql unique_employee_number_per_business: "employee_number IS NOT NULL"
+  end
+
+  # Configure soft delete functionality
+  archive do
+    # Use archived_at field for soft deletes
+    attribute :archived_at
+    # Allow both soft and hard deletes
+    base_filter? false
   end
 
   json_api do
