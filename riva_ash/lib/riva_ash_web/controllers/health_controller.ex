@@ -1,15 +1,15 @@
 defmodule RivaAshWeb.HealthController do
   @moduledoc """
   Controller for handling health check endpoints.
-  
+
   Provides endpoints to check the health status of the application,
   including database connectivity and service status.
   """
-  
+
   use Phoenix.Controller, formats: [:json]
-  
+
   alias Plug.Conn
-  
+
   @type health_response :: %{
           status: String.t(),
           timestamp: String.t(),
@@ -19,9 +19,9 @@ defmodule RivaAshWeb.HealthController do
 
   @doc """
   Health check endpoint.
-  
+
   Returns the health status of the application including database connectivity.
-  
+
   ## Responses
     * 200 - Application is healthy
       ```elixir
@@ -54,7 +54,7 @@ defmodule RivaAshWeb.HealthController do
         send_health_response(conn, :service_unavailable, "unhealthy", "disconnected")
     end
   end
-  
+
   @spec send_health_response(Conn.t(), atom(), String.t(), String.t()) :: Conn.t()
   defp send_health_response(conn, status, health_status, db_status) do
     response = %{
@@ -63,7 +63,7 @@ defmodule RivaAshWeb.HealthController do
       database: db_status,
       service: "riva_ash_api"
     }
-    
+
     conn
     |> put_status(status)
     |> json(response)
