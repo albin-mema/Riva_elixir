@@ -36,9 +36,16 @@ defmodule RivaAshWeb.Router do
     get "/health", RivaAshWeb.HealthController, :check
   end
 
+  # ERD diagram (available at both /erd and /admin/erd)
+  scope "/" do
+    pipe_through :browser
+    get "/erd", RivaAshWeb.MermaidController, :show
+  end
+
   # Admin interface
   scope "/admin" do
     pipe_through :browser
     ash_admin "/", domains: [RivaAsh.Domain]
+    get "/erd", RivaAshWeb.MermaidController, :show
   end
 end
