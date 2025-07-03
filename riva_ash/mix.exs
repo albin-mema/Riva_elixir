@@ -39,7 +39,11 @@ defmodule RivaAsh.MixProject do
       {:open_api_spex, "~> 3.5"},
       {:cors_plug, "~> 3.0"},
       {:finch, "~> 0.13"},
-      {:ash_admin, "~> 0.11"}
+      {:ash_admin, "~> 0.11"},
+      # Audit logging
+      {:ash_paper_trail, "~> 0.5.6"},
+      # Test dependencies
+      {:mox, "~> 1.0", only: :test}
     ]
   end
 
