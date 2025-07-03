@@ -29,7 +29,7 @@ defmodule RivaAshWeb.ConnCase do
 
     # Start any mocks needed for the tests
     Mox.stub_with(RivaAsh.Repo.Mock, RivaAsh.Repo)
-    
+
     {:ok, conn: Phoenix.ConnTest.build_conn()}
   end
 end

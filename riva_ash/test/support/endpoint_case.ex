@@ -22,17 +22,17 @@ defmodule RivaAshWeb.EndpointCase do
   setup tags do
     # Setup sandbox for database access
     :ok = RivaAsh.TestHelpers.setup_sandbox(tags)
-    
+
     # Build a connection for testing
     conn = Phoenix.ConnTest.build_conn()
-    
+
     # Add any default headers or configurations
-    conn = 
+    conn =
       conn
       |> Plug.Conn.put_req_header("accept", "application/vnd.api+json")
       |> Plug.Conn.put_req_header("content-type", "application/vnd.api+json")
       |> Plug.Conn.put_private(:phoenix_recycled, true)
-    
+
     {:ok, conn: conn}
   end
 end

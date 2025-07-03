@@ -1,7 +1,6 @@
 # Start ExUnit with the test suite
 ExUnit.start()
 
-
 # Setup database for tests
 Ecto.Adapters.SQL.Sandbox.mode(RivaAsh.Repo, :manual)
 

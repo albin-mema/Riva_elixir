@@ -5,7 +5,7 @@ defmodule RivaAsh.ArchivalTest do
   describe "AshArchival functionality" do
     test "soft delete sets archived_at timestamp" do
       # Create a business
-      business = 
+      business =
         Business
         |> Ash.Changeset.for_create(:create, %{
           name: "Test Business",
@@ -19,7 +19,7 @@ defmodule RivaAsh.ArchivalTest do
       assert business.archived_at == nil
 
       # Soft delete the business using archive action
-      archived_business = 
+      archived_business =
         business
         |> Ash.Changeset.for_destroy(:archive)
         |> Ash.destroy!()
@@ -31,7 +31,7 @@ defmodule RivaAsh.ArchivalTest do
 
     test "hard delete removes record completely" do
       # Create a business
-      business = 
+      business =
         Business
         |> Ash.Changeset.for_create(:create, %{
           name: "Test Business 2",
@@ -58,7 +58,7 @@ defmodule RivaAsh.ArchivalTest do
 
     test "archived records are excluded from normal queries by default" do
       # Create two businesses
-      business1 = 
+      business1 =
         Business
         |> Ash.Changeset.for_create(:create, %{
           name: "Active Business",
@@ -68,7 +68,7 @@ defmodule RivaAsh.ArchivalTest do
         })
         |> Ash.create!()
 
-      business2 = 
+      business2 =
         Business
         |> Ash.Changeset.for_create(:create, %{
           name: "To Archive Business",
@@ -85,7 +85,7 @@ defmodule RivaAsh.ArchivalTest do
 
       # Normal query should only return the active business
       active_businesses = Business |> Ash.read!()
-      
+
       assert length(active_businesses) >= 1
       assert Enum.any?(active_businesses, fn b -> b.id == business1.id end)
       refute Enum.any?(active_businesses, fn b -> b.id == business2.id end)
@@ -93,7 +93,7 @@ defmodule RivaAsh.ArchivalTest do
 
     test "can query archived records explicitly" do
       # Create a business
-      business = 
+      business =
         Business
         |> Ash.Changeset.for_create(:create, %{
           name: "Archive Test Business",
@@ -104,13 +104,13 @@ defmodule RivaAsh.ArchivalTest do
         |> Ash.create!()
 
       # Archive the business
-      archived_business = 
+      archived_business =
         business
         |> Ash.Changeset.for_destroy(:archive)
         |> Ash.destroy!()
 
       # Query for archived records explicitly
-      archived_records = 
+      archived_records =
         Business
         |> Ash.Query.filter(not is_nil(archived_at))
         |> Ash.read!()

@@ -6,13 +6,17 @@ defmodule RivaAsh.Resources.ReservationTest do
 
   setup do
     # Create test data
-    {:ok, client} = Client.create(%{name: "Test Client", email: "test@example.com", is_registered: true})
+    {:ok, client} =
+      Client.create(%{name: "Test Client", email: "test@example.com", is_registered: true})
+
     {:ok, item} = Item.create(%{name: "Test Item"})
-    
+
     # Future dates for testing
-    future_date = DateTime.utc_now() |> DateTime.add(3600, :second)  # 1 hour from now
-    end_future_date = future_date |> DateTime.add(3600, :second)     # 2 hours from now
-    
+    # 1 hour from now
+    future_date = DateTime.utc_now() |> DateTime.add(3600, :second)
+    # 2 hours from now
+    end_future_date = future_date |> DateTime.add(3600, :second)
+
     {:ok, client: client, item: item, future_date: future_date, end_future_date: end_future_date}
   end
 
@@ -36,30 +40,42 @@ defmodule RivaAsh.Resources.ReservationTest do
       assert reservation.status == "pending"
     end
 
-    test "validates time slot availability", %{valid_attrs: attrs, future_date: from, end_future_date: until} do
+    test "validates time slot availability", %{
+      valid_attrs: attrs,
+      future_date: from,
+      end_future_date: until
+    } do
       # Create first reservation
       assert {:ok, _} = Reservation.create(attrs)
-      
+
       # Try to create overlapping reservation
       overlapping_attrs = %{
-        attrs | 
-        reserved_from: from |> DateTime.add(1800, :second),  # 30 minutes after first starts
-        reserved_until: until |> DateTime.add(1800, :second) # 30 minutes after first ends
+        attrs
+        | # 30 minutes after first starts
+          reserved_from: from |> DateTime.add(1800, :second),
+          # 30 minutes after first ends
+          reserved_until: until |> DateTime.add(1800, :second)
       }
-      
+
       assert {:error, %{errors: errors}} = Reservation.create(overlapping_attrs)
-      assert "Time slot overlaps with an existing reservation" in errors_on(errors, :reserved_from)
+
+      assert "Time slot overlaps with an existing reservation" in errors_on(
+               errors,
+               :reserved_from
+             )
     end
   end
 
   describe "status updates" do
     setup %{client: client, item: item, future_date: from, end_future_date: until} do
-      {:ok, reservation} = Reservation.create(%{
-        client_id: client.id,
-        item_id: item.id,
-        reserved_from: from,
-        reserved_until: until
-      })
+      {:ok, reservation} =
+        Reservation.create(%{
+          client_id: client.id,
+          item_id: item.id,
+          reserved_from: from,
+          reserved_until: until
+        })
+
       %{reservation: reservation}
     end
 
@@ -82,32 +98,41 @@ defmodule RivaAsh.Resources.ReservationTest do
   describe "queries" do
     setup %{client: client, item: item} do
       now = DateTime.utc_now()
-      
+
       # Create reservations in different states
-      {:ok, past} = Reservation.create(%{
-        client_id: client.id,
-        item_id: item.id,
-        reserved_from: DateTime.add(now, -7200),  # 2 hours ago
-        reserved_until: DateTime.add(now, -3600), # 1 hour ago
-        status: "completed"
-      })
-      
-      {:ok, current} = Reservation.create(%{
-        client_id: client.id,
-        item_id: item.id,
-        reserved_from: DateTime.add(now, -1800), # 30 minutes ago
-        reserved_until: DateTime.add(now, 1800), # 30 minutes from now
-        status: "confirmed"
-      })
-      
-      {:ok, future} = Reservation.create(%{
-        client_id: client.id,
-        item_id: item.id,
-        reserved_from: DateTime.add(now, 3600),  # 1 hour from now
-        reserved_until: DateTime.add(now, 7200), # 2 hours from now
-        status: "pending"
-      })
-      
+      {:ok, past} =
+        Reservation.create(%{
+          client_id: client.id,
+          item_id: item.id,
+          # 2 hours ago
+          reserved_from: DateTime.add(now, -7200),
+          # 1 hour ago
+          reserved_until: DateTime.add(now, -3600),
+          status: "completed"
+        })
+
+      {:ok, current} =
+        Reservation.create(%{
+          client_id: client.id,
+          item_id: item.id,
+          # 30 minutes ago
+          reserved_from: DateTime.add(now, -1800),
+          # 30 minutes from now
+          reserved_until: DateTime.add(now, 1800),
+          status: "confirmed"
+        })
+
+      {:ok, future} =
+        Reservation.create(%{
+          client_id: client.id,
+          item_id: item.id,
+          # 1 hour from now
+          reserved_from: DateTime.add(now, 3600),
+          # 2 hours from now
+          reserved_until: DateTime.add(now, 7200),
+          status: "pending"
+        })
+
       %{past: past, current: current, future: future}
     end
 

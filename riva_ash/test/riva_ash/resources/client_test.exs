@@ -38,8 +38,9 @@ defmodule RivaAsh.Resources.ClientTest do
 
   describe "by_email/1" do
     test "finds client by email (case insensitive)" do
-      {:ok, _} = Client.create(%{name: "John Doe", email: "john@example.com", is_registered: true})
-      
+      {:ok, _} =
+        Client.create(%{name: "John Doe", email: "john@example.com", is_registered: true})
+
       assert {:ok, client} = Client.by_email("JOHN@example.com")
       assert client.name == "John Doe"
     end
