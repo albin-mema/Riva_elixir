@@ -16,137 +16,137 @@ defmodule RivaAsh.Resources.Client do
   # Configure versioning for this resource
   paper_trail do
     # Track all changes with full diffs
-    change_tracking_mode :full_diff
+    change_tracking_mode(:full_diff)
 
     # Don't store timestamps in the changes
-    ignore_attributes [:inserted_at, :updated_at]
+    ignore_attributes([:inserted_at, :updated_at])
 
     # Store action name for better auditing
-    store_action_name? true
+    store_action_name?(true)
 
     # Store action inputs for better auditing
-    store_action_inputs? true
+    store_action_inputs?(true)
 
     # Store resource identifier for better querying
-    store_resource_identifier? true
+    store_resource_identifier?(true)
   end
 
   postgres do
-    table "clients"
-    repo RivaAsh.Repo
+    table("clients")
+    repo(RivaAsh.Repo)
   end
 
   # Configure soft delete functionality
   archive do
     # Use archived_at field for soft deletes
-    attribute :archived_at
+    attribute(:archived_at)
     # Allow both soft and hard deletes
-    base_filter? false
+    base_filter?(false)
   end
 
   json_api do
-    type "client"
+    type("client")
 
     routes do
-      base "/clients"
+      base("/clients")
 
-      get :read
-      index :read
-      post :create
-      patch :update
-      delete :destroy
+      get(:read)
+      index(:read)
+      post(:create)
+      patch(:update)
+      delete(:destroy)
 
       # Additional routes for client-specific actions
-      get :by_email, route: "/by-email/:email"
-      get :registered, route: "/registered"
-      get :unregistered, route: "/unregistered"
+      get(:by_email, route: "/by-email/:email")
+      get(:registered, route: "/registered")
+      get(:unregistered, route: "/unregistered")
     end
   end
 
   code_interface do
-    define :create, action: :create
-    define :read, action: :read
-    define :update, action: :update
-    define :destroy, action: :destroy
-    define :by_id, args: [:id], action: :by_id
-    define :by_email, args: [:email], action: :by_email
+    define(:create, action: :create)
+    define(:read, action: :read)
+    define(:update, action: :update)
+    define(:destroy, action: :destroy)
+    define(:by_id, args: [:id], action: :by_id)
+    define(:by_email, args: [:email], action: :by_email)
   end
 
   actions do
-    defaults [:read, :update, :destroy]
+    defaults([:read, :update, :destroy])
 
     create :create do
-      accept [:name, :email, :phone, :is_registered]
-      primary? true
+      accept([:name, :email, :phone, :is_registered])
+      primary?(true)
     end
 
     read :by_id do
-      argument :id, :uuid, allow_nil?: false
-      get? true
-      filter expr(id == ^arg(:id))
+      argument(:id, :uuid, allow_nil?: false)
+      get?(true)
+      filter(expr(id == ^arg(:id)))
     end
 
     read :by_email do
-      argument :email, :string, allow_nil?: false
-      filter expr(email == ^arg(:email))
+      argument(:email, :string, allow_nil?: false)
+      filter(expr(email == ^arg(:email)))
     end
 
     read :registered do
-      filter expr(is_registered == true)
+      filter(expr(is_registered == true))
     end
 
     read :unregistered do
-      filter expr(is_registered == false)
+      filter(expr(is_registered == false))
     end
   end
 
   attributes do
-    uuid_primary_key :id
+    uuid_primary_key(:id)
 
     attribute :name, :string do
-      allow_nil? false
-      public? true
-      description "The name of the client"
+      allow_nil?(false)
+      public?(true)
+      description("The name of the client")
     end
 
     attribute :email, :ci_string do
-      allow_nil? true
-      public? true
-      description "Email address (required for registered clients)"
+      allow_nil?(true)
+      public?(true)
+      description("Email address (required for registered clients)")
     end
 
     attribute :phone, :string do
-      allow_nil? true
-      public? true
-      description "Contact phone number"
+      allow_nil?(true)
+      public?(true)
+      description("Contact phone number")
     end
 
     attribute :is_registered, :boolean do
-      allow_nil? false
-      default false
-      public? true
-      description "Whether this is a registered client"
+      allow_nil?(false)
+      default(false)
+      public?(true)
+      description("Whether this is a registered client")
     end
 
-    create_timestamp :inserted_at
-    update_timestamp :updated_at
+    create_timestamp(:inserted_at)
+    update_timestamp(:updated_at)
   end
 
   validations do
-    validate present([:email]), where: attribute_equals(:is_registered, true)
-    validate match(~r/^[^\s]+@[^\s]+$/, :email), where: attribute_equals(:is_registered, true)
+    validate(present([:email]), where: attribute_equals(:is_registered, true))
+    validate(match(~r/^[^\s]+@[^\s]+$/, :email), where: attribute_equals(:is_registered, true))
   end
 
   relationships do
     has_many :reservations, RivaAsh.Resources.Reservation do
-      public? true
-      description "Reservations made by this client"
+      public?(true)
+      description("Reservations made by this client")
     end
 
     has_many :recurring_reservations, RivaAsh.Resources.RecurringReservation do
-      destination_attribute :client_id
-      public? true
-      description "Recurring reservation patterns for this client"
+      destination_attribute(:client_id)
+      public?(true)
+      description("Recurring reservation patterns for this client")
     end
   end
 end

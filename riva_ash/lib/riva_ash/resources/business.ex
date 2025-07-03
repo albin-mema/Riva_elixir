@@ -7,55 +7,68 @@ defmodule RivaAsh.Resources.Business do
   use Ash.Resource,
     domain: RivaAsh.Domain,
     data_layer: AshPostgres.DataLayer,
+    authorizers: [Ash.Policy.Authorizer],
     extensions: [AshJsonApi.Resource, AshArchival.Resource]
 
   postgres do
-    table "businesses"
-    repo RivaAsh.Repo
+    table("businesses")
+    repo(RivaAsh.Repo)
   end
 
   # Configure soft delete functionality
   archive do
     # Use archived_at field for soft deletes
-    attribute :archived_at
+    attribute(:archived_at)
     # Allow both soft and hard deletes
-    base_filter? false
+    base_filter?(false)
+  end
+
+  policies do
+    # Only admins can create, update, or delete businesses
+    policy action_type([:create, :update, :destroy]) do
+      authorize_if(actor_attribute_equals(:role, :admin))
+    end
+
+    # All authenticated employees can read businesses
+    policy action_type(:read) do
+      authorize_if(actor_present())
+    end
   end
 
   json_api do
-    type "business"
+    type("business")
 
     routes do
-      base "/businesses"
+      base("/businesses")
 
-      get :read
-      index :read
-      post :create
-      patch :update
-      delete :destroy
+      get(:read)
+      index(:read)
+      post(:create)
+      patch(:update)
+      delete(:destroy)
     end
   end
 
   code_interface do
-    define :create, action: :create
-    define :read, action: :read
-    define :update, action: :update
-    define :destroy, action: :destroy
-    define :by_id, args: [:id], action: :by_id
+    define(:create, action: :create)
+    define(:read, action: :read)
+    define(:update, action: :update)
+    define(:destroy, action: :destroy)
+    define(:by_id, args: [:id], action: :by_id)
   end
 
   actions do
-    defaults [:read, :update, :destroy]
+    defaults([:read, :update, :destroy])
 
     create :create do
-      accept [:name, :description]
-      primary? true
+      accept([:name, :description])
+      primary?(true)
     end
 
     read :by_id do
-      argument :id, :uuid, allow_nil?: false
-      get? true
-      filter expr(id == ^arg(:id))
+      argument(:id, :uuid, allow_nil?: false)
+      get?(true)
+      filter(expr(id == ^arg(:id)))
     end
 
     # TODO: Re-enable reactor action once reactor syntax is fixed
@@ -73,33 +86,33 @@ defmodule RivaAsh.Resources.Business do
   end
 
   attributes do
-    uuid_primary_key :id
+    uuid_primary_key(:id)
 
     attribute :name, :string do
-      allow_nil? false
-      public? true
-      description "The name of the business"
+      allow_nil?(false)
+      public?(true)
+      description("The name of the business")
     end
 
     attribute :description, :string do
-      allow_nil? true
-      public? true
-      description "A detailed description of the business"
+      allow_nil?(true)
+      public?(true)
+      description("A detailed description of the business")
     end
 
-    create_timestamp :inserted_at
-    update_timestamp :updated_at
+    create_timestamp(:inserted_at)
+    update_timestamp(:updated_at)
   end
 
   relationships do
     has_many :sections, RivaAsh.Resources.Section do
-      destination_attribute :business_id
-      public? true
-      description "Sections belonging to this business"
+      destination_attribute(:business_id)
+      public?(true)
+      description("Sections belonging to this business")
     end
   end
 
   identities do
-    identity :unique_name, [:name]
+    identity(:unique_name, [:name])
   end
 end
