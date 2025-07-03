@@ -15,9 +15,11 @@ as a monorepo using PNPM workspaces.
 -   **Erlang** >= 26
 -   **Node.js** >= 18
 -   **PNPM** >= 8
--   **PostgreSQL** >= 14
+-   **PostgreSQL** >= 14 (or Docker Desktop for containerized setup)
 
 ## Quick Start
+
+### Option 1: Local Development (with local PostgreSQL)
 
 1. **Clone and setup**:
 
@@ -32,6 +34,33 @@ as a monorepo using PNPM workspaces.
     pnpm dev
     ```
     This starts the backend (Phoenix with Ash framework).
+
+### Option 2: Docker Development (recommended)
+
+1. **Clone and setup**:
+
+    ```bash
+    git clone <repository-url>
+    cd riva-monorepo
+    ```
+
+2. **Start PostgreSQL with Docker**:
+    ```bash
+    ./docker-dev.sh start
+    ```
+
+3. **Setup and start the application**:
+    ```bash
+    pnpm setup
+    pnpm dev
+    ```
+
+### Option 3: Full Docker Stack
+
+1. **Start everything with Docker**:
+    ```bash
+    docker-compose up --build
+    ```
 
 ## Available Scripts
 
@@ -95,9 +124,58 @@ The frontend directory is ready for your preferred frontend framework.
 3. **Shared code**: Create packages in `packages/` directory
 4. **Database changes**: Add migrations in `riva_ash/priv/repo/migrations/`
 
+## Docker Development
+
+The project includes Docker support for easier development and deployment:
+
+### Docker Helper Script
+
+Use the `docker-dev.sh` script for common Docker operations:
+
+```bash
+# Start only PostgreSQL in Docker (recommended for development)
+./docker-dev.sh start
+
+# Stop all Docker services
+./docker-dev.sh stop
+
+# Reset database and restart PostgreSQL
+./docker-dev.sh reset
+
+# Show PostgreSQL logs
+./docker-dev.sh logs
+
+# Start both app and database in Docker
+./docker-dev.sh full
+```
+
+### Manual Docker Commands
+
+```bash
+# Start PostgreSQL only
+docker-compose up postgres -d
+
+# Start full stack
+docker-compose up --build
+
+# Stop services
+docker-compose down
+
+# Reset database volumes
+docker-compose down -v
+```
+
 ## Environment Variables
 
-Create `.env` files as needed:
+The application supports environment variables for database configuration:
+
+- `DB_USERNAME` - Database username (default: postgres)
+- `DB_PASSWORD` - Database password (default: postgres)
+- `DB_HOSTNAME` - Database hostname (default: localhost, use "postgres" for Docker)
+- `DB_NAME` - Database name (default: riva_ash_dev)
+- `DB_PORT` - Database port (default: 5432)
+
+Copy `.env.example` to `.env` and modify as needed:
 
 -   `.env` - Shared environment variables
 -   `riva_ash/.env` - Backend-specific variables
