@@ -28,11 +28,12 @@ defmodule RivaAsh.Mermaid do
     attributes_str =
       attributes
       |> Enum.map(fn {name, types} ->
-        type = 
+        type =
           case types do
             [t | _] -> inspect(t)
             _ -> "any"
           end
+
         "    #{name} #{type}"
       end)
       |> Enum.join("\n")
@@ -51,28 +52,32 @@ defmodule RivaAsh.Mermaid do
   end
 
   defp relationship_to_mermaid(source_resource, %{
-    name: name,
-    destination: destination,
-    cardinality: cardinality,
-    type: type
-  }) do
-    dest_resource = 
+         name: name,
+         destination: destination,
+         cardinality: cardinality,
+         type: type
+       }) do
+    dest_resource =
       case destination do
         mod when is_atom(mod) -> mod |> Module.split() |> List.last()
         _ -> "#{destination}"
       end
-    
+
     case type do
       :belongs_to ->
-        "    #{source_resource} ||--o{ #{dest_resource} : " <> 
+        "    #{source_resource} ||--o{ #{dest_resource} : " <>
           if(cardinality == :one, do: "belongs_to", else: "has_many") <>
           "_#{name}"
+
       :has_many ->
         "    #{source_resource} ||--o{ #{dest_resource} : has_many_#{name}"
+
       :has_one ->
         "    #{source_resource} ||--|| #{dest_resource} : has_one_#{name}"
+
       :many_to_many ->
         "    #{source_resource} }o--o{ #{dest_resource} : many_to_many_#{name}"
+
       _ ->
         "    #{source_resource} -- #{dest_resource} : #{name} (#{inspect(type)})"
     end
