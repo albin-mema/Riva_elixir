@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>ERD Viewer</title>
+  <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+  <style>
+    body { margin: 0; padding: 20px; }
+    .mermaid { 
+      font-family: Arial, sans-serif;
+      margin: 20px auto;
+      max-width: 1200px;
+    }
+  </style>
+</head>
+<body>
+  <div class="mermaid">
+    erDiagram
+    Business {
+        UUID id
+        String name
+        String description
+    }
+    Section {
+        UUID id
+        String name
+        String description
+        UUID business_id
+    }
+    Item {
+        UUID id
+        String name
+        UUID section_id
+    }
+    Client {
+        UUID id
+        String name
+        String email
+        String phone
+        Boolean is_registered
+        DateTime inserted_at
+        DateTime updated_at
+    }
+    Reservation {
+        UUID id
+        DateTime reserved_from
+        DateTime reserved_until
+        String status
+        String notes
+        UUID client_id
+        UUID item_id
+        DateTime inserted_at
+        DateTime updated_at
+    }
+
+    Business ||--o{ Section : has
+    Section ||--o{ Item : contains
+    Client ||--o{ Reservation : makes
+    Item ||--o{ Reservation : has
+    
+    Reservation }o--|| Client : "belongs to"
+    Reservation }o--|| Item : "reserves"
+
+  </div>
+  <script>
+    mermaid.initialize({ startOnLoad: true });
+  </script>
+</body>
+</html>
