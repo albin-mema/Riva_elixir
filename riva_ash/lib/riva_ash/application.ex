@@ -7,6 +7,14 @@ defmodule RivaAsh.Application do
 
   @impl true
   def start(_type, _args) do
+    # Configure Ash to use SimpleSat
+    Application.put_env(:ash, :sat_solver, {SimpleSat, []})
+
+    # Log the SAT solver configuration for debugging
+    sat_solver = Application.get_env(:ash, :sat_solver, :not_configured)
+    require Logger
+    Logger.info("Configured SAT solver: #{inspect(sat_solver)}")
+
     children = [
       RivaAsh.Repo,
       {DNSCluster, query: Application.get_env(:riva_ash, :dns_cluster_query) || :ignore},

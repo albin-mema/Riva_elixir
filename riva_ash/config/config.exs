@@ -39,6 +39,19 @@ config :riva_ash, ecto_repos: [RivaAsh.Repo]
 
 # Configure Ash
 config :riva_ash, ash_domains: [RivaAsh.Domain]
+config :ash, :use_all_identities_in_manage_relationship?, false
+
+# Configure Ash to use SimpleSat
+config :ash, :sat_solver, {SimpleSat, []}
+
+# Configure Ash policies for better error messages
+config :ash, :policies, show_policy_breakdowns?: true
+
+# Configure AshJsonApi
+config :ash_json_api,
+  json_library: Jason,
+  remove_blank_fields: true,
+  remove_blank_values: true
 
 # Configure AshJsonApi
 config :ash_json_api, :domains, [RivaAsh.Domain]

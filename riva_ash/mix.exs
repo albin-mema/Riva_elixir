@@ -5,7 +5,7 @@ defmodule RivaAsh.MixProject do
     [
       app: :riva_ash,
       version: "0.1.0",
-      elixir: "~> 1.14",
+      elixir: "~> 1.17",
       start_permanent: Mix.env() == :prod,
       deps: deps(),
       aliases: aliases()
@@ -23,31 +23,45 @@ defmodule RivaAsh.MixProject do
   # Run "mix help deps" to learn about dependencies.
   defp deps do
     [
-      {:ash, "~> 3.0"},
-      {:ash_postgres, "~> 2.0"},
-      {:ash_json_api, "~> 1.0"},
-      {:phoenix, "~> 1.7.0"},
-      {:phoenix_ecto, "~> 4.4"},
-      {:ecto_sql, "~> 3.6"},
-      {:postgrex, ">= 0.0.0"},
-      {:telemetry_metrics, "~> 0.6"},
-      {:telemetry_poller, "~> 1.0"},
-      {:gettext, "~> 0.20"},
-      {:jason, "~> 1.2"},
-      {:dns_cluster, "~> 0.1.1"},
-      {:bandit, "~> 1.0"},
-      {:open_api_spex, "~> 3.5"},
-      {:cors_plug, "~> 3.0"},
-      {:finch, "~> 0.13"},
-      {:ash_admin, "~> 0.11"},
-      # Audit logging
+      # Ash core
+      {:ash, "~> 3.5"},
+      {:ash_postgres, "~> 2.6"},
+      {:ash_json_api, "~> 1.4"},
+
+      # Ash extensions
       {:ash_paper_trail, "~> 0.5.6"},
-      # Soft delete functionality
       {:ash_archival, "~> 1.0"},
-      # Reactor for saga orchestration
-      {:reactor, "~> 0.15"},
-      # Test dependencies
-      {:mox, "~> 1.0", only: :test}
+      {:ash_admin, "~> 0.13"},
+      {:reactor, "~> 0.15", override: true},
+
+      # SAT solver for Ash policies (pure Elixir implementation)
+      {:simple_sat, "~> 0.1.3"},
+
+      # Phoenix
+      {:phoenix, "~> 1.7"},
+      {:phoenix_ecto, "~> 4.5"},
+
+      # Database
+      {:ecto_sql, "~> 3.13"},
+      {:postgrex, "~> 0.18"},
+
+      # Telemetry
+      {:telemetry_metrics, "~> 1.0"},
+      {:telemetry_poller, "~> 1.0"},
+
+      # HTTP/API
+      {:bandit, "~> 1.7"},
+      {:finch, "~> 0.18"},
+      {:open_api_spex, "~> 3.21"},
+      {:cors_plug, "~> 3.0"},
+
+      # Utilities
+      {:gettext, "~> 0.24"},
+      {:jason, "~> 1.4"},
+      {:dns_cluster, "~> 0.1.1"},
+
+      # Test
+      {:mox, "~> 1.1", only: :test}
     ]
   end
 
