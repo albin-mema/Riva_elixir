@@ -142,5 +142,11 @@ defmodule RivaAsh.Resources.Client do
       public? true
       description "Reservations made by this client"
     end
+
+    has_many :recurring_reservations, RivaAsh.Resources.RecurringReservation do
+      destination_attribute :client_id
+      public? true
+      description "Recurring reservation patterns for this client"
+    end
   end
 end

@@ -21,6 +21,8 @@ defmodule RivaAsh.Domain do
     resource RivaAsh.Resources.Reservation
     resource RivaAsh.Resources.ItemSchedule
     resource RivaAsh.Resources.AvailabilityException
+    resource RivaAsh.Resources.RecurringReservation
+    resource RivaAsh.Resources.RecurringReservationInstance
   end
 
   json_api do
@@ -35,6 +37,8 @@ defmodule RivaAsh.Domain do
       tag "Reservations"
       tag "Item Schedules"
       tag "Availability Exceptions"
+      tag "Recurring Reservations"
+      tag "Recurring Reservation Instances"
       group_by :resource
     end
   end

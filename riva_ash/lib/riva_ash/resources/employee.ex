@@ -221,6 +221,12 @@ defmodule RivaAsh.Resources.Employee do
       public? true
       description "Reservations created by this employee"
     end
+
+    has_many :recurring_reservations, RivaAsh.Resources.RecurringReservation do
+      destination_attribute :employee_id
+      public? true
+      description "Recurring reservation patterns created by this employee"
+    end
   end
 
   validations do

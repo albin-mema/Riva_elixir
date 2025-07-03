@@ -158,6 +158,12 @@ defmodule RivaAsh.Resources.Item do
       public? true
       description "Availability exceptions for this item"
     end
+
+    has_many :recurring_reservations, RivaAsh.Resources.RecurringReservation do
+      destination_attribute :item_id
+      public? true
+      description "Recurring reservation patterns for this item"
+    end
   end
 
   identities do
