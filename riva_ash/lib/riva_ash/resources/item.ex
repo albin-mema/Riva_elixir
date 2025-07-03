@@ -59,6 +59,18 @@ defmodule RivaAsh.Resources.Item do
     read :unassigned do
       filter expr(is_nil(section_id))
     end
+
+    read :active do
+      filter expr(is_active == true)
+    end
+
+    read :always_available do
+      filter expr(is_always_available == true and is_active == true)
+    end
+
+    read :scheduled_availability do
+      filter expr(is_always_available == false and is_active == true)
+    end
   end
 
   attributes do
@@ -68,6 +80,45 @@ defmodule RivaAsh.Resources.Item do
       allow_nil? false
       public? true
       description "The name of the item"
+    end
+
+    attribute :description, :string do
+      allow_nil? true
+      public? true
+      description "Description of the item"
+    end
+
+    attribute :is_always_available, :boolean do
+      allow_nil? false
+      default true
+      public? true
+      description "Whether this item is always available (true) or has specific availability rules (false)"
+    end
+
+    attribute :capacity, :integer do
+      allow_nil? false
+      default 1
+      public? true
+      description "How many concurrent reservations this item can handle"
+    end
+
+    attribute :minimum_duration_minutes, :integer do
+      allow_nil? true
+      public? true
+      description "Minimum reservation duration in minutes"
+    end
+
+    attribute :maximum_duration_minutes, :integer do
+      allow_nil? true
+      public? true
+      description "Maximum reservation duration in minutes"
+    end
+
+    attribute :is_active, :boolean do
+      allow_nil? false
+      default true
+      public? true
+      description "Whether this item is currently active and bookable"
     end
 
     create_timestamp :inserted_at
@@ -80,6 +131,24 @@ defmodule RivaAsh.Resources.Item do
       attribute_writable? true
       public? true
       description "The section this item belongs to (optional)"
+    end
+
+    has_many :reservations, RivaAsh.Resources.Reservation do
+      destination_attribute :item_id
+      public? true
+      description "Reservations for this item"
+    end
+
+    has_many :schedules, RivaAsh.Resources.ItemSchedule do
+      destination_attribute :item_id
+      public? true
+      description "Recurring availability schedules for this item"
+    end
+
+    has_many :availability_exceptions, RivaAsh.Resources.AvailabilityException do
+      destination_attribute :item_id
+      public? true
+      description "Availability exceptions for this item"
     end
   end
 

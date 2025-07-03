@@ -1,11 +1,11 @@
 defmodule RivaAsh.Domain do
   use Ash.Domain,
     extensions: [
-      AshJsonApi.Domain, 
+      AshJsonApi.Domain,
       AshAdmin.Domain,
       AshPaperTrail.Domain
     ]
-    
+
   # Configure AshPaperTrail to include version tables in the domain
   paper_trail do
     # Auto-include all version resources
@@ -17,7 +17,10 @@ defmodule RivaAsh.Domain do
     resource RivaAsh.Resources.Section
     resource RivaAsh.Resources.Item
     resource RivaAsh.Resources.Client
+    resource RivaAsh.Resources.Employee
     resource RivaAsh.Resources.Reservation
+    resource RivaAsh.Resources.ItemSchedule
+    resource RivaAsh.Resources.AvailabilityException
   end
 
   json_api do
@@ -28,7 +31,10 @@ defmodule RivaAsh.Domain do
       tag "Sections"
       tag "Items"
       tag "Clients"
+      tag "Employees"
       tag "Reservations"
+      tag "Item Schedules"
+      tag "Availability Exceptions"
       group_by :resource
     end
   end

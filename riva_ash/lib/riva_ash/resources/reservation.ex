@@ -10,24 +10,24 @@ defmodule RivaAsh.Resources.Reservation do
       AshJsonApi.Resource,
       AshPaperTrail.Resource
     ]
-    
+
   # Configure versioning for this resource
   paper_trail do
     # Track all changes with full diffs
     change_tracking_mode :full_diff
-    
+
     # Don't store timestamps in the changes
     ignore_attributes [:inserted_at, :updated_at]
-    
+
     # Store action name for better auditing
     store_action_name? true
-    
+
     # Store action inputs for better auditing
     store_action_inputs? true
-    
+
     # Store resource identifier for better querying
     store_resource_identifier? true
-    
+
     # Create versions on destroy (for soft deletes)
     create_version_on_destroy? true
   end
@@ -48,14 +48,15 @@ defmodule RivaAsh.Resources.Reservation do
       post :create
       patch :update
       delete :destroy
-      
+
       # Additional routes for reservation-specific actions
       get :by_client, route: "/by-client/:client_id"
       get :by_item, route: "/by-item/:item_id"
+      get :by_employee, route: "/by-employee/:employee_id"
       get :active, route: "/active"
       get :upcoming, route: "/upcoming"
       get :past, route: "/past"
-      
+
       # Status update routes
       patch :confirm, route: "/:id/confirm"
       patch :cancel, route: "/:id/cancel"
@@ -71,6 +72,7 @@ defmodule RivaAsh.Resources.Reservation do
     define :by_id, args: [:id], action: :by_id
     define :by_client, args: [:client_id], action: :by_client
     define :by_item, args: [:item_id], action: :by_item
+    define :by_employee, args: [:employee_id], action: :by_employee
     define :active, action: :active
   end
 
@@ -78,7 +80,7 @@ defmodule RivaAsh.Resources.Reservation do
     defaults [:read, :update, :destroy]
 
     create :create do
-      accept [:client_id, :item_id, :reserved_from, :reserved_until, :notes]
+      accept [:client_id, :item_id, :employee_id, :reserved_from, :reserved_until, :notes]
       primary? true
     end
 
@@ -98,11 +100,16 @@ defmodule RivaAsh.Resources.Reservation do
       filter expr(item_id == ^arg(:item_id))
     end
 
+    read :by_employee do
+      argument :employee_id, :uuid, allow_nil?: false
+      filter expr(employee_id == ^arg(:employee_id))
+    end
+
     read :active do
       now = DateTime.utc_now()
       filter expr(
-        reserved_from <= ^now and 
-        reserved_until >= ^now and 
+        reserved_from <= ^now and
+        reserved_until >= ^now and
         status == "confirmed"
       )
     end
@@ -176,7 +183,7 @@ defmodule RivaAsh.Resources.Reservation do
       allow_nil? false
       attribute_writable? true
       public? true
-      description "The client who made the reservation"
+      description "The client for whom the reservation was made"
     end
 
     belongs_to :item, RivaAsh.Resources.Item do
@@ -184,6 +191,13 @@ defmodule RivaAsh.Resources.Reservation do
       attribute_writable? true
       public? true
       description "The item being reserved"
+    end
+
+    belongs_to :employee, RivaAsh.Resources.Employee do
+      allow_nil? false
+      attribute_writable? true
+      public? true
+      description "The employee who created this reservation"
     end
   end
 
