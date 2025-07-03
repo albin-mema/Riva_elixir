@@ -9,20 +9,24 @@ config :riva_ash, RivaAsh.Repo,
   username: "postgres",
   password: "postgres",
   hostname: "localhost",
-  database: "riva_ash_test#{System.get_env("MIX_TEST_PARTITION")}",
+  database: "riva_ash_test",
   pool: Ecto.Adapters.SQL.Sandbox,
   pool_size: 10,
-  skip_migrations: true
+  skip_migrations: true,
+  # Reduce timeout for faster test failures
+  timeout: 5000,
+  # Disable SSL for local testing
+  ssl: false
 
 # We don't run a server during test. If one is required,
 # you can enable the server option below.
 config :riva_ash, RivaAshWeb.Endpoint,
   http: [ip: {127, 0, 0, 1}, port: 4002],
   secret_key_base: "test_secret_key_base_change_me_in_production",
-  server: false
+  server: true
 
-# Skip repo for tests that don't need database
-config :riva_ash, ecto_repos: []
+# Configure Ecto repos
+config :riva_ash, ecto_repos: [RivaAsh.Repo]
 
 # Skip mailer configuration in test
 
