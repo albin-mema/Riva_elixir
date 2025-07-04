@@ -7,6 +7,7 @@ defmodule RivaAsh.Resources.Client do
   use Ash.Resource,
     domain: RivaAsh.Domain,
     data_layer: AshPostgres.DataLayer,
+    authorizers: [Ash.Policy.Authorizer],
     extensions: [
       AshJsonApi.Resource,
       AshPaperTrail.Resource,
@@ -44,6 +45,41 @@ defmodule RivaAsh.Resources.Client do
     base_filter?(false)
   end
 
+  policies do
+    # Admins can do everything
+    bypass actor_attribute_equals(:role, :admin) do
+      authorize_if(always())
+    end
+
+    # Managers can read and manage clients
+    policy actor_attribute_equals(:role, :manager) do
+      authorize_if(always())
+    end
+
+    # Staff can only read clients (for reservation purposes)
+    policy actor_attribute_equals(:role, :staff) do
+      authorize_if(action_type(:read))
+    end
+
+    # Clients can only access their own data
+    policy actor_attribute_equals(:__struct__, RivaAsh.Resources.Client) do
+      authorize_if(expr(id == ^actor(:id)))
+      # Clients can read and update their own data
+      forbid_unless(action_type([:read, :update]))
+    end
+
+    # Allow public client creation for booking flow
+    policy action_type(:create) do
+      # Allow booking system to create clients
+      authorize_if(always())
+    end
+
+    # Allow public read for booking lookups (by email)
+    policy action(:by_email) do
+      authorize_if(always())
+    end
+  end
+
   json_api do
     type("client")
 
@@ -65,9 +101,11 @@ defmodule RivaAsh.Resources.Client do
 
   code_interface do
     define(:create, action: :create)
+    define(:create_for_booking, action: :create_for_booking)
     define(:read, action: :read)
     define(:update, action: :update)
     define(:destroy, action: :destroy)
+    define(:register, action: :register)
     define(:by_id, args: [:id], action: :by_id)
     define(:by_email, args: [:email], action: :by_email)
   end
@@ -78,6 +116,30 @@ defmodule RivaAsh.Resources.Client do
     create :create do
       accept([:name, :email, :phone, :is_registered])
       primary?(true)
+    end
+
+    # Create unregistered client for booking flow
+    create :create_for_booking do
+      accept([:name, :email, :phone])
+      change(set_attribute(:is_registered, false))
+      description("Create unregistered client during booking process")
+    end
+
+    # Upgrade unregistered client to registered
+    update :register do
+      accept([:email])
+      require_atomic?(false)
+      change(set_attribute(:is_registered, true))
+      description("Convert unregistered client to registered client")
+    end
+
+    # Find or create client for booking (handles both cases)
+    create :find_or_create_for_booking do
+      accept([:name, :email, :phone])
+      upsert?(true)
+      upsert_identity(:email)
+      change(set_attribute(:is_registered, false))
+      description("Find existing client by email or create new unregistered client")
     end
 
     read :by_id do
@@ -132,9 +194,15 @@ defmodule RivaAsh.Resources.Client do
     update_timestamp(:updated_at)
   end
 
+  identities do
+    identity(:email, [:email], eager_check_with: RivaAsh.Domain)
+  end
+
   validations do
     validate(present([:email]), where: attribute_equals(:is_registered, true))
     validate(match(~r/^[^\s]+@[^\s]+$/, :email), where: attribute_equals(:is_registered, true))
+    # For booking flow, email is optional for unregistered clients
+    validate(present([:name]), message: "Name is required for all clients")
   end
 
   relationships do

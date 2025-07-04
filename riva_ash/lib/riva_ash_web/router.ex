@@ -25,6 +25,22 @@ defmodule RivaAshWeb.Router do
     forward("/", RivaAshWeb.JsonApiRouter)
   end
 
+  # Client-facing booking API (public)
+  scope "/api/booking", RivaAshWeb do
+    pipe_through([:api])
+
+    # Availability and items
+    get("/availability/:item_id", BookingController, :availability)
+    get("/items", BookingController, :items)
+
+    # Booking flow
+    post("/create", BookingController, :create)
+    post("/confirm/:booking_id", BookingController, :confirm)
+
+    # Client lookup
+    get("/client/:email", BookingController, :client_bookings)
+  end
+
   # Swagger UI - serves the OpenAPI documentation
   scope "/docs" do
     get("/", RivaAshWeb.SwaggerController, :index)
@@ -46,6 +62,5 @@ defmodule RivaAshWeb.Router do
   scope "/admin" do
     pipe_through(:browser)
     ash_admin("/", domains: [RivaAsh.Domain])
-    get("/erd", RivaAshWeb.MermaidController, :show)
   end
 end

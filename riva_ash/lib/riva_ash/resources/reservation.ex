@@ -64,9 +64,23 @@ defmodule RivaAsh.Resources.Reservation do
       forbid_unless(action_type(:read))
     end
 
+    # Clients can only access their own reservations
+    policy actor_attribute_equals(:__struct__, RivaAsh.Resources.Client) do
+      authorize_if(expr(client_id == ^actor(:id)))
+      # Clients can read and update (for cancellation) their own reservations
+      forbid_unless(action_type([:read, :update]))
+    end
+
     # All authenticated employees can create reservations
     policy action_type(:create) do
       authorize_if(actor_present())
+    end
+
+    # Allow public booking creation (no actor required for client bookings)
+    policy action_type(:create) do
+      # This allows the booking API to create reservations without authentication
+      # The booking controller handles the business logic
+      authorize_if(always())
     end
   end
 
@@ -99,6 +113,7 @@ defmodule RivaAsh.Resources.Reservation do
 
   code_interface do
     define(:create, action: :create)
+    define(:create_for_booking, action: :create_for_booking)
     define(:read, action: :read)
     define(:update, action: :update)
     define(:destroy, action: :destroy)
@@ -115,6 +130,13 @@ defmodule RivaAsh.Resources.Reservation do
     create :create do
       accept([:client_id, :item_id, :employee_id, :reserved_from, :reserved_until, :notes])
       primary?(true)
+    end
+
+    # Create reservation for client booking (employee_id optional)
+    create :create_for_booking do
+      accept([:client_id, :item_id, :reserved_from, :reserved_until, :notes])
+      change(set_attribute(:status, :pending))
+      description("Create reservation from client booking flow")
     end
 
     read :by_id do
@@ -251,10 +273,10 @@ defmodule RivaAsh.Resources.Reservation do
     end
 
     belongs_to :employee, RivaAsh.Resources.Employee do
-      allow_nil?(false)
+      allow_nil?(true)
       attribute_writable?(true)
       public?(true)
-      description("The employee who created this reservation")
+      description("The employee who created this reservation (optional for client bookings)")
     end
   end
 
