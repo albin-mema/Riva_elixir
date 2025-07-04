@@ -46,6 +46,12 @@ defmodule RivaAsh.Resources.Business do
       post(:create)
       patch(:update)
       delete(:destroy)
+
+      # Additional routes for business-specific actions
+      get(:active, route: "/active")
+      get(:inactive, route: "/inactive")
+      get(:with_sections, route: "/with-sections")
+      get(:with_employees, route: "/with-employees")
     end
   end
 
@@ -55,6 +61,10 @@ defmodule RivaAsh.Resources.Business do
     define(:update, action: :update)
     define(:destroy, action: :destroy)
     define(:by_id, args: [:id], action: :by_id)
+    define(:active, action: :active)
+    define(:inactive, action: :inactive)
+    define(:with_sections, action: :with_sections)
+    define(:with_employees, action: :with_employees)
   end
 
   actions do
@@ -69,6 +79,27 @@ defmodule RivaAsh.Resources.Business do
       argument(:id, :uuid, allow_nil?: false)
       get?(true)
       filter(expr(id == ^arg(:id)))
+    end
+
+    read :active do
+      # For now, all non-archived businesses are considered active
+      # This can be enhanced later with an is_active field if needed
+      filter(expr(is_nil(archived_at)))
+    end
+
+    read :inactive do
+      # Archived businesses are considered inactive
+      filter(expr(not is_nil(archived_at)))
+    end
+
+    read :with_sections do
+      load([:sections])
+    end
+
+    read :with_employees do
+      # Load employees through sections (if needed) or directly if relationship exists
+      # For now, this is a placeholder that can be enhanced
+      load([])
     end
 
     # TODO: Re-enable reactor action once reactor syntax is fixed

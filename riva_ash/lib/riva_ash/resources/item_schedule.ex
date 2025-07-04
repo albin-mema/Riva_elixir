@@ -37,6 +37,12 @@ defmodule RivaAsh.Resources.ItemSchedule do
       # Additional routes for schedule-specific actions
       get(:by_item, route: "/by-item/:item_id")
       get(:by_day, route: "/by-day/:day_of_week")
+      get(:available_schedules, route: "/available")
+      get(:unavailable_schedules, route: "/unavailable")
+      get(:active, route: "/active")
+      get(:by_time_range, route: "/by-time-range/:start_time/:end_time")
+      get(:weekdays, route: "/weekdays")
+      get(:weekends, route: "/weekends")
     end
   end
 
@@ -48,6 +54,12 @@ defmodule RivaAsh.Resources.ItemSchedule do
     define(:by_id, args: [:id], action: :by_id)
     define(:by_item, args: [:item_id], action: :by_item)
     define(:by_day, args: [:day_of_week], action: :by_day)
+    define(:available_schedules, action: :available_schedules)
+    define(:unavailable_schedules, action: :unavailable_schedules)
+    define(:active, action: :active)
+    define(:by_time_range, args: [:start_time, :end_time], action: :by_time_range)
+    define(:weekdays, action: :weekdays)
+    define(:weekends, action: :weekends)
   end
 
   actions do
@@ -80,6 +92,27 @@ defmodule RivaAsh.Resources.ItemSchedule do
 
     read :unavailable_schedules do
       filter(expr(is_available == false))
+    end
+
+    read :active do
+      # Non-archived schedules are considered active
+      filter(expr(is_nil(archived_at)))
+    end
+
+    read :by_time_range do
+      argument(:start_time, :time, allow_nil?: false)
+      argument(:end_time, :time, allow_nil?: false)
+      filter(expr(start_time >= ^arg(:start_time) and end_time <= ^arg(:end_time)))
+    end
+
+    read :weekdays do
+      # Monday (1) through Friday (5)
+      filter(expr(day_of_week >= 1 and day_of_week <= 5))
+    end
+
+    read :weekends do
+      # Saturday (6) and Sunday (0)
+      filter(expr(day_of_week == 0 or day_of_week == 6))
     end
   end
 

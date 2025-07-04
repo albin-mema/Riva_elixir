@@ -33,6 +33,13 @@ defmodule RivaAsh.Resources.Section do
       post(:create)
       patch(:update)
       delete(:destroy)
+
+      # Additional routes for section-specific actions
+      get(:by_business, route: "/by-business/:business_id")
+      get(:active, route: "/active")
+      get(:inactive, route: "/inactive")
+      get(:with_items, route: "/with-items")
+      get(:empty, route: "/empty")
     end
   end
 
@@ -43,6 +50,10 @@ defmodule RivaAsh.Resources.Section do
     define(:destroy, action: :destroy)
     define(:by_id, args: [:id], action: :by_id)
     define(:by_business, args: [:business_id], action: :by_business)
+    define(:active, action: :active)
+    define(:inactive, action: :inactive)
+    define(:with_items, action: :with_items)
+    define(:empty, action: :empty)
   end
 
   actions do
@@ -62,6 +73,25 @@ defmodule RivaAsh.Resources.Section do
     read :by_business do
       argument(:business_id, :uuid, allow_nil?: false)
       filter(expr(business_id == ^arg(:business_id)))
+    end
+
+    read :active do
+      # Non-archived sections are considered active
+      filter(expr(is_nil(archived_at)))
+    end
+
+    read :inactive do
+      # Archived sections are considered inactive
+      filter(expr(not is_nil(archived_at)))
+    end
+
+    read :with_items do
+      load([:items])
+    end
+
+    read :empty do
+      # Sections with no items
+      filter(expr(not exists(items)))
     end
   end
 

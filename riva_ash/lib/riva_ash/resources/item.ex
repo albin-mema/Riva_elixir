@@ -31,7 +31,18 @@ defmodule RivaAsh.Resources.Item do
       get(:read)
       index(:read)
       post(:create)
+      patch(:update)
       delete(:destroy)
+
+      # Additional routes for item-specific actions
+      get(:by_section, route: "/by-section/:section_id")
+      get(:unassigned, route: "/unassigned")
+      get(:active, route: "/active")
+      get(:inactive, route: "/inactive")
+      get(:always_available, route: "/always-available")
+      get(:scheduled_availability, route: "/scheduled-availability")
+      get(:with_schedules, route: "/with-schedules")
+      get(:available_now, route: "/available-now")
     end
   end
 
@@ -43,6 +54,12 @@ defmodule RivaAsh.Resources.Item do
     define(:by_id, args: [:id], action: :by_id)
     define(:by_section, args: [:section_id], action: :by_section)
     define(:unassigned, action: :unassigned)
+    define(:active, action: :active)
+    define(:inactive, action: :inactive)
+    define(:always_available, action: :always_available)
+    define(:scheduled_availability, action: :scheduled_availability)
+    define(:with_schedules, action: :with_schedules)
+    define(:available_now, action: :available_now)
   end
 
   actions do
@@ -78,6 +95,20 @@ defmodule RivaAsh.Resources.Item do
 
     read :scheduled_availability do
       filter(expr(is_always_available == false and is_active == true))
+    end
+
+    read :inactive do
+      filter(expr(is_active == false))
+    end
+
+    read :with_schedules do
+      load([:schedules])
+    end
+
+    read :available_now do
+      # Items that are either always available or have current schedule availability
+      # This is a simplified version - in practice you'd check current time against schedules
+      filter(expr(is_active == true))
     end
   end
 
