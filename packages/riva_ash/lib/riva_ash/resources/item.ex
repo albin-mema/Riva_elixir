@@ -7,7 +7,7 @@ defmodule RivaAsh.Resources.Item do
   use Ash.Resource,
     domain: RivaAsh.Domain,
     data_layer: AshPostgres.DataLayer,
-    extensions: [AshJsonApi.Resource, AshArchival.Resource]
+    extensions: [AshJsonApi.Resource, AshGraphql.Resource, AshArchival.Resource]
 
   postgres do
     table("items")
@@ -46,6 +46,29 @@ defmodule RivaAsh.Resources.Item do
     end
   end
 
+  graphql do
+    type(:item)
+
+    queries do
+      get(:get_item, :read)
+      list(:list_items, :read)
+      list(:items_by_section, :by_section)
+      list(:unassigned_items, :unassigned)
+      list(:active_items, :active)
+      list(:inactive_items, :inactive)
+      list(:always_available_items, :always_available)
+      list(:scheduled_availability_items, :scheduled_availability)
+      list(:items_with_schedules, :with_schedules)
+      list(:available_now_items, :available_now)
+    end
+
+    mutations do
+      create(:create_item, :create)
+      update(:update_item, :update)
+      destroy(:delete_item, :destroy)
+    end
+  end
+
   code_interface do
     define(:create, action: :create)
     define(:read, action: :read)
@@ -66,7 +89,7 @@ defmodule RivaAsh.Resources.Item do
     defaults([:read, :update, :destroy])
 
     create :create do
-      accept([:name, :section_id])
+      accept([:name, :section_id, :item_type_id])
       primary?(true)
     end
 
@@ -102,7 +125,7 @@ defmodule RivaAsh.Resources.Item do
     end
 
     read :with_schedules do
-      load([:schedules])
+      # Load schedules relationship - this will be handled by GraphQL automatically
     end
 
     read :available_now do
@@ -175,10 +198,23 @@ defmodule RivaAsh.Resources.Item do
       description("The section this item belongs to (optional)")
     end
 
+    belongs_to :item_type, RivaAsh.Resources.ItemType do
+      allow_nil?(true)
+      attribute_writable?(true)
+      public?(true)
+      description("The type/category of this item")
+    end
+
     has_many :reservations, RivaAsh.Resources.Reservation do
       destination_attribute(:item_id)
       public?(true)
       description("Reservations for this item")
+    end
+
+    has_many :item_positions, RivaAsh.Resources.ItemPosition do
+      destination_attribute(:item_id)
+      public?(true)
+      description("Positions of this item in various layouts")
     end
 
     has_many :schedules, RivaAsh.Resources.ItemSchedule do

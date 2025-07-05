@@ -9,6 +9,7 @@ defmodule RivaAsh.Resources.Reservation do
     authorizers: [Ash.Policy.Authorizer],
     extensions: [
       AshJsonApi.Resource,
+      AshGraphql.Resource,
       AshPaperTrail.Resource,
       AshArchival.Resource
     ]
@@ -111,6 +112,30 @@ defmodule RivaAsh.Resources.Reservation do
     end
   end
 
+  graphql do
+    type(:reservation)
+
+    queries do
+      get(:get_reservation, :read)
+      list(:list_reservations, :read)
+      list(:reservations_by_client, :by_client)
+      list(:reservations_by_item, :by_item)
+      list(:reservations_by_employee, :by_employee)
+      list(:active_reservations, :active)
+      list(:upcoming_reservations, :upcoming)
+      list(:past_reservations, :past)
+    end
+
+    mutations do
+      create(:create_reservation, :create)
+      update(:update_reservation, :update)
+      update(:confirm_reservation, :confirm)
+      update(:cancel_reservation, :cancel)
+      update(:complete_reservation, :complete)
+      destroy(:delete_reservation, :destroy)
+    end
+  end
+
   code_interface do
     define(:create, action: :create)
     define(:create_for_booking, action: :create_for_booking)
@@ -128,7 +153,7 @@ defmodule RivaAsh.Resources.Reservation do
     defaults([:read, :update, :destroy])
 
     create :create do
-      accept([:client_id, :item_id, :employee_id, :reserved_from, :reserved_until, :notes])
+      accept([:client_id, :item_id, :employee_id, :reserved_from, :reserved_until, :notes, :total_amount])
       primary?(true)
     end
 
@@ -212,6 +237,26 @@ defmodule RivaAsh.Resources.Reservation do
       require_atomic?(false)
     end
 
+    update :mark_as_paid do
+      accept([:total_amount])
+      change(set_attribute(:is_paid, true))
+      require_atomic?(false)
+    end
+
+    update :mark_as_unpaid do
+      accept([])
+      change(set_attribute(:is_paid, false))
+      require_atomic?(false)
+    end
+
+    read :paid do
+      filter(expr(is_paid == true))
+    end
+
+    read :unpaid do
+      filter(expr(is_paid == false))
+    end
+
     # TODO: Re-enable reactor action once reactor syntax is fixed
     # action :create_with_validation, :struct do
     #   constraints instance_of: RivaAsh.Resources.Reservation
@@ -253,6 +298,20 @@ defmodule RivaAsh.Resources.Reservation do
       description("Additional notes about the reservation")
     end
 
+    attribute :is_paid, :boolean do
+      allow_nil?(false)
+      default(false)
+      public?(true)
+      description("Whether the reservation has been paid for")
+    end
+
+    attribute :total_amount, :decimal do
+      allow_nil?(true)
+      public?(true)
+      constraints(min: 0)
+      description("Total amount for this reservation")
+    end
+
     create_timestamp(:inserted_at)
     update_timestamp(:updated_at)
   end
@@ -277,6 +336,12 @@ defmodule RivaAsh.Resources.Reservation do
       attribute_writable?(true)
       public?(true)
       description("The employee who created this reservation (optional for client bookings)")
+    end
+
+    has_many :payments, RivaAsh.Resources.Payment do
+      destination_attribute(:reservation_id)
+      public?(true)
+      description("Payments for this reservation")
     end
   end
 

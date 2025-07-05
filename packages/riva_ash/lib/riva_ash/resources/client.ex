@@ -10,6 +10,7 @@ defmodule RivaAsh.Resources.Client do
     authorizers: [Ash.Policy.Authorizer],
     extensions: [
       AshJsonApi.Resource,
+      AshGraphql.Resource,
       AshPaperTrail.Resource,
       AshArchival.Resource
     ]
@@ -96,6 +97,26 @@ defmodule RivaAsh.Resources.Client do
       get(:by_email, route: "/by-email/:email")
       get(:registered, route: "/registered")
       get(:unregistered, route: "/unregistered")
+    end
+  end
+
+  graphql do
+    type(:client)
+
+    queries do
+      get(:get_client, :read)
+      list(:list_clients, :read)
+      get(:client_by_email, :by_email)
+      list(:registered_clients, :registered)
+      list(:unregistered_clients, :unregistered)
+    end
+
+    mutations do
+      create(:create_client, :create)
+      create(:create_client_for_booking, :create_for_booking)
+      update(:update_client, :update)
+      update(:register_client, :register)
+      destroy(:delete_client, :destroy)
     end
   end
 

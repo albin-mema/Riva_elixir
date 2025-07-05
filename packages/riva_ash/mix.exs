@@ -27,6 +27,7 @@ defmodule RivaAsh.MixProject do
       {:ash, "~> 3.5"},
       {:ash_postgres, "~> 2.6"},
       {:ash_json_api, "~> 1.4"},
+      {:ash_graphql, "~> 1.7"},
 
       # Ash extensions
       {:ash_paper_trail, "~> 0.5.6"},
@@ -54,6 +55,10 @@ defmodule RivaAsh.MixProject do
       {:finch, "~> 0.18"},
       {:open_api_spex, "~> 3.21"},
       {:cors_plug, "~> 3.0"},
+
+      # GraphQL
+      {:absinthe, "~> 1.7"},
+      {:absinthe_plug, "~> 1.5"},
 
       # Utilities
       {:gettext, "~> 0.24"},

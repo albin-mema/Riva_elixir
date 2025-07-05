@@ -7,7 +7,7 @@ defmodule RivaAsh.Resources.Section do
   use Ash.Resource,
     domain: RivaAsh.Domain,
     data_layer: AshPostgres.DataLayer,
-    extensions: [AshJsonApi.Resource, AshArchival.Resource]
+    extensions: [AshJsonApi.Resource, AshGraphql.Resource, AshArchival.Resource]
 
   postgres do
     table("sections")
@@ -40,6 +40,26 @@ defmodule RivaAsh.Resources.Section do
       get(:inactive, route: "/inactive")
       get(:with_items, route: "/with-items")
       get(:empty, route: "/empty")
+    end
+  end
+
+  graphql do
+    type(:section)
+
+    queries do
+      get(:get_section, :read)
+      list(:list_sections, :read)
+      list(:sections_by_business, :by_business)
+      list(:active_sections, :active)
+      list(:inactive_sections, :inactive)
+      list(:sections_with_items, :with_items)
+      list(:empty_sections, :empty)
+    end
+
+    mutations do
+      create(:create_section, :create)
+      update(:update_section, :update)
+      destroy(:delete_section, :destroy)
     end
   end
 
@@ -86,7 +106,7 @@ defmodule RivaAsh.Resources.Section do
     end
 
     read :with_items do
-      load([:items])
+      # Load items relationship - this will be handled by GraphQL automatically
     end
 
     read :empty do

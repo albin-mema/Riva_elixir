@@ -8,7 +8,7 @@ defmodule RivaAsh.Resources.Business do
     domain: RivaAsh.Domain,
     data_layer: AshPostgres.DataLayer,
     authorizers: [Ash.Policy.Authorizer],
-    extensions: [AshJsonApi.Resource, AshArchival.Resource]
+    extensions: [AshJsonApi.Resource, AshGraphql.Resource, AshArchival.Resource]
 
   postgres do
     table("businesses")
@@ -55,6 +55,24 @@ defmodule RivaAsh.Resources.Business do
     end
   end
 
+  graphql do
+    type(:business)
+
+    queries do
+      get(:get_business, :read)
+      list(:list_businesses, :read)
+      list(:active_businesses, :active)
+      list(:inactive_businesses, :inactive)
+      get(:business_with_sections, :with_sections)
+    end
+
+    mutations do
+      create(:create_business, :create)
+      update(:update_business, :update)
+      destroy(:delete_business, :destroy)
+    end
+  end
+
   code_interface do
     define(:create, action: :create)
     define(:read, action: :read)
@@ -93,13 +111,12 @@ defmodule RivaAsh.Resources.Business do
     end
 
     read :with_sections do
-      load([:sections])
+      # Load sections relationship - this will be handled by GraphQL automatically
     end
 
     read :with_employees do
       # Load employees through sections (if needed) or directly if relationship exists
       # For now, this is a placeholder that can be enhanced
-      load([])
     end
 
     # TODO: Re-enable reactor action once reactor syntax is fixed

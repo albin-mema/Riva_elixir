@@ -25,6 +25,27 @@ defmodule RivaAshWeb.Router do
     forward("/", RivaAshWeb.JsonApiRouter)
   end
 
+  # GraphQL API routes
+  scope "/" do
+    pipe_through([:api])
+
+    forward("/graphql", Absinthe.Plug,
+      schema: RivaAshWeb.Schema
+    )
+  end
+
+  # GraphiQL interface (only in dev)
+  if Mix.env() == :dev do
+    scope "/" do
+      pipe_through([:api])
+
+      forward("/graphiql", Absinthe.Plug.GraphiQL,
+        schema: RivaAshWeb.Schema,
+        interface: :simple
+      )
+    end
+  end
+
   # Client-facing booking API (public)
   scope "/api/booking", RivaAshWeb do
     pipe_through([:api])

@@ -2,6 +2,7 @@ defmodule RivaAsh.Domain do
   use Ash.Domain,
     extensions: [
       AshJsonApi.Domain,
+      AshGraphql.Domain,
       AshAdmin.Domain,
       AshPaperTrail.Domain
     ]
@@ -15,12 +16,17 @@ defmodule RivaAsh.Domain do
   resources do
     resource(RivaAsh.Resources.Business)
     resource(RivaAsh.Resources.Section)
+    resource(RivaAsh.Resources.ItemType)
     resource(RivaAsh.Resources.Item)
+    resource(RivaAsh.Resources.Layout)
+    resource(RivaAsh.Resources.ItemPosition)
     resource(RivaAsh.Resources.Client)
     resource(RivaAsh.Resources.Employee)
     resource(RivaAsh.Resources.Permission)
     resource(RivaAsh.Resources.EmployeePermission)
     resource(RivaAsh.Resources.Reservation)
+    resource(RivaAsh.Resources.Pricing)
+    resource(RivaAsh.Resources.Payment)
     resource(RivaAsh.Resources.ItemSchedule)
     resource(RivaAsh.Resources.AvailabilityException)
     resource(RivaAsh.Resources.RecurringReservation)
@@ -33,18 +39,28 @@ defmodule RivaAsh.Domain do
     open_api do
       tag("Businesses")
       tag("Sections")
+      tag("Item Types")
       tag("Items")
+      tag("Layouts")
+      tag("Item Positions")
       tag("Clients")
       tag("Employees")
       tag("Permissions")
       tag("Employee Permissions")
       tag("Reservations")
+      tag("Pricing")
+      tag("Payments")
       tag("Item Schedules")
       tag("Availability Exceptions")
       tag("Recurring Reservations")
       tag("Recurring Reservation Instances")
       group_by(:resource)
     end
+  end
+
+  graphql do
+    # Generate queries and mutations for all resources
+    authorize?(false)  # Disable authorization for now, can be enabled later
   end
 
   admin do
