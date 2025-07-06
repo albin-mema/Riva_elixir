@@ -12,11 +12,30 @@ defmodule RivaAsh.Resources.Pricing do
   use Ash.Resource,
     domain: RivaAsh.Domain,
     data_layer: AshPostgres.DataLayer,
+    authorizers: [Ash.Policy.Authorizer],
     extensions: [AshJsonApi.Resource, AshGraphql.Resource, AshArchival.Resource]
 
   postgres do
     table("pricing")
     repo(RivaAsh.Repo)
+  end
+
+  policies do
+    # Admins can do everything
+    bypass actor_attribute_equals(:role, :admin) do
+      authorize_if(always())
+    end
+
+    # Permission-based authorization for pricing management
+    policy action_type([:create, :update, :destroy]) do
+      authorize_if(RivaAsh.Policies.PermissionCheck.can_update_pricing())
+    end
+
+    # View pricing - either have view permission or update permission
+    policy action_type(:read) do
+      authorize_if(RivaAsh.Policies.PermissionCheck.can_view_pricing())
+      authorize_if(RivaAsh.Policies.PermissionCheck.can_update_pricing())
+    end
   end
 
   # Configure soft delete functionality

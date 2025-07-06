@@ -53,35 +53,29 @@ defmodule RivaAsh.Resources.Employee do
       authorize_if(always())
     end
 
-    # Managers can read all employees in their business and manage staff
+    # Permission-based authorization for viewing employees
     policy action_type(:read) do
-      authorize_if(actor_attribute_equals(:role, :manager))
-      # Employees can read themselves
+      authorize_if(RivaAsh.Policies.PermissionCheck.can_view_employees())
+      # Employees can always read themselves
       authorize_if(expr(id == ^actor(:id)))
     end
 
-    # Managers can create new employees (staff only)
+    # Permission-based authorization for creating employees
     policy action_type(:create) do
-      authorize_if(actor_attribute_equals(:role, :manager))
+      authorize_if(RivaAsh.Policies.PermissionCheck.can_create_employees())
     end
 
-    # Managers can update staff employees and themselves
+    # Permission-based authorization for updating employees
     policy action_type(:update) do
-      authorize_if(actor_attribute_equals(:role, :manager))
-      # Employees can update themselves
+      authorize_if(RivaAsh.Policies.PermissionCheck.can_modify_employees())
+      # Employees can always update themselves
       authorize_if(expr(id == ^actor(:id)))
     end
 
-    # Only admins can delete employees
+    # Only admins can delete employees (prevent accidental deletions)
     policy action_type(:destroy) do
       # Prevent accidental deletions, use archive instead
       forbid_if(always())
-    end
-
-    # Staff can only read themselves
-    policy actor_attribute_equals(:role, :staff) do
-      authorize_if(expr(id == ^actor(:id)))
-      forbid_unless(action_type(:read))
     end
   end
 
