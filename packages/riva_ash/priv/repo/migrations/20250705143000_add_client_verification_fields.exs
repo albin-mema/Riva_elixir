@@ -6,16 +6,12 @@ defmodule RivaAsh.Repo.Migrations.AddClientVerificationFields do
       # Add new fields for email verification
       add :email_verified, :boolean, null: false, default: false
       add :verification_token, :string
-
-      # Add index for verification token for faster lookups
-      create index(:clients, [:verification_token])
-
-      # Add index for email_verified to speed up queries for verified clients
-      create index(:clients, [:email_verified])
-
-      # Add index for is_registered to speed up queries for registered clients
-      create index(:clients, [:is_registered])
     end
+
+    # Add indexes outside of alter table block
+    create index(:clients, [:verification_token])
+    create index(:clients, [:email_verified])
+    create index(:clients, [:is_registered])
 
     # Add constraint to ensure email is present for registered clients
     execute """
