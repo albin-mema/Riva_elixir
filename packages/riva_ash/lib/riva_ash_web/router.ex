@@ -14,7 +14,15 @@ defmodule RivaAshWeb.Router do
     plug(:accepts, ["html"])
     plug(:fetch_session)
     plug(:fetch_live_flash)
-    plug(:put_root_layout, html: {AshAdmin.PageLive, :root})
+    plug(:protect_from_forgery)
+    plug(:put_secure_browser_headers)
+  end
+
+  pipeline :browser_no_layout do
+    plug(:accepts, ["html"])
+    plug(:fetch_session)
+    plug(:fetch_live_flash)
+    plug(:put_root_layout, false)
     plug(:protect_from_forgery)
     plug(:put_secure_browser_headers)
   end
@@ -77,6 +85,13 @@ defmodule RivaAshWeb.Router do
   scope "/" do
     pipe_through(:browser)
     get("/erd", RivaAshWeb.MermaidController, :show)
+  end
+
+  # LiveView routes
+  scope "/", RivaAshWeb do
+    pipe_through(:browser_no_layout)
+
+    live("/employees", EmployeeLive, :index)
   end
 
   # Admin interface

@@ -17,9 +17,19 @@ defmodule RivaAshWeb.Endpoint do
     longpoll: [connect_info: [session: @session_options]]
   )
 
+  # Serve at "/" the static files from "priv/static" directory.
+  plug(Plug.Static,
+    at: "/",
+    from: :riva_ash,
+    gzip: false,
+    only: RivaAshWeb.static_paths()
+  )
+
   # Code reloading can be explicitly enabled under the
   # :code_reloader configuration of your endpoint.
   if code_reloading? do
+    socket("/phoenix/live_reload/socket", Phoenix.LiveReloader.Socket)
+    plug(Phoenix.LiveReloader)
     plug(Phoenix.CodeReloader)
     plug(Phoenix.Ecto.CheckRepoStatus, otp_app: :riva_ash)
   end

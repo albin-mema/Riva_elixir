@@ -34,3 +34,12 @@ config :phoenix, :stacktrace_depth, 20
 
 # Initialize plugs at runtime for faster development compilation
 config :phoenix, :plug_init_mode, :runtime
+
+# LiveDebugger configuration
+config :live_debugger,
+  ip: {127, 0, 0, 1},
+  port: 4007,
+  secret_key_base: "EuaQggrb3gfhrDAQUZqTsTMUt7zf9voCI2frB3kuyBabOCHiEue48mXJiMtL7QLj",
+  signing_salt: "live_debugger_salt",
+  adapter: Bandit.PhoenixAdapter,
+  server: true

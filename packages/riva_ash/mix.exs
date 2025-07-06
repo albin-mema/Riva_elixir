@@ -41,6 +41,9 @@ defmodule RivaAsh.MixProject do
       # Phoenix
       {:phoenix, "~> 1.7"},
       {:phoenix_ecto, "~> 4.5"},
+      {:phoenix_live_view, "~> 1.0"},
+      {:phoenix_html, "~> 4.0"},
+      {:live_react, "~> 1.1"},
 
       # Database
       {:ecto_sql, "~> 3.13"},
@@ -64,6 +67,10 @@ defmodule RivaAsh.MixProject do
       {:gettext, "~> 0.24"},
       {:jason, "~> 1.4"},
       {:dns_cluster, "~> 0.1.1"},
+
+      # Development
+      {:phoenix_live_reload, "~> 1.2", only: :dev},
+      {:live_debugger, "~> 0.3.0", only: :dev},
 
       # Test
       {:mox, "~> 1.1", only: :test}
