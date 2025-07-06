@@ -10,6 +10,10 @@ defmodule RivaAsh.Booking do
 
   alias RivaAsh.Resources.{Client, Reservation, Item}
   alias RivaAsh.Domain
+  alias RivaAsh.Repo
+  
+  @min_booking_minutes 30
+  @max_booking_hours 4
 
   @doc """
   Creates a booking with flexible client registration.
@@ -30,15 +34,49 @@ defmodule RivaAsh.Booking do
 
   ## Returns:
   - `{:ok, %{client: client, reservation: reservation}}` on success
-  - `{:error, reason}` on failure
+  - `{:error, map}` on failure, where map contains :code and :message
+  """
+  @doc """
+  Creates a new booking within a transaction to ensure data consistency.
+  
+  The transaction will be rolled back if any step fails.
   """
   def create_booking(booking_params) do
-    with {:ok, client} <- find_or_create_client(booking_params),
-         {:ok, reservation} <- create_reservation(client, booking_params) do
-      {:ok, %{client: client, reservation: reservation}}
-    else
-      {:error, reason} -> {:error, reason}
-    end
+    ErrorHelpers.with_error_handling(fn ->
+      Multi.new()
+      |> Multi.run(:client, fn _repo, _changes ->
+        client_params = Map.get(booking_params, :client_info, %{})
+        
+        # Try to find existing client by email if provided
+        case find_or_create_client(client_params, Map.get(booking_params, :register_client, false)) do
+          {:ok, client} -> {:ok, client}
+          {:error, error} -> 
+            {:error, ErrorHelpers.format_error(error)}
+        end
+      end)
+      |> Multi.run(:reservation, fn _repo, %{client: client} ->
+        reservation_params = 
+          booking_params
+          |> Map.put(:client_id, client.id)
+        
+        # Check item availability
+        with :ok <- check_item_availability(reservation_params),
+             {:ok, reservation} <- create_reservation(reservation_params) do
+          {:ok, reservation}
+        else
+          {:error, error} -> 
+            {:error, ErrorHelpers.format_error(error)}
+        end
+      end)
+      |> Repo.transaction()
+      |> case do
+        {:ok, %{client: client, reservation: reservation}} ->
+          {:ok, %{client: client, reservation: reservation}}
+          
+        {:error, _operation, reason, _changes} ->
+          {:error, reason}
+      end
+    end)
   end
 
   @doc """
@@ -51,7 +89,7 @@ defmodule RivaAsh.Booking do
 
   ## Returns:
   - `{:ok, %{client: client, reservation: reservation}}` on success
-  - `{:error, reason}` on failure
+  - `{:error, map}` on failure, where map contains :code and :message
   """
   def confirm_booking(reservation_id, register_client \\ false, client_updates \\ %{}) do
     with {:ok, reservation} <- get_reservation_with_client(reservation_id),
@@ -74,7 +112,7 @@ defmodule RivaAsh.Booking do
 
   ## Returns:
   - `{:ok, [%{start_time: datetime, end_time: datetime, available: boolean}]}`
-  - `{:error, reason}` on failure
+  - `{:error, map}` on failure, where map contains :code and :message
   """
   def get_availability(item_id, date, duration_minutes \\ 60, business_hours \\ %{start: 9, end: 17}) do
     with {:ok, _item} <- Item.by_id(item_id),
@@ -89,49 +127,102 @@ defmodule RivaAsh.Booking do
 
   # Private functions
 
-  defp find_or_create_client(%{client_info: client_info, register_client: register_immediately}) when register_immediately do
-    # Create registered client immediately
-    client_attrs = Map.put(client_info, :is_registered, true)
-
-    case Client.create(client_attrs, domain: Domain) do
-      {:ok, client} -> {:ok, client}
-      {:error, error} -> {:error, format_error(error)}
-    end
-  end
-
-  defp find_or_create_client(%{client_info: client_info}) do
-    # Create unregistered client or find existing by email
-    case client_info do
-      %{email: email} when not is_nil(email) ->
-        # Try to find existing client by email first
-        case Client.by_email(email, domain: Domain) do
-          {:ok, existing_client} -> {:ok, existing_client}
-          {:error, _not_found} ->
-            # Create new unregistered client
-            Client.create_for_booking(client_info, domain: Domain)
+  defp find_or_create_client(%{email: email} = params, register_immediately) when is_binary(email) and email != "" do
+    case Client.get_by(email: String.downcase(email)) do
+      nil -> 
+        # Create new client if not found
+        case Client.create(Map.put(params, :is_registered, register_immediately)) do
+          {:ok, client} -> {:ok, client}
+          {:error, changeset} -> 
+            {:error, %{
+              code: :client_creation_failed,
+              message: "Failed to create client",
+              errors: changeset.errors
+            }}
         end
-
-      _ ->
-        # No email provided, create unregistered client
-        Client.create_for_booking(client_info, domain: Domain)
+        
+      client ->
+        # Return existing client
+        {:ok, client}
+    end
+  end
+  
+  defp find_or_create_client(params, register_immediately) do
+    # Create unregistered client without email
+    case Client.create(Map.put(params, :is_registered, register_immediately)) do
+      {:ok, client} -> {:ok, client}
+      {:error, changeset} -> 
+        {:error, %{
+          code: :client_creation_failed,
+          message: "Failed to create client",
+          errors: changeset.errors
+        }}
     end
   end
 
-  defp create_reservation(client, %{item_id: item_id, reserved_from: reserved_from, reserved_until: reserved_until} = params) do
-    reservation_attrs = %{
-      client_id: client.id,
-      item_id: item_id,
-      reserved_from: reserved_from,
-      reserved_until: reserved_until,
-      notes: Map.get(params, :notes)
-    }
-
-    case Reservation.create_for_booking(reservation_attrs, domain: Domain) do
-      {:ok, reservation} -> {:ok, reservation}
-      {:error, error} -> {:error, format_error(error)}
+  defp create_reservation(params) do
+    case Reservation.create(params) do
+      {:ok, reservation} -> 
+        {:ok, reservation}
+        
+      {:error, changeset} -> 
+        {:error, %{
+          code: :reservation_creation_failed, 
+          message: "Failed to create reservation",
+          errors: changeset.errors
+        }}
     end
   end
-
+  
+  defp validate_booking_times(reserved_from, reserved_until) do
+    cond do
+      DateTime.compare(reserved_from, DateTime.utc_now()) == :lt ->
+        {:error, "Cannot create reservation in the past"}
+        
+      DateTime.diff(reserved_until, reserved_from, :minute) < @min_booking_minutes ->
+        {:error, "Reservation must be at least #{@min_booking_minutes} minutes"}
+        
+      DateTime.diff(reserved_until, reserved_from, :hour) > @max_booking_hours ->
+        {:error, "Reservation cannot exceed #{@max_booking_hours} hours"}
+        
+      true ->
+        :ok
+    end
+  end
+  
+  defp check_item_availability(item_id, reserved_from, reserved_until) do
+    # Check if item exists
+    case Repo.get(Item, item_id) do
+      nil ->
+        {:error, %{code: :not_found, message: "Item not found"}}
+        
+      item ->
+        # Check if item is active
+        if item.status != :active do
+          {:error, %{code: :unavailable, message: "Item is not available for booking"}}
+        else
+          # Check for overlapping reservations
+          query = from r in Reservation,
+            where: r.item_id == ^item_id,
+            where: r.status in [:pending, :confirmed],
+            where: 
+              (r.reserved_from <= ^reserved_from and r.reserved_until > ^reserved_from) or
+              (r.reserved_from < ^reserved_until and r.reserved_until >= ^reserved_until) or
+              (r.reserved_from >= ^reserved_from and r.reserved_until <= ^reserved_until),
+            select: count()
+            
+          case Repo.one(query) do
+            0 -> :ok
+            _ -> 
+              {:error, %{
+                code: :time_slot_unavailable, 
+                message: "Item is already booked for the selected time slot"
+              }}
+          end
+        end
+    end
+  end
+        
   defp get_reservation_with_client(reservation_id) do
     case Reservation.by_id(reservation_id, domain: Domain, load: [:client]) do
       {:ok, reservation} -> {:ok, reservation}
@@ -212,16 +303,17 @@ defmodule RivaAsh.Booking do
     DateTime.compare(start1, end2) == :lt and DateTime.compare(end1, start2) == :gt
   end
 
-  defp format_error(error) do
-    case error do
-      %{errors: errors} when is_list(errors) ->
-        errors
-        |> Enum.map(&Exception.message/1)
-        |> Enum.join(", ")
-
-      %{message: message} -> message
-      error when is_binary(error) -> error
-      _ -> "An unexpected error occurred"
-    end
+  defp format_error(error) when is_binary(error), do: error
+  defp format_error(%{errors: errors}) when is_list(errors) do
+    errors
+    |> Enum.map(&format_error/1)
+    |> Enum.join(", ")
   end
+  defp format_error(%{field: field, message: message}), do: "#{field}: #{message}"
+  defp format_error(%Ash.Error.Invalid{errors: errors}) do
+    errors
+    |> Enum.map(&format_error/1)
+    |> Enum.join(", ")
+  end
+  defp format_error(error), do: "An error occurred: #{inspect(error)}"
 end
