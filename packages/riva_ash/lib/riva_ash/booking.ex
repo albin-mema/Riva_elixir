@@ -11,7 +11,11 @@ defmodule RivaAsh.Booking do
   alias RivaAsh.Resources.{Client, Reservation, Item}
   alias RivaAsh.Domain
   alias RivaAsh.Repo
-  
+  alias Ecto.Multi
+
+  import Ash.Expr
+  require Ash.Query
+
   @min_booking_minutes 30
   @max_booking_hours 4
 
@@ -35,44 +39,42 @@ defmodule RivaAsh.Booking do
   ## Returns:
   - `{:ok, %{client: client, reservation: reservation}}` on success
   - `{:error, map}` on failure, where map contains :code and :message
-  """
-  @doc """
+
   Creates a new booking within a transaction to ensure data consistency.
-  
   The transaction will be rolled back if any step fails.
   """
   def create_booking(booking_params) do
-    ErrorHelpers.with_error_handling(fn ->
+    RivaAsh.ErrorHelpers.with_error_handling(fn ->
       Multi.new()
       |> Multi.run(:client, fn _repo, _changes ->
         client_params = Map.get(booking_params, :client_info, %{})
-        
+
         # Try to find existing client by email if provided
         case find_or_create_client(client_params, Map.get(booking_params, :register_client, false)) do
           {:ok, client} -> {:ok, client}
-          {:error, error} -> 
-            {:error, ErrorHelpers.format_error(error)}
+          {:error, error} ->
+            {:error, RivaAsh.ErrorHelpers.format_error(error)}
         end
       end)
       |> Multi.run(:reservation, fn _repo, %{client: client} ->
-        reservation_params = 
+        reservation_params =
           booking_params
           |> Map.put(:client_id, client.id)
-        
+
         # Check item availability
-        with :ok <- check_item_availability(reservation_params),
+        with :ok <- check_item_availability(reservation_params.item_id, reservation_params.reserved_from, reservation_params.reserved_until),
              {:ok, reservation} <- create_reservation(reservation_params) do
           {:ok, reservation}
         else
-          {:error, error} -> 
-            {:error, ErrorHelpers.format_error(error)}
+          {:error, error} ->
+            {:error, RivaAsh.ErrorHelpers.format_error(error)}
         end
       end)
       |> Repo.transaction()
       |> case do
         {:ok, %{client: client, reservation: reservation}} ->
           {:ok, %{client: client, reservation: reservation}}
-          
+
         {:error, _operation, reason, _changes} ->
           {:error, reason}
       end
@@ -128,30 +130,32 @@ defmodule RivaAsh.Booking do
   # Private functions
 
   defp find_or_create_client(%{email: email} = params, register_immediately) when is_binary(email) and email != "" do
-    case Client.get_by(email: String.downcase(email)) do
-      nil -> 
+    case Client
+         |> Ash.Query.filter(email: String.downcase(email))
+         |> Ash.read_one(domain: Domain) do
+      nil ->
         # Create new client if not found
         case Client.create(Map.put(params, :is_registered, register_immediately)) do
           {:ok, client} -> {:ok, client}
-          {:error, changeset} -> 
+          {:error, changeset} ->
             {:error, %{
               code: :client_creation_failed,
               message: "Failed to create client",
               errors: changeset.errors
             }}
         end
-        
+
       client ->
         # Return existing client
         {:ok, client}
     end
   end
-  
+
   defp find_or_create_client(params, register_immediately) do
     # Create unregistered client without email
     case Client.create(Map.put(params, :is_registered, register_immediately)) do
       {:ok, client} -> {:ok, client}
-      {:error, changeset} -> 
+      {:error, changeset} ->
         {:error, %{
           code: :client_creation_failed,
           message: "Failed to create client",
@@ -162,67 +166,73 @@ defmodule RivaAsh.Booking do
 
   defp create_reservation(params) do
     case Reservation.create(params) do
-      {:ok, reservation} -> 
+      {:ok, reservation} ->
         {:ok, reservation}
-        
-      {:error, changeset} -> 
+
+      {:error, changeset} ->
         {:error, %{
-          code: :reservation_creation_failed, 
+          code: :reservation_creation_failed,
           message: "Failed to create reservation",
           errors: changeset.errors
         }}
     end
   end
-  
+
   defp validate_booking_times(reserved_from, reserved_until) do
     cond do
       DateTime.compare(reserved_from, DateTime.utc_now()) == :lt ->
         {:error, "Cannot create reservation in the past"}
-        
+
       DateTime.diff(reserved_until, reserved_from, :minute) < @min_booking_minutes ->
         {:error, "Reservation must be at least #{@min_booking_minutes} minutes"}
-        
+
       DateTime.diff(reserved_until, reserved_from, :hour) > @max_booking_hours ->
         {:error, "Reservation cannot exceed #{@max_booking_hours} hours"}
-        
+
       true ->
         :ok
     end
   end
-  
+
   defp check_item_availability(item_id, reserved_from, reserved_until) do
     # Check if item exists
     case Repo.get(Item, item_id) do
       nil ->
         {:error, %{code: :not_found, message: "Item not found"}}
-        
+
       item ->
         # Check if item is active
         if item.status != :active do
           {:error, %{code: :unavailable, message: "Item is not available for booking"}}
         else
-          # Check for overlapping reservations
-          query = from r in Reservation,
-            where: r.item_id == ^item_id,
-            where: r.status in [:pending, :confirmed],
-            where: 
-              (r.reserved_from <= ^reserved_from and r.reserved_until > ^reserved_from) or
-              (r.reserved_from < ^reserved_until and r.reserved_until >= ^reserved_until) or
-              (r.reserved_from >= ^reserved_from and r.reserved_until <= ^reserved_until),
-            select: count()
-            
-          case Repo.one(query) do
-            0 -> :ok
-            _ -> 
+          # Check for overlapping reservations using Ash query
+          case Reservation
+               |> Ash.Query.filter(item_id: item_id)
+               |> Ash.Query.filter(status: [:pending, :confirmed])
+               |> Ash.Query.filter(
+                 expr(
+                   (reserved_from <= ^reserved_from and reserved_until > ^reserved_from) or
+                   (reserved_from < ^reserved_until and reserved_until >= ^reserved_until) or
+                   (reserved_from >= ^reserved_from and reserved_until <= ^reserved_until)
+                 )
+               )
+               |> Ash.read(domain: Domain) do
+            {:ok, []} -> :ok
+            {:ok, _overlapping_reservations} ->
               {:error, %{
-                code: :time_slot_unavailable, 
+                code: :time_slot_unavailable,
                 message: "Item is already booked for the selected time slot"
+              }}
+            {:error, _} ->
+              {:error, %{
+                code: :availability_check_failed,
+                message: "Could not check item availability"
               }}
           end
         end
     end
   end
-        
+
   defp get_reservation_with_client(reservation_id) do
     case Reservation.by_id(reservation_id, domain: Domain, load: [:client]) do
       {:ok, reservation} -> {:ok, reservation}
