@@ -3,108 +3,24 @@
 
 alias RivaAsh.Resources.Permission
 alias RivaAsh.Domain
+alias RivaAsh.Permissions.Constants
 
-# Define default permissions by category
-permissions = [
-  # Reservation permissions
-  %{
-    name: "can_create_reservations",
-    description: "Can create new reservations for clients",
-    category: :reservations,
-    is_assignable: true
-  },
-  %{
-    name: "can_view_all_reservations",
-    description: "Can view all reservations, not just own",
-    category: :reservations,
-    is_assignable: true
-  },
-  %{
-    name: "can_modify_reservations",
-    description: "Can modify existing reservations",
-    category: :reservations,
-    is_assignable: true
-  },
-  %{
-    name: "can_cancel_reservations",
-    description: "Can cancel reservations",
-    category: :reservations,
-    is_assignable: true
-  },
-
-  # Employee management permissions
-  %{
-    name: "can_view_employees",
-    description: "Can view employee information",
-    category: :employees,
-    is_assignable: true
-  },
-  %{
-    name: "can_create_employees",
-    description: "Can create new employee accounts",
-    category: :employees,
-    is_assignable: true
-  },
-  %{
-    name: "can_modify_employees",
-    description: "Can modify employee information",
-    category: :employees,
-    is_assignable: true
-  },
-  %{
-    name: "can_give_permissions",
-    description: "Can grant permissions to other employees",
-    category: :employees,
-    is_assignable: true
-  },
-
-  # Business management permissions
-  %{
-    name: "can_manage_business_settings",
-    description: "Can modify business settings and configuration",
-    category: :business,
-    is_assignable: true
-  },
-  %{
-    name: "can_manage_items",
-    description: "Can create, modify, and delete items",
-    category: :business,
-    is_assignable: true
-  },
-  %{
-    name: "can_manage_schedules",
-    description: "Can manage item schedules and availability",
-    category: :business,
-    is_assignable: true
-  },
-
-  # Reporting permissions
-  %{
-    name: "can_view_reports",
-    description: "Can access reporting and analytics",
-    category: :reports,
-    is_assignable: true
-  },
-  %{
-    name: "can_export_data",
-    description: "Can export data and reports",
-    category: :reports,
-    is_assignable: true
-  },
-
-  # System permissions
-  %{
-    name: "can_access_admin_panel",
-    description: "Can access the admin panel interface",
-    category: :system,
-    is_assignable: true
-  }
-]
+# Generate permissions from constants with metadata
+permissions =
+  Constants.permission_metadata()
+  |> Enum.map(fn {name, metadata} ->
+    %{
+      name: name,
+      description: metadata.description,
+      category: metadata.category,
+      is_assignable: true
+    }
+  end)
 
 # Create permissions if they don't exist
 Enum.each(permissions, fn permission_attrs ->
   case Permission
-       |> Ash.Query.filter(expr(name == ^permission_attrs.name))
+       |> Ash.Query.filter(name: permission_attrs.name)
        |> Ash.read_one(domain: Domain) do
     {:ok, nil} ->
       # Permission doesn't exist, create it
