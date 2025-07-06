@@ -12,6 +12,7 @@ defmodule RivaAsh.Permissions do
 
   alias RivaAsh.Resources.{Employee, Permission, EmployeePermission}
   alias RivaAsh.Domain
+  alias RivaAsh.Permissions.Constants
 
   import Ash.Expr
   require Ash.Query
@@ -32,6 +33,11 @@ defmodule RivaAsh.Permissions do
       false
   """
   def has_permission?(employee, permission_name) when is_binary(permission_name) do
+    # Validate permission exists
+    unless Constants.valid_permission?(permission_name) do
+      raise ArgumentError, "Unknown permission: #{permission_name}. Valid permissions: #{inspect(Constants.all_permissions())}"
+    end
+
     # Admins have all permissions
     if employee.role == :admin do
       true
@@ -212,4 +218,66 @@ defmodule RivaAsh.Permissions do
 
   defp validate_can_revoke_permission(_revoker, _employee_permission),
     do: {:error, :insufficient_permissions}
+
+  # Convenience functions using constants for common permission checks
+
+  @doc """
+  Check if employee can create reservations.
+  """
+  def can_create_reservations?(employee_or_id) do
+    has_permission?(employee_or_id, Constants.can_create_reservations())
+  end
+
+  @doc """
+  Check if employee can view all reservations.
+  """
+  def can_view_all_reservations?(employee_or_id) do
+    has_permission?(employee_or_id, Constants.can_view_all_reservations())
+  end
+
+  @doc """
+  Check if employee can modify reservations.
+  """
+  def can_modify_reservations?(employee_or_id) do
+    has_permission?(employee_or_id, Constants.can_modify_reservations())
+  end
+
+  @doc """
+  Check if employee can update pricing.
+  """
+  def can_update_pricing?(employee_or_id) do
+    has_permission?(employee_or_id, Constants.can_update_pricing())
+  end
+
+  @doc """
+  Check if employee can manage employees.
+  """
+  def can_manage_employees?(employee_or_id) do
+    has_permission?(employee_or_id, Constants.can_modify_employees())
+  end
+
+  @doc """
+  Check if employee can give permissions to others.
+  """
+  def can_give_permissions?(employee_or_id) do
+    has_permission?(employee_or_id, Constants.can_give_permissions())
+  end
+
+  @doc """
+  Returns all available permission constants.
+  Delegates to Constants module.
+  """
+  def all_permission_constants, do: Constants.all_permissions()
+
+  @doc """
+  Returns permissions grouped by category.
+  Delegates to Constants module.
+  """
+  def permissions_by_category, do: Constants.permissions_by_category()
+
+  @doc """
+  Validates that a permission name is valid.
+  Delegates to Constants module.
+  """
+  def valid_permission?(permission), do: Constants.valid_permission?(permission)
 end
