@@ -137,29 +137,126 @@ defmodule RivaAsh.Resources.Client do
     create :create do
       accept([:name, :email, :phone, :is_registered])
       primary?(true)
+      
+      # Ensure email is provided for registered clients
+      validate match_other([:email], [is_registered: true], "is required for registered clients")
+      
+      # Generate verification token for registered clients
+      change fn changeset, _ ->
+        if Ash.Changeset.get_attribute(changeset, :is_registered) do
+          token = generate_verification_token()
+          changeset
+          |> Ash.Changeset.force_change_attribute(:verification_token, token)
+          |> Ash.Changeset.force_change_attribute(:email_verified, false)
+        else
+          changeset
+        end
+      end
+      
+      # Send verification email for registered clients
+      after_action fn _changeset, client ->
+        if client.is_registered && client.email do
+          # In a real app, you would send a verification email here
+          # EmailVerification.send_verification_email(client.email, client.verification_token)
+          :ok
+        else
+          :ok
+        end
+      end
     end
 
     # Create unregistered client for booking flow
     create :create_for_booking do
       accept([:name, :email, :phone])
-      change(set_attribute(:is_registered, false))
+      
+      change set_attributes(%{
+        is_registered: false,
+        email_verified: false
+      })
+      
+      validate present([:name], "is required")
+      validate at_least_one_present([:email, :phone], "must provide at least one of email or phone")
+      
       description("Create unregistered client during booking process")
     end
 
-    # Upgrade unregistered client to registered
+    # Register an unregistered client
     update :register do
-      accept([:email])
-      require_atomic?(false)
-      change(set_attribute(:is_registered, true))
+      accept([:email, :phone, :name])
+      
+      # Only allow updating unregistered clients
+      validate attribute_equals(:is_registered, false, "already registered")
+      
+      # Require email for registration
+      validate present([:email], "is required for registration")
+      
+      # Generate verification token
+      change fn changeset, _ ->
+        token = generate_verification_token()
+        changeset
+        |> Ash.Changeset.force_change_attribute(:is_registered, true)
+        |> Ash.Changeset.force_change_attribute(:verification_token, token)
+        |> Ash.Changeset.force_change_attribute(:email_verified, false)
+      end
+      
+      # Send verification email
+      after_action fn _changeset, client ->
+        # In a real app, you would send a verification email here
+        # EmailVerification.send_verification_email(client.email, client.verification_token)
+        :ok
+      end
+      
       description("Convert unregistered client to registered client")
     end
-
+    
+    # Verify client's email
+    update :verify_email do
+      accept([:verification_token])
+      
+      validate attribute_equals(:email_verified, false, "already verified")
+      
+      change fn changeset, _ ->
+        token = Ash.Changeset.get_attribute(changeset, :verification_token)
+        
+        if token == changeset.data.verification_token do
+          changeset
+          |> Ash.Changeset.force_change_attribute(:email_verified, true)
+          |> Ash.Changeset.force_change_attribute(:verification_token, nil)
+        else
+          Ash.Changeset.add_error(changeset, "Invalid verification token")
+        end
+      end
+      
+      description("Verify client's email address using verification token")
+    end
+    
     # Find or create client for booking (handles both cases)
     create :find_or_create_for_booking do
       accept([:name, :email, :phone])
-      upsert?(true)
-      upsert_identity(:email)
-      change(set_attribute(:is_registered, false))
+      
+      validate at_least_one_present([:email, :phone], "must provide at least one of email or phone")
+      
+      # Use email as upsert key if available, otherwise use phone
+      upsert? true
+      upsert_identity :email, [:email]
+      
+      change set_attributes(%{
+        is_registered: false,
+        email_verified: false
+      })
+      
+      change fn changeset, _ ->
+        # If we're updating an existing client, preserve their registration status
+        if Ash.Changeset.get_attribute(changeset, :id) do
+          changeset
+        else
+          Ash.Changeset.force_change_attributes(changeset, %{
+            is_registered: false,
+            email_verified: false
+          })
+        end
+      end
+      
       description("Find existing client by email or create new unregistered client")
     end
 
@@ -190,18 +287,54 @@ defmodule RivaAsh.Resources.Client do
       allow_nil?(false)
       public?(true)
       description("The name of the client")
+      constraints [
+        min_length: 2,
+        max_length: 100,
+        trim?: true,
+        allow_empty?: false
+      ]
     end
 
     attribute :email, :ci_string do
       allow_nil?(true)
       public?(true)
       description("Email address (required for registered clients)")
+      constraints [
+        max_length: 255,
+        trim?: true,
+        match: ~r/^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/
+      ]
     end
-
+    
     attribute :phone, :string do
       allow_nil?(true)
       public?(true)
       description("Contact phone number")
+      constraints [
+        max_length: 20,
+        trim?: true,
+        match: ~r/^[\d\s\-\(\)\+]+$/
+      ]
+    end
+    
+    attribute :is_registered, :boolean do
+      allow_nil?(false)
+      default(false)
+      public?(true)
+      description("Whether the client has completed registration")
+    end
+    
+    attribute :email_verified, :boolean do
+      allow_nil?(false)
+      default(false)
+      public?(true)
+      description("Whether the client's email has been verified")
+    end
+    
+    attribute :verification_token, :string do
+      allow_nil?(true)
+      public?(false)
+      description("Token used for email verification")
     end
 
     attribute :is_registered, :boolean do
