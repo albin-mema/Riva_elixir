@@ -14,7 +14,7 @@ defmodule RivaAsh.Resources.ItemType do
   use Ash.Resource,
     domain: RivaAsh.Domain,
     data_layer: AshPostgres.DataLayer,
-    extensions: [AshJsonApi.Resource, AshGraphql.Resource, AshArchival.Resource]
+    extensions: [AshJsonApi.Resource, AshGraphql.Resource, AshArchival.Resource, AshAdmin.Resource]
 
   postgres do
     table("item_types")
@@ -27,6 +27,15 @@ defmodule RivaAsh.Resources.ItemType do
     attribute(:archived_at)
     # Allow both soft and hard deletes
     base_filter?(false)
+  end
+
+  # Configure admin interface
+  admin do
+    # Configure table display
+    table_columns([:name, :business, :description, :color, :icon])
+
+    # Configure relationship display
+    relationship_display_fields([:name])
   end
 
   json_api do
@@ -173,5 +182,19 @@ defmodule RivaAsh.Resources.ItemType do
       message: "Color must be a valid hex color code (e.g., #FF5733)",
       where: [present(:color)]
     )
+  end
+
+  # Helper function for admin dropdowns
+  def choices_for_select do
+    RivaAsh.Resources.ItemType
+    |> Ash.read!()
+    |> Enum.map(fn item_type ->
+      business_name = if item_type.business do
+        item_type.business.name
+      else
+        "Unknown Business"
+      end
+      {item_type.id, "#{item_type.name} (#{business_name})"}
+    end)
   end
 end

@@ -8,7 +8,7 @@ defmodule RivaAsh.Resources.Business do
     domain: RivaAsh.Domain,
     data_layer: AshPostgres.DataLayer,
     authorizers: [Ash.Policy.Authorizer],
-    extensions: [AshJsonApi.Resource, AshGraphql.Resource, AshArchival.Resource]
+    extensions: [AshJsonApi.Resource, AshGraphql.Resource, AshArchival.Resource, AshAdmin.Resource]
 
   postgres do
     table("businesses")
@@ -162,5 +162,14 @@ defmodule RivaAsh.Resources.Business do
 
   identities do
     identity(:unique_name, [:name])
+  end
+
+  # Helper function for admin dropdowns
+  def choices_for_select do
+    RivaAsh.Resources.Business
+    |> Ash.read!()
+    |> Enum.map(fn business ->
+      {business.id, business.name}
+    end)
   end
 end

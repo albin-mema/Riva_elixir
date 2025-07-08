@@ -7,7 +7,7 @@ defmodule RivaAsh.Resources.Section do
   use Ash.Resource,
     domain: RivaAsh.Domain,
     data_layer: AshPostgres.DataLayer,
-    extensions: [AshJsonApi.Resource, AshGraphql.Resource, AshArchival.Resource]
+    extensions: [AshJsonApi.Resource, AshGraphql.Resource, AshArchival.Resource, AshAdmin.Resource]
 
   postgres do
     table("sections")
@@ -20,6 +20,15 @@ defmodule RivaAsh.Resources.Section do
     attribute(:archived_at)
     # Allow both soft and hard deletes
     base_filter?(false)
+  end
+
+  # Configure admin interface
+  admin do
+    # Configure table display
+    table_columns([:name, :business, :description])
+
+    # Configure relationship display
+    relationship_display_fields([:name])
   end
 
   json_api do
@@ -151,5 +160,19 @@ defmodule RivaAsh.Resources.Section do
 
   identities do
     identity(:unique_name_per_business, [:name, :business_id])
+  end
+
+  # Helper function for admin dropdowns
+  def choices_for_select do
+    RivaAsh.Resources.Section
+    |> Ash.read!()
+    |> Enum.map(fn section ->
+      business_name = if section.business do
+        section.business.name
+      else
+        "Unknown Business"
+      end
+      {section.id, "#{section.name} (#{business_name})"}
+    end)
   end
 end
