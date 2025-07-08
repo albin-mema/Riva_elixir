@@ -12,6 +12,10 @@ defmodule RivaAshWeb.ConnCase do
       import Plug.Conn
       import Phoenix.ConnTest
       import RivaAshWeb.ConnCase
+      import RivaAsh.TestHelpers
+
+      # Import PhoenixTest for unified testing
+      import PhoenixTest
 
       alias RivaAshWeb.Router.Helpers, as: Routes
 
@@ -28,7 +32,15 @@ defmodule RivaAshWeb.ConnCase do
     end
 
     # Start any mocks needed for the tests
-    Mox.stub_with(RivaAsh.Repo.Mock, RivaAsh.Repo)
+    Mox.stub(RivaAsh.Repo.Mock, :query, fn _, _, _ -> {:ok, %{rows: []}} end)
+
+    # Set up default mocks for common Repo operations
+    Mox.stub(RivaAsh.Repo.Mock, :all, fn _ -> [] end)
+    Mox.stub(RivaAsh.Repo.Mock, :get, fn _, _ -> nil end)
+    Mox.stub(RivaAsh.Repo.Mock, :get_by, fn _, _ -> nil end)
+    Mox.stub(RivaAsh.Repo.Mock, :insert, fn _ -> {:ok, %{id: 1}} end)
+    Mox.stub(RivaAsh.Repo.Mock, :update, fn _ -> {:ok, %{id: 1}} end)
+    Mox.stub(RivaAsh.Repo.Mock, :delete, fn _ -> {:ok, %{id: 1}} end)
 
     {:ok, conn: Phoenix.ConnTest.build_conn()}
   end

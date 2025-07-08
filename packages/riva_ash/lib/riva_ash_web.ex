@@ -37,7 +37,7 @@ defmodule RivaAshWeb do
   def controller do
     quote do
       use Phoenix.Controller,
-        formats: [:json]
+        formats: [:html, :json]
 
       import Plug.Conn
       import RivaAshWeb.Gettext

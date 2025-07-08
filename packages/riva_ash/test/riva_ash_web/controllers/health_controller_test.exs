@@ -1,13 +1,15 @@
 defmodule RivaAshWeb.HealthControllerTest do
-  use RivaAshWeb.EndpointCase, async: true
+  use RivaAshWeb.FeatureCase, async: true
 
   describe "GET /health" do
     test "returns 200 and healthy status when database is available", %{conn: conn} do
-      # Make the request
-      conn = get(conn, "/health")
+      response =
+        conn
+        |> visit("/health")
+        |> unwrap(fn conn ->
+          json_response(conn, 200)
+        end)
 
-      # Verify the response
-      response = json_response(conn, 200)
       assert response["status"] == "healthy"
       assert response["database"] == "connected"
       assert response["service"] == "riva_ash_api"

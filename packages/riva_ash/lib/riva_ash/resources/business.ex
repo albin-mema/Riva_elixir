@@ -86,11 +86,22 @@ defmodule RivaAsh.Resources.Business do
   end
 
   actions do
-    defaults([:read, :update, :destroy])
+    defaults([:read, :destroy])
+
+    update :update do
+      accept([:name, :description])
+      primary?(true)
+
+      validate(present([:name]), message: "Business name is required")
+      validate(match(:name, ~r/^[a-zA-Z0-9\s\-_&.]+$/), message: "Business name contains invalid characters")
+    end
 
     create :create do
       accept([:name, :description])
       primary?(true)
+
+      validate(present([:name]), message: "Business name is required")
+      validate(match(:name, ~r/^[a-zA-Z0-9\s\-_&.]+$/), message: "Business name contains invalid characters")
     end
 
     read :by_id do
@@ -140,12 +151,14 @@ defmodule RivaAsh.Resources.Business do
       allow_nil?(false)
       public?(true)
       description("The name of the business")
+      constraints(min_length: 2, max_length: 100, trim?: true)
     end
 
     attribute :description, :string do
       allow_nil?(true)
       public?(true)
       description("A detailed description of the business")
+      constraints(max_length: 1000, trim?: true)
     end
 
     create_timestamp(:inserted_at)

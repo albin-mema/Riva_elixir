@@ -16,6 +16,7 @@ defmodule RivaAsh.Application do
     Logger.info("Configured SAT solver: #{inspect(sat_solver)}")
 
     children = [
+      TwMerge.Cache,
       RivaAsh.Repo,
       {DNSCluster, query: Application.get_env(:riva_ash, :dns_cluster_query) || :ignore},
       {Phoenix.PubSub, name: RivaAsh.PubSub},

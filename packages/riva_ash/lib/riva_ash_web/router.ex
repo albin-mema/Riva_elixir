@@ -14,8 +14,10 @@ defmodule RivaAshWeb.Router do
     plug(:accepts, ["html"])
     plug(:fetch_session)
     plug(:fetch_live_flash)
+    plug(:put_root_layout, html: {RivaAshWeb.Layouts, :root})
     plug(:protect_from_forgery)
     plug(:put_secure_browser_headers)
+    plug(RivaAshWeb.AuthHelpers, :fetch_current_user)
   end
 
   pipeline :browser_no_layout do
@@ -25,6 +27,12 @@ defmodule RivaAshWeb.Router do
     plug(:put_root_layout, false)
     plug(:protect_from_forgery)
     plug(:put_secure_browser_headers)
+    plug(RivaAshWeb.AuthHelpers, :fetch_current_user)
+  end
+
+  # Pipeline for routes that require authentication
+  pipeline :require_authenticated_user do
+    plug(RivaAshWeb.AuthHelpers, :require_authenticated_user)
   end
 
   scope "/api" do
@@ -88,9 +96,23 @@ defmodule RivaAshWeb.Router do
   end
 
   # LiveView routes
+  # Public routes (no authentication required)
   scope "/", RivaAshWeb do
-    pipe_through(:browser_no_layout)
+    pipe_through([:browser])
 
+    # Authentication routes
+    get("/sign-in", AuthController, :sign_in)
+    get("/register", AuthController, :register)
+    post("/sign-in", AuthController, :sign_in_submit)
+    post("/sign-out", AuthController, :sign_out)
+    post("/register", AuthController, :register_submit)
+  end
+
+  # Authenticated routes
+  scope "/", RivaAshWeb do
+    pipe_through([:browser, :require_authenticated_user])
+
+    live("/businesses", BusinessLive, :index)
     live("/employees", EmployeeLive, :index)
   end
 
