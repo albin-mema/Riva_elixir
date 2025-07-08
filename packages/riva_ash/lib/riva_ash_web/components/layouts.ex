@@ -10,5 +10,5 @@ defmodule RivaAshWeb.Layouts do
 
   import RivaAshWeb.CoreComponents
 
-  embed_templates "layouts/*"
+  embed_templates "core/layouts/*"
 end
