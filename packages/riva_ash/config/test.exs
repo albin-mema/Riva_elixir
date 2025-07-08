@@ -22,7 +22,7 @@ config :riva_ash, RivaAsh.Repo,
 # you can enable the server option below.
 config :riva_ash, RivaAshWeb.Endpoint,
   http: [ip: {127, 0, 0, 1}, port: 4002],
-  secret_key_base: "test_secret_key_base_change_me_in_production",
+  secret_key_base: "test_secret_key_base_change_me_in_production_this_needs_to_be_at_least_64_bytes_long_for_security",
   server: true
 
 # Configure Ecto repos
@@ -35,3 +35,6 @@ config :logger, level: :warning
 
 # Initialize plugs at runtime for faster test compilation
 config :phoenix, :plug_init_mode, :runtime
+
+# Configure PhoenixTest
+config :phoenix_test, :endpoint, RivaAshWeb.Endpoint

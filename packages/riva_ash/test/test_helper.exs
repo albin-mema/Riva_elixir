@@ -17,7 +17,12 @@ Application.put_env(:riva_ash, RivaAsh.Repo,
 # Start the repository for testing
 _ = Ecto.Adapters.SQL.Sandbox.start_owner!(RivaAsh.Repo)
 
+# Configure Mox for testing
+Mox.defmock(RivaAsh.Repo.Mock, for: Ecto.Adapter)
+
 # Load all test support files
 Code.require_file("test/support/test_helpers.ex")
 Code.require_file("test/support/endpoint_case.ex")
 Code.require_file("test/support/conn_case.ex")
+Code.require_file("test/support/feature_case.ex")
+Code.require_file("test/support/mocks/repo_mock.ex")

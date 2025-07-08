@@ -38,6 +38,11 @@ defmodule RivaAsh.MixProject do
       # SAT solver for Ash policies (pure Elixir implementation)
       {:simple_sat, "~> 0.1.3"},
 
+      # Authentication
+      {:ash_authentication, "~> 4.9"},
+      {:ash_authentication_phoenix, "~> 2.6"},
+      {:bcrypt_elixir, "~> 3.1"},
+
       # Phoenix
       {:phoenix, "~> 1.7"},
       {:phoenix_ecto, "~> 4.5"},
@@ -68,12 +73,16 @@ defmodule RivaAsh.MixProject do
       {:jason, "~> 1.4"},
       {:dns_cluster, "~> 0.1.1"},
 
+      # UI Components
+      {:salad_ui, "~> 1.0.0-beta.3"},
+
       # Development
       {:phoenix_live_reload, "~> 1.2", only: :dev},
       {:live_debugger, "~> 0.3.0", only: :dev},
 
       # Test
-      {:mox, "~> 1.1", only: :test}
+      {:mox, "~> 1.1", only: :test},
+      {:phoenix_test, "~> 0.7.0", only: :test, runtime: false}
     ]
   end
 
