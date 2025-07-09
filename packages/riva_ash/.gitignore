@@ -21,3 +21,9 @@ riva_ash-*.tar
 
 # Temporary files, for example, from tests.
 /tmp/
+
+# Hex package cache
+/hex/
+
+# Mix archives and cache
+/mix/

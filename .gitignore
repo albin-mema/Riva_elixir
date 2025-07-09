@@ -10,10 +10,12 @@ frontend/.nuxt/
 frontend/.vite/
 
 # Backend build outputs
-riva_ash/_build/
-riva_ash/deps/
-riva_ash/cover/
-riva_ash/doc/
+packages/riva_ash/_build/
+packages/riva_ash/deps/
+packages/riva_ash/cover/
+packages/riva_ash/doc/
+packages/riva_ash/hex/
+packages/riva_ash/mix/
 
 # Environment files
 .env
@@ -23,7 +25,7 @@ riva_ash/doc/
 .env.production.local
 
 # Database
-riva_ash/priv/static/
+packages/riva_ash/priv/static/
 
 # Logs
 *.log
@@ -49,8 +51,8 @@ Thumbs.db
 *.temp
 
 # Elixir specific
-riva_ash/erl_crash.dump
-riva_ash/.elixir_ls/
+packages/riva_ash/erl_crash.dump
+packages/riva_ash/.elixir_ls/
 
 # Mix artifacts
-riva_ash/mix.lock.backup
+packages/riva_ash/mix.lock.backup

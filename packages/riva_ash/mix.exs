@@ -5,7 +5,7 @@ defmodule RivaAsh.MixProject do
     [
       app: :riva_ash,
       version: "0.1.0",
-      elixir: "~> 1.19.0-rc.0 or ~> 1.19",
+      elixir: "~> 1.18",
       start_permanent: Mix.env() == :prod,
       deps: deps(),
       aliases: aliases()
@@ -15,8 +15,17 @@ defmodule RivaAsh.MixProject do
   # Run "mix help compile.app" to learn about applications.
   def application do
     [
-      extra_applications: [:logger],
-      mod: {RivaAsh.Application, []}
+      extra_applications: [
+        :logger,
+        :runtime_tools,
+        :os_mon,
+        :ssl,
+        :crypto,
+        :public_key,
+        :inets
+      ],
+      mod: {RivaAsh.Application, []},
+      start_phases: [migrate: []]
     ]
   end
 
