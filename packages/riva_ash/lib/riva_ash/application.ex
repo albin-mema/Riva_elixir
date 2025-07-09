@@ -15,19 +15,52 @@ defmodule RivaAsh.Application do
     require Logger
     Logger.info("Configured SAT solver: #{inspect(sat_solver)}")
 
+    # Define the children to be supervised
     children = [
-      TwMerge.Cache,
+      # Start the Ecto repository
       RivaAsh.Repo,
-      {DNSCluster, query: Application.get_env(:riva_ash, :dns_cluster_query) || :ignore},
+      # Start the Telemetry supervisor
+      RivaAshWeb.Telemetry,
+      # Start the PubSub system
       {Phoenix.PubSub, name: RivaAsh.PubSub},
+      # Start the Endpoint (http/https)
+      RivaAshWeb.Endpoint,
+      # Start a worker by calling: RivaAsh.Worker.start_link(arg)
+      # {RivaAsh.Worker, arg},
+      # Start TwMerge.Cache
+      TwMerge.Cache,
+      # Start Finch for HTTP clients
       {Finch, name: RivaAsh.Finch},
-      RivaAshWeb.Endpoint
+      # DNS cluster for distributed nodes
+      {DNSCluster, query: Application.get_env(:riva_ash, :dns_cluster_query) || :ignore}
     ]
 
     # See https://hexdocs.pm/elixir/Supervisor.html
     # for other strategies and supported options
     opts = [strategy: :one_for_one, name: RivaAsh.Supervisor]
     Supervisor.start_link(children, opts)
+  end
+
+  # Handle application start phases
+  @impl true
+  def start_phase(:migrate, _start_type, _phase_args) do
+    # Run database migrations during the migrate phase
+    # This is useful for production deployments
+    require Logger
+    Logger.info("Running database migrations...")
+
+    # Only run migrations if the repo is available
+    try do
+      RivaAsh.Release.migrate()
+      Logger.info("Database migrations completed successfully")
+      :ok
+    rescue
+      exception ->
+        Logger.error("Database migration failed: #{inspect(exception)}")
+        # Don't fail the application startup if migrations fail
+        # This allows the app to start even if migrations have issues
+        :ok
+    end
   end
 
   # Tell Phoenix to update the endpoint configuration
