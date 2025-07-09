@@ -100,6 +100,8 @@ defmodule RivaAshWeb.Router do
   scope "/", RivaAshWeb do
     pipe_through([:browser])
 
+    get("/", AuthController, :redirect_to_sign_in)
+
     # Authentication routes
     get("/sign-in", AuthController, :sign_in)
     get("/register", AuthController, :register)

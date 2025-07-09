@@ -53,6 +53,15 @@ defmodule RivaAsh.Accounts.User do
   actions do
     defaults [:read, :update, :destroy]
 
+    # Add the sign_in action
+    create :sign_in do
+      # The sign_in action is provided by AshAuthentication
+      # and does not need any additional configuration here.
+      # It will automatically use the password strategy.
+      # For more information, see:
+      # https://ash-hq.org/docs/ash_authentication/latest/ash-authentication-password/sign-in-action
+    end
+
     read :me do
       # Only returns the current user
       filter expr(id == ^actor(:id))

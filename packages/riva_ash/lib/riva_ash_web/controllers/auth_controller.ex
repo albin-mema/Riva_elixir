@@ -5,6 +5,10 @@ defmodule RivaAshWeb.AuthController do
 
   plug :put_layout, {RivaAshWeb.Layouts, :app}
 
+  def redirect_to_sign_in(conn, _params) do
+    redirect(conn, to: "/sign-in")
+  end
+
   def sign_in(conn, _params) do
     render(conn, :sign_in)
   end
@@ -15,7 +19,7 @@ defmodule RivaAshWeb.AuthController do
         conn
         |> AuthHelpers.sign_in_user(user)
         |> put_flash(:info, "Successfully signed in!")
-        |> redirect(to: "/businesses")
+        |> redirect(to: "/")
 
       {:error, _reason} ->
         conn

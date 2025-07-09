@@ -8,13 +8,9 @@ defmodule RivaAsh.Accounts do
 
   # Add any additional configuration or functions needed for authentication
   def sign_in(email, password) do
-    case AshAuthentication.authenticate(RivaAsh.Accounts.User, %{
-           "email" => email,
-           "password" => password
-         }) do
-      {:ok, user} -> {:ok, user}
-      {:error, reason} -> {:error, reason}
-    end
+    RivaAsh.Accounts.User
+    |> Ash.Changeset.for_action(:sign_in, %{"email" => email, "password" => password})
+    |> Ash.create()
   end
 
   def register(params) do
