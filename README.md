@@ -18,48 +18,45 @@ A comprehensive business management system built with Elixir/Phoenix and Ash Fra
 
 ## Quick Start
 
-### Option 1: Local Development (with local PostgreSQL)
+**🚀 Recommended Setup**
 
-1. **Clone and setup**:
+```bash
+git clone https://github.com/albin-mema/Riva_elixir.git
+cd Riva_elixir
+./docker-dev.sh start    # Start PostgreSQL with health checks
+pnpm setup               # Install dependencies and setup database
+pnpm dev                 # Start the application
+```
 
-    ```bash
-    git clone https://github.com/albin-mema/Riva_elixir.git
-    cd Riva_Ash
-    pnpm setup
-    ```
+**✅ Verify Setup**
 
-2. **Start development server**:
-    ```bash
-    pnpm dev
-    ```
-    This starts the backend (Phoenix with Ash framework).
+```bash
+./verify-setup.sh        # Check if everything is working correctly
+```
 
-### Option 2: Docker Development (recommended)
+**📖 Need Help?**
 
-1. **Clone and setup**:
+- **[SETUP_GUIDE.md](SETUP_GUIDE.md)** - Complete setup guide with troubleshooting
+- **[DEVELOPMENT_WORKFLOW.md](DEVELOPMENT_WORKFLOW.md)** - Development workflow and best practices
 
-    ```bash
-    git clone https://github.com/albin-mema/Riva_elixir.git
-    cd Riva_Ash
-    ```
+### Alternative Setup Methods
 
-2. **Start PostgreSQL with Docker**:
-    ```bash
-    ./docker-dev.sh start
-    ```
+#### Option 1: Docker Development (Recommended)
+```bash
+./docker-dev.sh start    # PostgreSQL in Docker
+pnpm setup && pnpm dev   # App runs locally
+```
 
-3. **Setup and start the application**:
-    ```bash
-    pnpm setup
-    pnpm dev
-    ```
+#### Option 2: Full Docker Stack
+```bash
+./docker-dev.sh full     # Everything in Docker
+```
 
-### Option 3: Full Docker Stack
-
-1. **Start everything with Docker**:
-    ```bash
-    docker-compose up --build
-    ```
+#### Option 3: Local PostgreSQL
+```bash
+# Requires local PostgreSQL installation
+pnpm setup && pnpm dev
+```
 
 ## Available Scripts
 
