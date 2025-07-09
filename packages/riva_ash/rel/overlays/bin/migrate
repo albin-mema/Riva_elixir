@@ -1,0 +1,10 @@
+#!/bin/sh
+
+cd "$(dirname "$0")/.."
+
+# Setup the environment
+export MIX_ENV=${MIX_ENV:-prod}
+
+echo "Running migrations..."
+
+exec "$RELEASE_ROOT/bin/riva_ash" eval "RivaAsh.Release.migrate"
