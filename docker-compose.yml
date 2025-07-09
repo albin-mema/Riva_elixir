@@ -3,43 +3,59 @@ version: '3.8'
 services:
   postgres:
     image: postgres:15-alpine
+    container_name: riva_elixir-postgres-1
     environment:
       POSTGRES_DB: riva_ash_dev
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
     ports:
-      - "5432:5432"
+      - "5433:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
+      - ./packages/riva_ash/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
-      interval: 10s
+      interval: 5s
       timeout: 5s
       retries: 5
+    restart: unless-stopped
 
   app:
-    build: 
-      context: ./riva_ash
+    build:
+      context: ./packages/riva_ash
       dockerfile: Dockerfile
+      target: app
+    container_name: riva_elixir-app-1
     depends_on:
       postgres:
         condition: service_healthy
     environment:
-      DATABASE_URL: "ecto://postgres:postgres@postgres:5432/riva_ash_dev"
-      PHX_HOST: "localhost"
-      SECRET_KEY_BASE: "EuaQggrb3gfhrDAQUZqTsTMUt7zf9voCI2frB3kuyBabOCHiEue48mXJiMtL7QLj"
+      - MIX_ENV=prod
+      - DATABASE_URL=ecto://postgres:postgres@postgres:5432/riva_ash_dev
+      - DB_USERNAME=postgres
+      - DB_PASSWORD=postgres
+      - DB_NAME=riva_ash_dev
+      - DB_HOSTNAME=postgres
+      - DB_PORT=5432
+      - SECRET_KEY_BASE=your-secret-key-base-here-change-this-in-production
+      - PHX_SERVER=true
+      - PHX_HOST=localhost
+      - PORT=4000
+      - LANG=C.UTF-8
+      - ERL_AFLAGS="-kernel shell_history enabled"
     ports:
       - "4000:4000"
     volumes:
-      - ./riva_ash:/app
-    command: >
-      sh -c "
-        mix deps.get &&
-        mix ecto.create &&
-        mix ecto.migrate &&
-        mix phx.server
-      "
+      - ./packages/riva_ash/priv/static:/app/priv/static
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "http://localhost:4000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    restart: unless-stopped
 
 volumes:
   postgres_data:
+  mix_deps:
+  mix_build:
