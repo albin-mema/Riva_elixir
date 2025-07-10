@@ -88,6 +88,8 @@ defmodule RivaAsh.MixProject do
       # Development
       {:phoenix_live_reload, "~> 1.2", only: :dev},
       {:live_debugger, "~> 0.3.0", only: :dev},
+      {:tailwind, "~> 0.2", runtime: Mix.env() == :dev},
+      {:esbuild, "~> 0.8", runtime: Mix.env() == :dev},
 
       # Test
       {:mox, "~> 1.1", only: :test},

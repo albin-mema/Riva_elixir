@@ -48,6 +48,14 @@ config :ash, :sat_solver, {SimpleSat, []}
 # Configure Ash policies for better error messages
 config :ash, :policies, show_policy_breakdowns?: true
 
+# Configure AshAuthentication
+config :ash_authentication, :token_lifetime, days: 7
+config :ash_authentication, :sign_in_tokens_enabled, true
+
+config :ash_authentication,
+       :token_secret,
+       System.get_env("AUTH_TOKEN_SECRET") || "default_secret_change_me_in_prod"
+
 # Configure AshJsonApi
 config :ash_json_api,
   json_library: Jason,
@@ -66,6 +74,34 @@ config :ash_json_api, :open_api,
 config :ash_admin,
   domains: [RivaAsh.Domain],
   show_sensitive_fields: [:change, :create]
+
+# Configure Tailwind CSS
+config :tailwind,
+  version: "3.3.0",
+  default: [
+    args: ~w(
+      --config=tailwind.config.js
+      --input=css/app.css
+      --output=../priv/static/assets/app.css
+    ),
+    cd: Path.expand("../assets", __DIR__)
+  ]
+
+# Configure Esbuild
+config :esbuild,
+  version: "0.19.0",
+  default: [
+    args: ~w(
+      js/app.js
+      --bundle
+      --target=es2017
+      --outdir=../priv/static/assets
+      --external:/fonts/*
+      --external:/images/*
+    ),
+    cd: Path.expand("../assets", __DIR__),
+    env: %{"NODE_PATH" => Path.expand("../deps", __DIR__)}
+  ]
 
 # Import environment specific config. This must remain at the bottom
 # of this file so it overrides the configuration defined above.
