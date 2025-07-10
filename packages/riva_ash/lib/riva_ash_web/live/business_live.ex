@@ -279,7 +279,10 @@ defmodule RivaAshWeb.BusinessLive do
           |> assign(:businesses, list_businesses(socket.assigns.current_user))
           |> assign(:show_form, false)
           |> assign(:editing_business, nil)
-          |> assign(:form, AshPhoenix.Form.for_create(Business, :create, actor: socket.assigns.current_user))
+          |> assign(
+            :form,
+            AshPhoenix.Form.for_create(Business, :create, actor: socket.assigns.current_user)
+          )
           |> assign(:loading, false)
           |> put_flash(:info, "Business \"#{business.name}\" #{action_text} successfully!")
 
@@ -321,7 +324,7 @@ defmodule RivaAshWeb.BusinessLive do
     try do
       business = Business |> Ash.get!(id)
 
-      case Business |> Ash.destroy(business, actor: socket.assigns.current_user) do
+      case business |> Ash.destroy(actor: socket.assigns.current_user) do
         :ok ->
           socket =
             socket

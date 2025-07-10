@@ -103,12 +103,14 @@ defmodule RivaAshWeb.Auth.SignInLive do
     case Accounts.sign_in(email, password) do
       {:ok, user} ->
         # Store the user in the session
-        token = Phoenix.Token.sign(RivaAshWeb.Endpoint, "user_auth", user.id)
         socket =
           socket
-          |> assign(:current_user, user)
+          |> assign(:current_user, user.resource)
 
-        {:noreply, redirect(socket, to: "/businesses")}
+        {:noreply,
+         socket
+         |> redirect(to: "/businesses")
+         |> put_flash(:info, "Successfully signed in!")}
 
       {:error, _reason} ->
         error_message = "Invalid email or password"
