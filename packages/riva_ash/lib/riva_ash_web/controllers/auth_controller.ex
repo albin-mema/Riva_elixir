@@ -3,10 +3,14 @@ defmodule RivaAshWeb.AuthController do
   alias RivaAsh.Accounts
   alias RivaAshWeb.AuthHelpers
 
-  plug :put_layout, {RivaAshWeb.Layouts, :app}
+  plug(:put_layout, {RivaAshWeb.Layouts, :app})
 
   def redirect_to_sign_in(conn, _params) do
-    redirect(conn, to: "/sign-in")
+    if conn.assigns[:current_user] do
+      redirect(conn, to: "/businesses")
+    else
+      redirect(conn, to: "/sign-in")
+    end
   end
 
   def sign_in(conn, _params) do
@@ -15,15 +19,35 @@ defmodule RivaAshWeb.AuthController do
 
   def sign_in_submit(conn, %{"email" => email, "password" => password}) do
     case Accounts.sign_in(email, password) do
-      {:ok, user} ->
+      {:ok, %{resource: user, token: token}} ->
         conn
-        |> AuthHelpers.sign_in_user(user)
+        |> put_session(:user_token, token)
+        |> assign(:current_user, user)
         |> put_flash(:info, "Successfully signed in!")
-        |> redirect(to: "/")
+        |> redirect(to: "/businesses")
 
-      {:error, _reason} ->
+      {:ok, user} when is_struct(user) ->
+        # Handle case where AshAuthentication returns user without token wrapper
+        token = Phoenix.Token.sign(RivaAshWeb.Endpoint, "user_auth", user.id)
+
         conn
-        |> put_flash(:error, "Invalid email or password")
+        |> put_session(:user_token, token)
+        |> assign(:current_user, user)
+        |> put_flash(:info, "Successfully signed in!")
+        |> redirect(to: "/businesses")
+
+      {:error, reason} when is_binary(reason) ->
+        IO.inspect(reason, label: "Sign in error")
+
+        conn
+        |> put_flash(:error, reason)
+        |> redirect(to: "/sign-in")
+
+      error ->
+        IO.inspect(error, label: "Unexpected authentication error")
+
+        conn
+        |> put_flash(:error, "An error occurred during sign in. Please try again.")
         |> redirect(to: "/sign-in")
     end
   end
@@ -39,7 +63,12 @@ defmodule RivaAshWeb.AuthController do
     render(conn, :register)
   end
 
-  def register_submit(conn, %{"name" => name, "email" => email, "password" => password, "password_confirmation" => password_confirmation}) do
+  def register_submit(conn, %{
+        "name" => name,
+        "email" => email,
+        "password" => password,
+        "password_confirmation" => password_confirmation
+      }) do
     # Validate password confirmation on the client side
     if password != password_confirmation do
       conn
@@ -47,21 +76,21 @@ defmodule RivaAshWeb.AuthController do
       |> redirect(to: "/register")
     else
       case Accounts.register(%{
-        "name" => name,
-        "email" => email,
-        "password" => password
-      }) do
-      {:ok, _user} ->
-        conn
-        |> put_flash(:info, "Registration successful! Please sign in.")
-        |> redirect(to: "/sign-in")
+             "name" => name,
+             "email" => email,
+             "password" => password
+           }) do
+        {:ok, _user} ->
+          conn
+          |> put_flash(:info, "Registration successful! Please sign in.")
+          |> redirect(to: "/sign-in")
 
-      {:error, changeset} ->
-        error_messages = format_changeset_errors(changeset)
+        {:error, changeset} ->
+          error_messages = format_changeset_errors(changeset)
 
-        conn
-        |> put_flash(:error, "Registration failed: #{error_messages}")
-        |> redirect(to: "/register")
+          conn
+          |> put_flash(:error, "Registration failed: #{error_messages}")
+          |> redirect(to: "/register")
       end
     end
   end
@@ -81,11 +110,15 @@ defmodule RivaAshWeb.AuthController do
           error -> format_ash_error(error)
         end)
         |> Enum.join(", ")
-      _ -> "Registration failed"
+
+      _ ->
+        "Registration failed"
     end
   end
 
-  defp format_ash_error(%{message: message, field: field}) when is_atom(field), do: "#{field} #{message}"
+  defp format_ash_error(%{message: message, field: field}) when is_atom(field),
+    do: "#{field} #{message}"
+
   defp format_ash_error(%{message: message}), do: message
   defp format_ash_error(%{input: input}), do: "Invalid input: #{input}"
   defp format_ash_error(%{field: field}) when is_atom(field), do: "Invalid field: #{field}"
