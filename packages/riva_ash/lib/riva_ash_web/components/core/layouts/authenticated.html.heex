@@ -1,0 +1,187 @@
+<div class="min-h-screen flex flex-col">
+  <!-- Top Navigation Bar -->
+  <header class="bg-primary shadow">
+    <div class="container mx-auto px-4 py-4 flex justify-between items-center">
+      <div class="flex items-center">
+        <div class="text-white font-bold text-xl">Riva Booking</div>
+      </div>
+
+      <div class="flex items-center space-x-2">
+        <%= if @current_user do %>
+          <div class="hidden sm:flex items-center text-white">
+            <span class="mr-2"><%= @current_user.name || @current_user.email %></span>
+            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary-foreground text-primary">
+              <%= String.capitalize(to_string(@current_user.role)) %>
+            </span>
+          </div>
+          <form class="ml-4" action="/sign-out" method="post">
+            <input type="hidden" name="_csrf_token" value={get_csrf_token()}>
+            <button type="submit" class="text-white hover:text-gray-200 flex items-center text-sm">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+              </svg>
+              Sign Out
+            </button>
+          </form>
+        <% end %>
+      </div>
+    </div>
+  </header>
+
+  <!-- Side Navigation and Content -->
+  <div class="flex flex-1">
+    <!-- Side Navigation -->
+    <aside class="bg-secondary w-64 shadow-md hidden md:block">
+      <nav class="p-4">
+        <ul class="space-y-2">
+          <li>
+            <.link
+              navigate={~p"/businesses"}
+              class={
+                "flex items-center p-2 rounded-lg text-muted-foreground hover:bg-secondary-foreground/10 hover:text-secondary-foreground #{if String.contains?(Phoenix.Controller.current_path(@conn), "businesses"), do: "bg-secondary-foreground/10 text-secondary-foreground font-medium", else: ""}"
+              }
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+              </svg>
+              Businesses
+            </.link>
+          </li>
+          <li>
+            <.link
+              navigate={~p"/employees"}
+              class={
+                "flex items-center p-2 rounded-lg text-muted-foreground hover:bg-secondary-foreground/10 hover:text-secondary-foreground #{if String.contains?(Phoenix.Controller.current_path(@conn), "employees"), do: "bg-secondary-foreground/10 text-secondary-foreground font-medium", else: ""}"
+              }
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+              </svg>
+              Employees
+            </.link>
+          </li>
+          <%= if @current_user && @current_user.role == :admin do %>
+            <li>
+              <.link
+                href="/admin"
+                class="flex items-center p-2 rounded-lg text-muted-foreground hover:bg-secondary-foreground/10 hover:text-secondary-foreground"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+                Admin
+              </.link>
+            </li>
+            <li>
+              <.link
+                href="/erd"
+                class="flex items-center p-2 rounded-lg text-muted-foreground hover:bg-secondary-foreground/10 hover:text-secondary-foreground"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                </svg>
+                Entity Diagram
+              </.link>
+            </li>
+          <% end %>
+        </ul>
+      </nav>
+    </aside>
+
+    <!-- Mobile Navigation Toggle -->
+    <div class="md:hidden bg-background border-b p-4">
+      <button
+        type="button"
+        id="mobile-menu-button"
+        class="text-gray-500 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-indigo-500"
+        phx-click={JS.toggle(to: "#mobile-menu")}
+      >
+        <span class="sr-only">Open main menu</span>
+        <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+        </svg>
+      </button>
+    </div>
+
+    <!-- Mobile Menu -->
+    <div id="mobile-menu" class="hidden md:hidden fixed inset-0 z-50 bg-background/95">
+      <div class="p-4">
+        <button
+          type="button"
+          class="absolute top-4 right-4 text-gray-500 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-indigo-500"
+          phx-click={JS.toggle(to: "#mobile-menu")}
+        >
+          <span class="sr-only">Close menu</span>
+          <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+
+        <nav class="mt-8">
+          <ul class="space-y-4">
+            <li>
+              <.link
+                navigate={~p"/businesses"}
+                class="flex items-center p-2 rounded-lg hover:bg-secondary/20"
+                phx-click={JS.toggle(to: "#mobile-menu")}
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                </svg>
+                Businesses
+              </.link>
+            </li>
+            <li>
+              <.link
+                navigate={~p"/employees"}
+                class="flex items-center p-2 rounded-lg hover:bg-secondary/20"
+                phx-click={JS.toggle(to: "#mobile-menu")}
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                </svg>
+                Employees
+              </.link>
+            </li>
+            <%= if @current_user && @current_user.role == :admin do %>
+              <li>
+                <.link
+                  href="/admin"
+                  class="flex items-center p-2 rounded-lg hover:bg-secondary/20"
+                  phx-click={JS.toggle(to: "#mobile-menu")}
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                  Admin
+                </.link>
+              </li>
+              <li>
+                <.link
+                  href="/erd"
+                  class="flex items-center p-2 rounded-lg hover:bg-secondary/20"
+                  phx-click={JS.toggle(to: "#mobile-menu")}
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                  </svg>
+                  Entity Diagram
+                </.link>
+              </li>
+            <% end %>
+          </ul>
+        </nav>
+      </div>
+    </div>
+
+    <!-- Main Content -->
+    <main class="flex-1 overflow-y-auto bg-background">
+      <div class="container mx-auto p-4">
+        <.flash_group flash={@flash} />
+        <%= @inner_content %>
+      </div>
+    </main>
+  </div>
+</div>
