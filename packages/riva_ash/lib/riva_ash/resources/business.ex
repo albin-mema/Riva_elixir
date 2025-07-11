@@ -8,7 +8,12 @@ defmodule RivaAsh.Resources.Business do
     domain: RivaAsh.Domain,
     data_layer: AshPostgres.DataLayer,
     authorizers: [Ash.Policy.Authorizer],
-    extensions: [AshJsonApi.Resource, AshGraphql.Resource, AshArchival.Resource, AshAdmin.Resource]
+    extensions: [
+      AshJsonApi.Resource,
+      AshGraphql.Resource,
+      AshArchival.Resource,
+      AshAdmin.Resource
+    ]
 
   postgres do
     table("businesses")
@@ -24,14 +29,25 @@ defmodule RivaAsh.Resources.Business do
   end
 
   policies do
-    # Only admins can create, update, or delete businesses
-    policy action_type([:create, :update, :destroy]) do
+    # Any authenticated user can create a business (they become the owner)
+    policy action_type(:create) do
+      authorize_if(actor_present())
+    end
+
+    # Admins can update or delete any business
+    policy action_type([:update, :destroy]) do
       authorize_if(actor_attribute_equals(:role, :admin))
     end
 
-    # All authenticated employees can read businesses
+    # Business owners can update or delete their own businesses
+    policy action_type([:update, :destroy]) do
+      authorize_if(relates_to_actor_via(:owner))
+    end
+
+    # Users can see their own businesses
     policy action_type(:read) do
-      authorize_if(actor_present())
+      authorize_if actor_attribute_equals(:role, :admin)
+      authorize_if relates_to_actor_via(:owner)
     end
   end
 
@@ -93,15 +109,24 @@ defmodule RivaAsh.Resources.Business do
       primary?(true)
 
       validate(present([:name]), message: "Business name is required")
-      validate(match(:name, ~r/^[a-zA-Z0-9\s\-_&.]+$/), message: "Business name contains invalid characters")
+
+      validate(match(:name, ~r/^[a-zA-Z0-9\s\-_&.]+$/),
+        message: "Business name contains invalid characters"
+      )
     end
 
     create :create do
-      accept([:name, :description])
+      accept([:name, :description, :owner_id])
       primary?(true)
 
       validate(present([:name]), message: "Business name is required")
-      validate(match(:name, ~r/^[a-zA-Z0-9\s\-_&.]+$/), message: "Business name contains invalid characters")
+
+      validate(match(:name, ~r/^[a-zA-Z0-9\s\-_&.]+$/),
+        message: "Business name contains invalid characters"
+      )
+
+      # Set owner_id to the current user's id if not provided
+      change(set_attribute(:owner_id, expr(^actor(:id))))
     end
 
     read :by_id do
@@ -123,6 +148,11 @@ defmodule RivaAsh.Resources.Business do
 
     read :with_sections do
       # Load sections relationship - this will be handled by GraphQL automatically
+    end
+
+    read :by_owner do
+      argument(:owner_id, :uuid, allow_nil?: false)
+      filter(expr(owner_id == ^arg(:owner_id)))
     end
 
     read :with_employees do
@@ -161,6 +191,12 @@ defmodule RivaAsh.Resources.Business do
       constraints(max_length: 1000, trim?: true)
     end
 
+    attribute :owner_id, :uuid do
+      allow_nil?(false)
+      public?(true)
+      description("The ID of the user who owns this business")
+    end
+
     create_timestamp(:inserted_at)
     update_timestamp(:updated_at)
   end
@@ -170,6 +206,15 @@ defmodule RivaAsh.Resources.Business do
       destination_attribute(:business_id)
       public?(true)
       description("Sections belonging to this business")
+    end
+
+    belongs_to :owner, RivaAsh.Accounts.User do
+      attribute_writable?(true)
+      public?(true)
+      allow_nil?(false)
+      source_attribute(:owner_id)
+      destination_attribute(:id)
+      description("The user who owns this business")
     end
   end
 
