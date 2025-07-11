@@ -1,13 +1,17 @@
 defmodule RivaAshWeb.BusinessLive do
   use RivaAshWeb, :live_view
 
-  import SaladUI.Button
-  import SaladUI.Card
-  import SaladUI.Input
-  import SaladUI.Label
-  import SaladUI.Textarea
+  require Ash.Query
+  import Ash.Expr
+
+  # Import atomic design components
+  import RivaAshWeb.Components.Atoms.Button
+  import RivaAshWeb.Components.Atoms.Badge
+  import RivaAshWeb.Components.Molecules.EmptyState
+  import RivaAshWeb.Components.Organisms.PageHeader
+  import RivaAshWeb.Components.Organisms.BusinessForm
+  import RivaAshWeb.Components.Organisms.BusinessCard
   import SaladUI.Alert
-  import SaladUI.Badge
 
   alias RivaAsh.Resources.Business
 
@@ -18,12 +22,15 @@ defmodule RivaAshWeb.BusinessLive do
     socket =
       socket
       |> assign(:current_user, user)
-      |> assign(:businesses, list_businesses(user))
+      |> assign(:businesses, list_user_businesses(user))
       |> assign(:form, AshPhoenix.Form.for_create(Business, :create, actor: user))
       |> assign(:changeset, changeset)
       |> assign(:show_form, false)
       |> assign(:editing_business, nil)
       |> assign(:loading, false)
+      |> assign(:is_admin, user.role == :admin)
+      |> assign(:business_count, count_user_businesses(user))
+      |> assign(:page_title, "Business Management")
 
     {:ok, socket}
   end
@@ -38,6 +45,9 @@ defmodule RivaAshWeb.BusinessLive do
       |> assign(:show_form, false)
       |> assign(:editing_business, nil)
       |> assign(:loading, false)
+      |> assign(:is_admin, false)
+      |> assign(:business_count, 0)
+      |> assign(:page_title, "Business Management")
 
     {:ok, socket}
   end
@@ -50,25 +60,28 @@ defmodule RivaAshWeb.BusinessLive do
   @impl true
   def render(assigns) do
     ~H"""
-    <div class="bg-background min-h-screen">
-      <div class="mx-auto px-4 py-8 container">
-        <!-- Header -->
-        <div class="flex justify-between items-center mb-8">
-          <div>
-            <h1 class="font-bold text-foreground text-3xl">Business Management</h1>
-            <p class="mt-2 text-muted-foreground">Manage your business entities and their information</p>
-          </div>
-          <.button
-            variant="default"
-            phx-click="toggle_form"
-            class="flex items-center gap-2"
-          >
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-            </svg>
-            <%= if @show_form, do: "Cancel", else: "Add Business" %>
-          </.button>
-        </div>
+    <!-- Page Header -->
+    <.page_header
+      title="Business Management"
+      description="Manage your business entities and their information"
+      icon={:building_office_2}
+    >
+      <:badge>
+        <.badge variant="outline">
+          <%= @business_count %> <%= if @business_count == 1, do: "business", else: "businesses" %>
+        </.badge>
+      </:badge>
+
+      <:action>
+        <.button
+          variant={if @show_form, do: "outline", else: "primary"}
+          phx-click="toggle_form"
+          icon_left={if @show_form, do: :x_mark, else: :plus}
+        >
+          <%= if @show_form, do: "Cancel", else: "Add Business" %>
+        </.button>
+      </:action>
+    </.page_header>
 
         <!-- Success/Error Messages -->
         <div :if={@flash["info"]} class="mb-6">
@@ -93,146 +106,40 @@ defmodule RivaAshWeb.BusinessLive do
 
         <!-- Business Form -->
         <div :if={@show_form} class="mb-8">
-          <.card>
-            <.card_header>
-              <.card_title>
-                <%= if @editing_business, do: "Edit Business", else: "Create New Business" %>
-              </.card_title>
-              <.card_description>
-                <%= if @editing_business do %>
-                  Update the business information below.
-                <% else %>
-                  Fill in the details to create a new business entity.
-                <% end %>
-              </.card_description>
-            </.card_header>
-            <.card_content>
-              <.form
-                for={@form}
-                phx-submit="save_business"
-                phx-change="validate_business"
-                class="space-y-6"
-              >
-                <div class="space-y-2">
-                  <.label for="name">Business Name *</.label>
-                  <.input
-                    field={@form[:name]}
-                    type="text"
-                    placeholder="Enter business name"
-                    required
-                  />
-                  <div :if={@form[:name].errors != []} class="text-destructive text-sm">
-                    <%= Enum.map(@form[:name].errors, fn error ->
-                      Phoenix.HTML.raw("• #{error}<br>")
-                    end) %>
-                  </div>
-                </div>
-
-                <div class="space-y-2">
-                  <.label for="description">Description</.label>
-                  <.textarea
-                    field={@form[:description]}
-                    placeholder="Enter business description (optional)"
-                    rows="4"
-                  />
-                  <div :if={@form[:description].errors != []} class="text-destructive text-sm">
-                    <%= Enum.map(@form[:description].errors, fn error ->
-                      Phoenix.HTML.raw("• #{error}<br>")
-                    end) %>
-                  </div>
-                </div>
-
-                <div class="flex gap-3 pt-4">
-                  <.button
-                    type="submit"
-                    variant="default"
-                    disabled={@loading}
-                    class="flex items-center gap-2"
-                  >
-                    <span :if={@loading} class="animate-spin">⏳</span>
-                    <%= if @editing_business, do: "Update Business", else: "Create Business" %>
-                  </.button>
-
-                  <.button
-                    type="button"
-                    variant="outline"
-                    phx-click="cancel_form"
-                  >
-                    Cancel
-                  </.button>
-                </div>
-              </.form>
-            </.card_content>
-          </.card>
+          <.business_form
+            form={@form}
+            editing={@editing_business != nil}
+            loading={@loading}
+            on_submit="save_business"
+            on_change="validate_business"
+            on_cancel="cancel_form"
+          />
         </div>
 
         <!-- Business List -->
         <div class="space-y-4">
           <h2 class="font-semibold text-foreground text-xl">Existing Businesses</h2>
 
-          <div :if={@businesses == []} class="py-12 text-center">
-            <div class="text-muted-foreground">
-              <svg class="opacity-50 mx-auto mb-4 w-12 h-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
-              </svg>
-              <p class="font-medium text-lg">No businesses found</p>
-              <p class="mt-1 text-sm">Create your first business to get started</p>
-            </div>
+          <div :if={@businesses == []}>
+            <.empty_state
+              icon={:building_office_2}
+              title="No businesses found"
+              description="Create your first business to get started"
+              variant="bordered"
+            />
           </div>
 
           <div :if={@businesses != []} class="gap-4 grid">
-            <.card :for={business <- @businesses} class="hover:shadow-md transition-shadow">
-              <.card_content class="p-6">
-                <div class="flex justify-between items-start">
-                  <div class="flex-1">
-                    <div class="flex items-center gap-3 mb-2">
-                      <h3 class="font-semibold text-foreground text-lg"><%= business.name %></h3>
-                      <.badge variant="secondary">
-                        ID: <%= String.slice(business.id, 0, 8) %>...
-                      </.badge>
-                    </div>
-
-                    <p :if={business.description} class="mb-4 text-muted-foreground">
-                      <%= business.description %>
-                    </p>
-                    <p :if={!business.description} class="mb-4 text-muted-foreground italic">
-                      No description provided
-                    </p>
-
-                    <div class="flex items-center gap-4 text-muted-foreground text-sm">
-                      <span>Created: <%= Calendar.strftime(business.inserted_at, "%B %d, %Y") %></span>
-                      <span :if={business.updated_at != business.inserted_at}>
-                        Updated: <%= Calendar.strftime(business.updated_at, "%B %d, %Y") %>
-                      </span>
-                    </div>
-                  </div>
-
-                  <div class="flex items-center gap-2 ml-4">
-                    <.button
-                      variant="outline"
-                      size="sm"
-                      phx-click="edit_business"
-                      phx-value-id={business.id}
-                    >
-                      Edit
-                    </.button>
-                    <.button
-                      variant="destructive"
-                      size="sm"
-                      phx-click="delete_business"
-                      phx-value-id={business.id}
-                      data-confirm="Are you sure you want to delete this business? This action cannot be undone."
-                    >
-                      Delete
-                    </.button>
-                  </div>
-                </div>
-              </.card_content>
-            </.card>
+            <.business_card
+              :for={business <- @businesses}
+              business={business}
+              current_user={@current_user}
+              is_admin={@is_admin}
+              on_edit="edit_business"
+              on_delete="delete_business"
+            />
           </div>
         </div>
-      </div>
-    </div>
     """
   end
 
@@ -244,7 +151,7 @@ defmodule RivaAshWeb.BusinessLive do
       socket
       |> assign(:show_form, !socket.assigns.show_form)
       |> assign(:editing_business, nil)
-      |> assign(:form, AshPhoenix.Form.for_create(Business, :create))
+      |> assign(:form, AshPhoenix.Form.for_create(Business, :create) |> to_form())
 
     {:noreply, socket}
   end
@@ -255,20 +162,29 @@ defmodule RivaAshWeb.BusinessLive do
       socket
       |> assign(:show_form, false)
       |> assign(:editing_business, nil)
-      |> assign(:form, AshPhoenix.Form.for_create(Business, :create))
+      |> assign(:form, AshPhoenix.Form.for_create(Business, :create) |> to_form())
 
     {:noreply, socket}
   end
 
   @impl true
   def handle_event("validate_business", %{"form" => params}, socket) do
-    form = AshPhoenix.Form.validate(socket.assigns.form, params)
+    form = AshPhoenix.Form.validate(socket.assigns.form, params) |> to_form()
     {:noreply, assign(socket, :form, form)}
   end
 
   @impl true
   def handle_event("save_business", %{"form" => params}, socket) do
     socket = assign(socket, :loading, true)
+    user = socket.assigns.current_user
+
+    # Add owner_id to params if creating a new business
+    params =
+      if socket.assigns.editing_business do
+        params
+      else
+        Map.put(params, "owner_id", user.id)
+      end
 
     case AshPhoenix.Form.submit(socket.assigns.form, params: params) do
       {:ok, business} ->
@@ -276,22 +192,31 @@ defmodule RivaAshWeb.BusinessLive do
 
         socket =
           socket
-          |> assign(:businesses, list_businesses(socket.assigns.current_user))
+          |> assign(:businesses, list_user_businesses(user))
+          |> assign(:business_count, count_user_businesses(user))
           |> assign(:show_form, false)
           |> assign(:editing_business, nil)
           |> assign(
             :form,
-            AshPhoenix.Form.for_create(Business, :create, actor: socket.assigns.current_user)
+            AshPhoenix.Form.for_create(Business, :create, actor: user) |> to_form()
           )
           |> assign(:loading, false)
           |> put_flash(:info, "Business \"#{business.name}\" #{action_text} successfully!")
 
         {:noreply, socket}
 
+      {:error, %Ash.Error.Forbidden{}} ->
+        socket =
+          socket
+          |> assign(:loading, false)
+          |> put_flash(:error, "You do not have permission to perform this action.")
+
+        {:noreply, socket}
+
       {:error, form} ->
         socket =
           socket
-          |> assign(:form, form)
+          |> assign(:form, form |> to_form())
           |> assign(:loading, false)
           |> put_flash(:error, "Please fix the errors below and try again.")
 
@@ -301,57 +226,136 @@ defmodule RivaAshWeb.BusinessLive do
 
   @impl true
   def handle_event("edit_business", %{"id" => id}, socket) do
+    user = socket.assigns.current_user
+
     try do
-      business = Business |> Ash.get!(id)
-      form = AshPhoenix.Form.for_update(business, :update)
+      business = Business |> Ash.get!(id, actor: user)
 
-      socket =
-        socket
-        |> assign(:show_form, true)
-        |> assign(:editing_business, business)
-        |> assign(:form, form)
+      # Check if user is owner or admin
+      if business.owner_id == user.id || user.role == :admin do
+        form = AshPhoenix.Form.for_update(business, :update, actor: user) |> to_form()
 
-      {:noreply, socket}
+        socket =
+          socket
+          |> assign(:show_form, true)
+          |> assign(:editing_business, business)
+          |> assign(:form, form)
+
+        {:noreply, socket}
+      else
+        socket = put_flash(socket, :error, "You do not have permission to edit this business.")
+        {:noreply, socket}
+      end
     rescue
       Ash.Error.Query.NotFound ->
-        socket = put_flash(socket, :error, "Business not found.")
+        socket =
+          put_flash(
+            socket,
+            :error,
+            "Business not found or you do not have permission to access it."
+          )
+
+        {:noreply, socket}
+
+      Ash.Error.Forbidden ->
+        socket =
+          put_flash(
+            socket,
+            :error,
+            "You do not have permission to access this business."
+          )
+
         {:noreply, socket}
     end
   end
 
   @impl true
   def handle_event("delete_business", %{"id" => id}, socket) do
-    try do
-      business = Business |> Ash.get!(id)
+    user = socket.assigns.current_user
 
-      case business |> Ash.destroy(actor: socket.assigns.current_user) do
+    try do
+      business = Business |> Ash.get!(id, actor: user)
+
+      case business |> Ash.destroy(actor: user) do
         :ok ->
           socket =
             socket
-            |> assign(:businesses, list_businesses(socket.assigns.current_user))
+            |> assign(:businesses, list_user_businesses(user))
+            |> assign(:business_count, count_user_businesses(user))
             |> put_flash(:info, "Business \"#{business.name}\" deleted successfully!")
 
           {:noreply, socket}
 
-        {:error, _error} ->
-          socket = put_flash(socket, :error, "Failed to delete business. Please try again.")
+        {:error, %Ash.Error.Forbidden{}} ->
+          socket =
+            put_flash(socket, :error, "You do not have permission to delete this business.")
+
+          {:noreply, socket}
+
+        {:error, error} ->
+          socket = put_flash(socket, :error, "Failed to delete business: #{inspect(error)}")
           {:noreply, socket}
       end
     rescue
       Ash.Error.Query.NotFound ->
-        socket = put_flash(socket, :error, "Business not found.")
+        socket =
+          put_flash(
+            socket,
+            :error,
+            "Business not found or you do not have permission to delete it."
+          )
+
+        {:noreply, socket}
+
+      error ->
+        socket = put_flash(socket, :error, "An error occurred: #{inspect(error)}")
         {:noreply, socket}
     end
   end
 
   # Helper Functions
 
-  defp list_businesses(actor) do
-    Business
-    |> Ash.read!(actor: actor)
-    |> case do
-      {:ok, businesses} -> Enum.sort_by(businesses, & &1.inserted_at, {:desc, DateTime})
-      _ -> []
+  defp list_user_businesses(user) do
+    if user.role == :admin do
+      # Admins can see all businesses
+      Business
+      |> Ash.Query.load(:owner)
+      |> Ash.read!(actor: user)
+      |> case do
+        businesses when is_list(businesses) ->
+          Enum.sort_by(businesses, & &1.inserted_at, {:desc, DateTime})
+
+        _ ->
+          []
+      end
+    else
+      # Regular users can only see their own businesses
+      Business
+      |> Ash.Query.filter(expr(owner_id == ^user.id))
+      |> Ash.Query.load(:owner)
+      |> Ash.read!(actor: user)
+      |> case do
+        businesses when is_list(businesses) ->
+          Enum.sort_by(businesses, & &1.inserted_at, {:desc, DateTime})
+
+        _ ->
+          []
+      end
     end
+  end
+
+  defp count_user_businesses(user) do
+    if user.role == :admin do
+      # Count all businesses for admin
+      Business
+      |> Ash.count!(actor: user)
+    else
+      # Count only owned businesses for regular users
+      Business
+      |> Ash.Query.filter(expr(owner_id == ^user.id))
+      |> Ash.count!(actor: user)
+    end
+  rescue
+    _ -> 0
   end
 end
