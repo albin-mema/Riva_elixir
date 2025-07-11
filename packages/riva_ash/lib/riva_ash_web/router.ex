@@ -20,6 +20,11 @@ defmodule RivaAshWeb.Router do
     plug(RivaAshWeb.AuthHelpers, :fetch_current_user)
   end
 
+  # Pipeline for authenticated routes with navigation layout
+  pipeline :authenticated_layout do
+    plug(:put_layout, html: {RivaAshWeb.Layouts, :authenticated})
+  end
+
   pipeline :browser_no_layout do
     plug(:accepts, ["html"])
     plug(:fetch_session)
@@ -45,9 +50,7 @@ defmodule RivaAshWeb.Router do
   scope "/" do
     pipe_through([:api])
 
-    forward("/graphql", Absinthe.Plug,
-      schema: RivaAshWeb.Schema
-    )
+    forward("/graphql", Absinthe.Plug, schema: RivaAshWeb.Schema)
   end
 
   # GraphiQL interface (only in dev)
@@ -112,7 +115,7 @@ defmodule RivaAshWeb.Router do
 
   # Authenticated routes
   scope "/", RivaAshWeb do
-    pipe_through([:browser, :require_authenticated_user])
+    pipe_through([:browser, :require_authenticated_user, :authenticated_layout])
 
     live("/businesses", BusinessLive, :index)
     live("/employees", EmployeeLive, :index)
