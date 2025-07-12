@@ -25,8 +25,9 @@ defmodule RivaAshWeb.FeatureCase do
       import RivaAshWeb.FeatureCase
       import RivaAsh.TestHelpers
 
-      # Import PhoenixTest helpers
-      import PhoenixTest
+      # Temporarily using standard Phoenix LiveView testing
+      import Phoenix.ConnTest
+      import Phoenix.LiveViewTest
     end
   end
 
