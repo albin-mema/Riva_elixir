@@ -25,6 +25,11 @@ defmodule RivaAsh.DataCase do
       import Ecto.Changeset
       import Ecto.Query
       import RivaAsh.DataCase
+      import RivaAsh.Factory
+      import RivaAsh.PropertyHelpers
+
+      # Enable property-based testing
+      use ExUnitProperties
     end
   end
 
@@ -37,8 +42,17 @@ defmodule RivaAsh.DataCase do
   Sets up the sandbox based on the test tags.
   """
   def setup_sandbox(tags) do
-    pid = Ecto.Adapters.SQL.Sandbox.start_owner!(RivaAsh.Repo, shared: not tags[:async])
-    on_exit(fn -> Ecto.Adapters.SQL.Sandbox.stop_owner(pid) end)
+    # Check if repo is using SQL Sandbox
+    repo_config = RivaAsh.Repo.config()
+    case repo_config[:pool] do
+      Ecto.Adapters.SQL.Sandbox ->
+        pid = Ecto.Adapters.SQL.Sandbox.start_owner!(RivaAsh.Repo, shared: not tags[:async])
+        on_exit(fn -> Ecto.Adapters.SQL.Sandbox.stop_owner(pid) end)
+      _ ->
+        # Fallback for non-sandbox environments
+        :ok = Ecto.Adapters.SQL.Sandbox.checkout(RivaAsh.Repo)
+        on_exit(fn -> Ecto.Adapters.SQL.Sandbox.checkin(RivaAsh.Repo) end)
+    end
   end
 
   @doc """

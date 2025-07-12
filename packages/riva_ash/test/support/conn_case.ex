@@ -14,8 +14,8 @@ defmodule RivaAshWeb.ConnCase do
       import RivaAshWeb.ConnCase
       import RivaAsh.TestHelpers
 
-      # Import PhoenixTest for unified testing
-      import PhoenixTest
+      # PhoenixTest disabled - not available in current setup
+      # import PhoenixTest
 
       alias RivaAshWeb.Router.Helpers, as: Routes
 
@@ -31,16 +31,7 @@ defmodule RivaAshWeb.ConnCase do
       Ecto.Adapters.SQL.Sandbox.mode(RivaAsh.Repo, {:shared, self()})
     end
 
-    # Start any mocks needed for the tests
-    Mox.stub(RivaAsh.Repo.Mock, :query, fn _, _, _ -> {:ok, %{rows: []}} end)
-
-    # Set up default mocks for common Repo operations
-    Mox.stub(RivaAsh.Repo.Mock, :all, fn _ -> [] end)
-    Mox.stub(RivaAsh.Repo.Mock, :get, fn _, _ -> nil end)
-    Mox.stub(RivaAsh.Repo.Mock, :get_by, fn _, _ -> nil end)
-    Mox.stub(RivaAsh.Repo.Mock, :insert, fn _ -> {:ok, %{id: 1}} end)
-    Mox.stub(RivaAsh.Repo.Mock, :update, fn _ -> {:ok, %{id: 1}} end)
-    Mox.stub(RivaAsh.Repo.Mock, :delete, fn _ -> {:ok, %{id: 1}} end)
+    # Skip mock setup for now - using real repo in sandbox mode
 
     {:ok, conn: Phoenix.ConnTest.build_conn()}
   end
