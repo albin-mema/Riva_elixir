@@ -93,6 +93,7 @@ defmodule RivaAsh.MixProject do
       {:esbuild, "~> 0.8", runtime: Mix.env() == :dev},
 
       # Test
+      {:stream_data, "~> 1.0"},
       {:mox, "~> 1.1", only: :test},
       {:phoenix_test, "~> 0.7.0", only: :test, runtime: false}
     ]
