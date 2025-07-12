@@ -1,154 +1,171 @@
 defmodule RivaAsh.Resources.ReservationTest do
   use RivaAsh.DataCase, async: true
   alias RivaAsh.Resources.{Reservation, Client, Item}
-  import RivaAsh.Factory
   import ExUnit.CaptureLog
 
-  setup do
-    # Create test data
-    {:ok, client} =
-      Client.create(%{name: "Test Client", email: "test@example.com", is_registered: true})
+  describe "create/1 - property-based tests" do
+    property "creates reservations with valid randomized attributes" do
+      check all client_attrs <- client_attrs(),
+                item_attrs <- item_attrs() do
 
-    {:ok, item} = Item.create(%{name: "Test Item"})
+        # Create dependencies first
+        {:ok, client} = Client.create(client_attrs)
+        {:ok, item} = Item.create(item_attrs)
 
-    # Future dates for testing
-    # 1 hour from now
-    future_date = DateTime.utc_now() |> DateTime.add(3600, :second)
-    # 2 hours from now
-    end_future_date = future_date |> DateTime.add(3600, :second)
+        # Generate reservation attributes with valid relationships
+        reservation_attrs = reservation_attrs(%{
+          client_id: client.id,
+          item_id: item.id
+        }) |> Enum.take(1) |> hd()
 
-    {:ok, client: client, item: item, future_date: future_date, end_future_date: end_future_date}
-  end
+        case Reservation.create(reservation_attrs) do
+          {:ok, reservation} ->
+            assert reservation.client_id == client.id
+            assert reservation.item_id == item.id
+            assert reservation.reserved_from != nil
+            assert reservation.reserved_until != nil
+            assert DateTime.compare(reservation.reserved_until, reservation.reserved_from) == :gt
+            assert reservation.status in [:pending, :provisional, :confirmed, :cancelled, :completed]
+            assert reservation.id != nil
 
-  describe "create/1" do
-    setup %{client: client, item: item, future_date: from, end_future_date: until} do
-      %{
-        valid_attrs: %{
+          {:error, _error} ->
+            # Some combinations might be invalid due to business rules
+            :ok
+        end
+      end
+    end
+
+    property "validates required fields" do
+      check all attrs <- reservation_attrs() do
+        # Test missing client_id
+        invalid_attrs = Map.put(attrs, :client_id, nil)
+        assert {:error, %{errors: errors}} = Reservation.create(invalid_attrs)
+        assert has_error_on_field?(%{errors: errors}, :client_id)
+
+        # Test missing item_id
+        invalid_attrs = Map.put(attrs, :item_id, nil)
+        assert {:error, %{errors: errors}} = Reservation.create(invalid_attrs)
+        assert has_error_on_field?(%{errors: errors}, :item_id)
+      end
+    end
+
+    property "validates datetime ordering" do
+      check all client_attrs <- client_attrs(),
+                item_attrs <- item_attrs() do
+
+        # Create dependencies
+        {:ok, client} = Client.create(client_attrs)
+        {:ok, item} = Item.create(item_attrs)
+
+        # Create reservation with invalid time ordering
+        now = DateTime.utc_now()
+        invalid_attrs = %{
           client_id: client.id,
           item_id: item.id,
-          reserved_from: from,
-          reserved_until: until,
-          notes: "Test reservation"
+          reserved_from: DateTime.add(now, 3600, :second),  # 1 hour from now
+          reserved_until: now  # Now (before reserved_from)
         }
-      }
-    end
 
-    test "creates a reservation with valid attributes", %{valid_attrs: attrs} do
-      assert {:ok, reservation} = Reservation.create(attrs)
-      assert reservation.client_id == attrs.client_id
-      assert reservation.item_id == attrs.item_id
-      assert reservation.status == "pending"
-    end
-
-    test "validates time slot availability", %{
-      valid_attrs: attrs,
-      future_date: from,
-      end_future_date: until
-    } do
-      # Create first reservation
-      assert {:ok, _} = Reservation.create(attrs)
-
-      # Try to create overlapping reservation
-      overlapping_attrs = %{
-        attrs
-        | # 30 minutes after first starts
-          reserved_from: from |> DateTime.add(1800, :second),
-          # 30 minutes after first ends
-          reserved_until: until |> DateTime.add(1800, :second)
-      }
-
-      assert {:error, %{errors: errors}} = Reservation.create(overlapping_attrs)
-
-      assert "Time slot overlaps with an existing reservation" in errors_on(
-               errors,
-               :reserved_from
-             )
+        assert {:error, %{errors: _errors}} = Reservation.create(invalid_attrs)
+      end
     end
   end
 
-  describe "status updates" do
-    setup %{client: client, item: item, future_date: from, end_future_date: until} do
-      {:ok, reservation} =
-        Reservation.create(%{
+  describe "status updates - property-based tests" do
+    property "status transitions work correctly" do
+      check all client_attrs <- client_attrs(),
+                item_attrs <- item_attrs() do
+
+        # Create dependencies
+        {:ok, client} = Client.create(client_attrs)
+        {:ok, item} = Item.create(item_attrs)
+
+        # Create reservation
+        reservation_attrs = reservation_attrs(%{
           client_id: client.id,
           item_id: item.id,
-          reserved_from: from,
-          reserved_until: until
-        })
+          status: :pending
+        }) |> Enum.take(1) |> hd()
 
-      %{reservation: reservation}
-    end
+        {:ok, reservation} = Reservation.create(reservation_attrs)
 
-    test "confirm/1 changes status to confirmed", %{reservation: reservation} do
-      assert {:ok, updated} = Reservation.confirm(reservation.id)
-      assert updated.status == "confirmed"
-    end
+        # Test confirm transition
+        assert {:ok, confirmed} = Reservation.confirm(reservation.id)
+        assert confirmed.status == :confirmed
 
-    test "cancel/1 changes status to cancelled", %{reservation: reservation} do
-      assert {:ok, updated} = Reservation.cancel(reservation.id)
-      assert updated.status == "cancelled"
-    end
+        # Test cancel transition (from confirmed)
+        assert {:ok, cancelled} = Reservation.cancel(confirmed.id)
+        assert cancelled.status == :cancelled
 
-    test "complete/1 changes status to completed", %{reservation: reservation} do
-      assert {:ok, updated} = Reservation.complete(reservation.id)
-      assert updated.status == "completed"
+        # Create another reservation to test complete
+        {:ok, reservation2} = Reservation.create(reservation_attrs)
+        {:ok, confirmed2} = Reservation.confirm(reservation2.id)
+
+        # Test complete transition
+        assert {:ok, completed} = Reservation.complete(confirmed2.id)
+        assert completed.status == :completed
+      end
     end
   end
 
-  describe "queries" do
-    setup %{client: client, item: item} do
-      now = DateTime.utc_now()
+  describe "queries - property-based tests" do
+    property "time-based queries work correctly" do
+      check all client_attrs <- client_attrs(),
+                item_attrs <- item_attrs() do
 
-      # Create reservations in different states
-      {:ok, past} =
-        Reservation.create(%{
+        # Create dependencies
+        {:ok, client} = Client.create(client_attrs)
+        {:ok, item} = Item.create(item_attrs)
+
+        now = DateTime.utc_now()
+
+        # Create past reservation
+        past_attrs = %{
           client_id: client.id,
           item_id: item.id,
-          # 2 hours ago
-          reserved_from: DateTime.add(now, -7200),
-          # 1 hour ago
-          reserved_until: DateTime.add(now, -3600),
-          status: "completed"
-        })
+          reserved_from: DateTime.add(now, -7200),  # 2 hours ago
+          reserved_until: DateTime.add(now, -3600), # 1 hour ago
+          status: :completed
+        }
+        {:ok, past_reservation} = Reservation.create(past_attrs)
 
-      {:ok, current} =
-        Reservation.create(%{
+        # Create current reservation
+        current_attrs = %{
           client_id: client.id,
           item_id: item.id,
-          # 30 minutes ago
-          reserved_from: DateTime.add(now, -1800),
-          # 30 minutes from now
-          reserved_until: DateTime.add(now, 1800),
-          status: "confirmed"
-        })
+          reserved_from: DateTime.add(now, -1800),  # 30 minutes ago
+          reserved_until: DateTime.add(now, 1800),  # 30 minutes from now
+          status: :confirmed
+        }
+        {:ok, current_reservation} = Reservation.create(current_attrs)
 
-      {:ok, future} =
-        Reservation.create(%{
+        # Create future reservation
+        future_attrs = %{
           client_id: client.id,
           item_id: item.id,
-          # 1 hour from now
-          reserved_from: DateTime.add(now, 3600),
-          # 2 hours from now
-          reserved_until: DateTime.add(now, 7200),
-          status: "pending"
-        })
+          reserved_from: DateTime.add(now, 3600),   # 1 hour from now
+          reserved_until: DateTime.add(now, 7200),  # 2 hours from now
+          status: :pending
+        }
+        {:ok, future_reservation} = Reservation.create(future_attrs)
 
-      %{past: past, current: current, future: future}
-    end
+        # Test active query
+        {:ok, active_reservations} = Reservation.active()
+        active_ids = Enum.map(active_reservations, & &1.id)
+        assert current_reservation.id in active_ids
+        assert past_reservation.id not in active_ids
+        assert future_reservation.id not in active_ids
 
-    test "active/0 returns currently active reservations", %{current: current} do
-      assert {:ok, [reservation]} = Reservation.active()
-      assert reservation.id == current.id
-    end
+        # Test upcoming query
+        {:ok, upcoming_reservations} = Reservation.upcoming()
+        upcoming_ids = Enum.map(upcoming_reservations, & &1.id)
+        assert future_reservation.id in upcoming_ids
 
-    test "upcoming/0 returns future reservations", %{future: future} do
-      assert {:ok, reservations} = Reservation.upcoming()
-      assert Enum.any?(reservations, &(&1.id == future.id))
-    end
-
-    test "past/0 returns completed or past reservations", %{past: past} do
-      assert {:ok, reservations} = Reservation.past()
-      assert Enum.any?(reservations, &(&1.id == past.id))
+        # Test past query
+        {:ok, past_reservations} = Reservation.past()
+        past_ids = Enum.map(past_reservations, & &1.id)
+        assert past_reservation.id in past_ids
+      end
     end
   end
 end

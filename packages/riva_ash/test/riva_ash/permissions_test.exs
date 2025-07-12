@@ -118,7 +118,7 @@ defmodule RivaAsh.PermissionsTest do
 
     test "metadata categories match permission categories" do
       metadata = Constants.permission_metadata()
-      permissions_by_category = Constants.permissions_by_category()
+      _permissions_by_category = Constants.permissions_by_category()
       
       # Check that each permission's metadata category matches its actual category
       Enum.each(metadata, fn {permission, meta} ->
