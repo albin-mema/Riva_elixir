@@ -9,13 +9,11 @@ config :riva_ash, RivaAsh.Repo,
   username: "postgres",
   password: "postgres",
   hostname: "localhost",
-  database: "riva_ash_test",
+  database: "riva_ash_test#{System.get_env("MIX_TEST_PARTITION")}",
   pool: Ecto.Adapters.SQL.Sandbox,
   pool_size: 10,
-  skip_migrations: true,
-  # Reduce timeout for faster test failures
-  timeout: 5000,
-  # Disable SSL for local testing
+  ownership_timeout: 15000,
+  timeout: 15000,
   ssl: false
 
 # We don't run a server during test. If one is required,
