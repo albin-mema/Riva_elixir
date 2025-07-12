@@ -11,7 +11,42 @@
 # and so on) as they will fail if something goes wrong.
 
 alias RivaAsh.Resources.{Business, Section, Item}
+alias RivaAsh.Accounts.User
 alias RivaAsh.Domain
+import Ash.Expr
+require Ash.Query
+
+IO.puts("Creating admin user...")
+
+# Check if admin user already exists by email
+admin_user = case User |> Ash.Query.filter(expr(email == "admin@example.com")) |> Ash.read_one() do
+  {:ok, user} when not is_nil(user) ->
+    IO.puts("Admin user already exists: #{user.email} (ID: #{user.id})")
+    user
+
+  {:ok, nil} ->
+    # Create the admin user
+    case User
+         |> Ash.Changeset.for_create(:register_with_password, %{
+           email: "admin@example.com",
+           name: "Admin User",
+           role: :admin,
+           password: "admin123456"
+         })
+         |> Ash.create() do
+      {:ok, user} ->
+        IO.puts("Created admin user: #{user.email} (ID: #{user.id})")
+        user
+
+      {:error, error} ->
+        IO.puts("Failed to create admin user: #{inspect(error)}")
+        System.halt(1)
+    end
+
+  {:error, error} ->
+    IO.puts("Error checking for admin user: #{inspect(error)}")
+    System.halt(1)
+end
 
 # Create sample businesses
 sample_businesses = [
@@ -23,7 +58,7 @@ sample_businesses = [
 IO.puts("Creating sample businesses...")
 
 businesses = Enum.map(sample_businesses, fn business_attrs ->
-  case Ash.create(Business, business_attrs, domain: Domain) do
+  case Business |> Ash.Changeset.for_create(:create, business_attrs, actor: admin_user) |> Ash.create() do
     {:ok, business} ->
       IO.puts("Created business: #{business.name} (ID: #{business.id})")
       business
@@ -61,7 +96,7 @@ sections = Enum.flat_map(sample_sections_data, fn %{business_name: business_name
     Enum.map(sections_list, fn section_attrs ->
       section_attrs_with_business = Map.put(section_attrs, :business_id, business.id)
 
-      case Ash.create(Section, section_attrs_with_business, domain: Domain) do
+      case Section |> Ash.Changeset.for_create(:create, section_attrs_with_business, actor: admin_user) |> Ash.create() do
         {:ok, section} ->
           IO.puts("Created section: #{section.name} for #{business.name} (ID: #{section.id})")
           section
@@ -95,7 +130,7 @@ Enum.each(sample_items_data, fn %{section_name: section_name, items: items_list}
 
   if section do
     Enum.each(items_list, fn item_name ->
-      case Ash.create(Item, %{name: item_name, section_id: section.id}, domain: Domain) do
+      case Item |> Ash.Changeset.for_create(:create, %{name: item_name, section_id: section.id}, actor: admin_user) |> Ash.create() do
         {:ok, item} ->
           IO.puts("Created item: #{item.name} in section #{section.name} (ID: #{item.id})")
         {:error, error} ->

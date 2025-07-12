@@ -29,8 +29,17 @@ config :riva_ash, RivaAshWeb.Endpoint,
 # Enable dev routes for dashboard
 config :riva_ash, dev_routes: false
 
-# Do not include metadata nor timestamps in development logs
-config :logger, :console, format: "[$level] $message\n"
+# Enable detailed logging for authentication
+config :logger, :console,
+  format: "[$level] $message\n",
+  level: :debug
+
+# Enable Ash and AshAuthentication debug logging
+config :ash, :log_level, :debug
+config :ash_authentication, :log_level, :debug
+
+# Log SQL queries
+config :riva_ash, RivaAsh.Repo, log_level: :debug
 
 # Set a higher stacktrace during development. Avoid configuring such
 # in production as building large stacktraces may be expensive.

@@ -16,40 +16,36 @@ defmodule RivaAshWeb.BusinessLive do
   alias RivaAsh.Resources.Business
 
   @impl true
-  def mount(_params, _session, %{assigns: %{current_user: user}} = socket) do
-    changeset = Business |> Ash.Changeset.for_create(:create) |> Map.put(:action, :validate)
+  def mount(_params, session, socket) do
+    # Get the current user from the session
+    user = get_current_user_from_session(session)
 
-    socket =
-      socket
-      |> assign(:current_user, user)
-      |> assign(:businesses, list_user_businesses(user))
-      |> assign(:form, AshPhoenix.Form.for_create(Business, :create, actor: user))
-      |> assign(:changeset, changeset)
-      |> assign(:show_form, false)
-      |> assign(:editing_business, nil)
-      |> assign(:loading, false)
-      |> assign(:is_admin, user.role == :admin)
-      |> assign(:business_count, count_user_businesses(user))
-      |> assign(:page_title, "Business Management")
+    if user do
+      changeset = Business |> Ash.Changeset.for_create(:create) |> Map.put(:action, :validate)
 
-    {:ok, socket}
-  end
+      socket =
+        socket
+        |> assign(:current_user, user)
+        |> assign(:businesses, list_user_businesses(user))
+        |> assign(:form, AshPhoenix.Form.for_create(Business, :create, actor: user) |> to_form())
+        |> assign(:changeset, changeset)
+        |> assign(:show_form, false)
+        |> assign(:editing_business, nil)
+        |> assign(:loading, false)
+        |> assign(:is_admin, user.role == :admin)
+        |> assign(:business_count, count_user_businesses(user))
+        |> assign(:page_title, "Business Management")
 
-  def mount(_params, _session, socket) do
-    # This should be handled by the require_authenticated_user plug
-    socket =
-      socket
-      |> assign(:businesses, [])
-      |> assign(:form, nil)
-      |> assign(:changeset, nil)
-      |> assign(:show_form, false)
-      |> assign(:editing_business, nil)
-      |> assign(:loading, false)
-      |> assign(:is_admin, false)
-      |> assign(:business_count, 0)
-      |> assign(:page_title, "Business Management")
+      {:ok, socket}
+    else
+      # User not authenticated, redirect to sign in
+      socket =
+        socket
+        |> put_flash(:error, "You must be logged in to access this page.")
+        |> redirect(to: "/sign-in")
 
-    {:ok, socket}
+      {:ok, socket}
+    end
   end
 
   @impl true
@@ -151,7 +147,7 @@ defmodule RivaAshWeb.BusinessLive do
       socket
       |> assign(:show_form, !socket.assigns.show_form)
       |> assign(:editing_business, nil)
-      |> assign(:form, AshPhoenix.Form.for_create(Business, :create) |> to_form())
+      |> assign(:form, AshPhoenix.Form.for_create(Business, :create, actor: socket.assigns.current_user) |> to_form())
 
     {:noreply, socket}
   end
@@ -162,7 +158,7 @@ defmodule RivaAshWeb.BusinessLive do
       socket
       |> assign(:show_form, false)
       |> assign(:editing_business, nil)
-      |> assign(:form, AshPhoenix.Form.for_create(Business, :create) |> to_form())
+      |> assign(:form, AshPhoenix.Form.for_create(Business, :create, actor: socket.assigns.current_user) |> to_form())
 
     {:noreply, socket}
   end
@@ -175,18 +171,14 @@ defmodule RivaAshWeb.BusinessLive do
 
   @impl true
   def handle_event("save_business", %{"form" => params}, socket) do
+    IO.puts("=== SAVE BUSINESS EVENT TRIGGERED ===")
+    IO.inspect(params, label: "Form params")
+
     socket = assign(socket, :loading, true)
     user = socket.assigns.current_user
 
-    # Add owner_id to params if creating a new business
-    params =
-      if socket.assigns.editing_business do
-        params
-      else
-        Map.put(params, "owner_id", user.id)
-      end
-
-    case AshPhoenix.Form.submit(socket.assigns.form, params: params) do
+    # The Business resource will automatically set owner_id from the actor
+    case AshPhoenix.Form.submit(socket.assigns.form, params: params, actor: user) do
       {:ok, business} ->
         action_text = if socket.assigns.editing_business, do: "updated", else: "created"
 
@@ -214,6 +206,8 @@ defmodule RivaAshWeb.BusinessLive do
         {:noreply, socket}
 
       {:error, form} ->
+        IO.inspect(form, label: "Form errors")
+
         socket =
           socket
           |> assign(:form, form |> to_form())
@@ -357,5 +351,22 @@ defmodule RivaAshWeb.BusinessLive do
     end
   rescue
     _ -> 0
+  end
+
+  defp get_current_user_from_session(session) do
+    user_token = session["user_token"]
+
+    if user_token do
+      case Phoenix.Token.verify(RivaAshWeb.Endpoint, "user_auth", user_token, max_age: 86_400) do
+        {:ok, user_id} ->
+          case Ash.get(RivaAsh.Accounts.User, user_id, domain: RivaAsh.Accounts) do
+            {:ok, user} -> user
+            _ -> nil
+          end
+        _ -> nil
+      end
+    else
+      nil
+    end
   end
 end
