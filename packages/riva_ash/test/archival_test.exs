@@ -1,90 +1,68 @@
 defmodule RivaAsh.ArchivalTest do
-  use ExUnit.Case
+  use RivaAsh.DataCase
+  import Ash.Expr
+  require Ash.Query
+  import RivaAsh.TestHelpers
   alias RivaAsh.Resources.Business
+  alias RivaAsh.Domain
 
   describe "AshArchival functionality" do
     test "soft delete sets archived_at timestamp" do
-      # Create a business
+      # Create a user to act as the business owner
+      user = create_user!(%{role: :admin})
+
+      # Create a business directly using Ash.create! with actor
       business =
         Business
         |> Ash.Changeset.for_create(:create, %{
           name: "Test Business",
-          address: "123 Test St",
-          phone: "555-0123",
-          email: "test@business.com"
+          description: "A test business for archival testing"
         })
-        |> Ash.create!()
+        |> Ash.create!(actor: user, domain: Domain)
 
-      # Verify it exists and archived_at is nil
-      assert business.archived_at == nil
+      # Verify the business was created and not archived
+      assert business.name == "Test Business"
+      assert is_nil(business.archived_at)
 
-      # Soft delete the business using archive action
+      # Archive the business using the archive action
       archived_business =
         business
         |> Ash.Changeset.for_destroy(:archive)
-        |> Ash.destroy!()
+        |> Ash.destroy!(actor: user, domain: Domain, return_destroyed?: true)
 
       # Verify archived_at is set
-      assert archived_business.archived_at != nil
-      assert is_struct(archived_business.archived_at, DateTime)
-    end
-
-    test "hard delete removes record completely" do
-      # Create a business
-      business =
-        Business
-        |> Ash.Changeset.for_create(:create, %{
-          name: "Test Business 2",
-          address: "456 Test Ave",
-          phone: "555-0456",
-          email: "test2@business.com"
-        })
-        |> Ash.create!()
-
-      business_id = business.id
-
-      # Hard delete the business using destroy action
-      business
-      |> Ash.Changeset.for_destroy(:destroy)
-      |> Ash.destroy!()
-
-      # Verify the record is completely gone
-      assert_raise Ash.Error.Query.NotFound, fn ->
-        Business
-        |> Ash.Query.filter(id == ^business_id)
-        |> Ash.read_one!()
-      end
+      refute is_nil(archived_business.archived_at)
+      assert %DateTime{} = archived_business.archived_at
     end
 
     test "archived records are excluded from normal queries by default" do
+      # Create a user to act as the business owner
+      user = create_user!(%{role: :admin})
+
       # Create two businesses
       business1 =
         Business
         |> Ash.Changeset.for_create(:create, %{
           name: "Active Business",
-          address: "789 Active St",
-          phone: "555-0789",
-          email: "active@business.com"
+          description: "This business should remain active"
         })
-        |> Ash.create!()
+        |> Ash.create!(actor: user, domain: Domain)
 
       business2 =
         Business
         |> Ash.Changeset.for_create(:create, %{
-          name: "To Archive Business",
-          address: "321 Archive Ave",
-          phone: "555-0321",
-          email: "archive@business.com"
+          name: "Business to Archive",
+          description: "This business will be archived"
         })
-        |> Ash.create!()
+        |> Ash.create!(actor: user, domain: Domain)
 
-      # Archive one business
+      # Archive the second business
       business2
       |> Ash.Changeset.for_destroy(:archive)
-      |> Ash.destroy!()
+      |> Ash.destroy!(actor: user, domain: Domain)
 
       # Normal query should only return the active business
-      active_businesses = Business |> Ash.read!()
+      active_businesses = Business |> Ash.read!(actor: user, domain: Domain)
 
       assert length(active_businesses) >= 1
       assert Enum.any?(active_businesses, fn b -> b.id == business1.id end)
@@ -92,30 +70,83 @@ defmodule RivaAsh.ArchivalTest do
     end
 
     test "can query archived records explicitly" do
+      # Create a user to act as the business owner
+      user = create_user!(%{role: :admin})
+
       # Create a business
       business =
         Business
         |> Ash.Changeset.for_create(:create, %{
           name: "Archive Test Business",
-          address: "999 Archive St",
-          phone: "555-0999",
-          email: "archivetest@business.com"
+          description: "A business for testing explicit archived record queries"
         })
-        |> Ash.create!()
+        |> Ash.create!(actor: user, domain: Domain)
 
       # Archive the business
       archived_business =
         business
         |> Ash.Changeset.for_destroy(:archive)
-        |> Ash.destroy!()
+        |> Ash.destroy!(actor: user, domain: Domain, return_destroyed?: true)
 
-      # Query for archived records explicitly
-      archived_records =
+      # Query for archived records explicitly using the base query without filter
+      # Since archived records are excluded by default, we need to explicitly include them
+      all_records =
         Business
-        |> Ash.Query.filter(not is_nil(archived_at))
-        |> Ash.read!()
+        |> Ash.Query.unset([:filter])
+        |> Ash.read!(actor: user, domain: Domain)
 
-      assert Enum.any?(archived_records, fn b -> b.id == archived_business.id end)
+      # Verify our archived business is in the results
+      assert Enum.any?(all_records, fn b -> 
+        b.id == archived_business.id && not is_nil(b.archived_at)
+      end)
+    end
+
+    test "hard delete removes record completely" do
+      # Create a user to act as the business owner
+      user = create_user!(%{role: :admin})
+
+      # Create a business
+      business =
+        Business
+        |> Ash.Changeset.for_create(:create, %{
+          name: "Business to Delete",
+          description: "This business will be permanently deleted"
+        })
+        |> Ash.create!(actor: user, domain: Domain)
+
+      business_id = business.id
+
+      # Check if hard delete action exists, if not skip this test
+      actions = Ash.Resource.Info.actions(Business)
+      destroy_actions = Enum.filter(actions, &(&1.type == :destroy))
+      
+      if Enum.any?(destroy_actions, &(&1.name == :destroy_permanently)) do
+        # Hard delete the business
+        business
+        |> Ash.Changeset.for_destroy(:destroy_permanently)
+        |> Ash.destroy!(actor: user, domain: Domain)
+
+        # Verify the record is completely gone (not just archived)
+        all_records =
+          Business
+          |> Ash.Query.unset([:filter])
+          |> Ash.read!(actor: user, domain: Domain)
+
+        refute Enum.any?(all_records, fn b -> b.id == business_id end)
+      else
+        # If no hard delete action exists, use regular destroy which should hard delete
+        business
+        |> Ash.Changeset.for_destroy(:destroy)
+        |> Ash.destroy!(actor: user, domain: Domain)
+
+        # Check that it's gone from all records
+        all_records =
+          Business
+          |> Ash.Query.unset([:filter])
+          |> Ash.read!(actor: user, domain: Domain)
+
+        refute Enum.any?(all_records, fn b -> b.id == business_id end)
+      end
     end
   end
 end

@@ -1,5 +1,5 @@
 defmodule RivaAsh.RecurringReservationsTest do
-  use ExUnit.Case, async: true
+  use RivaAsh.DataCase, async: true
 
   alias RivaAsh.RecurringReservations
   alias RivaAsh.Resources.{Business, Employee, Client, Item, RecurringReservation, RecurringReservationInstance}
@@ -7,9 +7,9 @@ defmodule RivaAsh.RecurringReservationsTest do
   describe "create_recurring_reservation/2" do
     setup do
       {:ok, business} = create_business()
-      {:ok, employee} = create_employee(business.id)
-      {:ok, client} = create_client(business.id)
-      {:ok, item} = create_item(business.id)
+      {:ok, employee} = create_employee(business.id, business.owner)
+      {:ok, client} = create_client(business.id, business.owner)
+      {:ok, item} = create_item(business.id, business.owner)
 
       %{
         business: business,
@@ -106,9 +106,9 @@ defmodule RivaAsh.RecurringReservationsTest do
   describe "process_instance/1" do
     setup do
       {:ok, business} = create_business()
-      {:ok, employee} = create_employee(business.id)
-      {:ok, client} = create_client(business.id)
-      {:ok, item} = create_item(business.id)
+      {:ok, employee} = create_employee(business.id, business.owner)
+      {:ok, client} = create_client(business.id, business.owner)
+      {:ok, item} = create_item(business.id, business.owner)
 
       attrs = %{
         client_id: client.id,
@@ -176,9 +176,9 @@ defmodule RivaAsh.RecurringReservationsTest do
   describe "get_recurring_reservation_stats/1" do
     test "returns correct statistics for recurring reservation" do
       {:ok, business} = create_business()
-      {:ok, employee} = create_employee(business.id)
-      {:ok, client} = create_client(business.id)
-      {:ok, item} = create_item(business.id)
+      {:ok, employee} = create_employee(business.id, business.owner)
+      {:ok, client} = create_client(business.id, business.owner)
+      {:ok, item} = create_item(business.id, business.owner)
 
       attrs = %{
         client_id: client.id,
@@ -204,9 +204,9 @@ defmodule RivaAsh.RecurringReservationsTest do
   describe "cancel_recurring_reservation/2" do
     test "cancels recurring reservation and all pending instances" do
       {:ok, business} = create_business()
-      {:ok, employee} = create_employee(business.id)
-      {:ok, client} = create_client(business.id)
-      {:ok, item} = create_item(business.id)
+      {:ok, employee} = create_employee(business.id, business.owner)
+      {:ok, client} = create_client(business.id, business.owner)
+      {:ok, item} = create_item(business.id, business.owner)
 
       attrs = %{
         client_id: client.id,
@@ -245,9 +245,9 @@ defmodule RivaAsh.RecurringReservationsTest do
   describe "process_all_instances/1" do
     test "processes all pending instances for a recurring reservation" do
       {:ok, business} = create_business()
-      {:ok, employee} = create_employee(business.id)
-      {:ok, client} = create_client(business.id)
-      {:ok, item} = create_item(business.id)
+      {:ok, employee} = create_employee(business.id, business.owner)
+      {:ok, client} = create_client(business.id, business.owner)
+      {:ok, item} = create_item(business.id, business.owner)
 
       attrs = %{
         client_id: client.id,
@@ -276,45 +276,56 @@ defmodule RivaAsh.RecurringReservationsTest do
 
   # Helper functions for creating test data
   defp create_business do
+    # Create a user to act as the business owner
+    user = RivaAsh.Accounts.User
+           |> Ash.Changeset.for_create(:register_with_password, %{
+             name: "Test Owner #{System.unique_integer()}",
+             email: "owner#{System.unique_integer()}@example.com",
+             password: "password123",
+             role: :admin
+           })
+           |> Ash.create!(domain: RivaAsh.Accounts)
+
     attrs = %{
       name: "Test Business #{System.unique_integer()}",
-      address: "123 Test St",
-      phone: "555-0123",
-      email: "test@example.com"
+      description: "A test business for recurring reservations"
     }
 
     Business
     |> Ash.Changeset.for_create(:create, attrs)
-    |> Ash.create(domain: RivaAsh.Domain)
+    |> Ash.Changeset.manage_relationship(:owner, user, type: :append_and_remove)
+    |> Ash.create(actor: user, domain: RivaAsh.Domain)
   end
 
-  defp create_employee(business_id) do
+  defp create_employee(business_id, actor) do
+    unique_id = System.unique_integer([:positive])
     attrs = %{
       business_id: business_id,
-      name: "Test Employee #{System.unique_integer()}",
-      email: "employee@example.com",
+      first_name: "Test",
+      last_name: "Employee #{unique_id}",
+      email: "employee#{unique_id}@example.com",
       role: :staff
     }
 
     Employee
     |> Ash.Changeset.for_create(:create, attrs)
-    |> Ash.create(domain: RivaAsh.Domain)
+    |> Ash.create(actor: actor, domain: RivaAsh.Domain)
   end
 
-  defp create_client(business_id) do
+  defp create_client(business_id, actor) do
     attrs = %{
       business_id: business_id,
       name: "Test Client #{System.unique_integer()}",
-      email: "client@example.com",
+      email: "client#{System.unique_integer()}@example.com",
       phone: "555-0456"
     }
 
     Client
     |> Ash.Changeset.for_create(:create, attrs)
-    |> Ash.create(domain: RivaAsh.Domain)
+    |> Ash.create(actor: actor, domain: RivaAsh.Domain)
   end
 
-  defp create_item(business_id) do
+  defp create_item(business_id, actor) do
     attrs = %{
       business_id: business_id,
       name: "Test Item #{System.unique_integer()}",
@@ -323,6 +334,6 @@ defmodule RivaAsh.RecurringReservationsTest do
 
     Item
     |> Ash.Changeset.for_create(:create, attrs)
-    |> Ash.create(domain: RivaAsh.Domain)
+    |> Ash.create(actor: actor, domain: RivaAsh.Domain)
   end
 end
