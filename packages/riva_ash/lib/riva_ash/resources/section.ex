@@ -25,7 +25,7 @@ defmodule RivaAsh.Resources.Section do
   # Configure admin interface
   admin do
     # Configure table display
-    table_columns([:name, :business, :description])
+    table_columns([:name, :plot, :description])
 
     # Configure relationship display
     relationship_display_fields([:name])
@@ -78,6 +78,7 @@ defmodule RivaAsh.Resources.Section do
     define(:update, action: :update)
     define(:destroy, action: :destroy)
     define(:by_id, args: [:id], action: :by_id)
+    define(:by_plot, args: [:plot_id], action: :by_plot)
     define(:by_business, args: [:business_id], action: :by_business)
     define(:active, action: :active)
     define(:inactive, action: :inactive)
@@ -89,7 +90,7 @@ defmodule RivaAsh.Resources.Section do
     defaults([:read, :update, :destroy])
 
     create :create do
-      accept([:name, :description, :business_id])
+      accept([:name, :description, :plot_id])
       primary?(true)
     end
 
@@ -99,9 +100,14 @@ defmodule RivaAsh.Resources.Section do
       filter(expr(id == ^arg(:id)))
     end
 
+    read :by_plot do
+      argument(:plot_id, :uuid, allow_nil?: false)
+      filter(expr(plot_id == ^arg(:plot_id)))
+    end
+
     read :by_business do
       argument(:business_id, :uuid, allow_nil?: false)
-      filter(expr(business_id == ^arg(:business_id)))
+      filter(expr(plot.business_id == ^arg(:business_id)))
     end
 
     read :active do
@@ -144,11 +150,11 @@ defmodule RivaAsh.Resources.Section do
   end
 
   relationships do
-    belongs_to :business, RivaAsh.Resources.Business do
+    belongs_to :plot, RivaAsh.Resources.Plot do
       allow_nil?(false)
       attribute_writable?(true)
       public?(true)
-      description("The business this section belongs to")
+      description("The plot this section belongs to")
     end
 
     has_many :items, RivaAsh.Resources.Item do
@@ -156,10 +162,12 @@ defmodule RivaAsh.Resources.Section do
       public?(true)
       description("Items contained in this section")
     end
+
+
   end
 
   identities do
-    identity(:unique_name_per_business, [:name, :business_id])
+    identity(:unique_name_per_plot, [:name, :plot_id])
   end
 
   # Helper function for admin dropdowns

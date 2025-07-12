@@ -129,6 +129,8 @@ defmodule RivaAsh.Resources.Client do
     define(:register, action: :register)
     define(:by_id, args: [:id], action: :by_id)
     define(:by_email, args: [:email], action: :by_email)
+    define(:registered, action: :registered)
+    define(:unregistered, action: :unregistered)
   end
 
   actions do

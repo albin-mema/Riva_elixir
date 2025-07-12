@@ -202,10 +202,10 @@ defmodule RivaAsh.Resources.Business do
   end
 
   relationships do
-    has_many :sections, RivaAsh.Resources.Section do
+    has_many :plots, RivaAsh.Resources.Plot do
       destination_attribute(:business_id)
       public?(true)
-      description("Sections belonging to this business")
+      description("Plots owned or managed by this business")
     end
 
     belongs_to :owner, RivaAsh.Accounts.User do

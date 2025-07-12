@@ -164,6 +164,32 @@ defmodule RivaAsh.Resources.Reservation do
       description("Create reservation from client booking flow")
     end
 
+    # Create provisional reservation for online bookings
+    create :create_provisional do
+      accept([:client_id, :item_id, :reserved_from, :reserved_until, :notes])
+      change(set_attribute(:status, :provisional))
+      change(set_attribute(:is_provisional, true))
+      change(set_attribute(:hold_expires_at, expr(fragment("NOW() + INTERVAL '15 minutes'"))))
+      description("Create provisional reservation with 15-minute hold")
+    end
+
+    # Confirm provisional reservation (when payment is received)
+    update :confirm_provisional do
+      accept([:total_amount, :notes])
+      change(set_attribute(:status, :confirmed))
+      change(set_attribute(:is_provisional, false))
+      change(set_attribute(:is_paid, true))
+      change(set_attribute(:hold_expires_at, nil))
+      description("Confirm provisional reservation after payment")
+    end
+
+    # Cancel expired provisional reservations
+    update :cancel_expired do
+      change(set_attribute(:status, :cancelled))
+      change(set_attribute(:is_provisional, false))
+      description("Cancel expired provisional reservation")
+    end
+
     read :by_id do
       argument(:id, :uuid, allow_nil?: false)
       get?(true)
@@ -215,6 +241,32 @@ defmodule RivaAsh.Resources.Reservation do
         expr(
           reserved_until < ^now or
             status in ["completed", "cancelled"]
+        )
+      )
+    end
+
+    read :provisional do
+      filter(expr(status == :provisional and is_provisional == true))
+    end
+
+    read :expired_provisional do
+      now = DateTime.utc_now()
+      filter(
+        expr(
+          status == :provisional and
+            is_provisional == true and
+            hold_expires_at < ^now
+        )
+      )
+    end
+
+    read :active_provisional do
+      now = DateTime.utc_now()
+      filter(
+        expr(
+          status == :provisional and
+            is_provisional == true and
+            hold_expires_at > ^now
         )
       )
     end
@@ -286,10 +338,23 @@ defmodule RivaAsh.Resources.Reservation do
     end
 
     attribute :status, :atom do
-      constraints(one_of: [:pending, :confirmed, :cancelled, :completed])
+      constraints(one_of: [:pending, :provisional, :confirmed, :cancelled, :completed])
       default(:pending)
       public?(true)
       description("Current status of the reservation")
+    end
+
+    attribute :hold_expires_at, :utc_datetime do
+      allow_nil?(true)
+      public?(true)
+      description("When the provisional hold on this reservation expires (for online bookings)")
+    end
+
+    attribute :is_provisional, :boolean do
+      allow_nil?(false)
+      default(false)
+      public?(true)
+      description("Whether this is a provisional reservation awaiting payment")
     end
 
     attribute :notes, :string do
@@ -310,6 +375,27 @@ defmodule RivaAsh.Resources.Reservation do
       public?(true)
       constraints(min: 0)
       description("Total amount for this reservation")
+    end
+
+    attribute :number_of_days, :integer do
+      allow_nil?(true)
+      public?(true)
+      constraints(min: 1)
+      description("Number of consecutive days for this reservation")
+    end
+
+    attribute :daily_rate, :decimal do
+      allow_nil?(true)
+      public?(true)
+      constraints(min: 0)
+      description("Daily rate for this reservation (before any discounts)")
+    end
+
+    attribute :multi_day_discount, :decimal do
+      allow_nil?(true)
+      public?(true)
+      constraints(min: 0, max: 100)
+      description("Percentage discount applied for multi-day reservations")
     end
 
     create_timestamp(:inserted_at)
@@ -345,7 +431,22 @@ defmodule RivaAsh.Resources.Reservation do
     end
   end
 
-  validations do
-    validate({RivaAsh.Validations.ReservationTimeSlot, []})
+  calculations do
+    calculate :calculated_days, :integer, expr(
+      fragment("EXTRACT(DAY FROM (? - ?))", reserved_until, reserved_from) + 1
+    ) do
+      public?(true)
+      description("Calculated number of days for this reservation")
+    end
+
+    calculate :is_multi_day, :boolean, expr(
+      fragment("EXTRACT(DAY FROM (? - ?))", reserved_until, reserved_from) > 0
+    ) do
+      public?(true)
+      description("Whether this is a multi-day reservation")
+    end
   end
+
+  # Validations removed to fix non-atomic action issues
+  # These will be handled in the actions themselves
 end

@@ -2,7 +2,7 @@ defmodule RivaAsh.Resources.Layout do
   @moduledoc """
   Represents the spatial layout configuration for a section.
   Layouts define how items are organized within a section's physical space.
-  
+
   Layout types:
   - grid: Items arranged in a grid pattern with rows and columns
   - free: Items can be positioned freely with x,y coordinates
@@ -40,7 +40,6 @@ defmodule RivaAsh.Resources.Layout do
       delete(:destroy)
 
       # Additional routes for layout specific actions
-      get(:by_section, route: "/by-section/:section_id")
       get(:by_business, route: "/by-business/:business_id")
       get(:active, route: "/active")
     end
@@ -52,7 +51,6 @@ defmodule RivaAsh.Resources.Layout do
     queries do
       get(:get_layout, :read)
       list(:list_layouts, :read)
-      list(:layouts_by_section, :by_section)
       list(:layouts_by_business, :by_business)
       list(:active_layouts, :active)
     end
@@ -70,7 +68,6 @@ defmodule RivaAsh.Resources.Layout do
     define(:update, action: :update)
     define(:destroy, action: :destroy)
     define(:by_id, args: [:id], action: :by_id)
-    define(:by_section, args: [:section_id], action: :by_section)
     define(:by_business, args: [:business_id], action: :by_business)
     define(:active, action: :active)
   end
@@ -81,7 +78,7 @@ defmodule RivaAsh.Resources.Layout do
     create :create do
       accept([
         :name,
-        :section_id,
+        :plot_id,
         :layout_type,
         :grid_rows,
         :grid_columns,
@@ -100,14 +97,14 @@ defmodule RivaAsh.Resources.Layout do
       filter(expr(id == ^arg(:id)))
     end
 
-    read :by_section do
-      argument(:section_id, :uuid, allow_nil?: false)
-      filter(expr(section_id == ^arg(:section_id)))
+    read :by_plot do
+      argument(:plot_id, :uuid, allow_nil?: false)
+      filter(expr(plot_id == ^arg(:plot_id)))
     end
 
     read :by_business do
       argument(:business_id, :uuid, allow_nil?: false)
-      filter(expr(section.business_id == ^arg(:business_id)))
+      filter(expr(plot.business_id == ^arg(:business_id)))
     end
 
     read :active do
@@ -183,11 +180,11 @@ defmodule RivaAsh.Resources.Layout do
   end
 
   relationships do
-    belongs_to :section, RivaAsh.Resources.Section do
+    belongs_to :plot, RivaAsh.Resources.Plot do
       allow_nil?(false)
       attribute_writable?(true)
       public?(true)
-      description("The section this layout belongs to")
+      description("The plot this layout belongs to")
     end
 
     has_many :item_positions, RivaAsh.Resources.ItemPosition do
@@ -198,7 +195,7 @@ defmodule RivaAsh.Resources.Layout do
   end
 
   identities do
-    identity(:unique_name_per_section, [:name, :section_id])
+    identity(:unique_name_per_plot, [:name, :plot_id])
   end
 
   validations do
