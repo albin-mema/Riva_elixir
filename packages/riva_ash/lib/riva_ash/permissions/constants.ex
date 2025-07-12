@@ -1,10 +1,10 @@
 defmodule RivaAsh.Permissions.Constants do
   @moduledoc """
   Centralized constants for all system permissions.
-  
+
   This module defines all possible actions/permissions that users can have in the system.
   Use these constants instead of hardcoded strings to ensure consistency and prevent typos.
-  
+
   The constants are designed to work seamlessly with Ash policies and the SAT solver
   for efficient authorization evaluation.
   """
@@ -15,6 +15,9 @@ defmodule RivaAsh.Permissions.Constants do
   @can_modify_reservations "can_modify_reservations"
   @can_cancel_reservations "can_cancel_reservations"
   @can_view_own_reservations "can_view_own_reservations"
+  @can_confirm_provisional_reservations "can_confirm_provisional_reservations"
+  @can_make_provisional_reservations "can_make_provisional_reservations"
+  @can_extend_reservation_hold "can_extend_reservation_hold"
 
   # Employee management permissions
   @can_view_employees "can_view_employees"
@@ -31,6 +34,18 @@ defmodule RivaAsh.Permissions.Constants do
   @can_view_pricing "can_view_pricing"
   @can_manage_layouts "can_manage_layouts"
   @can_manage_sections "can_manage_sections"
+
+  # Plot management permissions
+  @can_manage_plots_and_layouts "can_manage_plots_and_layouts"
+  @can_create_plot "can_create_plot"
+  @can_update_plot "can_update_plot"
+  @can_delete_plot "can_delete_plot"
+  @can_view_plot "can_view_plot"
+
+  # Item hold permissions
+  @can_create_item_hold "can_create_item_hold"
+  @can_release_item_hold "can_release_item_hold"
+  @can_view_active_holds "can_view_active_holds"
 
   # Client management permissions
   @can_view_clients "can_view_clients"
@@ -58,13 +73,13 @@ defmodule RivaAsh.Permissions.Constants do
   def can_modify_reservations, do: @can_modify_reservations
   def can_cancel_reservations, do: @can_cancel_reservations
   def can_view_own_reservations, do: @can_view_own_reservations
-  
+
   def can_view_employees, do: @can_view_employees
   def can_create_employees, do: @can_create_employees
   def can_modify_employees, do: @can_modify_employees
   def can_give_permissions, do: @can_give_permissions
   def can_revoke_permissions, do: @can_revoke_permissions
-  
+
   def can_manage_business_settings, do: @can_manage_business_settings
   def can_manage_items, do: @can_manage_items
   def can_manage_schedules, do: @can_manage_schedules
@@ -80,11 +95,11 @@ defmodule RivaAsh.Permissions.Constants do
   def can_process_payments, do: @can_process_payments
   def can_view_payments, do: @can_view_payments
   def can_refund_payments, do: @can_refund_payments
-  
+
   def can_view_reports, do: @can_view_reports
   def can_export_data, do: @can_export_data
   def can_view_analytics, do: @can_view_analytics
-  
+
   def can_access_admin_panel, do: @can_access_admin_panel
   def can_manage_system_settings, do: @can_manage_system_settings
   def can_view_audit_logs, do: @can_view_audit_logs

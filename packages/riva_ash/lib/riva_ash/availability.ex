@@ -11,7 +11,8 @@ defmodule RivaAsh.Availability do
   To determine if an item is available for a given time slot.
   """
 
-  import Ash.Query
+  # Only using require to avoid unused import warning
+  require Ash.Query
   require Ash.Query
 
   @doc """
@@ -156,7 +157,10 @@ defmodule RivaAsh.Availability do
 
     # Handle same-day reservations
     if DateTime.to_date(start_datetime) == date do
-      start_time >= schedule.start_time && end_time <= schedule.end_time
+      # For same day reservations, check if the time falls within schedule
+      start_in_range = Time.compare(start_time, schedule.start_time) in [:gt, :eq]
+      end_in_range = Time.compare(end_time, schedule.end_time) in [:lt, :eq]
+      start_in_range and end_in_range
     else
       # Multi-day reservations need more complex logic
       true
@@ -172,9 +176,13 @@ defmodule RivaAsh.Availability do
       {:ok, exceptions} ->
         blocking_exceptions =
           Enum.filter(exceptions, fn exception ->
-            exception.date >= start_date &&
-              exception.date <= end_date &&
-              !exception.is_available &&
+            # Check if exception date is within reservation date range
+            date_after_start = Date.compare(exception.date, start_date) in [:gt, :eq]
+            date_before_end = Date.compare(exception.date, end_date) in [:lt, :eq]
+            
+            # Exception must be in date range, marked as unavailable, and overlap the time
+            date_after_start and date_before_end and
+              not exception.is_available and
               exception_overlaps?(exception, start_datetime, end_datetime)
           end)
 
@@ -247,7 +255,7 @@ defmodule RivaAsh.Availability do
     end
   end
 
-  defp create_24_hour_slots(date, slot_duration_minutes) do
+  defp create_24_hour_slots(_date, slot_duration_minutes) do
     # Create slots from 00:00 to 23:59
     0..23
     |> Enum.flat_map(fn hour ->
@@ -261,7 +269,7 @@ defmodule RivaAsh.Availability do
     end)
   end
 
-  defp get_scheduled_slots(item_id, day_of_week, date, slot_duration_minutes) do
+  defp get_scheduled_slots(item_id, day_of_week, _date, slot_duration_minutes) do
     case RivaAsh.Resources.ItemSchedule.by_item(item_id) do
       {:ok, schedules} ->
         schedules
@@ -276,17 +284,40 @@ defmodule RivaAsh.Availability do
   end
 
   defp generate_slots_for_schedule(schedule, slot_duration_minutes) do
-    start_minutes = Time.to_seconds_after_midnight(schedule.start_time) / 60
-    end_minutes = Time.to_seconds_after_midnight(schedule.end_time) / 60
-
-    start_minutes
-    |> Stream.iterate(&(&1 + slot_duration_minutes))
-    |> Stream.take_while(&(&1 + slot_duration_minutes <= end_minutes))
-    |> Enum.map(fn minutes ->
-      start_time = Time.from_seconds_after_midnight(trunc(minutes * 60))
-      end_time = Time.add(start_time, slot_duration_minutes, :minute)
+    # Create a sequence of start times at regular intervals
+    # from schedule.start_time to just before schedule.end_time
+    
+    # First convert the start and end times to their hour and minute components
+    start_hour = schedule.start_time.hour
+    start_min = schedule.start_time.minute
+    end_hour = schedule.end_time.hour
+    end_min = schedule.end_time.minute
+    
+    # Calculate total minutes for start and end
+    start_minutes = start_hour * 60 + start_min
+    end_minutes = end_hour * 60 + end_min
+    
+    # Generate slot sequences
+    slots = []
+    slots = do_generate_slots(start_minutes, end_minutes, slot_duration_minutes, slots)
+    
+    # Convert minute offsets back to Time structs
+    Enum.map(slots, fn {slot_start, slot_end} ->
+      start_time = Time.new!(div(slot_start, 60), rem(slot_start, 60), 0)
+      end_time = Time.new!(div(slot_end, 60), rem(slot_end, 60), 0)
       {start_time, end_time}
     end)
+  end
+  
+  # Helper function to recursively generate slots
+  defp do_generate_slots(current, ending, duration, acc) do
+    next = current + duration
+    if next <= ending do
+      do_generate_slots(next, ending, duration, [{current, next} | acc])
+    else
+      # Return in chronological order
+      Enum.reverse(acc)
+    end
   end
 
   defp filter_exceptions(slots, item_id, date) do

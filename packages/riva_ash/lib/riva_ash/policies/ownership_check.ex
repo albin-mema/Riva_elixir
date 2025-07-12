@@ -31,7 +31,7 @@ defmodule RivaAsh.Policies.OwnershipCheck do
     
     case {actor, context} do
       # Actor must have an ID
-      {%{id: actor_id}, %{resource: resource}} when is_binary(actor_id) ->
+      {%{id: actor_id}, %{resource: _resource}} when is_binary(actor_id) ->
         # For queries, we can't easily check ownership without the record
         # The SAT solver will handle this via the authorize_if expression
         case Map.get(context, :record) do
