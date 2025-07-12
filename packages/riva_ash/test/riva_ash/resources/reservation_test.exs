@@ -90,19 +90,27 @@ defmodule RivaAsh.Resources.ReservationTest do
         {:ok, reservation} = Reservation.create(reservation_attrs)
 
         # Test confirm transition
-        assert {:ok, confirmed} = Reservation.confirm(reservation.id)
+        confirmed = reservation
+                   |> Ash.Changeset.for_update(:confirm, %{})
+                   |> Ash.update!(domain: RivaAsh.Domain)
         assert confirmed.status == :confirmed
 
         # Test cancel transition (from confirmed)
-        assert {:ok, cancelled} = Reservation.cancel(confirmed.id)
+        cancelled = confirmed
+                   |> Ash.Changeset.for_update(:cancel, %{})
+                   |> Ash.update!(domain: RivaAsh.Domain)
         assert cancelled.status == :cancelled
 
         # Create another reservation to test complete
         {:ok, reservation2} = Reservation.create(reservation_attrs)
-        {:ok, confirmed2} = Reservation.confirm(reservation2.id)
+        confirmed2 = reservation2
+                    |> Ash.Changeset.for_update(:confirm, %{})
+                    |> Ash.update!(domain: RivaAsh.Domain)
 
         # Test complete transition
-        assert {:ok, completed} = Reservation.complete(confirmed2.id)
+        completed = confirmed2
+                   |> Ash.Changeset.for_update(:complete, %{})
+                   |> Ash.update!(domain: RivaAsh.Domain)
         assert completed.status == :completed
       end
     end
@@ -157,12 +165,14 @@ defmodule RivaAsh.Resources.ReservationTest do
         assert future_reservation.id not in active_ids
 
         # Test upcoming query
-        {:ok, upcoming_reservations} = Reservation.upcoming()
+        query = Reservation |> Ash.Query.for_read(:upcoming)
+        {:ok, upcoming_reservations} = Ash.read(query, domain: RivaAsh.Domain)
         upcoming_ids = Enum.map(upcoming_reservations, & &1.id)
         assert future_reservation.id in upcoming_ids
 
         # Test past query
-        {:ok, past_reservations} = Reservation.past()
+        query = Reservation |> Ash.Query.for_read(:past)
+        {:ok, past_reservations} = Ash.read(query, domain: RivaAsh.Domain)
         past_ids = Enum.map(past_reservations, & &1.id)
         assert past_reservation.id in past_ids
       end

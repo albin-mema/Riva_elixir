@@ -116,7 +116,7 @@ defmodule RivaAsh.Resources.Business do
     end
 
     create :create do
-      accept([:name, :description])
+      accept([:name, :description, :owner_id])
       primary?(true)
 
       validate(present([:name]), message: "Business name is required")
@@ -124,9 +124,6 @@ defmodule RivaAsh.Resources.Business do
       validate(match(:name, ~r/^[a-zA-Z0-9\s\-_&.]+$/),
         message: "Business name contains invalid characters"
       )
-
-      # Always set owner_id from the current user's id
-      change(set_attribute(:owner_id, expr(^actor(:id))))
     end
 
     read :by_id do
@@ -211,7 +208,7 @@ defmodule RivaAsh.Resources.Business do
     belongs_to :owner, RivaAsh.Accounts.User do
       attribute_writable?(true)
       public?(true)
-      allow_nil?(false)
+      allow_nil?(true)
       source_attribute(:owner_id)
       destination_attribute(:id)
       description("The user who owns this business")

@@ -144,8 +144,8 @@ defmodule RivaAsh.Resources.Client do
       validate fn changeset, _ ->
         if Ash.Changeset.get_attribute(changeset, :is_registered) do
           case Ash.Changeset.get_attribute(changeset, :email) do
-            nil -> [email: "is required for registered clients"]
-            "" -> [email: "is required for registered clients"]
+            nil -> {:error, field: :email, message: "is required for registered clients"}
+            "" -> {:error, field: :email, message: "is required for registered clients"}
             _ -> :ok
           end
         else
@@ -193,7 +193,10 @@ defmodule RivaAsh.Resources.Client do
         phone = Ash.Changeset.get_attribute(changeset, :phone)
 
         if (is_nil(email) or email == "") and (is_nil(phone) or phone == "") do
-          [email: "must provide at least one of email or phone", phone: "must provide at least one of email or phone"]
+          {:error, [
+            %{field: :email, message: "must provide at least one of email or phone"},
+            %{field: :phone, message: "must provide at least one of email or phone"}
+          ]}
         else
           :ok
         end
@@ -210,7 +213,7 @@ defmodule RivaAsh.Resources.Client do
       # Only allow updating unregistered clients
       validate fn changeset, _ ->
         if Ash.Changeset.get_data(changeset, :is_registered) == true do
-          [is_registered: "already registered"]
+          {:error, field: :is_registered, message: "already registered"}
         else
           :ok
         end
@@ -245,7 +248,7 @@ defmodule RivaAsh.Resources.Client do
 
       validate fn changeset, _ ->
         if Ash.Changeset.get_data(changeset, :email_verified) == true do
-          [email_verified: "already verified"]
+          {:error, field: :email_verified, message: "already verified"}
         else
           :ok
         end
@@ -275,7 +278,10 @@ defmodule RivaAsh.Resources.Client do
         phone = Ash.Changeset.get_attribute(changeset, :phone)
 
         if (is_nil(email) or email == "") and (is_nil(phone) or phone == "") do
-          [email: "must provide at least one of email or phone", phone: "must provide at least one of email or phone"]
+          {:error, [
+            %{field: :email, message: "must provide at least one of email or phone"},
+            %{field: :phone, message: "must provide at least one of email or phone"}
+          ]}
         else
           :ok
         end
@@ -396,8 +402,8 @@ defmodule RivaAsh.Resources.Client do
     validate fn changeset, _ ->
       if Ash.Changeset.get_attribute(changeset, :is_registered) == true do
         case Ash.Changeset.get_attribute(changeset, :email) do
-          nil -> [email: "is required for registered clients"]
-          "" -> [email: "is required for registered clients"]
+          nil -> {:error, field: :email, message: "is required for registered clients"}
+          "" -> {:error, field: :email, message: "is required for registered clients"}
           _ -> :ok
         end
       else

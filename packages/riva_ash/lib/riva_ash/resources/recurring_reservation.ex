@@ -92,7 +92,27 @@ defmodule RivaAsh.Resources.RecurringReservation do
   end
 
   actions do
-    defaults([:read, :update, :destroy])
+    defaults([:read, :destroy])
+
+    update :update do
+      accept([
+        :client_id,
+        :item_id,
+        :employee_id,
+        :start_date,
+        :start_time,
+        :end_time,
+        :consecutive_days,
+        :pattern_type,
+        :notes,
+        :title,
+        :status,
+        :instances_generated,
+        :generated_at
+      ])
+      primary?(true)
+      require_atomic?(false)
+    end
 
     create :create do
       accept([

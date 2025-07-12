@@ -174,7 +174,7 @@ defmodule RivaAsh.TestHelpers do
 
     User
     |> Ash.Changeset.for_create(:register_with_password, attrs)
-    |> Ash.create(domain: Accounts)
+    |> Ash.create(domain: RivaAsh.Accounts)
   end
 
   @doc """
@@ -236,14 +236,15 @@ defmodule RivaAsh.TestHelpers do
   def create_business(attrs \\ %{}, actor) do
     defaults = %{
       name: "Test Business #{System.unique_integer([:positive, :monotonic])}",
-      description: "A test business"
+      description: "A test business",
+      owner_id: actor.id
     }
 
     attrs = Map.merge(defaults, attrs)
 
     RivaAsh.Resources.Business
     |> Ash.Changeset.for_create(:create, attrs)
-    |> Ash.create(actor: actor, domain: Domain)
+    |> Ash.create(actor: actor, domain: RivaAsh.Domain)
   end
 
   @doc """

@@ -44,11 +44,11 @@ defmodule RivaAsh.Factory do
   def business_name do
     one_of([
       string(:alphanumeric, min_length: 2, max_length: 50),
-      fixed_list([
+      member_of([
         "Acme Corp", "Tech Solutions Inc", "Green Valley Farm", "City Cafe",
         "Mountain View Resort", "Ocean Breeze Hotel", "Downtown Fitness",
         "Sunset Restaurant", "Pine Tree Lodge", "River Side Marina"
-      ]) |> member_of()
+      ])
     ])
   end
 
@@ -57,7 +57,9 @@ defmodule RivaAsh.Factory do
     bind(string(:alphanumeric, min_length: 3, max_length: 10), fn username ->
       bind(string(:alphanumeric, min_length: 3, max_length: 10), fn domain ->
         bind(member_of(["com", "org", "net", "edu", "gov"]), fn tld ->
-          constant("#{username}@#{domain}.#{tld}")
+          # Use UUID to ensure uniqueness
+          uuid = Ash.UUID.generate()
+          constant("#{username}#{uuid}@#{domain}.#{tld}")
         end)
       end)
     end)
@@ -92,13 +94,13 @@ defmodule RivaAsh.Factory do
     one_of([
       constant(nil),
       string(:alphanumeric, min_length: 10, max_length: 200),
-      fixed_list([
-        constant("A wonderful place to visit and enjoy quality time"),
-        constant("Professional services with excellent customer care"),
-        constant("Modern facilities with state-of-the-art equipment"),
-        constant("Family-friendly environment with great amenities"),
-        constant("Convenient location with easy access and parking")
-      ]) |> member_of()
+      member_of([
+        "A wonderful place to visit and enjoy quality time",
+        "Professional services with excellent customer care",
+        "Modern facilities with state-of-the-art equipment",
+        "Family-friendly environment with great amenities",
+        "Convenient location with easy access and parking"
+      ])
     ])
   end
 
