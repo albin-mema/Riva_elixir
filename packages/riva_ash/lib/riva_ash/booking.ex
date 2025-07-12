@@ -8,6 +8,8 @@ defmodule RivaAsh.Booking do
   - Unregistered client bookings
   """
 
+  use Timex
+  
   alias RivaAsh.Resources.{Client, Reservation, Item}
   alias RivaAsh.Domain
   alias RivaAsh.Repo
@@ -180,13 +182,13 @@ defmodule RivaAsh.Booking do
 
   defp validate_booking_times(reserved_from, reserved_until) do
     cond do
-      DateTime.compare(reserved_from, DateTime.utc_now()) == :lt ->
+      Timex.compare(reserved_from, Timex.now()) == -1 ->
         {:error, "Cannot create reservation in the past"}
 
-      DateTime.diff(reserved_until, reserved_from, :minute) < @min_booking_minutes ->
+      Timex.diff(reserved_until, reserved_from, :minutes) < @min_booking_minutes ->
         {:error, "Reservation must be at least #{@min_booking_minutes} minutes"}
 
-      DateTime.diff(reserved_until, reserved_from, :hour) > @max_booking_hours ->
+      Timex.diff(reserved_until, reserved_from, :hours) > @max_booking_hours ->
         {:error, "Reservation cannot exceed #{@max_booking_hours} hours"}
 
       true ->
@@ -270,8 +272,8 @@ defmodule RivaAsh.Booking do
     case Reservation.by_item(item_id, domain: Domain) do
       {:ok, reservations} ->
         filtered = Enum.filter(reservations, fn res ->
-          DateTime.compare(res.reserved_from, start_of_day) != :lt and
-          DateTime.compare(res.reserved_until, end_of_day) != :gt and
+          Timex.compare(res.reserved_from, start_of_day) != -1 and
+          Timex.compare(res.reserved_until, end_of_day) != 1 and
           res.status in [:confirmed, :pending]
         end)
         {:ok, filtered}
@@ -288,13 +290,13 @@ defmodule RivaAsh.Booking do
   end
 
   defp generate_slots(current_time, end_time, duration_minutes, acc) do
-    slot_end = DateTime.add(current_time, duration_minutes * 60, :second)
+    slot_end = Timex.shift(current_time, minutes: duration_minutes)
 
-    if DateTime.compare(slot_end, end_time) == :gt do
+    if Timex.compare(slot_end, end_time) == 1 do
       Enum.reverse(acc)
     else
       slot = %{start_time: current_time, end_time: slot_end, available: true}
-      next_time = DateTime.add(current_time, duration_minutes * 60, :second)
+      next_time = Timex.shift(current_time, minutes: duration_minutes)
       generate_slots(next_time, end_time, duration_minutes, [slot | acc])
     end
   end
@@ -310,7 +312,7 @@ defmodule RivaAsh.Booking do
   end
 
   defp times_overlap?(start1, end1, start2, end2) do
-    DateTime.compare(start1, end2) == :lt and DateTime.compare(end1, start2) == :gt
+    Timex.compare(start1, end2) == -1 and Timex.compare(end1, start2) == 1
   end
 
   defp format_error(error) when is_binary(error), do: error

@@ -81,6 +81,7 @@ defmodule RivaAsh.MixProject do
       {:gettext, "~> 0.24"},
       {:jason, "~> 1.4"},
       {:dns_cluster, "~> 0.1.1"},
+      {:timex, "~> 3.7"},
 
       # UI Components
       {:salad_ui, "~> 1.0.0-beta.3"},

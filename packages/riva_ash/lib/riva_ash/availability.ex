@@ -11,6 +11,8 @@ defmodule RivaAsh.Availability do
   To determine if an item is available for a given time slot.
   """
 
+  use Timex
+  
   # Only using require to avoid unused import warning
   require Ash.Query
   require Ash.Query
@@ -58,7 +60,7 @@ defmodule RivaAsh.Availability do
     with {:ok, item} <- get_item(item_id),
          :ok <- validate_item_active(item) do
       # Get base schedule for the day
-      day_of_week = Date.day_of_week(date) |> convert_to_sunday_start()
+      day_of_week = Timex.weekday(date) |> convert_to_sunday_start()
 
       base_slots =
         if item.is_always_available do
@@ -93,7 +95,7 @@ defmodule RivaAsh.Availability do
   defp validate_item_active(_), do: {:error, :item_inactive}
 
   defp validate_duration(item, start_datetime, end_datetime) do
-    duration_minutes = DateTime.diff(end_datetime, start_datetime, :minute)
+    duration_minutes = Timex.diff(end_datetime, start_datetime, :minutes)
 
     cond do
       duration_minutes <= 0 ->
@@ -113,14 +115,15 @@ defmodule RivaAsh.Availability do
   defp check_schedule_availability(%{is_always_available: true}, _, _), do: :ok
 
   defp check_schedule_availability(item, start_datetime, end_datetime) do
-    start_date = DateTime.to_date(start_datetime)
-    end_date = DateTime.to_date(end_datetime)
+    start_date = Timex.to_date(start_datetime)
+    end_date = Timex.to_date(end_datetime)
 
     # Check each day in the range
-    start_date
-    |> Date.range(end_date)
+    Timex.Interval.new(from: start_date, until: end_date)
+    |> Timex.Interval.with_step(days: 1)
+    |> Enum.map(&Timex.to_date/1)
     |> Enum.all?(fn date ->
-      day_of_week = Date.day_of_week(date) |> convert_to_sunday_start()
+      day_of_week = Timex.weekday(date) |> convert_to_sunday_start()
       check_day_schedule(item.id, day_of_week, start_datetime, end_datetime, date)
     end)
     |> case do
@@ -156,10 +159,10 @@ defmodule RivaAsh.Availability do
     end_time = DateTime.to_time(end_datetime)
 
     # Handle same-day reservations
-    if DateTime.to_date(start_datetime) == date do
+    if Timex.to_date(start_datetime) == date do
       # For same day reservations, check if the time falls within schedule
-      start_in_range = Time.compare(start_time, schedule.start_time) in [:gt, :eq]
-      end_in_range = Time.compare(end_time, schedule.end_time) in [:lt, :eq]
+      start_in_range = Timex.compare(start_time, schedule.start_time) in [1, 0]
+      end_in_range = Timex.compare(end_time, schedule.end_time) in [-1, 0]
       start_in_range and end_in_range
     else
       # Multi-day reservations need more complex logic
@@ -168,8 +171,8 @@ defmodule RivaAsh.Availability do
   end
 
   defp check_exceptions(item_id, start_datetime, end_datetime) do
-    start_date = DateTime.to_date(start_datetime)
-    end_date = DateTime.to_date(end_datetime)
+    start_date = Timex.to_date(start_datetime)
+    end_date = Timex.to_date(end_datetime)
 
     # Get all exceptions in the date range
     case RivaAsh.Resources.AvailabilityException.by_item(item_id) do
@@ -177,8 +180,8 @@ defmodule RivaAsh.Availability do
         blocking_exceptions =
           Enum.filter(exceptions, fn exception ->
             # Check if exception date is within reservation date range
-            date_after_start = Date.compare(exception.date, start_date) in [:gt, :eq]
-            date_before_end = Date.compare(exception.date, end_date) in [:lt, :eq]
+            date_after_start = Timex.compare(exception.date, start_date) in [1, 0]
+            date_before_end = Timex.compare(exception.date, end_date) in [-1, 0]
             
             # Exception must be in date range, marked as unavailable, and overlap the time
             date_after_start and date_before_end and
@@ -208,8 +211,8 @@ defmodule RivaAsh.Availability do
       exception_end = DateTime.new!(exception.date, exception.end_time)
 
       # Check for overlap: start < exception_end && end > exception_start
-      DateTime.compare(start_datetime, exception_end) == :lt &&
-        DateTime.compare(end_datetime, exception_start) == :gt
+      Timex.compare(start_datetime, exception_end) == -1 &&
+        Timex.compare(end_datetime, exception_start) == 1
     end
   end
 
@@ -239,18 +242,18 @@ defmodule RivaAsh.Availability do
 
   defp reservations_overlap?(reservation, start_datetime, end_datetime) do
     # Check for overlap: start < reservation_end && end > reservation_start
-    DateTime.compare(start_datetime, reservation.reserved_until) == :lt &&
-      DateTime.compare(end_datetime, reservation.reserved_from) == :gt
+    Timex.compare(start_datetime, reservation.reserved_until) == -1 &&
+      Timex.compare(end_datetime, reservation.reserved_from) == 1
   end
 
   # Helper functions for slot generation
 
   defp convert_to_sunday_start(day_of_week) do
-    # Convert from Monday=1 to Sunday=0 format
+    # Timex uses Monday=1, but we need Sunday=0 format
     case day_of_week do
-      # Sunday
+      # Sunday (Timex returns 7 for Sunday)
       7 -> 0
-      # Monday=1, Tuesday=2, etc.
+      # Monday=1, Tuesday=2, etc. stay the same
       n -> n
     end
   end
@@ -342,8 +345,8 @@ defmodule RivaAsh.Availability do
       true
     else
       # Check time overlap
-      Time.compare(start_time, exception.end_time) == :lt &&
-        Time.compare(end_time, exception.start_time) == :gt
+      Timex.compare(start_time, exception.end_time) == -1 &&
+        Timex.compare(end_time, exception.start_time) == 1
     end
   end
 
@@ -353,8 +356,8 @@ defmodule RivaAsh.Availability do
         day_reservations =
           Enum.filter(reservations, fn reservation ->
             reservation.status in [:confirmed, :pending] &&
-              (DateTime.to_date(reservation.reserved_from) == date ||
-                 DateTime.to_date(reservation.reserved_until) == date)
+              (Timex.to_date(reservation.reserved_from) == date ||
+                 Timex.to_date(reservation.reserved_until) == date)
           end)
 
         Enum.filter(slots, fn {start_time, end_time} ->

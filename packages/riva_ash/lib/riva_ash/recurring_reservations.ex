@@ -9,6 +9,8 @@ defmodule RivaAsh.RecurringReservations do
   - Managing recurring reservation lifecycle
   """
 
+  use Timex
+  
   alias RivaAsh.Resources.{RecurringReservation, RecurringReservationInstance, Reservation}
 
   @doc """
@@ -193,7 +195,7 @@ defmodule RivaAsh.RecurringReservations do
         attrs = %{
           status: :skipped,
           skip_reason: reason || "Recurring reservation cancelled",
-          failed_at: DateTime.utc_now()
+          failed_at: Timex.now()
         }
 
         instance
@@ -232,7 +234,7 @@ defmodule RivaAsh.RecurringReservations do
         # Generate all consecutive days
         0..(consecutive_days - 1)
         |> Enum.map(fn day_offset ->
-          Date.add(start_date, day_offset)
+          Timex.shift(start_date, days: day_offset)
         end)
 
       :weekdays_only ->
@@ -243,7 +245,7 @@ defmodule RivaAsh.RecurringReservations do
         # Default to all days
         0..(consecutive_days - 1)
         |> Enum.map(fn day_offset ->
-          Date.add(start_date, day_offset)
+          Timex.shift(start_date, days: day_offset)
         end)
     end
 
@@ -251,10 +253,10 @@ defmodule RivaAsh.RecurringReservations do
   end
 
   defp generate_weekdays_only(start_date, target_days) do
-    Stream.iterate(start_date, &Date.add(&1, 1))
+    Stream.iterate(start_date, &Timex.shift(&1, days: 1))
     |> Stream.filter(fn date ->
-      # Monday = 1, Sunday = 7
-      Date.day_of_week(date) in 1..5
+      # Monday = 1, Sunday = 7 in Timex
+      Timex.weekday(date) in 1..5
     end)
     |> Enum.take(target_days)
   end
@@ -318,8 +320,8 @@ defmodule RivaAsh.RecurringReservations do
         has_conflict = reservations
         |> Enum.any?(fn reservation ->
           reservation.status in [:pending, :confirmed] and
-          DateTime.compare(reservation.reserved_from, end_datetime) == :lt and
-          DateTime.compare(reservation.reserved_until, start_datetime) == :gt
+          Timex.compare(reservation.reserved_from, end_datetime) == -1 and
+          Timex.compare(reservation.reserved_until, start_datetime) == 1
         end)
 
         if has_conflict do
@@ -374,7 +376,7 @@ defmodule RivaAsh.RecurringReservations do
     attrs = %{
       status: :failed,
       error_message: reason,
-      failed_at: DateTime.utc_now()
+      failed_at: Timex.now()
     }
 
     instance
@@ -386,7 +388,7 @@ defmodule RivaAsh.RecurringReservations do
     attrs = %{
       status: :confirmed,
       reservation_id: reservation.id,
-      created_at: DateTime.utc_now(),
+      created_at: Timex.now(),
       error_message: nil,
       failed_at: nil
     }

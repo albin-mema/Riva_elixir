@@ -1,4 +1,5 @@
 defmodule RivaAsh.PropertyHelpers do
+  use Timex
   @moduledoc """
   Helper functions for property-based testing.
 
@@ -168,14 +169,14 @@ defmodule RivaAsh.PropertyHelpers do
       :future ->
         # Test that future dates are accepted
         check all attrs <- attrs_generator do
-          future_time = DateTime.add(DateTime.utc_now(), 3600, :second)
+          future_time = Timex.shift(Timex.now(), hours: 1)
           valid_attrs = Map.put(attrs, datetime_field, future_time)
           assert_valid_creation(resource_module, valid_attrs)
         end
 
         # Test that past dates are rejected
         check all attrs <- attrs_generator do
-          past_time = DateTime.add(DateTime.utc_now(), -3600, :second)
+          past_time = Timex.shift(Timex.now(), hours: -1)
           invalid_attrs = Map.put(attrs, datetime_field, past_time)
           assert_invalid_creation(resource_module, invalid_attrs, datetime_field)
         end
@@ -183,7 +184,7 @@ defmodule RivaAsh.PropertyHelpers do
       :past ->
         # Test that past dates are accepted
         check all attrs <- attrs_generator do
-          past_time = DateTime.add(DateTime.utc_now(), -3600, :second)
+          past_time = Timex.shift(Timex.now(), hours: -1)
           valid_attrs = Map.put(attrs, datetime_field, past_time)
           assert_valid_creation(resource_module, valid_attrs)
         end

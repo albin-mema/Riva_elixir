@@ -26,6 +26,7 @@ defmodule RivaAsh.Factory do
   """
 
   use ExUnitProperties
+  use Timex
   import StreamData
 
   alias RivaAsh.Resources.{
@@ -106,8 +107,8 @@ defmodule RivaAsh.Factory do
     bind(integer(1..365), fn days ->
       bind(integer(0..23), fn hours ->
         bind(integer(0..59), fn minutes ->
-          base_time = DateTime.utc_now()
-          DateTime.add(base_time, days * 24 * 3600 + hours * 3600 + minutes * 60, :second)
+          base_time = Timex.now()
+          Timex.shift(base_time, days: days, hours: hours, minutes: minutes)
           |> constant()
         end)
       end)
@@ -119,8 +120,8 @@ defmodule RivaAsh.Factory do
     bind(integer(1..365), fn days ->
       bind(integer(0..23), fn hours ->
         bind(integer(0..59), fn minutes ->
-          base_time = DateTime.utc_now()
-          DateTime.add(base_time, -(days * 24 * 3600 + hours * 3600 + minutes * 60), :second)
+          base_time = Timex.now()
+          Timex.shift(base_time, days: -days, hours: -hours, minutes: -minutes)
           |> constant()
         end)
       end)
@@ -227,10 +228,10 @@ defmodule RivaAsh.Factory do
               bind(description(), fn notes ->
                 bind(one_of([constant(nil), uuid()]), fn employee_id ->
                   # Ensure reserved_until is after reserved_from
-                  actual_until = if DateTime.compare(reserved_until, reserved_from) == :gt do
+                  actual_until = if Timex.compare(reserved_until, reserved_from) == 1 do
                     reserved_until
                   else
-                    DateTime.add(reserved_from, 3600, :second)  # Add 1 hour
+                    Timex.shift(reserved_from, hours: 1)  # Add 1 hour
                   end
 
                   %{
