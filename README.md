@@ -69,6 +69,8 @@ pnpm setup && pnpm dev
 
 -   `pnpm test` - Run Elixir tests
 -   `pnpm test:backend` - Run Elixir tests
+-   `pnpm test:property` - Run property-based tests
+-   `./run-property-tests.sh` - Run property tests with database setup
 
 ### Database
 
@@ -226,6 +228,29 @@ The application supports environment variables for database configuration:
 - `DB_PORT` - Database port (default: 5432)
 
 Environment variables can be set in your shell or added to configuration files as needed.
+
+## Property-Based Testing
+
+The project uses property-based testing to verify system behavior across a wide range of inputs. Unlike traditional unit tests that test specific examples, property-based tests generate many test cases automatically.
+
+### Running Property Tests
+
+```bash
+# Run property tests with proper database setup
+./run-property-tests.sh
+
+# Or use the npm command
+pnpm test:property
+```
+
+### Key Features
+
+- **Automatic Test Generation**: Tests a wide range of possible inputs
+- **Randomized Input**: Finds edge cases traditional tests might miss
+- **Failure Minimization**: When a test fails, automatically finds the smallest failing case
+- **Stateful Testing**: Can test complex sequences of operations
+
+Property tests are tagged with `@tag property: true` in the test files and use StreamData generators to create test inputs.
 
 ## Resources Overview
 
