@@ -309,17 +309,16 @@ defmodule RivaAsh.Resources.Reservation do
       filter(expr(is_paid == false))
     end
 
-    # TODO: Re-enable reactor action once reactor syntax is fixed
-    # action :create_with_validation, :struct do
-    #   constraints instance_of: RivaAsh.Resources.Reservation
-    #   argument :client_id, :uuid, allow_nil?: false
-    #   argument :employee_id, :uuid, allow_nil?: false
-    #   argument :item_id, :uuid, allow_nil?: false
-    #   argument :start_datetime, :utc_datetime, allow_nil?: false
-    #   argument :end_datetime, :utc_datetime, allow_nil?: false
-    #   argument :notes, :string, allow_nil?: true
-    #   run RivaAsh.Reactors.ReservationReactor
-    # end
+    action :create_with_validation, :struct do
+      constraints instance_of: RivaAsh.Resources.Reservation
+      argument :client_id, :uuid, allow_nil?: false
+      argument :employee_id, :uuid, allow_nil?: false
+      argument :item_id, :uuid, allow_nil?: false
+      argument :start_datetime, :utc_datetime, allow_nil?: false
+      argument :end_datetime, :utc_datetime, allow_nil?: false
+      argument :notes, :string, allow_nil?: true
+      run RivaAsh.Reactors.ReservationReactor
+    end
   end
 
   attributes do

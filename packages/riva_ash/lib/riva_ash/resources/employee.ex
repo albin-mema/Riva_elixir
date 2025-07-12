@@ -283,8 +283,7 @@ defmodule RivaAsh.Resources.Employee do
   end
 
   validations do
-    # TODO: Fix email validation - temporarily disabled for property-based testing
-    # validate(match(~r/^[^\s]+@[^\s]+$/, :email), message: "must be a valid email address")
+    validate(match(~r/^[^\s]+@[^\s]+$/, :email), message: "must be a valid email address")
     validate(present([:first_name, :last_name]), message: "first and last name are required")
   end
 

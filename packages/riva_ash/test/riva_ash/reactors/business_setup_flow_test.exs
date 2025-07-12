@@ -5,7 +5,6 @@ defmodule RivaAsh.Reactors.BusinessSetupFlowTest do
   alias RivaAsh.Resources.{Business, Plot, Layout, Section, ItemType, Pricing}
 
   describe "BusinessSetupFlow" do
-    @tag :skip
     test "successfully sets up a complete business with plot and initial configuration" do
       # Create a user to be the business owner
       user = RivaAsh.Accounts.User

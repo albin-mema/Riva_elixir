@@ -157,18 +157,17 @@ defmodule RivaAsh.Resources.Business do
       # For now, this is a placeholder that can be enhanced
     end
 
-    # TODO: Re-enable reactor action once reactor syntax is fixed
-    # action :create_complete_setup, :struct do
-    #   constraints instance_of: RivaAsh.Resources.Item
-    #   argument :business_name, :string, allow_nil?: false
-    #   argument :business_description, :string, allow_nil?: true
-    #   argument :section_name, :string, allow_nil?: false
-    #   argument :section_description, :string, allow_nil?: true
-    #   argument :item_name, :string, allow_nil?: false
-    #   argument :item_description, :string, allow_nil?: true
-    #   argument :item_capacity, :integer, allow_nil?: false, default: 1
-    #   run RivaAsh.Reactors.ExampleReactor
-    # end
+    action :create_complete_setup, :struct do
+      constraints instance_of: RivaAsh.Resources.Item
+      argument :business_name, :string, allow_nil?: false
+      argument :business_description, :string, allow_nil?: true
+      argument :section_name, :string, allow_nil?: false
+      argument :section_description, :string, allow_nil?: true
+      argument :item_name, :string, allow_nil?: false
+      argument :item_description, :string, allow_nil?: true
+      argument :item_capacity, :integer, allow_nil?: false, default: 1
+      run RivaAsh.Reactors.ExampleReactor
+    end
   end
 
   attributes do

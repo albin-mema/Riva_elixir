@@ -303,8 +303,52 @@ defmodule RivaAsh.Resources.Payment do
       message: "Currency must be a valid 3-letter ISO code"
     )
 
-    # TODO: Add conditional validations for payment_date and refund_reason
-    # These would need custom validation functions
+    # Conditional validation for payment_date
+    validate fn changeset, _context ->
+      status = Ash.Changeset.get_attribute(changeset, :status)
+      payment_date = Ash.Changeset.get_attribute(changeset, :payment_date)
+
+      if status in [:paid, :partially_paid] && is_nil(payment_date) do
+        {:error, field: :payment_date, message: "Payment date is required when payment is marked as paid"}
+      else
+        :ok
+      end
+    end, message: "Payment date is required when status is paid or partially_paid"
+
+    # Conditional validation for refund_reason
+    validate fn changeset, _context ->
+      refund_amount = Ash.Changeset.get_attribute(changeset, :refund_amount)
+      refund_reason = Ash.Changeset.get_attribute(changeset, :refund_reason)
+
+      if refund_amount && Decimal.gt?(refund_amount, 0) && (is_nil(refund_reason) || refund_reason == "") do
+        {:error, field: :refund_reason, message: "Refund reason is required when refund amount is specified"}
+      else
+        :ok
+      end
+    end, message: "Refund reason is required when refund amount is greater than 0"
+
+    # Validation to ensure payment_date is not in the future
+    validate fn changeset, _context ->
+      payment_date = Ash.Changeset.get_attribute(changeset, :payment_date)
+
+      if payment_date && Date.compare(payment_date, Date.utc_today()) == :gt do
+        {:error, field: :payment_date, message: "Payment date cannot be in the future"}
+      else
+        :ok
+      end
+    end, message: "Payment date cannot be in the future"
+
+    # Validation to ensure refund amount doesn't exceed paid amount
+    validate fn changeset, _context ->
+      amount_paid = Ash.Changeset.get_attribute(changeset, :amount_paid)
+      refund_amount = Ash.Changeset.get_attribute(changeset, :refund_amount)
+
+      if amount_paid && refund_amount && Decimal.gt?(refund_amount, amount_paid) do
+        {:error, field: :refund_amount, message: "Refund amount cannot exceed amount paid"}
+      else
+        :ok
+      end
+    end, message: "Refund amount cannot exceed the amount paid"
   end
 
   calculations do

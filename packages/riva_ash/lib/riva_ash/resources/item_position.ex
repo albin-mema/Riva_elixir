@@ -214,13 +214,6 @@ defmodule RivaAsh.Resources.ItemPosition do
   end
 
   validations do
-    # Grid positioning validation - simplified for now
-    # TODO: Add custom validation functions for layout-specific rules
-
-    # Ensure grid position is within layout bounds
-    # Note: These validations would need custom validation functions
-    # For now, we'll rely on application-level validation
-
     # Ensure dimensions are positive
     validate(compare(:width, greater_than: 0),
       message: "Width must be greater than 0",
@@ -231,13 +224,156 @@ defmodule RivaAsh.Resources.ItemPosition do
       message: "Height must be greater than 0",
       where: [present(:height)]
     )
+
+    # Custom validation to ensure position is within layout bounds
+    validate fn changeset, _context ->
+      layout_id = Ash.Changeset.get_attribute(changeset, :layout_id)
+      grid_row = Ash.Changeset.get_attribute(changeset, :grid_row)
+      grid_column = Ash.Changeset.get_attribute(changeset, :grid_column)
+      width = Ash.Changeset.get_attribute(changeset, :width) || 1
+      height = Ash.Changeset.get_attribute(changeset, :height) || 1
+
+      if layout_id && grid_row && grid_column do
+        case check_layout_bounds(layout_id, grid_row, grid_column, width, height) do
+          :ok -> :ok
+          {:error, message} -> {:error, field: :grid_row, message: message}
+        end
+      else
+        :ok
+      end
+    end, message: "Position must be within layout boundaries"
+
+    # Custom validation to prevent overlapping positions
+    validate fn changeset, _context ->
+      layout_id = Ash.Changeset.get_attribute(changeset, :layout_id)
+      grid_row = Ash.Changeset.get_attribute(changeset, :grid_row)
+      grid_column = Ash.Changeset.get_attribute(changeset, :grid_column)
+      width = Ash.Changeset.get_attribute(changeset, :width) || 1
+      height = Ash.Changeset.get_attribute(changeset, :height) || 1
+
+      if layout_id && grid_row && grid_column do
+        case check_position_overlap(layout_id, grid_row, grid_column, width, height, changeset) do
+          :ok -> :ok
+          {:error, message} -> {:error, field: :grid_row, message: message}
+        end
+      else
+        :ok
+      end
+    end, message: "Position overlaps with existing item"
   end
 
-  # TODO: Add calculations for position validation
-  # calculations do
-  #   calculate :is_within_bounds, :boolean, expr(true) do
-  #     public?(true)
-  #     description("Whether the position is within the layout bounds")
-  #   end
-  # end
+  calculations do
+    calculate :is_within_bounds, :boolean do
+      public?(true)
+      description("Whether the position is within the layout bounds")
+
+      calculation fn records, _context ->
+        Enum.map(records, fn record ->
+          case get_layout_dimensions(record.layout_id) do
+            {:ok, {max_rows, max_columns}} ->
+              width = record.width || 1
+              height = record.height || 1
+
+              record.grid_row >= 1 &&
+              record.grid_column >= 1 &&
+              (record.grid_row + height - 1) <= max_rows &&
+              (record.grid_column + width - 1) <= max_columns
+            {:error, _} ->
+              false
+          end
+        end)
+      end
+    end
+
+    calculate :occupied_cells, {:array, :map} do
+      public?(true)
+      description("List of all grid cells occupied by this item")
+
+      calculation fn records, _context ->
+        Enum.map(records, fn record ->
+          width = record.width || 1
+          height = record.height || 1
+
+          for row <- record.grid_row..(record.grid_row + height - 1),
+              col <- record.grid_column..(record.grid_column + width - 1) do
+            %{row: row, column: col}
+          end
+        end)
+      end
+    end
+  end
+
+  # Helper function to check layout bounds
+  defp check_layout_bounds(layout_id, grid_row, grid_column, width, height) do
+    case get_layout_dimensions(layout_id) do
+      {:ok, {max_rows, max_columns}} ->
+        cond do
+          grid_row < 1 || grid_column < 1 ->
+            {:error, "Grid position must be positive (starting from 1)"}
+
+          (grid_row + height - 1) > max_rows ->
+            {:error, "Item extends beyond layout height (#{max_rows} rows)"}
+
+          (grid_column + width - 1) > max_columns ->
+            {:error, "Item extends beyond layout width (#{max_columns} columns)"}
+
+          true ->
+            :ok
+        end
+      {:error, _} ->
+        {:error, "Could not validate layout bounds"}
+    end
+  end
+
+  # Helper function to check for position overlaps
+  defp check_position_overlap(layout_id, grid_row, grid_column, width, height, changeset) do
+    import Ash.Expr
+
+    # Get the ID of the current record if it's an update
+    current_id = Ash.Changeset.get_data(changeset, :id)
+
+    # Calculate all cells this item will occupy
+    occupied_cells = for row <- grid_row..(grid_row + height - 1),
+                         col <- grid_column..(grid_column + width - 1) do
+      {row, col}
+    end
+
+    # Find existing positions in the same layout
+    query = __MODULE__
+    |> Ash.Query.filter(expr(layout_id == ^layout_id))
+    |> Ash.Query.load([:occupied_cells])
+
+    # Exclude current record if this is an update
+    query = if current_id do
+      Ash.Query.filter(query, expr(id != ^current_id))
+    else
+      query
+    end
+
+    case Ash.read(query, domain: RivaAsh.Domain) do
+      {:ok, existing_positions} ->
+        overlapping = Enum.any?(existing_positions, fn pos ->
+          existing_cells = Enum.map(pos.occupied_cells, fn cell -> {cell.row, cell.column} end)
+          Enum.any?(occupied_cells, fn cell -> cell in existing_cells end)
+        end)
+
+        if overlapping do
+          {:error, "Position overlaps with existing item"}
+        else
+          :ok
+        end
+      {:error, _} ->
+        :ok  # If we can't check, allow the operation
+    end
+  end
+
+  # Helper function to get layout dimensions
+  defp get_layout_dimensions(layout_id) do
+    case RivaAsh.Resources.Layout.by_id(layout_id) do
+      {:ok, layout} ->
+        {:ok, {layout.grid_rows, layout.grid_columns}}
+      {:error, reason} ->
+        {:error, reason}
+    end
+  end
 end
