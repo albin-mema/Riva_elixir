@@ -15,11 +15,13 @@ defmodule RivaAsh.Domain do
 
   resources do
     resource(RivaAsh.Resources.Business)
+    resource(RivaAsh.Resources.Plot)
     resource(RivaAsh.Resources.Section)
     resource(RivaAsh.Resources.ItemType)
     resource(RivaAsh.Resources.Item)
     resource(RivaAsh.Resources.Layout)
     resource(RivaAsh.Resources.ItemPosition)
+    resource(RivaAsh.Resources.ItemHold)
     resource(RivaAsh.Resources.Client)
     resource(RivaAsh.Resources.Employee)
     resource(RivaAsh.Resources.Permission)
