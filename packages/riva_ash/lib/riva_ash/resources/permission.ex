@@ -18,12 +18,16 @@ defmodule RivaAsh.Resources.Permission do
     extensions: [
       AshJsonApi.Resource,
       AshGraphql.Resource,
+      AshPaperTrail.Resource,
+      AshArchival.Resource,
       AshAdmin.Resource
     ]
 
   import RivaAsh.ResourceHelpers
 
   standard_postgres("permissions")
+  standard_archive()
+  standard_paper_trail()
 
   policies do
     # Only admins and managers can manage permissions
@@ -36,6 +40,10 @@ defmodule RivaAsh.Resources.Permission do
     policy action_type(:read) do
       authorize_if(actor_present())
     end
+  end
+
+  graphql do
+    type(:permission)
   end
 
   json_api do

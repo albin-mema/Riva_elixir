@@ -166,8 +166,7 @@ defmodule RivaAsh.Resources.ItemSchedule do
 
   validations do
     # Time range validation
-    validate({RivaAsh.Validations, :validate_time_range},
-      start_field: :start_time, end_field: :end_time)
+    validate(&RivaAsh.Validations.validate_time_range/2)
 
     # Day of week validation (0=Sunday, 1=Monday, ..., 6=Saturday)
     validate(compare(:day_of_week, greater_than_or_equal_to: 0),
@@ -178,6 +177,48 @@ defmodule RivaAsh.Resources.ItemSchedule do
     # Required fields
     validate(present([:item_id, :day_of_week, :start_time, :end_time]),
       message: "All schedule fields are required")
+  end
+
+  calculations do
+    calculate :is_weekday, :boolean, expr(day_of_week >= 1 and day_of_week <= 5) do
+      public?(true)
+      description("Whether this schedule is for a weekday (Monday-Friday)")
+    end
+
+    calculate :is_weekend, :boolean, expr(day_of_week == 0 or day_of_week == 6) do
+      public?(true)
+      description("Whether this schedule is for a weekend (Saturday-Sunday)")
+    end
+
+    calculate :day_type, :string, expr(
+      if(day_of_week >= 1 and day_of_week <= 5, "weekday", "weekend")
+    ) do
+      public?(true)
+      description("Day type as string: 'weekday' or 'weekend'")
+    end
+
+    calculate :day_name, :string, expr(
+      cond do
+        day_of_week == 0 -> "Sunday"
+        day_of_week == 1 -> "Monday"
+        day_of_week == 2 -> "Tuesday"
+        day_of_week == 3 -> "Wednesday"
+        day_of_week == 4 -> "Thursday"
+        day_of_week == 5 -> "Friday"
+        day_of_week == 6 -> "Saturday"
+        true -> "Unknown"
+      end
+    ) do
+      public?(true)
+      description("Human-readable day name")
+    end
+
+    calculate :duration_minutes, :integer, expr(
+      fragment("EXTRACT(EPOCH FROM (? - ?)) / 60", end_time, start_time)
+    ) do
+      public?(true)
+      description("Duration of this schedule window in minutes")
+    end
   end
 
   identities do

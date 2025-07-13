@@ -10,7 +10,7 @@ defmodule RivaAsh.ResourceHelpers do
   defmacro standard_attributes do
     quote do
       uuid_primary_key(:id)
-      
+
       create_timestamp(:inserted_at)
       update_timestamp(:updated_at)
     end
@@ -111,6 +111,33 @@ defmodule RivaAsh.ResourceHelpers do
   end
 
   @doc """
+  Standard paper trail configuration for audit tracking.
+  """
+  defmacro standard_paper_trail(opts \\ []) do
+    quote do
+      paper_trail do
+        # Track all changes with full diffs
+        change_tracking_mode(:full_diff)
+
+        # Don't store timestamps in the changes by default
+        ignore_attributes(unquote(Keyword.get(opts, :ignore_attributes, [:inserted_at, :updated_at])))
+
+        # Store action name for better auditing
+        store_action_name?(true)
+
+        # Store action inputs for better auditing
+        store_action_inputs?(true)
+
+        # Store resource identifier for better querying
+        store_resource_identifier?(true)
+
+        # Create versions on destroy (for soft deletes) - can be overridden
+        create_version_on_destroy?(unquote(Keyword.get(opts, :create_version_on_destroy?, true)))
+      end
+    end
+  end
+
+  @doc """
   Standard postgres configuration.
   """
   defmacro standard_postgres(table_name) do
@@ -127,13 +154,111 @@ defmodule RivaAsh.ResourceHelpers do
   """
   defmacro standard_extensions do
     quote do
-      extensions: [
-        AshJsonApi.Resource,
-        AshGraphql.Resource,
-        AshPaperTrail.Resource,
-        AshArchival.Resource,
-        AshAdmin.Resource
-      ]
+      use Ash.Resource,
+        extensions: [
+          AshJsonApi.Resource,
+          AshGraphql.Resource,
+          AshPaperTrail.Resource,
+          AshArchival.Resource,
+          AshAdmin.Resource
+        ]
+    end
+  end
+
+  @doc """
+  Complete standard resource configuration for business domain resources.
+  Includes postgres, archival, and paper trail configurations.
+  """
+  defmacro standard_business_resource(table_name, admin_columns \\ []) do
+    quote do
+      standard_postgres(unquote(table_name))
+      standard_archive()
+      standard_paper_trail()
+
+      unless unquote(admin_columns) == [] do
+        standard_admin(unquote(admin_columns))
+      end
+    end
+  end
+
+  @doc """
+  Standard configuration for join table resources (like EmployeePermission).
+  Includes postgres, archival, and paper trail but no admin interface.
+  """
+  defmacro standard_join_resource(table_name) do
+    quote do
+      standard_postgres(unquote(table_name))
+      standard_archive()
+      standard_paper_trail()
+    end
+  end
+
+  @doc """
+  Standard configuration for lookup/reference resources (like Permission).
+  Includes postgres, archival, paper trail, and admin interface.
+  """
+  defmacro standard_lookup_resource(table_name, admin_columns) do
+    quote do
+      standard_postgres(unquote(table_name))
+      standard_archive()
+      standard_paper_trail()
+      standard_admin(unquote(admin_columns))
+    end
+  end
+
+  @doc """
+  Standard JSON API configuration for most resources.
+  """
+  defmacro standard_json_api(type_name, base_route \\ nil) do
+    base_route = base_route || "/#{String.replace(type_name, "_", "-")}s"
+
+    quote do
+      json_api do
+        type(unquote(type_name))
+
+        routes do
+          base(unquote(base_route))
+
+          get(:read)
+          index(:read)
+          post(:create)
+          patch(:update)
+          delete(:destroy)
+        end
+      end
+    end
+  end
+
+  @doc """
+  Standard GraphQL configuration for most resources.
+  """
+  defmacro standard_graphql do
+    quote do
+      graphql do
+        type(:read)
+        type(:create)
+        type(:update)
+        type(:destroy)
+      end
+    end
+  end
+
+  @doc """
+  Standard attributes that most business resources need.
+  """
+  defmacro standard_timestamps do
+    quote do
+      create_timestamp(:inserted_at)
+      update_timestamp(:updated_at)
+    end
+  end
+
+  @doc """
+  Standard UUID primary key.
+  """
+  defmacro standard_uuid_primary_key do
+    quote do
+      uuid_primary_key(:id)
     end
   end
 

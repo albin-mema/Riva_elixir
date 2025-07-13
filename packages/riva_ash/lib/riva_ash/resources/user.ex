@@ -6,12 +6,19 @@ defmodule RivaAsh.Accounts.User do
     data_layer: AshPostgres.DataLayer,
     extensions: [
       AshAuthentication,
-      AshAuthentication.Strategy.Password
+      AshAuthentication.Strategy.Password,
+      AshArchival.Resource
     ]
 
   postgres do
     table("users")
     repo(RivaAsh.Repo)
+  end
+
+  # Configure soft delete functionality
+  archive do
+    attribute(:archived_at)
+    base_filter?(false)
   end
 
   attributes do

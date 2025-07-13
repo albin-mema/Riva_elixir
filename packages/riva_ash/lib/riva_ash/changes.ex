@@ -4,7 +4,7 @@ defmodule RivaAsh.Changes do
   These functions handle automatic data transformations and denormalization for performance.
   """
 
-  use Ash.Resource.Change
+  # This module contains utility functions for changes, not a single change implementation
 
   @doc """
   Automatically sets business_id from the related item for performance optimization.
@@ -12,7 +12,7 @@ defmodule RivaAsh.Changes do
   """
   def set_business_id_from_item(changeset, _opts) do
     case Ash.Changeset.get_argument_or_attribute(changeset, :item_id) do
-      nil -> 
+      nil ->
         changeset
       item_id ->
         case Ash.get(RivaAsh.Resources.Item, item_id, domain: RivaAsh.Domain) do
@@ -30,7 +30,7 @@ defmodule RivaAsh.Changes do
   """
   def set_business_id_from_client(changeset, _opts) do
     case Ash.Changeset.get_argument_or_attribute(changeset, :client_id) do
-      nil -> 
+      nil ->
         changeset
       client_id ->
         case Ash.get(RivaAsh.Resources.Client, client_id, domain: RivaAsh.Domain) do
@@ -48,7 +48,7 @@ defmodule RivaAsh.Changes do
   """
   def set_business_id_from_employee(changeset, _opts) do
     case Ash.Changeset.get_argument_or_attribute(changeset, :employee_id) do
-      nil -> 
+      nil ->
         changeset
       employee_id ->
         case Ash.get(RivaAsh.Resources.Employee, employee_id, domain: RivaAsh.Domain) do
@@ -66,7 +66,7 @@ defmodule RivaAsh.Changes do
   """
   def set_business_id_from_reservation(changeset, _opts) do
     case Ash.Changeset.get_argument_or_attribute(changeset, :reservation_id) do
-      nil -> 
+      nil ->
         changeset
       reservation_id ->
         case Ash.get(RivaAsh.Resources.Reservation, reservation_id, domain: RivaAsh.Domain) do

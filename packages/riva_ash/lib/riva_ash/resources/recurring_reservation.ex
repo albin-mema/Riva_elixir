@@ -18,39 +18,15 @@ defmodule RivaAsh.Resources.RecurringReservation do
       AshArchival.Resource
     ]
 
-  # Configure versioning for this resource
-  paper_trail do
-    # Track all changes with full diffs
-    change_tracking_mode(:full_diff)
-
-    # Don't store timestamps in the changes
-    ignore_attributes([:inserted_at, :updated_at])
-
-    # Store action name for better auditing
-    store_action_name?(true)
-
-    # Store action inputs for better auditing
-    store_action_inputs?(true)
-
-    # Store resource identifier for better querying
-    store_resource_identifier?(true)
-
-    # Create versions on destroy (for soft deletes)
-    create_version_on_destroy?(true)
-  end
+  import RivaAsh.ResourceHelpers
 
   postgres do
     table("recurring_reservations")
     repo(RivaAsh.Repo)
   end
 
-  # Configure soft delete functionality
-  archive do
-    # Use archived_at field for soft deletes
-    attribute(:archived_at)
-    # Allow both soft and hard deletes
-    base_filter?(false)
-  end
+  standard_archive()
+  standard_paper_trail()
 
   json_api do
     type("recurring_reservation")
@@ -114,8 +90,8 @@ defmodule RivaAsh.Resources.RecurringReservation do
       require_atomic?(false)
 
       # Validate cross-business relationships
-      validate({RivaAsh.Validations, :validate_client_item_business_match})
-      validate({RivaAsh.Validations, :validate_employee_item_business_match})
+      validate(&RivaAsh.Validations.validate_client_item_business_match/2)
+      validate(&RivaAsh.Validations.validate_employee_item_business_match/2)
     end
 
     create :create do
@@ -135,8 +111,8 @@ defmodule RivaAsh.Resources.RecurringReservation do
       primary?(true)
 
       # Validate cross-business relationships
-      validate({RivaAsh.Validations, :validate_client_item_business_match})
-      validate({RivaAsh.Validations, :validate_employee_item_business_match})
+      validate(&RivaAsh.Validations.validate_client_item_business_match/2)
+      validate(&RivaAsh.Validations.validate_employee_item_business_match/2)
     end
 
     read :by_id do

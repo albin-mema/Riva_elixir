@@ -8,30 +8,17 @@ defmodule RivaAsh.Resources.EmployeePermission do
     domain: RivaAsh.Domain,
     data_layer: AshPostgres.DataLayer,
     authorizers: [Ash.Policy.Authorizer],
-    extensions: [AshJsonApi.Resource, AshPaperTrail.Resource]
+    extensions: [AshJsonApi.Resource, AshPaperTrail.Resource, AshArchival.Resource]
 
-  # Configure versioning for this resource
-  paper_trail do
-    # Track all changes with full diffs
-    change_tracking_mode(:full_diff)
-
-    # Don't store timestamps in the changes
-    ignore_attributes([:inserted_at, :updated_at])
-
-    # Store action name for better auditing
-    store_action_name?(true)
-
-    # Store action inputs for better auditing
-    store_action_inputs?(true)
-
-    # Store resource identifier for better querying
-    store_resource_identifier?(true)
-  end
+  import RivaAsh.ResourceHelpers
 
   postgres do
     table("employee_permissions")
     repo(RivaAsh.Repo)
   end
+
+  standard_archive()
+  standard_paper_trail()
 
   policies do
     # Admins can do everything
@@ -102,7 +89,7 @@ defmodule RivaAsh.Resources.EmployeePermission do
       primary?(true)
 
       # Validate cross-business relationships
-      validate({RivaAsh.Validations, :validate_employee_granter_business_match})
+      validate(&RivaAsh.Validations.validate_employee_granter_business_match/2)
     end
 
     create :grant_permission do
@@ -117,7 +104,7 @@ defmodule RivaAsh.Resources.EmployeePermission do
       change(set_attribute(:notes, arg(:notes)))
 
       # Validate cross-business relationships
-      validate({RivaAsh.Validations, :validate_employee_granter_business_match})
+      validate(&RivaAsh.Validations.validate_employee_granter_business_match/2)
     end
 
     read :by_employee do

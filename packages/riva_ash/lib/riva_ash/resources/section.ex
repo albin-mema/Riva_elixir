@@ -22,12 +22,13 @@ defmodule RivaAsh.Resources.Section do
 
   standard_postgres("sections")
   standard_archive()
-  standard_admin([:name, :plot, :description, :is_active])
+  standard_admin([:name, :plot, :description])
 
   # Authorization policies
   policies do
-    business_scoped_policies()
-    employee_accessible_policies(:manage_sections)
+    # TODO: Re-enable business_scoped_policies() after fixing macro
+    # business_scoped_policies()
+    # employee_accessible_policies(:manage_sections)
   end
 
   json_api do

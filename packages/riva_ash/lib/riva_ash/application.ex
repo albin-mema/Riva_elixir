@@ -25,12 +25,12 @@ defmodule RivaAsh.Application do
       {Phoenix.PubSub, name: RivaAsh.PubSub},
       # Start the Endpoint (http/https)
       RivaAshWeb.Endpoint,
-      # Start a worker by calling: RivaAsh.Worker.start_link(arg)
-      # {RivaAsh.Worker, arg},
       # Start TwMerge.Cache
       TwMerge.Cache,
       # Start Finch for HTTP clients
       {Finch, name: RivaAsh.Finch},
+      # Start background jobs
+      RivaAsh.Jobs.HoldCleanupJob,
       # DNS cluster for distributed nodes
       {DNSCluster, query: Application.get_env(:riva_ash, :dns_cluster_query) || :ignore}
     ]

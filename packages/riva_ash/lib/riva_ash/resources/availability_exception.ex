@@ -173,12 +173,10 @@ defmodule RivaAsh.Resources.AvailabilityException do
 
   validations do
     # Time range validation (when both times are present)
-    validate({RivaAsh.Validations, :validate_time_range},
-      start_field: :start_time, end_field: :end_time)
+    validate(&RivaAsh.Validations.validate_time_range/2)
 
     # Date validation - should not be in the past for future exceptions
-    validate({RivaAsh.Validations, :validate_future_date},
-      field: :date)
+    validate(&RivaAsh.Validations.validate_future_date/2)
 
     # Required fields
     validate(present([:item_id, :date, :exception_type]),

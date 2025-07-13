@@ -20,6 +20,7 @@ defmodule RivaAsh.Resources.Business do
 
   standard_postgres("businesses")
   standard_archive()
+  standard_paper_trail()
 
   policies do
     # Any authenticated user can create a business (they become the owner)
@@ -219,7 +220,7 @@ defmodule RivaAsh.Resources.Business do
   Fetches the owner user for a business.
   Since User is in a different domain, we handle this at the application level.
   """
-  def get_owner(%__MODULE__{owner_id: owner_id}) when not is_nil(owner_id) do
+  def get_owner(%{owner_id: owner_id}) when not is_nil(owner_id) do
     Ash.get(RivaAsh.Accounts.User, owner_id, domain: RivaAsh.Accounts)
   end
   def get_owner(_), do: {:ok, nil}

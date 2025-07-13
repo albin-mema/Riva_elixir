@@ -27,6 +27,7 @@ defmodule RivaAsh.DataCase do
       import RivaAsh.DataCase
       import RivaAsh.Factory
       import RivaAsh.PropertyHelpers
+      import RivaAsh.TestHelpers
 
       # Enable property-based testing
       use ExUnitProperties

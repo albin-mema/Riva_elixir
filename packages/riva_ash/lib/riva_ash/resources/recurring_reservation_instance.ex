@@ -16,39 +16,15 @@ defmodule RivaAsh.Resources.RecurringReservationInstance do
       AshArchival.Resource
     ]
 
-  # Configure versioning for this resource
-  paper_trail do
-    # Track all changes with full diffs
-    change_tracking_mode(:full_diff)
-
-    # Don't store timestamps in the changes
-    ignore_attributes([:inserted_at, :updated_at])
-
-    # Store action name for better auditing
-    store_action_name?(true)
-
-    # Store action inputs for better auditing
-    store_action_inputs?(true)
-
-    # Store resource identifier for better querying
-    store_resource_identifier?(true)
-
-    # Create versions on destroy (for soft deletes)
-    create_version_on_destroy?(true)
-  end
+  import RivaAsh.ResourceHelpers
 
   postgres do
     table("recurring_reservation_instances")
     repo(RivaAsh.Repo)
   end
 
-  # Configure soft delete functionality
-  archive do
-    # Use archived_at field for soft deletes
-    attribute(:archived_at)
-    # Allow both soft and hard deletes
-    base_filter?(false)
-  end
+  standard_archive()
+  standard_paper_trail()
 
   json_api do
     type("recurring_reservation_instance")

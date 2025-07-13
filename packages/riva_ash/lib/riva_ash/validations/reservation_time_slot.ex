@@ -1,6 +1,7 @@
 defmodule RivaAsh.Validations.ReservationTimeSlot do
   @moduledoc """
   Validates that a reservation's time slot doesn't overlap with existing reservations for the same item.
+  Uses the standardized overlap detection logic from RivaAsh.Validations.
   """
   use Ash.Resource.Validation
   require Ash.Expr
@@ -8,43 +9,34 @@ defmodule RivaAsh.Validations.ReservationTimeSlot do
   alias Ash.Error.Changes.InvalidChanges
 
   @impl true
-  def validate(changeset, _opts, _context) do
+  def validate(changeset, opts, _context) do
     item_id = Ash.Changeset.get_attribute(changeset, :item_id)
     reserved_from = Ash.Changeset.get_attribute(changeset, :reserved_from)
     reserved_until = Ash.Changeset.get_attribute(changeset, :reserved_until)
     reservation_id = Ash.Changeset.get_attribute(changeset, :id)
 
-    if overlapping_reservation?(item_id, reserved_from, reserved_until, reservation_id) do
-      {:error,
-       InvalidChanges.exception(
-         field: :reserved_from,
-         message: "Time slot overlaps with an existing reservation"
-       )}
-    else
-      :ok
-    end
-  end
-
-  defp overlapping_reservation?(item_id, reserved_from, reserved_until, reservation_id) do
-    query =
-      RivaAsh.Resources.Reservation
-      |> Ash.Query.filter(
-        item_id == ^item_id and
-          reserved_from < ^reserved_until and
-          reserved_until > ^reserved_from
-      )
-
-    query =
-      if reservation_id do
-        Ash.Query.filter(query, id != ^reservation_id)
-      else
-        query
-      end
-
-    case Ash.read_one(query, domain: RivaAsh.Domain) do
-      {:ok, nil} -> false
-      {:ok, _reservation} -> true
-      _ -> false
+    # Use standardized overlap checking logic
+    case RivaAsh.Validations.check_reservation_overlap(
+           item_id,
+           reserved_from,
+           reserved_until,
+           reservation_id,
+           opts
+         ) do
+      {:ok, :no_overlap} ->
+        :ok
+      {:ok, :overlap_found} ->
+        {:error,
+         InvalidChanges.exception(
+           field: :reserved_from,
+           message: "Time slot overlaps with an existing reservation"
+         )}
+      {:error, reason} ->
+        {:error,
+         InvalidChanges.exception(
+           field: :reserved_from,
+           message: "Failed to validate time slot: #{reason}"
+         )}
     end
   end
 end

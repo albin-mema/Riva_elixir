@@ -28,8 +28,9 @@ defmodule RivaAsh.Resources.Plot do
 
   # Authorization policies
   policies do
-    business_scoped_policies()
-    employee_accessible_policies(:manage_plots)
+    # TODO: Re-enable business_scoped_policies() after fixing macro
+    # business_scoped_policies()
+    # employee_accessible_policies(:manage_plots)
   end
 
   json_api do

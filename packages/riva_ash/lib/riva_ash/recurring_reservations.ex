@@ -10,7 +10,7 @@ defmodule RivaAsh.RecurringReservations do
   """
 
   use Timex
-  
+
   alias RivaAsh.Resources.{RecurringReservation, RecurringReservationInstance, Reservation}
 
   @doc """
@@ -308,36 +308,45 @@ defmodule RivaAsh.RecurringReservations do
     start_datetime = DateTime.new!(scheduled_date, start_time, "Etc/UTC")
     end_datetime = DateTime.new!(scheduled_date, end_time, "Etc/UTC")
 
-    # Check for overlapping reservations by getting all reservations for this item
-    # and checking for conflicts in memory (simpler than complex query)
     item_id = recurring_reservation.item_id
 
-    case Reservation
-         |> Ash.Query.for_read(:by_item, %{item_id: item_id})
-         |> Ash.read(domain: RivaAsh.Domain) do
-      {:ok, reservations} ->
-        # Check for overlaps in memory
-        has_conflict = reservations
-        |> Enum.any?(fn reservation ->
-          reservation.status in [:pending, :confirmed] and
-          Timex.compare(reservation.reserved_from, end_datetime) == -1 and
-          Timex.compare(reservation.reserved_until, start_datetime) == 1
-        end)
-
-        if has_conflict do
-          {:ok, %{
-            available: false,
-            reason: "Time slot conflicts with existing reservation"
-          }}
-        else
-          {:ok, %{
-            available: true,
-            start_datetime: start_datetime,
-            end_datetime: end_datetime
-          }}
+    # Use standardized overlap checking logic
+    case RivaAsh.Validations.check_reservation_overlap(
+           item_id,
+           start_datetime,
+           end_datetime,
+           nil,
+           [include_provisional: false]  # Don't include provisional for recurring reservations
+         ) do
+      {:ok, :no_overlap} ->
+        # Also check item availability (schedules, holds, etc.)
+        case RivaAsh.Validations.check_item_availability(
+               item_id,
+               start_datetime,
+               end_datetime,
+               [check_holds: true]
+             ) do
+          {:ok, :available} ->
+            {:ok, %{
+              available: true,
+              start_datetime: start_datetime,
+              end_datetime: end_datetime
+            }}
+          {:ok, :unavailable, reason} ->
+            {:ok, %{
+              available: false,
+              reason: reason
+            }}
+          {:error, error} ->
+            {:error, "Failed to check item availability: #{error}"}
         end
+      {:ok, :overlap_found} ->
+        {:ok, %{
+          available: false,
+          reason: "Time slot conflicts with existing reservation"
+        }}
       {:error, error} ->
-        {:error, "Failed to check availability: #{inspect(error)}"}
+        {:error, "Failed to check reservation overlap: #{error}"}
     end
   end
 
