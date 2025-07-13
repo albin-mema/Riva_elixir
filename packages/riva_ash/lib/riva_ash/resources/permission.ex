@@ -15,12 +15,15 @@ defmodule RivaAsh.Resources.Permission do
     domain: RivaAsh.Domain,
     data_layer: AshPostgres.DataLayer,
     authorizers: [Ash.Policy.Authorizer],
-    extensions: [AshJsonApi.Resource]
+    extensions: [
+      AshJsonApi.Resource,
+      AshGraphql.Resource,
+      AshAdmin.Resource
+    ]
 
-  postgres do
-    table("permissions")
-    repo(RivaAsh.Repo)
-  end
+  import RivaAsh.ResourceHelpers
+
+  standard_postgres("permissions")
 
   policies do
     # Only admins and managers can manage permissions

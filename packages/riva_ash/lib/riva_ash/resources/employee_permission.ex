@@ -100,6 +100,9 @@ defmodule RivaAsh.Resources.EmployeePermission do
     create :create do
       accept([:employee_id, :permission_id, :granted_by_id, :notes])
       primary?(true)
+
+      # Validate cross-business relationships
+      validate({RivaAsh.Validations, :validate_employee_granter_business_match})
     end
 
     create :grant_permission do
@@ -112,6 +115,9 @@ defmodule RivaAsh.Resources.EmployeePermission do
       change(set_attribute(:permission_id, arg(:permission_id)))
       change(set_attribute(:granted_by_id, arg(:granted_by_id)))
       change(set_attribute(:notes, arg(:notes)))
+
+      # Validate cross-business relationships
+      validate({RivaAsh.Validations, :validate_employee_granter_business_match})
     end
 
     read :by_employee do
