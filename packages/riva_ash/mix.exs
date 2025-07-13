@@ -86,6 +86,8 @@ defmodule RivaAsh.MixProject do
       # UI Components
       {:salad_ui, "~> 1.0.0-beta.3"},
       {:heroicons, "~> 0.5.0"},
+      {:flop, "~> 0.26.0"},
+      {:flop_phoenix, "~> 0.25.2"},
 
       # Development
       {:phoenix_live_reload, "~> 1.2", only: :dev},
