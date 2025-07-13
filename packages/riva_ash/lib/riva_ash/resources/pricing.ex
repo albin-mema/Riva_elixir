@@ -13,37 +13,31 @@ defmodule RivaAsh.Resources.Pricing do
     domain: RivaAsh.Domain,
     data_layer: AshPostgres.DataLayer,
     authorizers: [Ash.Policy.Authorizer],
-    extensions: [AshJsonApi.Resource, AshGraphql.Resource, AshArchival.Resource]
+    extensions: [
+      AshJsonApi.Resource,
+      AshGraphql.Resource,
+      AshPaperTrail.Resource,
+      AshArchival.Resource,
+      AshAdmin.Resource
+    ]
 
-  postgres do
-    table("pricing")
-    repo(RivaAsh.Repo)
-  end
+  import RivaAsh.ResourceHelpers
+  import RivaAsh.Authorization
 
+  standard_postgres("pricing")
+  standard_archive()
+
+  # Authorization policies
   policies do
-    # Admins can do everything
-    bypass actor_attribute_equals(:role, :admin) do
-      authorize_if(always())
-    end
+    business_scoped_policies()
+    employee_accessible_policies(:manage_pricing)
 
-    # Permission-based authorization for pricing management
+    # Special restrictions for pricing management
     policy action_type([:create, :update, :destroy]) do
-      authorize_if(RivaAsh.Policies.PermissionCheck.can_update_pricing())
+      # Business owners (users who own businesses) can manage pricing
+      authorize_if(expr(business.owner_id == ^actor(:id)))
+      authorize_if(has_permission(actor(), :manage_pricing))
     end
-
-    # View pricing - either have view permission or update permission
-    policy action_type(:read) do
-      authorize_if(RivaAsh.Policies.PermissionCheck.can_view_pricing())
-      authorize_if(RivaAsh.Policies.PermissionCheck.can_update_pricing())
-    end
-  end
-
-  # Configure soft delete functionality
-  archive do
-    # Use archived_at field for soft deletes
-    attribute(:archived_at)
-    # Allow both soft and hard deletes
-    base_filter?(false)
   end
 
   json_api do
@@ -104,7 +98,25 @@ defmodule RivaAsh.Resources.Pricing do
   end
 
   actions do
-    defaults([:read, :update, :destroy])
+    defaults([:read, :destroy])
+
+    update :update do
+      accept([
+        :pricing_type,
+        :price_per_day,
+        :currency,
+        :effective_from,
+        :effective_until,
+        :is_active,
+        :name,
+        :description
+      ])
+      primary?(true)
+
+      # Validate pricing constraints
+      validate({RivaAsh.Validations, :validate_pricing_date_overlap})
+      validate({RivaAsh.Validations, :validate_single_active_base_pricing})
+    end
 
     create :create do
       accept([
@@ -120,6 +132,13 @@ defmodule RivaAsh.Resources.Pricing do
         :description
       ])
       primary?(true)
+
+      # Validate cross-business relationships
+      validate({RivaAsh.Validations, :validate_item_type_business_match})
+
+      # Validate pricing constraints
+      validate({RivaAsh.Validations, :validate_pricing_date_overlap})
+      validate({RivaAsh.Validations, :validate_single_active_base_pricing})
     end
 
     read :by_id do
@@ -260,8 +279,8 @@ defmodule RivaAsh.Resources.Pricing do
   end
 
   identities do
-    # Ensure only one base pricing per business/item_type combination
-    identity(:unique_base_pricing, [:business_id, :item_type_id, :pricing_type])
+    # Prevent exact duplicates while allowing validation to handle business logic
+    identity(:unique_pricing_rule, [:business_id, :item_type_id, :pricing_type, :effective_from, :effective_until])
   end
 
   validations do
@@ -276,6 +295,12 @@ defmodule RivaAsh.Resources.Pricing do
     validate(match(:currency, ~r/^[A-Z]{3}$/),
       message: "Currency must be a valid 3-letter ISO code (e.g., USD, EUR)"
     )
+
+    # Prevent overlapping pricing rules
+    validate({RivaAsh.Validations, :validate_pricing_date_overlap})
+
+    # Ensure only one active base pricing rule per business/item_type
+    validate({RivaAsh.Validations, :validate_single_active_base_pricing})
   end
 
   # TODO: Add calculations for pricing effectiveness
