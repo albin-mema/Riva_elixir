@@ -92,6 +92,7 @@ defmodule RivaAsh.MixProject do
       # Development
       {:phoenix_live_reload, "~> 1.2", only: :dev},
       {:live_debugger, "~> 0.3.0", only: :dev},
+      {:phoenix_storybook, "~> 0.6.0", only: :dev},
       {:tailwind, "~> 0.2", runtime: Mix.env() == :dev},
       {:esbuild, "~> 0.8", runtime: Mix.env() == :dev},
 
@@ -107,7 +108,13 @@ defmodule RivaAsh.MixProject do
       setup: ["deps.get", "ecto.setup"],
       "ecto.setup": ["ecto.create", "ecto.migrate", "run priv/repo/seeds.exs"],
       "ecto.reset": ["ecto.drop", "ecto.setup"],
-      test: ["ecto.create --quiet", "ecto.migrate --quiet", "test"]
+      test: ["ecto.create --quiet", "ecto.migrate --quiet", "test"],
+      "assets.deploy": [
+        "tailwind default --minify",
+        "tailwind storybook --minify",
+        "esbuild default --minify",
+        "phx.digest"
+      ]
     ]
   end
 end
