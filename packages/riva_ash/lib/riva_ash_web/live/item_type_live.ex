@@ -41,7 +41,7 @@ defmodule RivaAshWeb.ItemTypeLive do
           <button phx-click="new_item_type">Add Item Type</button>
         </:action>
       </.page_header>
-      
+
       <div :if={@item_types == []}>
         <.empty_state
           icon={:tag}
@@ -49,21 +49,21 @@ defmodule RivaAshWeb.ItemTypeLive do
           description="Create item types to categorize your reservable items"
         />
       </div>
-      
+
       <.data_table
         :if={@item_types != []}
         items={@item_types}
         meta={@meta}
-        path={~p"/item-types"}
+        path="/item-types"
         id="item-types-table"
       >
-        <:col label="Name" field={:name} sortable>
+        <:col :let={item} label="Name" field={:name} sortable>
           <%= item.name %>
         </:col>
-        <:col label="Description">
+        <:col :let={item} label="Description">
           <%= item.description %>
         </:col>
-        <:col label="Actions">
+        <:col :let={item} label="Actions">
           <button phx-click="edit_item_type" phx-value-id={item.id}>Edit</button>
           <button phx-click="delete_item_type" phx-value-id={item.id}>Delete</button>
         </:col>

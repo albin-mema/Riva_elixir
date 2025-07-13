@@ -43,7 +43,7 @@ defmodule RivaAshWeb.PermissionLive do
           <button phx-click="create_permission">Create Permission</button>
         </:action>
       </.page_header>
-      
+
       <.tab_navigation
         tabs={[
           %{id: "employees", label: "Employee Permissions"},
@@ -52,7 +52,7 @@ defmodule RivaAshWeb.PermissionLive do
         active_tab={@active_tab}
         on_tab_change="change_tab"
       />
-      
+
       <div :if={@active_tab == "employees"}>
         <div :if={@selected_employee}>
           <.permission_matrix
@@ -64,43 +64,43 @@ defmodule RivaAshWeb.PermissionLive do
             on_cancel="cancel_permission_edit"
           />
         </div>
-        
+
         <.data_table
           :if={!@selected_employee}
           items={@employees}
           meta={@meta}
-          path={~p"/permissions"}
+          path="/permissions"
           id="employees-permissions-table"
         >
-          <:col label="Employee" field={:name} sortable>
+          <:col :let={item} label="Employee" field={:name} sortable>
             <%= item.first_name %> <%= item.last_name %>
           </:col>
-          <:col label="Role" field={:role}>
+          <:col :let={item} label="Role" field={:role}>
             <%= item.role %>
           </:col>
-          <:col label="Permissions Count">
+          <:col :let={item} label="Permissions Count">
             <%= length(item.permissions || []) %>
           </:col>
-          <:col label="Actions">
+          <:col :let={item} label="Actions">
             <button phx-click="manage_permissions" phx-value-id={item.id}>Manage Permissions</button>
           </:col>
         </.data_table>
       </div>
-      
+
       <div :if={@active_tab == "permissions"}>
         <.data_table
           items={@permissions}
           meta={@meta}
-          path={~p"/permissions"}
+          path="/permissions"
           id="permissions-table"
         >
-          <:col label="Name" field={:name} sortable>
+          <:col :let={item} label="Name" field={:name} sortable>
             <%= item.name %>
           </:col>
-          <:col label="Description">
+          <:col :let={item} label="Description">
             <%= item.description %>
           </:col>
-          <:col label="Actions">
+          <:col :let={item} label="Actions">
             <button phx-click="edit_permission" phx-value-id={item.id}>Edit</button>
             <button phx-click="delete_permission" phx-value-id={item.id}>Delete</button>
           </:col>

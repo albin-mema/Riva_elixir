@@ -41,7 +41,7 @@ defmodule RivaAshWeb.LayoutLive do
           <button phx-click="new_layout">Create Layout</button>
         </:action>
       </.page_header>
-      
+
       <div :if={@design_mode && @current_layout}>
         <.layout_designer
           layout={@current_layout}
@@ -53,33 +53,33 @@ defmodule RivaAshWeb.LayoutLive do
           on_item_remove="remove_item"
           on_grid_resize="resize_grid"
         />
-        
+
         <div>
           <button phx-click="save_layout">Save Layout</button>
           <button phx-click="cancel_design">Cancel</button>
         </div>
       </div>
-      
+
       <.data_table
         :if={!@design_mode}
         items={@layouts}
         meta={@meta}
-        path={~p"/layouts"}
+        path="/layouts"
         id="layouts-table"
       >
-        <:col label="Name" field={:name} sortable>
+        <:col :let={item} label="Name" field={:name} sortable>
           <%= item.name %>
         </:col>
-        <:col label="Plot" field={:plot} sortable>
+        <:col :let={item} label="Plot" field={:plot} sortable>
           <%= item.plot.name %>
         </:col>
-        <:col label="Type" field={:layout_type} sortable>
+        <:col :let={item} label="Type" field={:layout_type} sortable>
           <%= item.layout_type %>
         </:col>
-        <:col label="Grid Size">
+        <:col :let={item} label="Grid Size">
           <%= item.grid_rows %>x<%= item.grid_columns %>
         </:col>
-        <:col label="Actions">
+        <:col :let={item} label="Actions">
           <button phx-click="design_layout" phx-value-id={item.id}>Design</button>
           <button phx-click="edit_layout" phx-value-id={item.id}>Edit</button>
           <button phx-click="delete_layout" phx-value-id={item.id}>Delete</button>

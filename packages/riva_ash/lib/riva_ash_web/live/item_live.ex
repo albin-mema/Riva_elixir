@@ -44,7 +44,7 @@ defmodule RivaAshWeb.ItemLive do
           <button phx-click="new_item">Add Item</button>
         </:action>
       </.page_header>
-      
+
       <div :if={@show_form}>
         <.item_form
           form={@form}
@@ -56,7 +56,7 @@ defmodule RivaAshWeb.ItemLive do
           on_cancel="cancel_form"
         />
       </div>
-      
+
       <div :if={@items == [] && !@show_form}>
         <.empty_state
           icon={:cube}
@@ -64,30 +64,30 @@ defmodule RivaAshWeb.ItemLive do
           description="Create your first reservable item to start taking bookings"
         />
       </div>
-      
+
       <.data_table
         :if={@items != [] && !@show_form}
         items={@items}
         meta={@meta}
-        path={~p"/items"}
+        path="/items"
         id="items-table"
       >
-        <:col label="Name" field={:name} sortable>
+        <:col :let={item} label="Name" field={:name} sortable>
           <%= item.name %>
         </:col>
-        <:col label="Section" field={:section} sortable>
+        <:col :let={item} label="Section" field={:section} sortable>
           <%= item.section.name %>
         </:col>
-        <:col label="Type" field={:item_type} sortable>
+        <:col :let={item} label="Type" field={:item_type} sortable>
           <%= item.item_type.name %>
         </:col>
-        <:col label="Position">
+        <:col :let={item} label="Position">
           Row <%= item.grid_row %>, Col <%= item.grid_column %>
         </:col>
-        <:col label="Status">
+        <:col :let={item} label="Status">
           <%= if item.is_active, do: "Active", else: "Inactive" %>
         </:col>
-        <:col label="Actions">
+        <:col :let={item} label="Actions">
           <button phx-click="edit_item" phx-value-id={item.id}>Edit</button>
           <button phx-click="delete_item" phx-value-id={item.id}>Delete</button>
         </:col>

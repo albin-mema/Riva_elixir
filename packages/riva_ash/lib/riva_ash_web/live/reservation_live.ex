@@ -46,7 +46,7 @@ defmodule RivaAshWeb.ReservationLive do
           <button phx-click="new_reservation">New Reservation</button>
         </:action>
       </.page_header>
-      
+
       <.tab_navigation
         tabs={[
           %{id: "list", label: "List View"},
@@ -56,7 +56,7 @@ defmodule RivaAshWeb.ReservationLive do
         active_tab={@active_tab}
         on_tab_change="change_view"
       />
-      
+
       <div :if={@show_form}>
         <.reservation_form
           form={@form}
@@ -68,42 +68,42 @@ defmodule RivaAshWeb.ReservationLive do
           on_cancel="cancel_form"
         />
       </div>
-      
+
       <div :if={@active_tab == "list" && !@show_form}>
         <.data_table
           items={@reservations}
           meta={@meta}
-          path={~p"/reservations"}
+          path="/reservations"
           id="reservations-table"
         >
-          <:col label="Client" field={:client} sortable>
+          <:col :let={item} label="Client" field={:client} sortable>
             <%= item.client.first_name %> <%= item.client.last_name %>
           </:col>
-          <:col label="Item" field={:item} sortable>
+          <:col :let={item} label="Item" field={:item} sortable>
             <%= item.item.name %>
           </:col>
-          <:col label="Date" field={:reserved_from} sortable>
+          <:col :let={item} label="Date" field={:reserved_from} sortable>
             <%= Calendar.strftime(item.reserved_from, "%Y-%m-%d") %>
           </:col>
-          <:col label="Time">
-            <%= Calendar.strftime(item.reserved_from, "%H:%M") %> - 
+          <:col :let={item} label="Time">
+            <%= Calendar.strftime(item.reserved_from, "%H:%M") %> -
             <%= Calendar.strftime(item.reserved_until, "%H:%M") %>
           </:col>
-          <:col label="Status" field={:status}>
+          <:col :let={item} label="Status" field={:status}>
             <%= item.status %>
           </:col>
-          <:col label="Actions">
+          <:col :let={item} label="Actions">
             <button phx-click="edit_reservation" phx-value-id={item.id}>Edit</button>
             <button phx-click="cancel_reservation" phx-value-id={item.id}>Cancel</button>
           </:col>
         </.data_table>
       </div>
-      
+
       <div :if={@active_tab == "calendar" && !@show_form}>
         <!-- Calendar view will go here -->
         <p>Calendar view coming soon...</p>
       </div>
-      
+
       <div :if={@active_tab == "timeline" && !@show_form}>
         <!-- Timeline view will go here -->
         <p>Timeline view coming soon...</p>

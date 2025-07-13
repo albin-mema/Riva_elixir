@@ -42,7 +42,7 @@ defmodule RivaAshWeb.ClientLive do
           <button phx-click="new_client">Add Client</button>
         </:action>
       </.page_header>
-      
+
       <div :if={@show_form}>
         <.client_form
           form={@form}
@@ -52,7 +52,7 @@ defmodule RivaAshWeb.ClientLive do
           on_cancel="cancel_form"
         />
       </div>
-      
+
       <div :if={@clients == [] && !@show_form}>
         <.empty_state
           icon={:users}
@@ -60,27 +60,27 @@ defmodule RivaAshWeb.ClientLive do
           description="Add your first client to start managing reservations"
         />
       </div>
-      
+
       <.data_table
         :if={@clients != [] && !@show_form}
         items={@clients}
         meta={@meta}
-        path={~p"/clients"}
+        path="/clients"
         id="clients-table"
       >
-        <:col label="Name" field={:name} sortable>
+        <:col :let={item} label="Name" field={:name} sortable>
           <%= item.first_name %> <%= item.last_name %>
         </:col>
-        <:col label="Email" field={:email} sortable>
+        <:col :let={item} label="Email" field={:email} sortable>
           <%= item.email %>
         </:col>
-        <:col label="Phone" field={:phone}>
+        <:col :let={item} label="Phone" field={:phone}>
           <%= item.phone %>
         </:col>
-        <:col label="Status">
+        <:col :let={item} label="Status">
           <%= if item.is_registered, do: "Registered", else: "Guest" %>
         </:col>
-        <:col label="Actions">
+        <:col :let={item} label="Actions">
           <button phx-click="edit_client" phx-value-id={item.id}>Edit</button>
           <button phx-click="view_reservations" phx-value-id={item.id}>Reservations</button>
           <button phx-click="delete_client" phx-value-id={item.id}>Delete</button>

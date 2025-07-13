@@ -41,7 +41,7 @@ defmodule RivaAshWeb.PlotLive do
           <button phx-click="new_plot">Add Plot</button>
         </:action>
       </.page_header>
-      
+
       <div :if={@plots == []}>
         <.empty_state
           icon={:map}
@@ -49,21 +49,21 @@ defmodule RivaAshWeb.PlotLive do
           description="Create your first plot to organize your business space"
         />
       </div>
-      
+
       <.data_table
         :if={@plots != []}
         items={@plots}
         meta={@meta}
-        path={~p"/plots"}
+        path="/plots"
         id="plots-table"
       >
-        <:col label="Name" field={:name} sortable>
+        <:col :let={item} label="Name" field={:name} sortable>
           <%= item.name %>
         </:col>
-        <:col label="Business" field={:business} sortable>
+        <:col :let={item} label="Business" field={:business} sortable>
           <%= item.business.name %>
         </:col>
-        <:col label="Actions">
+        <:col :let={item} label="Actions">
           <button phx-click="edit_plot" phx-value-id={item.id}>Edit</button>
           <button phx-click="delete_plot" phx-value-id={item.id}>Delete</button>
         </:col>

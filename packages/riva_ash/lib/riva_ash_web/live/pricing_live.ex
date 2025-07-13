@@ -43,7 +43,7 @@ defmodule RivaAshWeb.PricingLive do
           <button phx-click="new_pricing">Add Pricing Rule</button>
         </:action>
       </.page_header>
-      
+
       <div :if={@show_form}>
         <.pricing_form
           form={@form}
@@ -54,7 +54,7 @@ defmodule RivaAshWeb.PricingLive do
           on_cancel="cancel_form"
         />
       </div>
-      
+
       <div :if={@pricing_rules == [] && !@show_form}>
         <.empty_state
           icon={:currency_dollar}
@@ -62,27 +62,27 @@ defmodule RivaAshWeb.PricingLive do
           description="Create pricing rules to set rates for your items"
         />
       </div>
-      
+
       <.data_table
         :if={@pricing_rules != [] && !@show_form}
         items={@pricing_rules}
         meta={@meta}
-        path={~p"/pricing"}
+        path="/pricing"
         id="pricing-table"
       >
-        <:col label="Item" field={:item} sortable>
+        <:col :let={item} label="Item" field={:item} sortable>
           <%= item.item.name %>
         </:col>
-        <:col label="Price per Day" field={:price_per_day} sortable>
+        <:col :let={item} label="Price per Day" field={:price_per_day} sortable>
           $<%= :erlang.float_to_binary(item.price_per_day, decimals: 2) %>
         </:col>
-        <:col label="Effective From" field={:effective_from} sortable>
+        <:col :let={item} label="Effective From" field={:effective_from} sortable>
           <%= Calendar.strftime(item.effective_from, "%Y-%m-%d") %>
         </:col>
-        <:col label="Effective Until" field={:effective_until}>
+        <:col :let={item} label="Effective Until" field={:effective_until}>
           <%= if item.effective_until, do: Calendar.strftime(item.effective_until, "%Y-%m-%d"), else: "Ongoing" %>
         </:col>
-        <:col label="Actions">
+        <:col :let={item} label="Actions">
           <button phx-click="edit_pricing" phx-value-id={item.id}>Edit</button>
           <button phx-click="delete_pricing" phx-value-id={item.id}>Delete</button>
         </:col>

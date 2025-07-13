@@ -41,7 +41,7 @@ defmodule RivaAshWeb.PaymentLive do
           <button phx-click="record_payment">Record Payment</button>
         </:action>
       </.page_header>
-      
+
       <.filter_panel
         filters={[
           %{type: "select", field: "status", label: "Status", options: [
@@ -57,36 +57,36 @@ defmodule RivaAshWeb.PaymentLive do
         on_apply="apply_filters"
         on_clear="clear_filters"
       />
-      
+
       <.data_table
         items={@payments}
         meta={@meta}
-        path={~p"/payments"}
+        path="/payments"
         id="payments-table"
       >
-        <:col label="Reservation" field={:reservation} sortable>
-          <%= item.reservation.client.first_name %> <%= item.reservation.client.last_name %> - 
+        <:col :let={item} label="Reservation" field={:reservation} sortable>
+          <%= item.reservation.client.first_name %> <%= item.reservation.client.last_name %> -
           <%= item.reservation.item.name %>
         </:col>
-        <:col label="Amount" field={:amount} sortable>
+        <:col :let={item} label="Amount" field={:amount} sortable>
           $<%= :erlang.float_to_binary(item.amount, decimals: 2) %>
         </:col>
-        <:col label="Method" field={:payment_method}>
+        <:col :let={item} label="Method" field={:payment_method}>
           <%= item.payment_method %>
         </:col>
-        <:col label="Status" field={:status}>
+        <:col :let={item} label="Status" field={:status}>
           <.status_indicator status={item.status} />
         </:col>
-        <:col label="Date" field={:payment_date} sortable>
+        <:col :let={item} label="Date" field={:payment_date} sortable>
           <%= Calendar.strftime(item.payment_date, "%Y-%m-%d %H:%M") %>
         </:col>
-        <:col label="Actions">
+        <:col :let={item} label="Actions">
           <button phx-click="view_payment" phx-value-id={item.id}>View</button>
           <button :if={item.status == "pending"} phx-click="mark_paid" phx-value-id={item.id}>Mark Paid</button>
           <button :if={item.status == "completed"} phx-click="refund_payment" phx-value-id={item.id}>Refund</button>
         </:col>
       </.data_table>
-      
+
       <div :if={@selected_payment}>
         <!-- Payment details modal will go here -->
         <div>

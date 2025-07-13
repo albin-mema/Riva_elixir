@@ -41,7 +41,7 @@ defmodule RivaAshWeb.SectionLive do
           <button phx-click="new_section">Add Section</button>
         </:action>
       </.page_header>
-      
+
       <div :if={@sections == []}>
         <.empty_state
           icon={:squares_2x2}
@@ -49,24 +49,24 @@ defmodule RivaAshWeb.SectionLive do
           description="Create sections to organize items within your plots"
         />
       </div>
-      
+
       <.data_table
         :if={@sections != []}
         items={@sections}
         meta={@meta}
-        path={~p"/sections"}
+        path="/sections"
         id="sections-table"
       >
-        <:col label="Name" field={:name} sortable>
+        <:col :let={item} label="Name" field={:name} sortable>
           <%= item.name %>
         </:col>
-        <:col label="Plot" field={:plot} sortable>
+        <:col :let={item} label="Plot" field={:plot} sortable>
           <%= item.plot.name %>
         </:col>
-        <:col label="Description">
+        <:col :let={item} label="Description">
           <%= item.description %>
         </:col>
-        <:col label="Actions">
+        <:col :let={item} label="Actions">
           <button phx-click="edit_section" phx-value-id={item.id}>Edit</button>
           <button phx-click="delete_section" phx-value-id={item.id}>Delete</button>
         </:col>
