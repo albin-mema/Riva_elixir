@@ -1,6 +1,10 @@
 defmodule RivaAsh.Resources.Reservation do
   @moduledoc """
   Represents a reservation made by a client for an item.
+
+  Reservations track the booking of items by clients, including timing,
+  status, and payment information. They are central to the business logic
+  and require comprehensive validation and authorization.
   """
 
   use Ash.Resource,
@@ -11,55 +15,43 @@ defmodule RivaAsh.Resources.Reservation do
       AshJsonApi.Resource,
       AshGraphql.Resource,
       AshPaperTrail.Resource,
-      AshArchival.Resource
+      AshArchival.Resource,
+      AshAdmin.Resource
     ]
+
+  import RivaAsh.ResourceHelpers
+  import RivaAsh.Authorization
 
   # Configure versioning for this resource
   paper_trail do
-    # Track all changes with full diffs
     change_tracking_mode(:full_diff)
-
-    # Don't store timestamps in the changes
     ignore_attributes([:inserted_at, :updated_at])
-
-    # Store action name for better auditing
     store_action_name?(true)
-
-    # Store action inputs for better auditing
     store_action_inputs?(true)
-
-    # Store resource identifier for better querying
     store_resource_identifier?(true)
-
-    # Create versions on destroy (for soft deletes)
     create_version_on_destroy?(true)
   end
 
-  postgres do
-    table("reservations")
-    repo(RivaAsh.Repo)
-  end
+  standard_postgres("reservations")
+  standard_archive()
 
-  # Configure soft delete functionality
-  archive do
-    # Use archived_at field for soft deletes
-    attribute(:archived_at)
-    # Allow both soft and hard deletes
-    base_filter?(false)
-  end
-
+  # Authorization policies
   policies do
     # Admins can do everything
     bypass actor_attribute_equals(:role, :admin) do
       authorize_if(always())
     end
 
-    # Managers can manage all reservations
+    # Business-scoped policies for business owners and employees
+    business_scoped_policies()
+    employee_accessible_policies(:manage_reservations)
+
+    # Managers can manage all reservations within their business
     policy actor_attribute_equals(:role, :manager) do
-      authorize_if(always())
+      authorize_if(RivaAsh.Authorization.can_access_business?(actor(), get_context(:business_id)))
     end
 
-    # Staff can only read reservations they created
+    # Staff can only read reservations they created within their business
     policy actor_attribute_equals(:role, :staff) do
       authorize_if(expr(employee_id == ^actor(:id)))
       forbid_unless(action_type(:read))
@@ -72,16 +64,19 @@ defmodule RivaAsh.Resources.Reservation do
       forbid_unless(action_type([:read, :update]))
     end
 
-    # All authenticated employees can create reservations
-    policy action_type(:create) do
-      authorize_if(actor_present())
+    # Special policy for viewing reservations by client or employee
+    policy action_type(:read) do
+      authorize_if(expr(client_id == ^actor(:id)))
+      authorize_if(expr(employee_id == ^actor(:id)))
     end
 
-    # Allow public booking creation (no actor required for client bookings)
+    # Secure reservation creation - require business context
     policy action_type(:create) do
-      # This allows the booking API to create reservations without authentication
-      # The booking controller handles the business logic
-      authorize_if(always())
+      # Business employees can create reservations
+      authorize_if(actor_present() and RivaAsh.Authorization.can_access_business?(actor(), get_context(:business_id)))
+
+      # Allow authenticated booking creation with business context
+      authorize_if(actor_present() and present(get_argument(:client_id)) and present(get_argument(:item_id)))
     end
   end
 
@@ -155,6 +150,13 @@ defmodule RivaAsh.Resources.Reservation do
     create :create do
       accept([:client_id, :item_id, :employee_id, :reserved_from, :reserved_until, :notes, :total_amount])
       primary?(true)
+
+      # Automatically set business_id from item
+      change({RivaAsh.Changes, :set_business_id_from_item})
+
+      # Validate cross-business relationships
+      validate({RivaAsh.Validations, :validate_client_item_business_match})
+      validate({RivaAsh.Validations, :validate_employee_item_business_match})
     end
 
     # Create reservation for client booking (employee_id optional)
@@ -162,12 +164,24 @@ defmodule RivaAsh.Resources.Reservation do
       accept([:client_id, :item_id, :reserved_from, :reserved_until, :notes])
       change(set_attribute(:status, :pending))
       description("Create reservation from client booking flow")
+
+      # Automatically set business_id from item
+      change({RivaAsh.Changes, :set_business_id_from_item})
+
+      # Validate cross-business relationships
+      validate({RivaAsh.Validations, :validate_client_item_business_match})
     end
 
     # Create provisional reservation for online bookings
     create :create_provisional do
       accept([:client_id, :item_id, :reserved_from, :reserved_until, :notes])
       change(set_attribute(:status, :provisional))
+
+      # Automatically set business_id from item
+      change({RivaAsh.Changes, :set_business_id_from_item})
+
+      # Validate cross-business relationships
+      validate({RivaAsh.Validations, :validate_client_item_business_match})
       change(set_attribute(:is_provisional, true))
       change(set_attribute(:hold_expires_at, expr(fragment("NOW() + INTERVAL '15 minutes'"))))
       description("Create provisional reservation with 15-minute hold")
@@ -324,6 +338,12 @@ defmodule RivaAsh.Resources.Reservation do
   attributes do
     uuid_primary_key(:id)
 
+    attribute :business_id, :uuid do
+      allow_nil?(false)
+      public?(true)
+      description("Denormalized business ID for performance optimization")
+    end
+
     attribute :reserved_from, :utc_datetime do
       allow_nil?(false)
       public?(true)
@@ -402,6 +422,13 @@ defmodule RivaAsh.Resources.Reservation do
   end
 
   relationships do
+    belongs_to :business, RivaAsh.Resources.Business do
+      allow_nil?(false)
+      attribute_writable?(true)
+      public?(true)
+      description("Denormalized business relationship for performance")
+    end
+
     belongs_to :client, RivaAsh.Resources.Client do
       allow_nil?(false)
       attribute_writable?(true)
@@ -446,6 +473,36 @@ defmodule RivaAsh.Resources.Reservation do
     end
   end
 
-  # Validations removed to fix non-atomic action issues
-  # These will be handled in the actions themselves
+  validations do
+    # Basic field validations
+    validate(present([:client_id, :item_id, :reserved_from, :reserved_until]),
+      message: "Required fields must be present")
+
+    # Time range validation
+    validate({RivaAsh.Validations, :validate_time_range},
+      start_field: :reserved_from, end_field: :reserved_until)
+
+    # Future date validation
+    validate({RivaAsh.Validations, :validate_future_date},
+      field: :reserved_from)
+
+    # Item availability validation
+    validate({RivaAsh.Validations, :validate_item_availability})
+
+    # Reservation conflict validation
+    validate({RivaAsh.Validations, :validate_reservation_availability})
+
+    # Business access validation
+    validate({RivaAsh.Validations, :validate_business_access})
+  end
+
+  identities do
+    # Prevent duplicate reservations for the same item at the same time
+    identity(:unique_item_time_slot, [:item_id, :reserved_from, :reserved_until])
+  end
+
+  # Helper function for admin dropdowns
+  def choices_for_select do
+    RivaAsh.ResourceHelpers.choices_for_select(__MODULE__)
+  end
 end

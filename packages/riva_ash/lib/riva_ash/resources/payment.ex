@@ -20,12 +20,15 @@ defmodule RivaAsh.Resources.Payment do
   use Ash.Resource,
     domain: RivaAsh.Domain,
     data_layer: AshPostgres.DataLayer,
+    authorizers: [Ash.Policy.Authorizer],
     extensions: [
       AshJsonApi.Resource,
       AshGraphql.Resource,
       AshPaperTrail.Resource,
       AshArchival.Resource
     ]
+
+  import RivaAsh.Authorization
 
   # Configure versioning for payment tracking
   paper_trail do
@@ -46,6 +49,29 @@ defmodule RivaAsh.Resources.Payment do
   archive do
     attribute(:archived_at)
     base_filter?(false)
+  end
+
+  # Authorization policies
+  policies do
+    # Admins can do everything
+    bypass actor_attribute_equals(:role, :admin) do
+      authorize_if(always())
+    end
+
+    # Business owners can manage payments for their business (optimized with denormalized business_id)
+    policy action_type([:read, :create, :update, :destroy]) do
+      authorize_if(expr(business.owner_id == ^actor(:id)))
+    end
+
+    # Employees can manage payments within their business (optimized)
+    policy action_type([:read, :create, :update]) do
+      authorize_if(RivaAsh.Authorization.can_access_business?(actor(), business_id))
+    end
+
+    # Clients can view their own payments
+    policy action_type(:read) do
+      authorize_if(expr(reservation.client_id == ^actor(:id)))
+    end
   end
 
   json_api do
@@ -126,6 +152,12 @@ defmodule RivaAsh.Resources.Payment do
 
       # Set initial status to pending
       change(set_attribute(:status, :pending))
+
+      # Automatically set business_id from reservation
+      change({RivaAsh.Changes, :set_business_id_from_reservation})
+
+      # Validate cross-business relationships
+      validate({RivaAsh.Validations, :validate_reservation_payment_business_match})
     end
 
     read :by_id do
@@ -186,6 +218,12 @@ defmodule RivaAsh.Resources.Payment do
 
   attributes do
     uuid_primary_key(:id)
+
+    attribute :business_id, :uuid do
+      allow_nil?(false)
+      public?(true)
+      description("Denormalized business ID for performance optimization")
+    end
 
     attribute :status, :atom do
       constraints(one_of: [:pending, :paid, :partial, :refunded, :cancelled])
@@ -271,6 +309,13 @@ defmodule RivaAsh.Resources.Payment do
   end
 
   relationships do
+    belongs_to :business, RivaAsh.Resources.Business do
+      allow_nil?(false)
+      attribute_writable?(true)
+      public?(true)
+      description("Denormalized business relationship for performance")
+    end
+
     belongs_to :reservation, RivaAsh.Resources.Reservation do
       allow_nil?(false)
       attribute_writable?(true)

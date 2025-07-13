@@ -10,42 +10,31 @@ defmodule RivaAsh.Resources.Employee do
     authorizers: [Ash.Policy.Authorizer],
     extensions: [
       AshJsonApi.Resource,
+      AshGraphql.Resource,
       AshPaperTrail.Resource,
-      AshArchival.Resource
+      AshArchival.Resource,
+      AshAdmin.Resource
     ]
+
+  import RivaAsh.ResourceHelpers
+  import RivaAsh.Authorization
 
   # Configure versioning for this resource
   paper_trail do
-    # Track all changes with full diffs
     change_tracking_mode(:full_diff)
-
-    # Don't store timestamps in the changes
     ignore_attributes([:inserted_at, :updated_at, :last_login_at])
-
-    # Store action name for better auditing
     store_action_name?(true)
-
-    # Store action inputs for better auditing
     store_action_inputs?(true)
-
-    # Store resource identifier for better querying
     store_resource_identifier?(true)
   end
 
   postgres do
     table("employees")
     repo(RivaAsh.Repo)
-
     identity_wheres_to_sql(unique_employee_number_per_business: "employee_number IS NOT NULL")
   end
 
-  # Configure soft delete functionality
-  archive do
-    # Use archived_at field for soft deletes
-    attribute(:archived_at)
-    # Allow both soft and hard deletes
-    base_filter?(false)
-  end
+  standard_archive()
 
   policies do
     # Admins can do everything
@@ -53,21 +42,29 @@ defmodule RivaAsh.Resources.Employee do
       authorize_if(always())
     end
 
-    # Permission-based authorization for viewing employees
+    # Business owners can manage employees in their business
+    policy action_type([:read, :create, :update]) do
+      authorize_if(expr(business.owner_id == ^actor(:id)))
+    end
+
+    # Permission-based authorization for viewing employees (within same business)
     policy action_type(:read) do
-      authorize_if(RivaAsh.Policies.PermissionCheck.can_view_employees())
+      authorize_if(RivaAsh.Policies.PermissionCheck.can_view_employees() and
+                   RivaAsh.Authorization.can_access_business?(actor(), business_id))
       # Employees can always read themselves
       authorize_if(expr(id == ^actor(:id)))
     end
 
-    # Permission-based authorization for creating employees
+    # Permission-based authorization for creating employees (within accessible business)
     policy action_type(:create) do
-      authorize_if(RivaAsh.Policies.PermissionCheck.can_create_employees())
+      authorize_if(RivaAsh.Policies.PermissionCheck.can_create_employees() and
+                   RivaAsh.Authorization.can_access_business?(actor(), get_argument(:business_id)))
     end
 
-    # Permission-based authorization for updating employees
+    # Permission-based authorization for updating employees (within same business)
     policy action_type(:update) do
-      authorize_if(RivaAsh.Policies.PermissionCheck.can_modify_employees())
+      authorize_if(RivaAsh.Policies.PermissionCheck.can_modify_employees() and
+                   RivaAsh.Authorization.can_access_business?(actor(), business_id))
       # Employees can always update themselves
       authorize_if(expr(id == ^actor(:id)))
     end
@@ -116,6 +113,9 @@ defmodule RivaAsh.Resources.Employee do
     create :create do
       accept([:business_id, :email, :first_name, :last_name, :role, :phone, :is_active])
       primary?(true)
+
+      # Validate business access
+      validate({RivaAsh.Validations, :validate_business_access})
     end
 
     read :by_id do
@@ -283,9 +283,34 @@ defmodule RivaAsh.Resources.Employee do
   end
 
   validations do
-    validate(match(~r/^[^\s]+@[^\s]+$/, :email), message: "must be a valid email address")
+    validate(fn changeset, _context ->
+      case Ash.Changeset.get_attribute(changeset, :email) do
+        nil -> :ok
+        email ->
+          # Convert CiString to string for regex validation
+          email_string = to_string(email)
+          if Regex.match?(~r/^[^\s]+@[^\s]+$/, email_string) do
+            :ok
+          else
+            {:error, field: :email, message: "must be a valid email address"}
+          end
+      end
+    end)
     validate(present([:first_name, :last_name]), message: "first and last name are required")
   end
+
+  # Flop configuration for table functionality
+  @derive {
+    Flop.Schema,
+    filterable: [:first_name, :last_name, :email, :role, :is_active, :business_id],
+    sortable: [:first_name, :last_name, :email, :role, :hire_date, :inserted_at],
+    default_order: %{
+      order_by: [:last_name, :first_name],
+      order_directions: [:asc, :asc]
+    },
+    default_limit: 20,
+    max_limit: 100
+  }
 
   identities do
     identity(:unique_email, [:email])
