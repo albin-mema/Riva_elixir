@@ -25,7 +25,7 @@ defmodule RivaAshWeb.Components.Interactive.GridPositionPicker do
     <div {@rest}>
       <div :if={@show_coordinates}>
         <p>
-          Selected Position: 
+          Selected Position:
           <%= if @selected_row && @selected_column do %>
             Row <%= @selected_row %>, Column <%= @selected_column %>
           <% else %>
@@ -33,13 +33,13 @@ defmodule RivaAshWeb.Components.Interactive.GridPositionPicker do
           <% end %>
         </p>
       </div>
-      
-      <div 
+
+      <div
         class="position-grid"
         style={"display: grid; grid-template-rows: repeat(#{@grid_rows}, 1fr); grid-template-columns: repeat(#{@grid_columns}, 1fr); gap: 2px; max-width: 400px;"}
       >
         <button
-          :for={row <- 1..@grid_rows, col <- 1..@grid_columns}
+          :for={{row, col} <- for(row <- 1..@grid_rows, col <- 1..@grid_columns, do: {row, col})}
           class={[
             "grid-position",
             if(row == @selected_row && col == @selected_column, do: "selected", else: ""),
@@ -57,7 +57,7 @@ defmodule RivaAshWeb.Components.Interactive.GridPositionPicker do
           <% end %>
         </button>
       </div>
-      
+
       <div>
         <div>
           <span class="legend-item available">Available</span>
@@ -65,7 +65,7 @@ defmodule RivaAshWeb.Components.Interactive.GridPositionPicker do
           <span class="legend-item selected">Selected</span>
         </div>
       </div>
-      
+
       <div :if={@occupied_positions != []}>
         <h4>Occupied Positions:</h4>
         <ul>

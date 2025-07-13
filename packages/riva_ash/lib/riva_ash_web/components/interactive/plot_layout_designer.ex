@@ -52,21 +52,21 @@ defmodule RivaAshWeb.Components.Interactive.PlotLayoutDesigner do
             phx-value-dimension="columns"
           />
         </div>
-        
+
         <div>
           <h3>Add Elements</h3>
           <.button phx-click={@on_add_section}>Add Section</.button>
           <.button phx-click={@on_add_item}>Add Item</.button>
         </div>
       </div>
-      
-      <div 
+
+      <div
         class="layout-grid"
         style={"display: grid; grid-template-rows: repeat(#{@grid_rows}, 1fr); grid-template-columns: repeat(#{@grid_columns}, 1fr); gap: 1px; min-height: 400px;"}
       >
         <!-- Grid cells -->
-        <div 
-          :for={row <- 1..@grid_rows, col <- 1..@grid_columns}
+        <div
+          :for={{row, col} <- for(row <- 1..@grid_rows, col <- 1..@grid_columns, do: {row, col})}
           class="grid-cell"
           style={"grid-row: #{row}; grid-column: #{col};"}
           phx-click={if @mode == "edit", do: "cell_clicked", else: nil}
@@ -74,7 +74,7 @@ defmodule RivaAshWeb.Components.Interactive.PlotLayoutDesigner do
           phx-value-column={col}
         >
           <!-- Sections in this cell -->
-          <div 
+          <div
             :for={section <- get_elements_at_position(@sections, row, col)}
             class={[
               "section-element",
@@ -86,7 +86,7 @@ defmodule RivaAshWeb.Components.Interactive.PlotLayoutDesigner do
           >
             <div class="section-header">
               <span><%= section.name %></span>
-              <button 
+              <button
                 :if={@mode == "edit"}
                 phx-click={@on_remove_element}
                 phx-value-type="section"
@@ -95,9 +95,9 @@ defmodule RivaAshWeb.Components.Interactive.PlotLayoutDesigner do
                 ×
               </button>
             </div>
-            
+
             <!-- Items within this section -->
-            <div 
+            <div
               :for={item <- get_section_items(@items, section.id)}
               class={[
                 "item-element",
@@ -108,7 +108,7 @@ defmodule RivaAshWeb.Components.Interactive.PlotLayoutDesigner do
               phx-value-id={item.id}
             >
               <span><%= item.name %></span>
-              <button 
+              <button
                 :if={@mode == "edit"}
                 phx-click={@on_remove_element}
                 phx-value-type="item"
@@ -120,14 +120,14 @@ defmodule RivaAshWeb.Components.Interactive.PlotLayoutDesigner do
           </div>
         </div>
       </div>
-      
+
       <div :if={@selected_element && @mode == "edit"}>
         <div>
           <h3>Element Properties</h3>
           <p>Type: <%= @selected_element.type %></p>
           <p>Name: <%= @selected_element.name %></p>
           <p>Position: Row <%= @selected_element.grid_row %>, Column <%= @selected_element.grid_column %></p>
-          
+
           <div>
             <.input
               type="number"

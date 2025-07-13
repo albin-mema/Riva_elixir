@@ -26,8 +26,8 @@ defmodule RivaAshWeb.Components.Organisms.DataTable do
   slot :col, required: true do
     attr :label, :string, required: true
     attr :field, :atom
-    attr :sortable, :boolean, default: false
-    attr :filterable, :boolean, default: false
+    attr :sortable, :boolean
+    attr :filterable, :boolean
   end
 
   def data_table(assigns) do
@@ -36,7 +36,7 @@ defmodule RivaAshWeb.Components.Organisms.DataTable do
     <div {@rest}>
       <.search_bar :if={@show_search} on_search="search" />
       <.filter_panel :if={@show_filters} filters={[]} on_apply="apply_filters" on_clear="clear_filters" />
-      
+
       <table>
         <thead>
           <tr>
@@ -51,7 +51,7 @@ defmodule RivaAshWeb.Components.Organisms.DataTable do
           </tr>
         </tbody>
       </table>
-      
+
       <.pagination :if={@show_pagination} meta={@meta} path={@path} />
     </div>
     """

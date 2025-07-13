@@ -30,10 +30,10 @@ defmodule RivaAshWeb.Components.Organisms.LayoutDesigner do
         <.input type="number" value={@grid_columns} placeholder="Columns" />
         <.button phx-click={@on_grid_resize}>Resize Grid</.button>
       </div>
-      
+
       <div style={"grid-template-rows: repeat(#{@grid_rows}, 1fr); grid-template-columns: repeat(#{@grid_columns}, 1fr);"}>
         <!-- Grid cells will go here -->
-        <div :for={row <- 1..@grid_rows, col <- 1..@grid_columns}>
+        <div :for={{row, col} <- for(row <- 1..@grid_rows, col <- 1..@grid_columns, do: {row, col})}>
           <!-- Grid cell content -->
         </div>
       </div>
