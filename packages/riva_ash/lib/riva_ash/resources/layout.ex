@@ -22,17 +22,31 @@ defmodule RivaAsh.Resources.Layout do
     ]
 
   import RivaAsh.ResourceHelpers
-  import RivaAsh.Authorization
 
   standard_postgres("layouts")
   standard_archive()
 
   # Authorization policies
   policies do
-    # TODO: Re-enable business_scoped_policies() after fixing macro
-    # business_scoped_policies()
-    # TODO: Re-enable employee_accessible_policies() after fixing macro
-    # employee_accessible_policies(:manage_layouts)
+    # Admin bypass
+    bypass actor_attribute_equals(:role, :admin) do
+      authorize_if(always())
+    end
+
+    # Business owner has full access to their business data
+    policy action_type([:read, :create, :update, :destroy]) do
+      authorize_if(expr(business.owner_id == ^actor(:id)))
+    end
+
+    # Employees with manager role can manage layouts
+    policy action_type([:create, :update]) do
+      authorize_if(actor_attribute_equals(:role, :manager))
+    end
+
+    # Employees can read layouts
+    policy action_type(:read) do
+      authorize_if(actor_attribute_equals(:role, :employee))
+    end
   end
 
   json_api do

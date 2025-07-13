@@ -17,7 +17,6 @@ defmodule RivaAsh.Resources.Employee do
     ]
 
   import RivaAsh.ResourceHelpers
-  import RivaAsh.Authorization
 
   postgres do
     table("employees")
@@ -150,16 +149,19 @@ defmodule RivaAsh.Resources.Employee do
 
     update :update_last_login do
       accept([])
+      require_atomic? false
       change(set_attribute(:last_login_at, &DateTime.utc_now/0))
     end
 
     update :deactivate do
       accept([])
+      require_atomic? false
       change(set_attribute(:is_active, false))
     end
 
     update :activate do
       accept([])
+      require_atomic? false
       change(set_attribute(:is_active, true))
     end
   end

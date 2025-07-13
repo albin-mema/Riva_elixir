@@ -4,6 +4,8 @@ defmodule RivaAsh.ResourceHelpers do
   Provides common attribute definitions, relationship patterns, and action templates.
   """
 
+  import Ash.Expr
+
   @doc """
   Standard attributes that most resources should have.
   """
@@ -267,6 +269,8 @@ defmodule RivaAsh.ResourceHelpers do
   """
   defmacro standard_read_actions do
     quote do
+      import Ash.Expr
+
       read :by_id do
         argument(:id, :uuid, allow_nil?: false)
         get?(true)
@@ -288,6 +292,8 @@ defmodule RivaAsh.ResourceHelpers do
   """
   defmacro business_scoped_actions do
     quote do
+      import Ash.Expr
+
       read :by_business do
         argument(:business_id, :uuid, allow_nil?: false)
         filter(expr(business_id == ^arg(:business_id)))

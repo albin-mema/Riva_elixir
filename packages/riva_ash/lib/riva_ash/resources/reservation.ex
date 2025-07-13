@@ -20,7 +20,6 @@ defmodule RivaAsh.Resources.Reservation do
     ]
 
   import RivaAsh.ResourceHelpers
-  import RivaAsh.Authorization
 
   standard_postgres("reservations")
   standard_archive()
@@ -34,9 +33,20 @@ defmodule RivaAsh.Resources.Reservation do
     end
 
     # Business-scoped policies for business owners and employees
-    # TODO: Re-enable business_scoped_policies() after fixing macro
-    # business_scoped_policies()
-    # employee_accessible_policies(:manage_reservations)
+    # Business owner has full access to their business data
+    policy action_type([:read, :create, :update, :destroy]) do
+      authorize_if(expr(item.section.plot.business.owner_id == ^actor(:id)))
+    end
+
+    # Employees with manager role can manage reservations
+    policy action_type([:create, :update]) do
+      authorize_if(actor_attribute_equals(:role, :manager))
+    end
+
+    # Employees can read reservations
+    policy action_type(:read) do
+      authorize_if(actor_attribute_equals(:role, :employee))
+    end
 
     # Managers can manage all reservations within their business
     policy actor_attribute_equals(:role, :manager) do
@@ -180,6 +190,7 @@ defmodule RivaAsh.Resources.Reservation do
     # Confirm provisional reservation (when payment is received)
     update :confirm_provisional do
       accept([:total_amount, :notes])
+      require_atomic? false
       change(set_attribute(:status, :confirmed))
       change(set_attribute(:is_provisional, false))
       change(set_attribute(:is_paid, true))
@@ -189,6 +200,7 @@ defmodule RivaAsh.Resources.Reservation do
 
     # Cancel expired provisional reservations
     update :cancel_expired do
+      require_atomic? false
       change(set_attribute(:status, :cancelled))
       change(set_attribute(:is_provisional, false))
       description("Cancel expired provisional reservation")

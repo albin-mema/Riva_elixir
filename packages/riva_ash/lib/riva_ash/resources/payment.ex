@@ -29,7 +29,6 @@ defmodule RivaAsh.Resources.Payment do
     ]
 
   import RivaAsh.ResourceHelpers
-  import RivaAsh.Authorization
 
   postgres do
     table("payments")
@@ -185,6 +184,7 @@ defmodule RivaAsh.Resources.Payment do
     # Action to mark payment as paid
     update :mark_as_paid do
       accept([:amount_paid, :payment_method, :payment_date, :transaction_reference, :notes])
+      require_atomic? false
 
       change(set_attribute(:status, :paid))
 
@@ -195,6 +195,7 @@ defmodule RivaAsh.Resources.Payment do
     # Action to process refund
     update :process_refund do
       accept([:refund_amount, :refund_reason, :refund_date])
+      require_atomic? false
 
       change(set_attribute(:status, :refunded))
 

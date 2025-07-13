@@ -17,6 +17,7 @@ defmodule RivaAsh.Jobs.HoldCleanupJob do
   require Logger
 
   import Ash.Expr
+  require Ash.Query
 
   alias RivaAsh.Resources.ItemHold
   alias RivaAsh.Domain

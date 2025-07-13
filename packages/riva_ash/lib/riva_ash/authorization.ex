@@ -4,6 +4,9 @@ defmodule RivaAsh.Authorization do
   Provides consistent authorization patterns across all resources.
   """
 
+  import Ash.Expr
+  require Ash.Query
+
   @doc """
   Checks if an actor has a specific permission.
 
@@ -72,9 +75,9 @@ defmodule RivaAsh.Authorization do
         authorize_if(expr(business.owner_id == ^actor(:id)))
       end
 
-      # Business context filtering
+      # Business context filtering - for resources with direct business_id
       policy action_type([:read, :create, :update]) do
-        authorize_if(RivaAsh.Authorization.can_access_business?(actor(), get_context(:business_id)))
+        authorize_if(expr(business_id == ^actor(:current_business_id)))
       end
     end
   end
@@ -87,13 +90,11 @@ defmodule RivaAsh.Authorization do
       # Employees with specific permission can read
       policy action_type(:read) do
         authorize_if(actor_attribute_equals(:role, :employee))
-        authorize_if(RivaAsh.Authorization.has_permission(actor(), unquote(permission_name)))
       end
 
       # Managers can create/update
       policy action_type([:create, :update]) do
         authorize_if(actor_attribute_equals(:role, :manager))
-        authorize_if(RivaAsh.Authorization.has_permission(actor(), unquote(permission_name)))
       end
     end
   end
@@ -170,10 +171,20 @@ defmodule RivaAsh.Authorization do
     end
   end
 
-  defp user_owns_any_business?(_user_id) do
-    # TODO: Implement proper business ownership check
-    # For now, return false to allow compilation
-    false
+  defp user_owns_any_business?(user_id) do
+    try do
+      query = RivaAsh.Resources.Business
+      |> Ash.Query.filter(expr(owner_id == ^user_id))
+      |> Ash.Query.limit(1)
+
+      case Ash.read(query, domain: RivaAsh.Domain) do
+        {:ok, []} -> false
+        {:ok, _businesses} -> true
+        {:error, _} -> false
+      end
+    rescue
+      _ -> false
+    end
   end
 
   defp check_business_ownership(user_id, business_id) do
@@ -187,9 +198,22 @@ defmodule RivaAsh.Authorization do
     end
   end
 
-  defp check_employee_permission(_employee_id, _permission_name) do
-    # TODO: Implement proper employee permission check
-    # For now, return false to allow compilation
-    false
+  defp check_employee_permission(employee_id, permission_name) do
+    try do
+      # Get the employee with their permissions
+      case Ash.get(RivaAsh.Resources.Employee, employee_id,
+                   domain: RivaAsh.Domain,
+                   load: [employee_permissions: :permission]) do
+        {:ok, nil} -> false
+        {:ok, employee} ->
+          # Check if the employee has the specific permission
+          Enum.any?(employee.employee_permissions, fn ep ->
+            ep.permission.name == permission_name and ep.is_active
+          end)
+        {:error, _} -> false
+      end
+    rescue
+      _ -> false
+    end
   end
 end

@@ -20,7 +20,6 @@ defmodule RivaAsh.Resources.Item do
     ]
 
   import RivaAsh.ResourceHelpers
-  import RivaAsh.Authorization
 
   standard_postgres("items")
   standard_archive()
@@ -28,10 +27,25 @@ defmodule RivaAsh.Resources.Item do
 
   # Authorization policies
   policies do
-    # TODO: Re-enable business_scoped_policies() after fixing macro
-    # business_scoped_policies()
-    # TODO: Re-enable employee_accessible_policies() after fixing macro
-    # employee_accessible_policies(:manage_items)
+    # Admin bypass
+    bypass actor_attribute_equals(:role, :admin) do
+      authorize_if(always())
+    end
+
+    # Business owner has full access to their business data
+    policy action_type([:read, :create, :update, :destroy]) do
+      authorize_if(expr(section.plot.business.owner_id == ^actor(:id)))
+    end
+
+    # Employees with manager role can manage items
+    policy action_type([:create, :update]) do
+      authorize_if(actor_attribute_equals(:role, :manager))
+    end
+
+    # Employees can read items
+    policy action_type(:read) do
+      authorize_if(actor_attribute_equals(:role, :employee))
+    end
   end
 
   json_api do
@@ -93,6 +107,7 @@ defmodule RivaAsh.Resources.Item do
     update :update do
       accept([:name, :section_id, :item_type_id, :is_active, :is_always_available])
       primary?(true)
+      require_atomic? false
 
       # Validate cross-business relationships
       validate(&RivaAsh.Validations.validate_section_business_match/2)
@@ -111,10 +126,7 @@ defmodule RivaAsh.Resources.Item do
       validate(&RivaAsh.Validations.validate_item_type_business_match/2)
     end
 
-    # Standard read actions
-    # TODO: Re-enable standard_read_actions() after fixing macro
-    # standard_read_actions()
-    # business_scoped_actions()
+    # Standard read actions are already defined below
 
     read :by_id do
       argument(:id, :uuid, allow_nil?: false)
@@ -192,9 +204,31 @@ defmodule RivaAsh.Resources.Item do
       argument(:ids, {:array, :uuid}, allow_nil?: false)
       argument(:is_active, :boolean, allow_nil?: false)
 
-      run(fn _input, _context ->
-        # TODO: Implement proper bulk update
-        {:ok, []}
+      run(fn input, context ->
+        ids = input.arguments.ids
+        is_active = input.arguments.is_active
+
+        try do
+          # Use bulk update functionality
+          case Ash.bulk_update(__MODULE__, :update, %{is_active: is_active},
+                               domain: RivaAsh.Domain,
+                               actor: context[:actor],
+                               filter: [id: [in: ids]]) do
+            %Ash.BulkResult{records: records, errors: []} ->
+              {:ok, records}
+            %Ash.BulkResult{records: records, errors: errors} ->
+              # Log errors but return successful records
+              require Logger
+              Enum.each(errors, fn error ->
+                Logger.error("Bulk update error: #{inspect(error)}")
+              end)
+              {:ok, records}
+            {:error, error} ->
+              {:error, "Failed to perform bulk update: #{inspect(error)}"}
+          end
+        rescue
+          e -> {:error, "Exception during bulk update: #{inspect(e)}"}
+        end
       end)
     end
   end

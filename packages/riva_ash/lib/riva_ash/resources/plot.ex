@@ -20,7 +20,6 @@ defmodule RivaAsh.Resources.Plot do
     ]
 
   import RivaAsh.ResourceHelpers
-  import RivaAsh.Authorization
 
   standard_postgres("plots")
   standard_archive()
@@ -28,9 +27,25 @@ defmodule RivaAsh.Resources.Plot do
 
   # Authorization policies
   policies do
-    # TODO: Re-enable business_scoped_policies() after fixing macro
-    # business_scoped_policies()
-    # employee_accessible_policies(:manage_plots)
+    # Admin bypass
+    bypass actor_attribute_equals(:role, :admin) do
+      authorize_if(always())
+    end
+
+    # Business owner has full access to their business data
+    policy action_type([:read, :create, :update, :destroy]) do
+      authorize_if(expr(business.owner_id == ^actor(:id)))
+    end
+
+    # Employees with manager role can manage plots
+    policy action_type([:create, :update]) do
+      authorize_if(actor_attribute_equals(:role, :manager))
+    end
+
+    # Employees can read plots
+    policy action_type(:read) do
+      authorize_if(actor_attribute_equals(:role, :employee))
+    end
   end
 
   json_api do

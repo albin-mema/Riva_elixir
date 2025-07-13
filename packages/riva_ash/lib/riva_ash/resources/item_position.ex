@@ -14,6 +14,9 @@ defmodule RivaAsh.Resources.ItemPosition do
     data_layer: AshPostgres.DataLayer,
     extensions: [AshJsonApi.Resource, AshGraphql.Resource, AshArchival.Resource]
 
+  import Ash.Expr
+  require Ash.Query
+
   postgres do
     table("item_positions")
     repo(RivaAsh.Repo)

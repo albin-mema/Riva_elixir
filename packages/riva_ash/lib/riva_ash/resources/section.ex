@@ -18,7 +18,6 @@ defmodule RivaAsh.Resources.Section do
     ]
 
   import RivaAsh.ResourceHelpers
-  import RivaAsh.Authorization
 
   standard_postgres("sections")
   standard_archive()
@@ -26,9 +25,25 @@ defmodule RivaAsh.Resources.Section do
 
   # Authorization policies
   policies do
-    # TODO: Re-enable business_scoped_policies() after fixing macro
-    # business_scoped_policies()
-    # employee_accessible_policies(:manage_sections)
+    # Admin bypass
+    bypass actor_attribute_equals(:role, :admin) do
+      authorize_if(always())
+    end
+
+    # Business owner has full access to their business data
+    policy action_type([:read, :create, :update, :destroy]) do
+      authorize_if(expr(plot.business.owner_id == ^actor(:id)))
+    end
+
+    # Employees with manager role can manage sections
+    policy action_type([:create, :update]) do
+      authorize_if(actor_attribute_equals(:role, :manager))
+    end
+
+    # Employees can read sections
+    policy action_type(:read) do
+      authorize_if(actor_attribute_equals(:role, :employee))
+    end
   end
 
   json_api do

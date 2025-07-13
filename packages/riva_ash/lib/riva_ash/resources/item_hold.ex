@@ -20,6 +20,9 @@ defmodule RivaAsh.Resources.ItemHold do
       AshArchival.Resource
     ]
 
+  import Ash.Expr
+  require Ash.Query
+
   postgres do
     table("item_holds")
     repo(RivaAsh.Repo)
@@ -139,6 +142,7 @@ defmodule RivaAsh.Resources.ItemHold do
     # Release a hold (mark as inactive)
     update :release do
       accept([])
+      require_atomic? false
       change(set_attribute(:is_active, false))
       change(set_attribute(:released_at, expr(fragment("NOW()"))))
       description("Release an active hold")
@@ -147,6 +151,7 @@ defmodule RivaAsh.Resources.ItemHold do
     # Extend hold duration
     update :extend do
       argument(:additional_minutes, :integer, allow_nil?: false)
+      require_atomic? false
       change(set_attribute(:expires_at,
         expr(fragment("? + INTERVAL '? minutes'", expires_at, ^arg(:additional_minutes)))))
       description("Extend hold expiration time")
@@ -269,8 +274,6 @@ defmodule RivaAsh.Resources.ItemHold do
 
   # Helper function to check for overlapping holds
   defp check_for_overlapping_holds(item_id, reserved_from, reserved_until, changeset) do
-    import Ash.Expr
-
     # Get the ID of the current record if it's an update
     current_id = Ash.Changeset.get_data(changeset, :id)
 

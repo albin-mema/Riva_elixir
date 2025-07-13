@@ -22,7 +22,6 @@ defmodule RivaAsh.Resources.Pricing do
     ]
 
   import RivaAsh.ResourceHelpers
-  import RivaAsh.Authorization
 
   standard_postgres("pricing")
   standard_archive()
@@ -115,6 +114,7 @@ defmodule RivaAsh.Resources.Pricing do
         :description
       ])
       primary?(true)
+      require_atomic? false
 
       # Validate pricing constraints
       validate(&RivaAsh.Validations.validate_pricing_date_overlap/2)
