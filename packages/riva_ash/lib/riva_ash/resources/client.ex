@@ -12,39 +12,24 @@ defmodule RivaAsh.Resources.Client do
       AshJsonApi.Resource,
       AshGraphql.Resource,
       AshPaperTrail.Resource,
-      AshArchival.Resource
+      AshArchival.Resource,
+      AshAdmin.Resource
     ]
+
+  import RivaAsh.ResourceHelpers
+  import RivaAsh.Authorization
 
   # Configure versioning for this resource
   paper_trail do
-    # Track all changes with full diffs
     change_tracking_mode(:full_diff)
-
-    # Don't store timestamps in the changes
     ignore_attributes([:inserted_at, :updated_at])
-
-    # Store action name for better auditing
     store_action_name?(true)
-
-    # Store action inputs for better auditing
     store_action_inputs?(true)
-
-    # Store resource identifier for better querying
     store_resource_identifier?(true)
   end
 
-  postgres do
-    table("clients")
-    repo(RivaAsh.Repo)
-  end
-
-  # Configure soft delete functionality
-  archive do
-    # Use archived_at field for soft deletes
-    attribute(:archived_at)
-    # Allow both soft and hard deletes
-    base_filter?(false)
-  end
+  standard_postgres("clients")
+  standard_archive()
 
   policies do
     # Admins can do everything
@@ -69,14 +54,30 @@ defmodule RivaAsh.Resources.Client do
       forbid_unless(action_type([:read, :update]))
     end
 
-    # Allow public client creation for booking flow
+    # Secure client creation - only allow legitimate use cases
     policy action_type(:create) do
-      # Allow booking system to create clients
-      authorize_if(always())
+      # Business owners can create clients for their business
+      authorize_if(expr(business.owner_id == ^actor(:id)))
+
+      # Employees can create clients for their business
+      authorize_if(RivaAsh.Authorization.can_access_business?(actor(), get_argument(:business_id)))
+
+      # Allow authenticated users to create clients with valid business context (for booking flow)
+      authorize_if(actor_present() and present(get_argument(:business_id)))
     end
 
-    # Allow public read for booking lookups (by email)
+    # Business-scoped read access
+    policy action_type(:read) do
+      # Business owners can read their business clients
+      authorize_if(expr(business.owner_id == ^actor(:id)))
+
+      # Employees can read clients from their business
+      authorize_if(RivaAsh.Authorization.can_access_business?(actor(), business_id))
+    end
+
+    # Allow public read for booking lookups (by email) - but should be business-scoped
     policy action(:by_email) do
+      # This should be restricted in production - consider requiring business context
       authorize_if(always())
     end
   end
@@ -129,6 +130,8 @@ defmodule RivaAsh.Resources.Client do
     define(:register, action: :register)
     define(:by_id, args: [:id], action: :by_id)
     define(:by_email, args: [:email], action: :by_email)
+    define(:by_business, args: [:business_id], action: :by_business)
+    define(:by_business_and_email, args: [:business_id, :email], action: :by_business_and_email)
     define(:registered, action: :registered)
     define(:unregistered, action: :unregistered)
   end
@@ -137,8 +140,11 @@ defmodule RivaAsh.Resources.Client do
     defaults([:read, :update, :destroy])
 
     create :create do
-      accept([:name, :email, :phone, :is_registered])
+      accept([:business_id, :name, :email, :phone, :is_registered])
       primary?(true)
+
+      # Validate business access
+      validate({RivaAsh.Validations, :validate_business_access})
 
       # Ensure email is provided for registered clients
       validate fn changeset, _ ->
@@ -179,7 +185,10 @@ defmodule RivaAsh.Resources.Client do
 
     # Create unregistered client for booking flow
     create :create_for_booking do
-      accept([:name, :email, :phone])
+      accept([:business_id, :name, :email, :phone])
+
+      # Validate business access
+      validate({RivaAsh.Validations, :validate_business_access})
 
       change fn changeset, _ ->
         changeset
@@ -287,9 +296,9 @@ defmodule RivaAsh.Resources.Client do
         end
       end
 
-      # Use email as upsert key if available, otherwise use phone
+      # Use business_id + email as upsert key if available
       upsert? true
-      upsert_identity :email
+      upsert_identity :unique_email_per_business
 
       change fn changeset, _ ->
         changeset
@@ -323,6 +332,17 @@ defmodule RivaAsh.Resources.Client do
       filter(expr(email == ^arg(:email)))
     end
 
+    read :by_business do
+      argument(:business_id, :uuid, allow_nil?: false)
+      filter(expr(business_id == ^arg(:business_id)))
+    end
+
+    read :by_business_and_email do
+      argument(:business_id, :uuid, allow_nil?: false)
+      argument(:email, :string, allow_nil?: false)
+      filter(expr(business_id == ^arg(:business_id) and email == ^arg(:email)))
+    end
+
     read :registered do
       filter(expr(is_registered == true))
     end
@@ -334,6 +354,12 @@ defmodule RivaAsh.Resources.Client do
 
   attributes do
     uuid_primary_key(:id)
+
+    attribute :business_id, :uuid do
+      allow_nil?(false)
+      public?(true)
+      description("The business this client belongs to")
+    end
 
     attribute :name, :string do
       allow_nil?(false)
@@ -394,7 +420,8 @@ defmodule RivaAsh.Resources.Client do
   end
 
   identities do
-    identity(:email, [:email], eager_check_with: RivaAsh.Domain)
+    # Email must be unique within each business
+    identity(:unique_email_per_business, [:business_id, :email], eager_check_with: RivaAsh.Domain)
   end
 
   validations do
@@ -412,24 +439,29 @@ defmodule RivaAsh.Resources.Client do
     end
 
     # Email format validation for registered clients
+    # Enhanced email validation
+    validate({RivaAsh.Validations, :validate_email_format}, field: :email)
+
+    # Phone validation
+    validate({RivaAsh.Validations, :validate_phone_format}, field: :phone)
+
+    # Text sanitization
+    validate({RivaAsh.Validations, :sanitize_text_input}, field: :name)
+
+    # Business logic validation for registered clients
     validate fn changeset, _ ->
       if Ash.Changeset.get_attribute(changeset, :is_registered) == true do
         case Ash.Changeset.get_attribute(changeset, :email) do
-          email when is_binary(email) ->
-            if Regex.match?(~r/^[^\s]+@[^\s]+$/, email) do
-              :ok
-            else
-              [email: "has invalid format"]
-            end
-          _ -> :ok
+          email when is_binary(email) and email != "" -> :ok
+          _ -> {:error, field: :email, message: "Email is required for registered clients"}
         end
       else
         :ok
       end
     end
 
-    # Name is required for all clients
-    validate present([:name])
+    # Required fields
+    validate(present([:name]), message: "Name is required")
   end
 
   # Private helper functions
@@ -439,6 +471,13 @@ defmodule RivaAsh.Resources.Client do
   end
 
   relationships do
+    belongs_to :business, RivaAsh.Resources.Business do
+      allow_nil?(false)
+      attribute_writable?(true)
+      public?(true)
+      description("The business this client belongs to")
+    end
+
     has_many :reservations, RivaAsh.Resources.Reservation do
       public?(true)
       description("Reservations made by this client")
