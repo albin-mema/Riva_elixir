@@ -106,7 +106,7 @@ defmodule RivaAsh.Resources.ItemSchedule do
     end
 
     read :weekdays do
-      # Monday (1) through Friday (5)
+      # Monday (1) through Friday (5) in 0-6 format
       filter(expr(day_of_week >= 1 and day_of_week <= 5))
     end
 
@@ -165,9 +165,19 @@ defmodule RivaAsh.Resources.ItemSchedule do
   end
 
   validations do
-    validate(compare(:end_time, greater_than: :start_time),
-      message: "End time must be after start time"
-    )
+    # Time range validation
+    validate({RivaAsh.Validations, :validate_time_range},
+      start_field: :start_time, end_field: :end_time)
+
+    # Day of week validation (0=Sunday, 1=Monday, ..., 6=Saturday)
+    validate(compare(:day_of_week, greater_than_or_equal_to: 0),
+      message: "Day of week must be between 0 and 6 (0=Sunday, 6=Saturday)")
+    validate(compare(:day_of_week, less_than_or_equal_to: 6),
+      message: "Day of week must be between 0 and 6 (0=Sunday, 6=Saturday)")
+
+    # Required fields
+    validate(present([:item_id, :day_of_week, :start_time, :end_time]),
+      message: "All schedule fields are required")
   end
 
   identities do
