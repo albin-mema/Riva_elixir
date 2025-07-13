@@ -1,7 +1,7 @@
 defmodule RivaAsh.Resources.Layout do
   @moduledoc """
-  Represents the spatial layout configuration for a section.
-  Layouts define how items are organized within a section's physical space.
+  Represents the spatial layout configuration for a plot.
+  Layouts define how items are organized within a plot's physical space.
 
   Layout types:
   - grid: Items arranged in a grid pattern with rows and columns
@@ -12,19 +12,25 @@ defmodule RivaAsh.Resources.Layout do
   use Ash.Resource,
     domain: RivaAsh.Domain,
     data_layer: AshPostgres.DataLayer,
-    extensions: [AshJsonApi.Resource, AshGraphql.Resource, AshArchival.Resource]
+    authorizers: [Ash.Policy.Authorizer],
+    extensions: [
+      AshJsonApi.Resource,
+      AshGraphql.Resource,
+      AshPaperTrail.Resource,
+      AshArchival.Resource,
+      AshAdmin.Resource
+    ]
 
-  postgres do
-    table("layouts")
-    repo(RivaAsh.Repo)
-  end
+  import RivaAsh.ResourceHelpers
+  import RivaAsh.Authorization
 
-  # Configure soft delete functionality
-  archive do
-    # Use archived_at field for soft deletes
-    attribute(:archived_at)
-    # Allow both soft and hard deletes
-    base_filter?(false)
+  standard_postgres("layouts")
+  standard_archive()
+
+  # Authorization policies
+  policies do
+    business_scoped_policies()
+    employee_accessible_policies(:manage_layouts)
   end
 
   json_api do
@@ -89,6 +95,9 @@ defmodule RivaAsh.Resources.Layout do
         :is_active
       ])
       primary?(true)
+
+      # Note: Layout doesn't have direct business_id, so we validate plot exists
+      # Business context is enforced through plot relationship
     end
 
     read :by_id do

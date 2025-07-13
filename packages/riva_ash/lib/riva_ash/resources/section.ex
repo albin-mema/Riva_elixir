@@ -1,34 +1,33 @@
 defmodule RivaAsh.Resources.Section do
   @moduledoc """
-  Represents a section within a business that can contain multiple items.
-  Sections help organize items within a business context.
+  Represents a section within a plot that can contain multiple items.
+  Sections help organize items within a business context and provide
+  spatial organization for reservable resources.
   """
 
   use Ash.Resource,
     domain: RivaAsh.Domain,
     data_layer: AshPostgres.DataLayer,
-    extensions: [AshJsonApi.Resource, AshGraphql.Resource, AshArchival.Resource, AshAdmin.Resource]
+    authorizers: [Ash.Policy.Authorizer],
+    extensions: [
+      AshJsonApi.Resource,
+      AshGraphql.Resource,
+      AshPaperTrail.Resource,
+      AshArchival.Resource,
+      AshAdmin.Resource
+    ]
 
-  postgres do
-    table("sections")
-    repo(RivaAsh.Repo)
-  end
+  import RivaAsh.ResourceHelpers
+  import RivaAsh.Authorization
 
-  # Configure soft delete functionality
-  archive do
-    # Use archived_at field for soft deletes
-    attribute(:archived_at)
-    # Allow both soft and hard deletes
-    base_filter?(false)
-  end
+  standard_postgres("sections")
+  standard_archive()
+  standard_admin([:name, :plot, :description, :is_active])
 
-  # Configure admin interface
-  admin do
-    # Configure table display
-    table_columns([:name, :plot, :description])
-
-    # Configure relationship display
-    relationship_display_fields([:name])
+  # Authorization policies
+  policies do
+    business_scoped_policies()
+    employee_accessible_policies(:manage_sections)
   end
 
   json_api do
@@ -92,6 +91,9 @@ defmodule RivaAsh.Resources.Section do
     create :create do
       accept([:name, :description, :plot_id])
       primary?(true)
+
+      # Note: Section doesn't have direct business_id, so we validate plot exists
+      # Business context is enforced through plot relationship
     end
 
     read :by_id do

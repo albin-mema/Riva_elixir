@@ -172,10 +172,23 @@ defmodule RivaAsh.Resources.AvailabilityException do
   end
 
   validations do
-    validate(compare(:end_time, greater_than: :start_time),
-      where: [present(:start_time), present(:end_time)],
-      message: "End time must be after start time"
-    )
+    # Time range validation (when both times are present)
+    validate({RivaAsh.Validations, :validate_time_range},
+      start_field: :start_time, end_field: :end_time)
+
+    # Date validation - should not be in the past for future exceptions
+    validate({RivaAsh.Validations, :validate_future_date},
+      field: :date)
+
+    # Required fields
+    validate(present([:item_id, :date, :exception_type]),
+      message: "Item, date, and exception type are required")
+
+    # Logical validation - if it's a closure, times are optional
+    # If it's extended hours, times should be present
+    validate(present([:start_time, :end_time]),
+      where: [attribute_equals(:exception_type, :extended_hours)],
+      message: "Start and end times are required for extended hours exceptions")
   end
 
   identities do

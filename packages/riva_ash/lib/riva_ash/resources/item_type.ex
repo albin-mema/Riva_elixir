@@ -2,7 +2,7 @@ defmodule RivaAsh.Resources.ItemType do
   @moduledoc """
   Represents a type/category of items that can be reserved.
   Item types help categorize and organize different kinds of reservable resources.
-  
+
   Examples:
   - Table (for restaurants)
   - Room (for hotels/meeting spaces)
@@ -14,28 +14,26 @@ defmodule RivaAsh.Resources.ItemType do
   use Ash.Resource,
     domain: RivaAsh.Domain,
     data_layer: AshPostgres.DataLayer,
-    extensions: [AshJsonApi.Resource, AshGraphql.Resource, AshArchival.Resource, AshAdmin.Resource]
+    authorizers: [Ash.Policy.Authorizer],
+    extensions: [
+      AshJsonApi.Resource,
+      AshGraphql.Resource,
+      AshPaperTrail.Resource,
+      AshArchival.Resource,
+      AshAdmin.Resource
+    ]
 
-  postgres do
-    table("item_types")
-    repo(RivaAsh.Repo)
-  end
+  import RivaAsh.ResourceHelpers
+  import RivaAsh.Authorization
 
-  # Configure soft delete functionality
-  archive do
-    # Use archived_at field for soft deletes
-    attribute(:archived_at)
-    # Allow both soft and hard deletes
-    base_filter?(false)
-  end
+  standard_postgres("item_types")
+  standard_archive()
+  standard_admin([:name, :business, :description, :color, :icon, :is_active])
 
-  # Configure admin interface
-  admin do
-    # Configure table display
-    table_columns([:name, :business, :description, :color, :icon])
-
-    # Configure relationship display
-    relationship_display_fields([:name])
+  # Authorization policies
+  policies do
+    business_scoped_policies()
+    employee_accessible_policies(:manage_item_types)
   end
 
   json_api do

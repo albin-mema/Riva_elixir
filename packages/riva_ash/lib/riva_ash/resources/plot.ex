@@ -14,30 +14,22 @@ defmodule RivaAsh.Resources.Plot do
     extensions: [
       AshJsonApi.Resource,
       AshGraphql.Resource,
+      AshPaperTrail.Resource,
       AshArchival.Resource,
       AshAdmin.Resource
     ]
 
-  postgres do
-    table("plots")
-    repo(RivaAsh.Repo)
-  end
+  import RivaAsh.ResourceHelpers
+  import RivaAsh.Authorization
 
-  # Configure soft delete functionality
-  archive do
-    # Use archived_at field for soft deletes
-    attribute(:archived_at)
-    # Allow both soft and hard deletes
-    base_filter?(false)
-  end
+  standard_postgres("plots")
+  standard_archive()
+  standard_admin([:name, :business, :description, :total_area, :is_active])
 
-  # Configure admin interface
-  admin do
-    # Configure table display
-    table_columns([:name, :business, :description, :total_area, :is_active])
-
-    # Configure relationship display
-    relationship_display_fields([:name])
+  # Authorization policies
+  policies do
+    business_scoped_policies()
+    employee_accessible_policies(:manage_plots)
   end
 
   json_api do

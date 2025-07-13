@@ -112,6 +112,10 @@ defmodule RivaAsh.Resources.RecurringReservation do
       ])
       primary?(true)
       require_atomic?(false)
+
+      # Validate cross-business relationships
+      validate({RivaAsh.Validations, :validate_client_item_business_match})
+      validate({RivaAsh.Validations, :validate_employee_item_business_match})
     end
 
     create :create do
@@ -129,6 +133,10 @@ defmodule RivaAsh.Resources.RecurringReservation do
       ])
 
       primary?(true)
+
+      # Validate cross-business relationships
+      validate({RivaAsh.Validations, :validate_client_item_business_match})
+      validate({RivaAsh.Validations, :validate_employee_item_business_match})
     end
 
     read :by_id do

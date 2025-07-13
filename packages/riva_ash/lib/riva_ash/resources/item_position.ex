@@ -93,6 +93,9 @@ defmodule RivaAsh.Resources.ItemPosition do
         :is_visible
       ])
       primary?(true)
+
+      # Validate cross-business relationships
+      validate({RivaAsh.Validations, :validate_item_layout_business_match})
     end
 
     read :by_id do

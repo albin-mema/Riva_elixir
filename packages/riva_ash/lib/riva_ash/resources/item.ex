@@ -2,33 +2,34 @@ defmodule RivaAsh.Resources.Item do
   @moduledoc """
   Represents an individual item that can optionally belong to a section.
   Items are the basic inventory units in the system.
+
+  Items can be reserved by clients and have various availability patterns.
+  They belong to a business and can be categorized by item type.
   """
 
   use Ash.Resource,
     domain: RivaAsh.Domain,
     data_layer: AshPostgres.DataLayer,
-    extensions: [AshJsonApi.Resource, AshGraphql.Resource, AshArchival.Resource, AshAdmin.Resource]
+    authorizers: [Ash.Policy.Authorizer],
+    extensions: [
+      AshJsonApi.Resource,
+      AshGraphql.Resource,
+      AshPaperTrail.Resource,
+      AshArchival.Resource,
+      AshAdmin.Resource
+    ]
 
-  postgres do
-    table("items")
-    repo(RivaAsh.Repo)
-  end
+  import RivaAsh.ResourceHelpers
+  import RivaAsh.Authorization
 
-  # Configure soft delete functionality
-  archive do
-    # Use archived_at field for soft deletes
-    attribute(:archived_at)
-    # Allow both soft and hard deletes
-    base_filter?(false)
-  end
+  standard_postgres("items")
+  standard_archive()
+  standard_admin([:name, :section, :item_type, :is_active, :is_always_available])
 
-  # Configure admin interface
-  admin do
-    # Configure table display
-    table_columns([:name, :section, :item_type, :is_active, :is_always_available])
-
-    # Configure relationship display
-    relationship_display_fields([:name])
+  # Authorization policies
+  policies do
+    business_scoped_policies()
+    employee_accessible_policies(:manage_items)
   end
 
   json_api do
@@ -43,40 +44,28 @@ defmodule RivaAsh.Resources.Item do
       patch(:update)
       delete(:destroy)
 
-      # Additional routes for item-specific actions
+      # Business-scoped routes
+      get(:by_business, route: "/by-business/:business_id")
+      get(:by_business_active, route: "/by-business/:business_id/active")
+
+      # Section-specific routes
       get(:by_section, route: "/by-section/:section_id")
       get(:unassigned, route: "/unassigned")
+
+      # Status routes
       get(:active, route: "/active")
       get(:inactive, route: "/inactive")
+
+      # Availability routes
       get(:always_available, route: "/always-available")
       get(:scheduled_availability, route: "/scheduled-availability")
       get(:with_schedules, route: "/with-schedules")
       get(:available_now, route: "/available-now")
+      get(:available_for_date, route: "/available-for-date/:date")
     end
   end
 
-  graphql do
-    type(:item)
-
-    queries do
-      get(:get_item, :read)
-      list(:list_items, :read)
-      list(:items_by_section, :by_section)
-      list(:unassigned_items, :unassigned)
-      list(:active_items, :active)
-      list(:inactive_items, :inactive)
-      list(:always_available_items, :always_available)
-      list(:scheduled_availability_items, :scheduled_availability)
-      list(:items_with_schedules, :with_schedules)
-      list(:available_now_items, :available_now)
-    end
-
-    mutations do
-      create(:create_item, :create)
-      update(:update_item, :update)
-      destroy(:delete_item, :destroy)
-    end
-  end
+  standard_graphql(:item)
 
   code_interface do
     define(:create, action: :create)
@@ -84,6 +73,7 @@ defmodule RivaAsh.Resources.Item do
     define(:update, action: :update)
     define(:destroy, action: :destroy)
     define(:by_id, args: [:id], action: :by_id)
+    define(:by_business, args: [:business_id], action: :by_business)
     define(:by_section, args: [:section_id], action: :by_section)
     define(:unassigned, action: :unassigned)
     define(:active, action: :active)
@@ -92,21 +82,36 @@ defmodule RivaAsh.Resources.Item do
     define(:scheduled_availability, action: :scheduled_availability)
     define(:with_schedules, action: :with_schedules)
     define(:available_now, action: :available_now)
+    define(:available_for_date, args: [:date], action: :available_for_date)
   end
 
   actions do
-    defaults([:read, :update, :destroy])
+    defaults([:read, :destroy])
+
+    update :update do
+      accept([:name, :section_id, :item_type_id, :is_active, :is_always_available])
+      primary?(true)
+
+      # Validate cross-business relationships
+      validate({RivaAsh.Validations, :validate_section_business_match})
+      validate({RivaAsh.Validations, :validate_item_type_business_match})
+    end
 
     create :create do
-      accept([:name, :section_id, :item_type_id])
+      accept([:name, :section_id, :item_type_id, :business_id, :is_active, :is_always_available])
       primary?(true)
+
+      # Validate business access
+      validate({RivaAsh.Validations, :validate_business_access})
+
+      # Validate cross-business relationships
+      validate({RivaAsh.Validations, :validate_section_business_match})
+      validate({RivaAsh.Validations, :validate_item_type_business_match})
     end
 
-    read :by_id do
-      argument(:id, :uuid, allow_nil?: false)
-      get?(true)
-      filter(expr(id == ^arg(:id)))
-    end
+    # Standard read actions
+    standard_read_actions()
+    business_scoped_actions()
 
     read :by_section do
       argument(:section_id, :uuid, allow_nil?: false)
@@ -117,89 +122,105 @@ defmodule RivaAsh.Resources.Item do
       filter(expr(is_nil(section_id)))
     end
 
-    read :active do
-      filter(expr(is_active == true))
-    end
-
     read :always_available do
-      filter(expr(is_always_available == true and is_active == true))
+      filter(expr(is_always_available == true and is_active == true and is_nil(archived_at)))
     end
 
     read :scheduled_availability do
-      filter(expr(is_always_available == false and is_active == true))
-    end
-
-    read :inactive do
-      filter(expr(is_active == false))
+      filter(expr(is_always_available == false and is_active == true and is_nil(archived_at)))
     end
 
     read :with_schedules do
-      # Load schedules relationship - this will be handled by GraphQL automatically
+      prepare(build(load: [:schedules]))
     end
 
     read :available_now do
-      # Items that are either always available or have current schedule availability
-      # This is a simplified version - in practice you'd check current time against schedules
-      filter(expr(is_active == true))
+      filter(expr(
+        is_active == true and
+        is_nil(archived_at) and
+        not exists(reservations,
+          status in [:confirmed, :pending] and
+          reserved_from <= now() and
+          reserved_until >= now()
+        )
+      ))
+    end
+
+    read :available_for_date do
+      argument(:date, :date, allow_nil?: false)
+
+      filter(expr(
+        is_active == true and
+        is_nil(archived_at) and
+        not exists(reservations,
+          status in [:confirmed, :pending] and
+          fragment("DATE(reserved_from) <= ? AND DATE(reserved_until) >= ?",
+            ^arg(:date), ^arg(:date))
+        )
+      ))
+    end
+
+    # Bulk operations
+    action :bulk_update_status do
+      argument(:ids, {:array, :uuid}, allow_nil?: false)
+      argument(:is_active, :boolean, allow_nil?: false)
+
+      run(fn input, context ->
+        Ash.bulk_update(__MODULE__, :update,
+          %{is_active: input.arguments.is_active},
+          filter: expr(id in ^input.arguments.ids),
+          context: context
+        )
+      end)
     end
   end
 
   attributes do
-    uuid_primary_key(:id)
-
-    attribute :name, :string do
-      allow_nil?(false)
-      public?(true)
-      description("The name of the item")
-    end
-
-    attribute :description, :string do
-      allow_nil?(true)
-      public?(true)
-      description("Description of the item")
-    end
+    standard_attributes()
+    name_attribute(description: "The name of the item")
+    description_attribute()
+    active_attribute()
 
     attribute :is_always_available, :boolean do
       allow_nil?(false)
-      default(true)
+      default(false)
       public?(true)
-
-      description(
-        "Whether this item is always available (true) or has specific availability rules (false)"
-      )
+      description("Whether the item is always available (true) or follows a schedule (false)")
     end
 
     attribute :capacity, :integer do
       allow_nil?(false)
       default(1)
       public?(true)
+      constraints(min: 1, max: 100)
       description("How many concurrent reservations this item can handle")
     end
 
     attribute :minimum_duration_minutes, :integer do
       allow_nil?(true)
       public?(true)
+      constraints(min: 15, max: 1440)
       description("Minimum reservation duration in minutes")
     end
 
     attribute :maximum_duration_minutes, :integer do
       allow_nil?(true)
       public?(true)
+      constraints(min: 15, max: 10080)
       description("Maximum reservation duration in minutes")
     end
 
-    attribute :is_active, :boolean do
+    # Business relationship as attribute for performance
+    attribute :business_id, :uuid do
       allow_nil?(false)
-      default(true)
       public?(true)
-      description("Whether this item is currently active and bookable")
+      description("The business this item belongs to")
     end
-
-    create_timestamp(:inserted_at)
-    update_timestamp(:updated_at)
   end
 
   relationships do
+    business_relationship()
+
     belongs_to :section, RivaAsh.Resources.Section do
       allow_nil?(true)
       attribute_writable?(true)
@@ -245,7 +266,40 @@ defmodule RivaAsh.Resources.Item do
     end
   end
 
+  # Aggregates for performance
+  aggregates do
+    count(:reservation_count, :reservations)
+    count(:active_reservation_count, :reservations, filter: expr(status == :confirmed))
+  end
+
+  # Calculations for frequently accessed data
+  calculations do
+    calculate(:is_available_now, :boolean, expr(
+      is_active and
+      is_nil(archived_at) and
+      not exists(reservations, status == :confirmed and
+        reserved_from <= now() and reserved_until >= now())
+    ))
+  end
+
+  validations do
+    validate(present([:name, :business_id]), message: "Name and business are required")
+    validate({RivaAsh.Validations, :sanitize_text_input}, field: :name)
+    validate({RivaAsh.Validations, :validate_business_access})
+
+    # Duration constraints
+    validate(compare(:maximum_duration_minutes, greater_than: :minimum_duration_minutes),
+      where: [present(:minimum_duration_minutes), present(:maximum_duration_minutes)],
+      message: "Maximum duration must be greater than minimum duration"
+    )
+  end
+
   identities do
-    identity(:unique_name, [:name])
+    identity(:unique_name_per_business, [:name, :business_id])
+  end
+
+  # Helper function for admin dropdowns
+  def choices_for_select do
+    RivaAsh.ResourceHelpers.choices_for_select(__MODULE__)
   end
 end
