@@ -1,7 +1,25 @@
 defmodule RivaAshWeb.SwaggerController do
   use Phoenix.Controller, formats: [:html]
+  import OK, only: [success: 1, failure: 1, ~>>: 2, for: 1]
 
   def index(conn, _params) do
+    OK.for do
+      html <- generate_swagger_html()
+      response_conn <- conn
+                     |> put_resp_content_type("text/html")
+                     |> send_resp(200, html)
+                     |> OK.wrap()
+    after
+      response_conn
+    else
+      error ->
+        conn
+        |> put_resp_content_type("text/plain")
+        |> send_resp(500, "Failed to generate API documentation: #{inspect(error)}")
+    end
+  end
+
+  defp generate_swagger_html do
     html = """
     <!DOCTYPE html>
     <html lang="en">
@@ -49,9 +67,7 @@ defmodule RivaAshWeb.SwaggerController do
     </body>
     </html>
     """
-
-    conn
-    |> put_resp_content_type("text/html")
-    |> send_resp(200, html)
+    
+    success(html)
   end
 end

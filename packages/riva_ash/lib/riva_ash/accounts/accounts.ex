@@ -1,5 +1,6 @@
 defmodule RivaAsh.Accounts do
   use Ash.Domain
+  import OK, only: [success: 1, failure: 1, ~>>: 2, for: 1]
 
   resources do
     resource(RivaAsh.Accounts.User)
@@ -8,22 +9,20 @@ defmodule RivaAsh.Accounts do
 
   # Add any additional configuration or functions needed for authentication
   def sign_in(email, password) do
-    # Get the password strategy from the User resource
-    strategy = AshAuthentication.Info.strategy!(RivaAsh.Accounts.User, :password)
-
-    # Use Strategy.action to call the sign_in action with the provided credentials
-    case AshAuthentication.Strategy.action(
-           strategy,
-           :sign_in,
-           %{"email" => email, "password" => password}
-         ) do
-      {:ok, result} ->
-        {:ok, result}
-
+    OK.for do
+      strategy <- OK.wrap(AshAuthentication.Info.strategy!(RivaAsh.Accounts.User, :password))
+      result <- AshAuthentication.Strategy.action(
+                  strategy,
+                  :sign_in,
+                  %{"email" => email, "password" => password}
+                )
+    after
+      result
+    else
       _ ->
         # Add a small delay to prevent timing attacks
         :crypto.hash_equals(<<0>>, <<0>>)
-        {:error, "Invalid email or password"}
+        failure("Invalid email or password")
     end
   end
 
@@ -32,9 +31,12 @@ defmodule RivaAsh.Accounts do
     RivaAsh.Accounts.User
     |> Ash.Changeset.for_create(:register_with_password, params)
     |> Ash.create()
+    ~> fn user -> user end
   end
 
   def current_user(conn) do
-    Ash.PlugHelpers.get_actor(conn)
+    conn
+    |> Ash.PlugHelpers.get_actor()
+    |> OK.required(:user_not_found)
   end
 end

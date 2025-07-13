@@ -3,6 +3,7 @@ defmodule RivaAshWeb.DashboardLive do
   Main dashboard LiveView with statistics and quick actions.
   """
   use RivaAshWeb, :live_view
+  import OK, only: [success: 1, failure: 1, ~>>: 2]
 
   import RivaAshWeb.Components.Organisms.PageHeader
   import RivaAshWeb.Components.Organisms.DashboardStats
@@ -21,9 +22,9 @@ defmodule RivaAshWeb.DashboardLive do
         |> assign(:recent_reservations, [])
         |> assign(:upcoming_events, [])
 
-      {:ok, socket}
+      success(socket)
     else
-      {:ok, redirect(socket, to: "/sign-in")}
+      success(redirect(socket, to: "/sign-in"))
     end
   end
 

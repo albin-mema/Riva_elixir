@@ -9,6 +9,7 @@ defmodule RivaAshWeb.HealthController do
   use Phoenix.Controller, formats: [:json]
 
   alias Plug.Conn
+  import OK, only: [success: 1, failure: 1, ~>>: 2]
 
   @type health_response :: %{
           status: String.t(),

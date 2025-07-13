@@ -3,6 +3,7 @@ defmodule RivaAshWeb.ClientLive do
   Client management LiveView for registration and management.
   """
   use RivaAshWeb, :live_view
+  import OK, only: [success: 1, failure: 1, ~>>: 2, for: 1, required: 2]
 
   import RivaAshWeb.Components.Organisms.PageHeader
   import RivaAshWeb.Components.Organisms.DataTable
@@ -13,22 +14,21 @@ defmodule RivaAshWeb.ClientLive do
 
   @impl true
   def mount(_params, session, socket) do
-    user = get_current_user_from_session(session)
-
-    if user do
-      socket =
-        socket
-        |> assign(:current_user, user)
-        |> assign(:page_title, "Client Management")
-        |> assign(:clients, [])
-        |> assign(:meta, %{})
-        |> assign(:show_form, false)
-        |> assign(:editing_client, nil)
-        |> assign(:form, nil)
-
-      {:ok, socket}
-    else
-      {:ok, redirect(socket, to: "/sign-in")}
+    get_current_user_from_session(session)
+    |> OK.required(:user_not_authenticated)
+    ~>> fn user ->
+      socket
+      |> assign(:current_user, user)
+      |> assign(:page_title, "Client Management")
+      |> assign(:clients, load_clients(user))
+      |> assign(:meta, %{})
+      |> assign(:show_form, false)
+      |> assign(:editing_client, nil)
+      |> assign(:form, nil)
+    end
+    |> case do
+      {:ok, socket} -> success(socket)
+      {:error, :user_not_authenticated} -> success(redirect(socket, to: "/sign-in"))
     end
   end
 
@@ -92,45 +92,112 @@ defmodule RivaAshWeb.ClientLive do
 
   @impl true
   def handle_event("new_client", _params, socket) do
-    {:noreply, assign(socket, :show_form, true)}
+    form = AshPhoenix.Form.for_create(Client, :create, actor: socket.assigns.current_user) |> to_form()
+
+    socket
+    |> assign(:show_form, true)
+    |> assign(:form, form)
+    |> then(&{:noreply, &1})
   end
 
   def handle_event("edit_client", %{"id" => id}, socket) do
-    # Implementation will go here
-    {:noreply, socket}
+    OK.for do
+      client <- Client.by_id(id)
+      form <- OK.wrap(AshPhoenix.Form.for_update(client, :update, actor: socket.assigns.current_user))
+    after
+      socket
+      |> assign(:editing_client, client)
+      |> assign(:form, form |> to_form())
+      |> assign(:show_form, true)
+    else
+      _ ->
+        socket
+        |> put_flash(:error, "Failed to load client for editing")
+    end
+    |> then(&{:noreply, &1})
   end
 
   def handle_event("view_reservations", %{"id" => id}, socket) do
-    # Implementation will go here
-    {:noreply, socket}
+    socket
+    |> redirect(to: "/reservations?client_id=#{id}")
+    |> then(&{:noreply, &1})
   end
 
   def handle_event("delete_client", %{"id" => id}, socket) do
-    # Implementation will go here
-    {:noreply, socket}
+    Client.by_id(id)
+    ~>> fn client ->
+      Client.destroy(client, actor: socket.assigns.current_user)
+    end
+    |> case do
+      {:ok, _} ->
+        socket
+        |> put_flash(:info, "Client deleted successfully")
+        |> assign(:clients, load_clients(socket.assigns.current_user))
+      {:error, error} ->
+        socket
+        |> put_flash(:error, "Failed to delete client: #{inspect(error)}")
+    end
+    |> then(&{:noreply, &1})
   end
 
-  def handle_event("save_client", _params, socket) do
-    # Implementation will go here
-    {:noreply, socket}
+  def handle_event("save_client", %{"form" => params}, socket) do
+    AshPhoenix.Form.submit(socket.assigns.form, params: params, actor: socket.assigns.current_user)
+    ~>> fn client ->
+      action_text = if socket.assigns.editing_client, do: "updated", else: "created"
+      
+      socket
+      |> assign(:clients, load_clients(socket.assigns.current_user))
+      |> assign(:show_form, false)
+      |> assign(:editing_client, nil)
+      |> assign(:form, nil)
+      |> put_flash(:info, "Client #{action_text} successfully")
+    end
+    |> case do
+      {:ok, socket} -> {:noreply, socket}
+      {:error, form} ->
+        socket =
+          socket
+          |> assign(:form, form |> to_form())
+          |> put_flash(:error, "Please fix the errors below")
+        {:noreply, socket}
+    end
   end
 
-  def handle_event("validate_client", _params, socket) do
-    # Implementation will go here
+  def handle_event("validate_client", %{"form" => params}, socket) do
+    form = AshPhoenix.Form.validate(socket.assigns.form, params) |> to_form()
+    socket = assign(socket, :form, form)
     {:noreply, socket}
   end
 
   def handle_event("cancel_form", _params, socket) do
-    {:noreply, assign(socket, :show_form, false)}
+    socket
+    |> assign(:show_form, false)
+    |> assign(:editing_client, nil)
+    |> assign(:form, nil)
+    |> then(&{:noreply, &1})
   end
 
   def handle_event(_event, _params, socket) do
     {:noreply, socket}
   end
 
-  # Private helper functions will go here
-  defp get_current_user_from_session(_session) do
-    # Implementation will go here
-    nil
+  # Private helper functions
+
+  defp get_current_user_from_session(session) do
+    # Implementation will be added when auth system is integrated
+    case Map.get(session, "user_token") do
+      nil -> nil
+      _token -> %{id: "user-1", role: :user} # Mock user for now
+    end
+  end
+
+  defp load_clients(user) do
+    Client
+    |> Ash.read(actor: user)
+    |> case do
+      {:ok, clients} -> clients
+      {:error, _} -> []
+    end
+  end
   end
 end

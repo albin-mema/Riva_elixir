@@ -3,6 +3,7 @@ defmodule RivaAshWeb.ItemLive do
   Item management LiveView with positioning support.
   """
   use RivaAshWeb, :live_view
+  import OK, only: [success: 1, failure: 1, ~>>: 2, for: 1, required: 2]
 
   import RivaAshWeb.Components.Organisms.PageHeader
   import RivaAshWeb.Components.Organisms.DataTable
@@ -13,24 +14,23 @@ defmodule RivaAshWeb.ItemLive do
 
   @impl true
   def mount(_params, session, socket) do
-    user = get_current_user_from_session(session)
-
-    if user do
-      socket =
-        socket
-        |> assign(:current_user, user)
-        |> assign(:page_title, "Item Management")
-        |> assign(:items, [])
-        |> assign(:meta, %{})
-        |> assign(:show_form, false)
-        |> assign(:editing_item, nil)
-        |> assign(:form, nil)
-        |> assign(:sections, [])
-        |> assign(:item_types, [])
-
-      {:ok, socket}
-    else
-      {:ok, redirect(socket, to: "/sign-in")}
+    get_current_user_from_session(session)
+    |> OK.required(:user_not_authenticated)
+    ~>> fn user ->
+      socket
+      |> assign(:current_user, user)
+      |> assign(:page_title, "Item Management")
+      |> assign(:items, load_items(user))
+      |> assign(:meta, %{})
+      |> assign(:show_form, false)
+      |> assign(:editing_item, nil)
+      |> assign(:form, nil)
+      |> assign(:sections, load_sections(user))
+      |> assign(:item_types, load_item_types(user))
+    end
+    |> case do
+      {:ok, socket} -> success(socket)
+      {:error, :user_not_authenticated} -> success(redirect(socket, to: "/sign-in"))
     end
   end
 
@@ -98,40 +98,125 @@ defmodule RivaAshWeb.ItemLive do
 
   @impl true
   def handle_event("new_item", _params, socket) do
-    {:noreply, assign(socket, :show_form, true)}
+    form = AshPhoenix.Form.for_create(Item, :create, actor: socket.assigns.current_user) |> to_form()
+
+    socket
+    |> assign(:show_form, true)
+    |> assign(:form, form)
+    |> then(&{:noreply, &1})
   end
 
   def handle_event("edit_item", %{"id" => id}, socket) do
-    # Implementation will go here
-    {:noreply, socket}
+    OK.for do
+      item <- Item.by_id(id)
+      form <- OK.wrap(AshPhoenix.Form.for_update(item, :update, actor: socket.assigns.current_user))
+    after
+      socket
+      |> assign(:editing_item, item)
+      |> assign(:form, form |> to_form())
+      |> assign(:show_form, true)
+    else
+      _ ->
+        socket
+        |> put_flash(:error, "Failed to load item for editing")
+    end
+    |> then(&{:noreply, &1})
   end
 
   def handle_event("delete_item", %{"id" => id}, socket) do
-    # Implementation will go here
-    {:noreply, socket}
+    Item.by_id(id)
+    ~>> fn item ->
+      Item.destroy(item, actor: socket.assigns.current_user)
+    end
+    |> case do
+      {:ok, _} ->
+        socket
+        |> put_flash(:info, "Item deleted successfully")
+        |> assign(:items, load_items(socket.assigns.current_user))
+      {:error, error} ->
+        socket
+        |> put_flash(:error, "Failed to delete item: #{inspect(error)}")
+    end
+    |> then(&{:noreply, &1})
   end
 
-  def handle_event("save_item", _params, socket) do
-    # Implementation will go here
-    {:noreply, socket}
+  def handle_event("save_item", %{"form" => params}, socket) do
+    AshPhoenix.Form.submit(socket.assigns.form, params: params, actor: socket.assigns.current_user)
+    ~>> fn item ->
+      action_text = if socket.assigns.editing_item, do: "updated", else: "created"
+      
+      socket
+      |> assign(:items, load_items(socket.assigns.current_user))
+      |> assign(:show_form, false)
+      |> assign(:editing_item, nil)
+      |> assign(:form, nil)
+      |> put_flash(:info, "Item #{action_text} successfully")
+    end
+    |> case do
+      {:ok, socket} -> {:noreply, socket}
+      {:error, form} ->
+        socket =
+          socket
+          |> assign(:form, form |> to_form())
+          |> put_flash(:error, "Please fix the errors below")
+        {:noreply, socket}
+    end
   end
 
-  def handle_event("validate_item", _params, socket) do
-    # Implementation will go here
+  def handle_event("validate_item", %{"form" => params}, socket) do
+    form = AshPhoenix.Form.validate(socket.assigns.form, params) |> to_form()
+    socket = assign(socket, :form, form)
     {:noreply, socket}
   end
 
   def handle_event("cancel_form", _params, socket) do
-    {:noreply, assign(socket, :show_form, false)}
+    socket
+    |> assign(:show_form, false)
+    |> assign(:editing_item, nil)
+    |> assign(:form, nil)
+    |> then(&{:noreply, &1})
   end
 
   def handle_event(_event, _params, socket) do
     {:noreply, socket}
   end
 
-  # Private helper functions will go here
-  defp get_current_user_from_session(_session) do
-    # Implementation will go here
-    nil
+  # Private helper functions
+
+  defp get_current_user_from_session(session) do
+    # Implementation will be added when auth system is integrated
+    case Map.get(session, "user_token") do
+      nil -> nil
+      _token -> %{id: "user-1", role: :user} # Mock user for now
+    end
   end
+
+  defp load_items(user) do
+    Item
+    |> Ash.Query.load([:section, :item_type])
+    |> Ash.read(actor: user)
+    |> case do
+      {:ok, items} -> items
+      {:error, _} -> []
+    end
+  end
+
+  defp load_sections(user) do
+    RivaAsh.Resources.Section
+    |> Ash.read(actor: user)
+    |> case do
+      {:ok, sections} -> sections
+      {:error, _} -> []
+    end
+  end
+
+  defp load_item_types(user) do
+    RivaAsh.Resources.ItemType
+    |> Ash.read(actor: user)
+    |> case do
+      {:ok, types} -> types
+      {:error, _} -> []
+    end
+  end
+end
 end

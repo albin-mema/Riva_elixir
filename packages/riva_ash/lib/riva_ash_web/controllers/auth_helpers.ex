@@ -1,6 +1,7 @@
 defmodule RivaAshWeb.AuthHelpers do
   import Plug.Conn
   import Phoenix.Controller
+  import OK, only: [success: 1, failure: 1, ~>>: 2, for: 1, required: 2]
 
   # Plug behaviour implementation
   def init(opts), do: opts
@@ -29,35 +30,34 @@ defmodule RivaAshWeb.AuthHelpers do
   def fetch_current_user(conn, _opts) do
     user_token = get_session(conn, :user_token)
 
-    if user_token do
-      case Phoenix.Token.verify(RivaAshWeb.Endpoint, "user_auth", user_token, max_age: 86_400) do
-        {:ok, user_id} ->
-          case Ash.get(RivaAsh.Accounts.User, user_id, domain: RivaAsh.Accounts) do
-            {:ok, user} ->
-              assign(conn, :current_user, user)
-            _ ->
-              conn
-              |> clear_session()
-              |> assign(:current_user, nil)
-          end
-        _ ->
-          conn
-          |> clear_session()
-          |> assign(:current_user, nil)
-      end
+    OK.for do
+      token <- OK.required(user_token, :no_token)
+      user_id <- Phoenix.Token.verify(RivaAshWeb.Endpoint, "user_auth", token, max_age: 86_400)
+      user <- Ash.get(RivaAsh.Accounts.User, user_id, domain: RivaAsh.Accounts)
+    after
+      assign(conn, :current_user, user)
     else
-      conn
-      |> assign(:current_user, nil)
+      _ ->
+        conn
+        |> clear_session()
+        |> assign(:current_user, nil)
     end
   end
 
   # Helper function to sign in a user
   def sign_in_user(conn, user) do
-    token = Phoenix.Token.sign(RivaAshWeb.Endpoint, "user_auth", user.id)
+    OK.required(user, :user_required)
+    ~>> fn validated_user ->
+      token = Phoenix.Token.sign(RivaAshWeb.Endpoint, "user_auth", validated_user.id)
 
-    conn
-    |> put_session(:user_token, token)
-    |> assign(:current_user, user)
+      conn
+      |> put_session(:user_token, token)
+      |> assign(:current_user, validated_user)
+    end
+    |> case do
+      {:ok, result} -> result
+      {:error, _} -> conn
+    end
   end
 
   # Helper function to sign out a user

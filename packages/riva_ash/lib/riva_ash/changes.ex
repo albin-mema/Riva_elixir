@@ -4,6 +4,8 @@ defmodule RivaAsh.Changes do
   These functions handle automatic data transformations and denormalization for performance.
   """
 
+  import OK, only: [success: 1, failure: 1, ~>>: 2]
+
   # This module contains utility functions for changes, not a single change implementation
 
   @doc """
@@ -15,9 +17,12 @@ defmodule RivaAsh.Changes do
       nil ->
         changeset
       item_id ->
-        case Ash.get(RivaAsh.Resources.Item, item_id, domain: RivaAsh.Domain) do
-          {:ok, item} ->
-            Ash.Changeset.force_change_attribute(changeset, :business_id, item.business_id)
+        Ash.get(RivaAsh.Resources.Item, item_id, domain: RivaAsh.Domain)
+        ~>> fn item ->
+          Ash.Changeset.force_change_attribute(changeset, :business_id, item.business_id)
+        end
+        |> case do
+          {:ok, updated_changeset} -> updated_changeset
           {:error, _} ->
             # Item not found - let validation handle this error
             changeset
@@ -33,9 +38,12 @@ defmodule RivaAsh.Changes do
       nil ->
         changeset
       client_id ->
-        case Ash.get(RivaAsh.Resources.Client, client_id, domain: RivaAsh.Domain) do
-          {:ok, client} ->
-            Ash.Changeset.force_change_attribute(changeset, :business_id, client.business_id)
+        Ash.get(RivaAsh.Resources.Client, client_id, domain: RivaAsh.Domain)
+        ~>> fn client ->
+          Ash.Changeset.force_change_attribute(changeset, :business_id, client.business_id)
+        end
+        |> case do
+          {:ok, updated_changeset} -> updated_changeset
           {:error, _} ->
             # Client not found - let validation handle this error
             changeset
@@ -51,9 +59,12 @@ defmodule RivaAsh.Changes do
       nil ->
         changeset
       employee_id ->
-        case Ash.get(RivaAsh.Resources.Employee, employee_id, domain: RivaAsh.Domain) do
-          {:ok, employee} ->
-            Ash.Changeset.force_change_attribute(changeset, :business_id, employee.business_id)
+        Ash.get(RivaAsh.Resources.Employee, employee_id, domain: RivaAsh.Domain)
+        ~>> fn employee ->
+          Ash.Changeset.force_change_attribute(changeset, :business_id, employee.business_id)
+        end
+        |> case do
+          {:ok, updated_changeset} -> updated_changeset
           {:error, _} ->
             # Employee not found - let validation handle this error
             changeset
@@ -69,9 +80,12 @@ defmodule RivaAsh.Changes do
       nil ->
         changeset
       reservation_id ->
-        case Ash.get(RivaAsh.Resources.Reservation, reservation_id, domain: RivaAsh.Domain) do
-          {:ok, reservation} ->
-            Ash.Changeset.force_change_attribute(changeset, :business_id, reservation.business_id)
+        Ash.get(RivaAsh.Resources.Reservation, reservation_id, domain: RivaAsh.Domain)
+        ~>> fn reservation ->
+          Ash.Changeset.force_change_attribute(changeset, :business_id, reservation.business_id)
+        end
+        |> case do
+          {:ok, updated_changeset} -> updated_changeset
           {:error, _} ->
             # Reservation not found - let validation handle this error
             changeset

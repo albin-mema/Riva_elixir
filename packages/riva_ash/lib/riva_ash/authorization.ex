@@ -6,6 +6,7 @@ defmodule RivaAsh.Authorization do
 
   import Ash.Expr
   require Ash.Query
+  import OK, only: [success: 1, failure: 1, ~>>: 2]
 
   @doc """
   Checks if an actor has a specific permission.
@@ -172,48 +173,41 @@ defmodule RivaAsh.Authorization do
   end
 
   defp user_owns_any_business?(user_id) do
-    try do
-      query = RivaAsh.Resources.Business
-      |> Ash.Query.filter(expr(owner_id == ^user_id))
-      |> Ash.Query.limit(1)
+    query = RivaAsh.Resources.Business
+    |> Ash.Query.filter(expr(owner_id == ^user_id))
+    |> Ash.Query.limit(1)
 
-      case Ash.read(query, domain: RivaAsh.Domain) do
-        {:ok, []} -> false
-        {:ok, _businesses} -> true
-        {:error, _} -> false
-      end
-    rescue
-      _ -> false
+    query
+    |> Ash.read(domain: RivaAsh.Domain)
+    |> case do
+      {:ok, []} -> false
+      {:ok, _businesses} -> true
+      {:error, _} -> false
     end
   end
 
   defp check_business_ownership(user_id, business_id) do
-    try do
-      case Ash.get(RivaAsh.Resources.Business, business_id, domain: RivaAsh.Domain) do
-        {:ok, %{owner_id: ^user_id}} -> true
-        _ -> false
-      end
-    rescue
+    business_id
+    |> (&Ash.get(RivaAsh.Resources.Business, &1, domain: RivaAsh.Domain)).()
+    |> case do
+      {:ok, %{owner_id: ^user_id}} -> true
       _ -> false
     end
   end
 
   defp check_employee_permission(employee_id, permission_name) do
-    try do
-      # Get the employee with their permissions
-      case Ash.get(RivaAsh.Resources.Employee, employee_id,
-                   domain: RivaAsh.Domain,
-                   load: [employee_permissions: :permission]) do
-        {:ok, nil} -> false
-        {:ok, employee} ->
-          # Check if the employee has the specific permission
-          Enum.any?(employee.employee_permissions, fn ep ->
-            ep.permission.name == permission_name and ep.is_active
-          end)
-        {:error, _} -> false
-      end
-    rescue
-      _ -> false
+    employee_id
+    |> (&Ash.get(RivaAsh.Resources.Employee, &1,
+                 domain: RivaAsh.Domain,
+                 load: [employee_permissions: :permission])).()
+    |> case do
+      {:ok, nil} -> false
+      {:ok, employee} ->
+        # Check if the employee has the specific permission
+        Enum.any?(employee.employee_permissions, fn ep ->
+          ep.permission.name == permission_name and ep.is_active
+        end)
+      {:error, _} -> false
     end
   end
 end

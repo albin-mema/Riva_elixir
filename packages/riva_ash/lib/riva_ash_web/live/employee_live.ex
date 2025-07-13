@@ -1,5 +1,6 @@
 defmodule RivaAshWeb.EmployeeLive do
   use RivaAshWeb, :live_view
+  import OK, only: [success: 1, failure: 1, ~>>: 2, for: 1, required: 2]
 
   require Ash.Query
 
@@ -15,30 +16,26 @@ defmodule RivaAshWeb.EmployeeLive do
 
   @impl true
   def mount(_params, session, socket) do
-    # Get the current user from the session
-    user = get_current_user_from_session(session)
-
-    if user do
-      socket =
-        socket
-        |> assign(:current_user, user)
-        |> assign(:businesses, list_user_businesses(user))
-        |> assign(:form, AshPhoenix.Form.for_create(Employee, :create, actor: user) |> to_form())
-        |> assign(:show_form, false)
-        |> assign(:editing_employee, nil)
-        |> assign(:loading, false)
-        |> assign(:is_admin, user.role == :admin)
-        |> assign(:page_title, "Employee Management")
-
-      {:ok, socket}
-    else
-      # User not authenticated, redirect to sign in
-      socket =
+    get_current_user_from_session(session)
+    |> OK.required(:user_not_authenticated)
+    ~>> fn user ->
+      socket
+      |> assign(:current_user, user)
+      |> assign(:businesses, list_user_businesses(user))
+      |> assign(:form, AshPhoenix.Form.for_create(Employee, :create, actor: user) |> to_form())
+      |> assign(:show_form, false)
+      |> assign(:editing_employee, nil)
+      |> assign(:loading, false)
+      |> assign(:is_admin, user.role == :admin)
+      |> assign(:page_title, "Employee Management")
+    end
+    |> case do
+      {:ok, socket} -> success(socket)
+      {:error, :user_not_authenticated} ->
         socket
         |> put_flash(:error, "You must be logged in to access this page.")
         |> redirect(to: "/sign-in")
-
-      {:ok, socket}
+        |> success()
     end
   end
 
@@ -47,14 +44,22 @@ defmodule RivaAshWeb.EmployeeLive do
     user = socket.assigns.current_user
 
     # Use Flop to handle pagination, sorting, and filtering
-    {employees, meta} = list_employees_with_flop(user, params)
-
-    socket =
+    list_employees_with_flop(user, params)
+    ~> fn {employees, meta} ->
       socket
       |> assign(:employees, employees)
       |> assign(:meta, meta)
-
-    {:noreply, socket}
+    end
+    |> case do
+      {:ok, socket} -> {:noreply, socket}
+      {:error, _} ->
+        socket =
+          socket
+          |> assign(:employees, [])
+          |> assign(:meta, %{})
+          |> put_flash(:error, "Failed to load employees")
+        {:noreply, socket}
+    end
   end
 
   @impl true

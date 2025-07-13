@@ -4,6 +4,7 @@ defmodule RivaAsh.Application do
   @moduledoc false
 
   use Application
+  import OK, only: [success: 1, failure: 1, ~>>: 2, for: 1]
 
   @impl true
   def start(_type, _args) do
@@ -39,6 +40,7 @@ defmodule RivaAsh.Application do
     # for other strategies and supported options
     opts = [strategy: :one_for_one, name: RivaAsh.Supervisor]
     Supervisor.start_link(children, opts)
+    ~> fn pid -> pid end
   end
 
   # Handle application start phases
@@ -50,13 +52,14 @@ defmodule RivaAsh.Application do
     Logger.info("Running database migrations...")
 
     # Only run migrations if the repo is available
-    try do
-      RivaAsh.Release.migrate()
+    OK.for do
+      result <- OK.wrap(RivaAsh.Release.migrate())
+    after
       Logger.info("Database migrations completed successfully")
       :ok
-    rescue
-      exception ->
-        Logger.error("Database migration failed: #{inspect(exception)}")
+    else
+      error ->
+        Logger.error("Database migration failed: #{inspect(error)}")
         # Don't fail the application startup if migrations fail
         # This allows the app to start even if migrations have issues
         :ok

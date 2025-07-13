@@ -1,5 +1,6 @@
 defmodule RivaAshWeb.MermaidController do
   use RivaAshWeb, :controller
+  import OK, only: [success: 1, failure: 1, ~>>: 2, for: 1]
 
   def show(conn, _params) do
     # Generate the Mermaid diagram using Ash's built-in functionality
@@ -57,10 +58,13 @@ defmodule RivaAshWeb.MermaidController do
 
   defp generate_mermaid_diagram do
     # Generate Mermaid diagram using Ash's built-in functionality
-    case Mix.Task.run("ash.generate_resource_diagrams", ["--domain", "RivaAsh.Domain"]) do
-      _ ->
-        # If the task runs successfully, read the generated file
-        read_generated_diagram()
+    OK.for do
+      _ <- OK.wrap(Mix.Task.run("ash.generate_resource_diagrams", ["--domain", "RivaAsh.Domain"]))
+      content <- read_generated_diagram()
+    after
+      content
+    else
+      _ -> "%% Error: Could not generate or read the diagram file"
     end
   end
 
@@ -68,9 +72,7 @@ defmodule RivaAshWeb.MermaidController do
     # The diagram is typically generated in priv/static/ash_resource_diagrams/domain_name.mmd
     path = "priv/static/ash_resource_diagrams/riva_ash_domain.mmd"
 
-    case File.read(path) do
-      {:ok, content} -> content
-      {:error, _reason} -> "%% Error: Could not generate or read the diagram file"
-    end
+    File.read(path)
+    ~> fn content -> content end
   end
 end

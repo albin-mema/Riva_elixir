@@ -12,6 +12,7 @@ defmodule RivaAsh.RecurringReservations do
   use Timex
 
   alias RivaAsh.Resources.{RecurringReservation, RecurringReservationInstance, Reservation}
+  import OK, only: [success: 1, failure: 1, ~>>: 2]
 
   @doc """
   Creates a new recurring reservation and optionally generates instances immediately.
@@ -25,11 +26,9 @@ defmodule RivaAsh.RecurringReservations do
   - {:error, reason} if failed
   """
   def create_recurring_reservation(attrs, generate_immediately \\ true) do
-    with {:ok, recurring_reservation} <- create_recurring_reservation_record(attrs),
-         {:ok, updated_reservation} <- maybe_generate_instances(recurring_reservation, generate_immediately) do
-      {:ok, updated_reservation}
-    else
-      {:error, reason} -> {:error, reason}
+    create_recurring_reservation_record(attrs)
+    ~>> fn recurring_reservation ->
+      maybe_generate_instances(recurring_reservation, generate_immediately)
     end
   end
 
@@ -44,13 +43,19 @@ defmodule RivaAsh.RecurringReservations do
   - {:error, reason} if failed
   """
   def generate_instances(recurring_reservation_id) do
-    with {:ok, recurring_reservation} <- get_recurring_reservation(recurring_reservation_id),
-         {:ok, dates} <- calculate_consecutive_dates(recurring_reservation),
-         {:ok, _instances} <- create_instances_for_dates(recurring_reservation, dates),
-         {:ok, updated_reservation} <- update_recurring_reservation_status(recurring_reservation, :active) do
-      {:ok, updated_reservation}
-    else
-      {:error, reason} -> {:error, "Failed to generate instances: #{inspect(reason)}"}
+    get_recurring_reservation(recurring_reservation_id)
+    ~>> fn recurring_reservation ->
+      calculate_consecutive_dates(recurring_reservation)
+      ~>> fn dates ->
+        create_instances_for_dates(recurring_reservation, dates)
+        ~>> fn _instances ->
+          update_recurring_reservation_status(recurring_reservation, :active)
+        end
+      end
+    end
+    |> case do
+      {:ok, result} -> success(result)
+      {:error, reason} -> failure("Failed to generate instances: #{inspect(reason)}")
     end
   end
 
@@ -65,13 +70,19 @@ defmodule RivaAsh.RecurringReservations do
   - {:error, reason} if failed
   """
   def process_instance(instance_id) do
-    with {:ok, instance} <- get_instance(instance_id),
-         {:ok, recurring_reservation} <- get_recurring_reservation(instance.recurring_reservation_id),
-         {:ok, availability} <- check_availability(instance, recurring_reservation),
-         {:ok, updated_instance} <- create_or_fail_reservation(instance, recurring_reservation, availability) do
-      {:ok, updated_instance}
-    else
-      {:error, reason} -> {:error, "Failed to process instance: #{inspect(reason)}"}
+    get_instance(instance_id)
+    ~>> fn instance ->
+      get_recurring_reservation(instance.recurring_reservation_id)
+      ~>> fn recurring_reservation ->
+        check_availability(instance, recurring_reservation)
+        ~>> fn availability ->
+          create_or_fail_reservation(instance, recurring_reservation, availability)
+        end
+      end
+    end
+    |> case do
+      {:ok, result} -> success(result)
+      {:error, reason} -> failure("Failed to process instance: #{inspect(reason)}")
     end
   end
 
@@ -86,21 +97,20 @@ defmodule RivaAsh.RecurringReservations do
   - {:error, reason} if failed
   """
   def process_all_instances(recurring_reservation_id) do
-    with {:ok, instances} <- get_pending_instances(recurring_reservation_id) do
+    get_pending_instances(recurring_reservation_id)
+    ~>> fn instances ->
       results = instances
       |> Enum.map(fn instance ->
         case process_instance(instance.id) do
-          {:ok, updated_instance} -> {:ok, updated_instance}
-          {:error, reason} -> {:error, {instance.id, reason}}
+          {:ok, updated_instance} -> success(updated_instance)
+          {:error, reason} -> failure({instance.id, reason})
         end
       end)
 
       successes = results |> Enum.filter(&match?({:ok, _}, &1)) |> Enum.map(fn {:ok, instance} -> instance end)
       failures = results |> Enum.filter(&match?({:error, _}, &1)) |> Enum.map(fn {:error, error} -> error end)
 
-      {:ok, %{successes: successes, failures: failures, total: length(instances)}}
-    else
-      {:error, reason} -> {:error, reason}
+      %{successes: successes, failures: failures, total: length(instances)}
     end
   end
 
@@ -116,12 +126,12 @@ defmodule RivaAsh.RecurringReservations do
   - {:error, reason} if failed
   """
   def cancel_recurring_reservation(recurring_reservation_id, reason \\ nil) do
-    with {:ok, recurring_reservation} <- get_recurring_reservation(recurring_reservation_id),
-         {:ok, _} <- cancel_pending_instances(recurring_reservation_id, reason),
-         {:ok, updated_reservation} <- update_recurring_reservation_status(recurring_reservation, :cancelled) do
-      {:ok, updated_reservation}
-    else
-      {:error, reason} -> {:error, reason}
+    get_recurring_reservation(recurring_reservation_id)
+    ~>> fn recurring_reservation ->
+      cancel_pending_instances(recurring_reservation_id, reason)
+      ~>> fn _ ->
+        update_recurring_reservation_status(recurring_reservation, :cancelled)
+      end
     end
   end
 
@@ -136,18 +146,16 @@ defmodule RivaAsh.RecurringReservations do
   - {:error, reason} if failed
   """
   def get_recurring_reservation_stats(recurring_reservation_id) do
-    case RecurringReservationInstance
-         |> Ash.Query.for_read(:by_recurring_reservation, %{recurring_reservation_id: recurring_reservation_id})
-         |> Ash.read(domain: RivaAsh.Domain) do
-      {:ok, instances} ->
-        stats = instances
-        |> Enum.group_by(& &1.status)
-        |> Enum.map(fn {status, instances} -> {status, length(instances)} end)
-        |> Enum.into(%{})
+    RecurringReservationInstance
+    |> Ash.Query.for_read(:by_recurring_reservation, %{recurring_reservation_id: recurring_reservation_id})
+    |> Ash.read(domain: RivaAsh.Domain)
+    ~>> fn instances ->
+      stats = instances
+      |> Enum.group_by(& &1.status)
+      |> Enum.map(fn {status, instances} -> {status, length(instances)} end)
+      |> Enum.into(%{})
 
-        {:ok, Map.merge(%{pending: 0, confirmed: 0, failed: 0, skipped: 0}, stats)}
-      {:error, reason} ->
-        {:error, reason}
+      Map.merge(%{pending: 0, confirmed: 0, failed: 0, skipped: 0}, stats)
     end
   end
 
@@ -182,9 +190,9 @@ defmodule RivaAsh.RecurringReservations do
         |> Enum.filter(&(&1.status == :pending))
         |> Enum.sort_by(&(&1.sequence_number))
 
-        {:ok, pending_instances}
+        success(pending_instances)
       {:error, reason} ->
-        {:error, reason}
+        failure(reason)
     end
   end
 
@@ -207,12 +215,12 @@ defmodule RivaAsh.RecurringReservations do
       errors = results |> Enum.filter(&match?({:error, _}, &1))
 
       if Enum.empty?(errors) do
-        {:ok, :cancelled}
+        success(:cancelled)
       else
-        {:error, "Failed to cancel some instances: #{inspect(errors)}"}
+        failure("Failed to cancel some instances: #{inspect(errors)}")
       end
     else
-      {:error, reason} -> {:error, reason}
+      {:error, reason} -> failure(reason)
     end
   end
 
@@ -249,7 +257,7 @@ defmodule RivaAsh.RecurringReservations do
         end)
     end
 
-    {:ok, dates}
+    success(dates)
   end
 
   defp generate_weekdays_only(start_date, target_days) do
@@ -288,9 +296,9 @@ defmodule RivaAsh.RecurringReservations do
 
     if Enum.empty?(errors) do
       successes = results |> Enum.map(fn {:ok, instance} -> instance end)
-      {:ok, successes}
+      success(successes)
     else
-      {:error, errors}
+      failure(errors)
     end
   end
 
@@ -311,42 +319,46 @@ defmodule RivaAsh.RecurringReservations do
     item_id = recurring_reservation.item_id
 
     # Use standardized overlap checking logic
-    case RivaAsh.Validations.check_reservation_overlap(
+    RivaAsh.Validations.check_reservation_overlap(
+       item_id,
+       start_datetime,
+       end_datetime,
+       nil,
+       [include_provisional: false]  # Don't include provisional for recurring reservations
+     )
+    ~>> case do
+      :no_overlap ->
+        # Also check item availability (schedules, holds, etc.)
+        RivaAsh.Validations.check_item_availability(
            item_id,
            start_datetime,
            end_datetime,
-           nil,
-           [include_provisional: false]  # Don't include provisional for recurring reservations
-         ) do
-      {:ok, :no_overlap} ->
-        # Also check item availability (schedules, holds, etc.)
-        case RivaAsh.Validations.check_item_availability(
-               item_id,
-               start_datetime,
-               end_datetime,
-               [check_holds: true]
-             ) do
+           [check_holds: true]
+         )
+        |> case do
           {:ok, :available} ->
-            {:ok, %{
+            success(%{
               available: true,
               start_datetime: start_datetime,
               end_datetime: end_datetime
-            }}
+            })
           {:ok, :unavailable, reason} ->
-            {:ok, %{
+            success(%{
               available: false,
               reason: reason
-            }}
+            })
           {:error, error} ->
-            {:error, "Failed to check item availability: #{error}"}
+            failure("Failed to check item availability: #{error}")
         end
-      {:ok, :overlap_found} ->
-        {:ok, %{
+      :overlap_found ->
+        success(%{
           available: false,
           reason: "Time slot conflicts with existing reservation"
-        }}
-      {:error, error} ->
-        {:error, "Failed to check reservation overlap: #{error}"}
+        })
+    end
+    |> case do
+      {:ok, result} -> success(result)
+      {:error, error} -> failure("Failed to check reservation overlap: #{error}")
     end
   end
 
@@ -368,12 +380,15 @@ defmodule RivaAsh.RecurringReservations do
       notes: build_reservation_notes(instance, recurring_reservation)
     }
 
-    case Reservation
-         |> Ash.Changeset.for_create(:create, reservation_attrs)
-         |> Ash.create(domain: RivaAsh.Domain) do
-      {:ok, reservation} ->
-        # Link reservation and mark as confirmed
-        update_instance_with_reservation(instance, reservation)
+    Reservation
+    |> Ash.Changeset.for_create(:create, reservation_attrs)
+    |> Ash.create(domain: RivaAsh.Domain)
+    ~>> fn reservation ->
+      # Link reservation and mark as confirmed
+      update_instance_with_reservation(instance, reservation)
+    end
+    |> case do
+      {:ok, result} -> success(result)
       {:error, error} ->
         # Mark as failed due to reservation creation error
         error_message = format_error_message(error)

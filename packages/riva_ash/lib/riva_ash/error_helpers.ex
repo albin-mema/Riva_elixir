@@ -6,6 +6,9 @@ defmodule RivaAsh.ErrorHelpers do
   error responses across the application.
   """
   
+  alias OK
+  import OK, only: [success: 1, failure: 1]
+  
   @doc """
   Standardizes error responses from Ash changesets and other error sources.
   
@@ -91,17 +94,17 @@ defmodule RivaAsh.ErrorHelpers do
     try do
       case fun.() do
         {:ok, result} -> 
-          {:ok, result}
+          success(result)
           
         {:error, error} -> 
-          {:error, handle_error(error)}
+          failure(handle_error(error))
           
         other -> 
-          {:error, handle_error("Unexpected result: #{inspect(other)}")}
+          failure(handle_error("Unexpected result: #{inspect(other)}"))
       end
     rescue
       e -> 
-        {:error, handle_error(e)}
+        failure(handle_error(e))
     end
   end
   
@@ -114,4 +117,12 @@ defmodule RivaAsh.ErrorHelpers do
       {:error, error} -> raise "Operation failed: #{error.message}"
     end
   end
+  
+  # OK library helper functions
+  def map_success(result, fun), do: OK.map(result, fun)
+  def bind_success(result, fun), do: OK.flat_map(result, fun)
+  def map_error({:ok, _} = success, _fun), do: success
+  def map_error({:error, error}, fun), do: {:error, fun.(error)}
+  def to_success(value), do: success(value)
+  def to_error(error), do: failure(handle_error(error))
 end

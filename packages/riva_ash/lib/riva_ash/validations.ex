@@ -6,6 +6,7 @@ defmodule RivaAsh.Validations do
 
   import Ash.Expr
   require Ash.Query
+  import OK, only: [success: 1, failure: 1, ~>>: 2]
 
   @doc """
   Validates that a reservation doesn't conflict with existing reservations.
@@ -22,7 +23,7 @@ defmodule RivaAsh.Validations do
       case check_reservation_overlap(item_id, reserved_from, reserved_until, current_reservation_id, opts) do
         {:ok, :no_overlap} -> :ok
         {:error, reason} ->
-          {:error, field: :reserved_from, message: "Failed to check availability: #{reason}"}
+          failure(%{field: :reserved_from, message: "Failed to check availability: #{reason}"})
       end
     else
       :error -> :ok  # Skip validation if required fields are missing
@@ -67,13 +68,14 @@ defmodule RivaAsh.Validations do
         query
       end
 
-      case Ash.read(query, domain: RivaAsh.Domain) do
-        {:ok, []} -> {:ok, :no_overlap}
-        {:ok, _overlapping} -> {:error, "Time slot conflicts with existing reservation"}
-        {:error, error} -> {:error, "Failed to check overlap: #{inspect(error)}"}
+      query
+      |> Ash.read(domain: RivaAsh.Domain)
+      ~>> case do
+        [] -> success(:no_overlap)
+        _overlapping -> failure("Time slot conflicts with existing reservation")
       end
     rescue
-      e -> {:error, "Exception during overlap check: #{inspect(e)}"}
+      e -> failure("Exception during overlap check: #{inspect(e)}")
     end
   end
 
@@ -88,9 +90,9 @@ defmodule RivaAsh.Validations do
       case check_item_availability(item_id, reserved_from, reserved_until, opts) do
         {:ok, :available} -> :ok
         {:ok, :unavailable, reason} ->
-          {:error, field: :item_id, message: reason}
+          failure(%{field: :item_id, message: reason})
         {:error, reason} ->
-          {:error, field: :item_id, message: "Failed to check item availability: #{reason}"}
+          failure(%{field: :item_id, message: "Failed to check item availability: #{reason}"})
       end
     else
       :error -> :ok
@@ -105,28 +107,43 @@ defmodule RivaAsh.Validations do
     check_holds = Keyword.get(opts, :check_holds, true)
 
     try do
-      # First check if item exists and is active
-      case RivaAsh.Resources.Item |> Ash.get(item_id, domain: RivaAsh.Domain) do
-        {:ok, nil} -> {:ok, :unavailable, "Item not found"}
-        {:ok, item} ->
-          cond do
-            not item.is_active -> {:ok, :unavailable, "Item is not active"}
-            not is_nil(item.archived_at) -> {:ok, :unavailable, "Item is archived"}
-            item.is_always_available -> check_additional_constraints(item_id, reserved_from, reserved_until, check_holds)
-            true -> check_schedule_and_exceptions(item, reserved_from, reserved_until, check_holds)
-          end
-        {:error, error} -> {:error, "Failed to fetch item: #{inspect(error)}"}
+      OK.for do
+        item <- RivaAsh.Resources.Item 
+               |> Ash.get(item_id, domain: RivaAsh.Domain) 
+               |> OK.required(:item_not_found)
+        
+        _ <- validate_item_is_active(item)
+        _ <- validate_item_not_archived(item)
+        
+        result <- if item.is_always_available do
+                    check_additional_constraints(item_id, reserved_from, reserved_until, check_holds)
+                  else
+                    check_schedule_and_exceptions(item, reserved_from, reserved_until, check_holds)
+                  end
+      after
+        result
+      else
+        :item_not_found -> success({:unavailable, "Item not found"})
+        :item_inactive -> success({:unavailable, "Item is not active"})
+        :item_archived -> success({:unavailable, "Item is archived"})
+        error -> failure("Failed to check availability: #{inspect(error)}")
       end
     rescue
-      e -> {:error, "Exception during availability check: #{inspect(e)}"}
+      e -> failure("Exception during availability check: #{inspect(e)}")
     end
   end
+
+  defp validate_item_is_active(%{is_active: true}), do: success(:ok)
+  defp validate_item_is_active(_), do: failure(:item_inactive)
+
+  defp validate_item_not_archived(%{archived_at: nil}), do: success(:ok)
+  defp validate_item_not_archived(_), do: failure(:item_archived)
 
   defp check_additional_constraints(item_id, reserved_from, reserved_until, check_holds) do
     if check_holds do
       check_active_holds(item_id, reserved_from, reserved_until)
     else
-      {:ok, :available}
+      success(:available)
     end
   end
 
@@ -135,35 +152,43 @@ defmodule RivaAsh.Validations do
     # For now, we'll implement basic availability checking
     # In the future, this could check ItemSchedule and AvailabilityException resources
 
-    # Convert datetime to date for checking
     reservation_date = DateTime.to_date(reserved_from)
 
-    # Check if there are any availability exceptions for this date
-    case Ash.read(RivaAsh.Resources.AvailabilityException, domain: RivaAsh.Domain) do
-      {:ok, exceptions} ->
-        has_exception = Enum.any?(exceptions, fn exception ->
-          exception.item_id == item.id and
-          Date.compare(exception.exception_date, reservation_date) == :eq and
-          not exception.is_available
-        end)
-
-        if has_exception do
-          {:ok, :unavailable, "Item is not available on this date due to exception"}
-        else
-          if check_holds do
-            check_active_holds(item.id, reserved_from, reserved_until)
-          else
-            {:ok, :available}
-          end
-        end
-      {:error, _} ->
-        # If we can't check exceptions, proceed with holds check
+    OK.for do
+      exceptions <- RivaAsh.Resources.AvailabilityException 
+                   |> Ash.read(domain: RivaAsh.Domain) 
+                   |> OK.wrap_error(:exception_check_failed)
+      
+      has_exception = check_exceptions_for_date(exceptions, item.id, reservation_date)
+      
+      _ <- if has_exception, 
+             do: failure("Item is unavailable due to scheduled exception"), 
+             else: success(:ok)
+      
+      result <- if check_holds, 
+                  do: check_active_holds(item.id, reserved_from, reserved_until), 
+                  else: success(:available)
+    after
+      result
+    else
+      :exception_check_failed ->
+        # If we can't check exceptions, assume no exceptions and proceed
         if check_holds do
           check_active_holds(item.id, reserved_from, reserved_until)
         else
-          {:ok, :available}
+          success(:available)
         end
+      
+      error -> failure(error)
     end
+  end
+
+  defp check_exceptions_for_date(exceptions, item_id, reservation_date) do
+    Enum.any?(exceptions, fn exception ->
+      exception.item_id == item_id and
+      Date.compare(exception.exception_date, reservation_date) == :eq and
+      not exception.is_available
+    end)
   end
 
   def check_active_holds(item_id, reserved_from, reserved_until) do
@@ -180,12 +205,12 @@ defmodule RivaAsh.Validations do
       ))
 
       case Ash.read(query, domain: RivaAsh.Domain) do
-        {:ok, []} -> {:ok, :available}
-        {:ok, _active_holds} -> {:ok, :unavailable, "Item is currently held by another user"}
-        {:error, error} -> {:error, "Failed to check active holds: #{inspect(error)}"}
+        {:ok, []} -> success(:available)
+        {:ok, _active_holds} -> success({:unavailable, "Item is currently held by another user"})
+        {:error, error} -> failure("Failed to check active holds: #{inspect(error)}")
       end
     rescue
-      e -> {:error, "Exception during holds check: #{inspect(e)}"}
+      e -> failure("Exception during holds check: #{inspect(e)}")
     end
   end
 

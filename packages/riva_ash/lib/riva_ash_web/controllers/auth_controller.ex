@@ -2,6 +2,7 @@ defmodule RivaAshWeb.AuthController do
   use RivaAshWeb, :controller
   alias RivaAsh.Accounts
   alias RivaAshWeb.AuthHelpers
+  import OK, only: [success: 1, failure: 1, ~>>: 2]
 
   plug(:put_layout, {RivaAshWeb.Layouts, :app})
 
@@ -18,15 +19,17 @@ defmodule RivaAshWeb.AuthController do
   end
 
   def sign_in_submit(conn, %{"email" => email, "password" => password}) do
-    case Accounts.sign_in(email, password) do
-      {:ok, %{resource: user, token: token}} ->
+    Accounts.sign_in(email, password)
+    ~>> case do
+      %{resource: user, token: token} ->
         conn
         |> put_session(:user_token, token)
         |> assign(:current_user, user)
         |> put_flash(:info, "Successfully signed in!")
         |> redirect(to: "/businesses")
+        |> success()
 
-      {:ok, user} when is_struct(user) ->
+      user when is_struct(user) ->
         # Handle case where AshAuthentication returns user without token wrapper
         token = Phoenix.Token.sign(RivaAshWeb.Endpoint, "user_auth", user.id)
 
@@ -35,7 +38,10 @@ defmodule RivaAshWeb.AuthController do
         |> assign(:current_user, user)
         |> put_flash(:info, "Successfully signed in!")
         |> redirect(to: "/businesses")
-
+        |> success()
+    end
+    |> case do
+      {:ok, result} -> result
       {:error, reason} when is_binary(reason) ->
         IO.inspect(reason, label: "Sign in error")
 
@@ -43,7 +49,7 @@ defmodule RivaAshWeb.AuthController do
         |> put_flash(:error, reason)
         |> redirect(to: "/sign-in")
 
-      error ->
+      {:error, error} ->
         IO.inspect(error, label: "Unexpected authentication error")
 
         conn
@@ -75,16 +81,18 @@ defmodule RivaAshWeb.AuthController do
       |> put_flash(:error, "Password confirmation does not match")
       |> redirect(to: "/register")
     else
-      case Accounts.register(%{
-             "name" => name,
-             "email" => email,
-             "password" => password
-           }) do
-        {:ok, _user} ->
-          conn
-          |> put_flash(:info, "Registration successful! Please sign in.")
-          |> redirect(to: "/sign-in")
-
+      Accounts.register(%{
+        "name" => name,
+        "email" => email,
+        "password" => password
+      })
+      ~>> fn _user ->
+        conn
+        |> put_flash(:info, "Registration successful! Please sign in.")
+        |> redirect(to: "/sign-in")
+      end
+      |> case do
+        {:ok, result} -> result
         {:error, changeset} ->
           error_messages = format_changeset_errors(changeset)
 

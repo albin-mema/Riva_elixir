@@ -82,6 +82,7 @@ defmodule RivaAsh.MixProject do
       {:jason, "~> 1.4"},
       {:dns_cluster, "~> 0.1.1"},
       {:timex, "~> 3.7"},
+      {:ok, "~> 2.3"},  # Railway oriented programming and error handling
 
       # UI Components
       {:salad_ui, "~> 1.0.0-beta.3"},

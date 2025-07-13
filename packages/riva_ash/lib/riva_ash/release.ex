@@ -4,25 +4,45 @@ defmodule RivaAsh.Release do
   installed as a dependency.
   """
   @app :riva_ash
+  import OK, only: [success: 1, failure: 1, ~>>: 2, for: 1, map_all: 2]
 
   def migrate do
-    load_app()
-
-    for repo <- repos() do
-      {:ok, _, _} = Ecto.Migrator.with_repo(repo, &Ecto.Migrator.run(&1, :up, all: true))
+    OK.for do
+      _ <- load_app()
+      repos <- repos()
+      results <- OK.map_all(repos, fn repo ->
+        Ecto.Migrator.with_repo(repo, &Ecto.Migrator.run(&1, :up, all: true))
+        ~> fn {status, _, _} -> {status, repo} end
+      end)
+    after
+      results
     end
   end
 
   def rollback(repo, version) do
-    load_app()
-    {:ok, _, _} = Ecto.Migrator.with_repo(repo, &Ecto.Migrator.run(&1, :down, to: version))
+    OK.for do
+      _ <- load_app()
+      result <- Ecto.Migrator.with_repo(repo, &Ecto.Migrator.run(&1, :down, to: version))
+    after
+      result
+    end
   end
 
   defp repos do
-    Application.fetch_env!(@app, :ecto_repos)
+    @app
+    |> Application.fetch_env(:ecto_repos)
+    |> case do
+      {:ok, repos} -> success(repos)
+      :error -> failure(:ecto_repos_not_configured)
+    end
   end
 
   defp load_app do
-    Application.load(@app)
+    @app
+    |> Application.load()
+    |> case do
+      :ok -> success(:loaded)
+      {:error, reason} -> failure(reason)
+    end
   end
 end
