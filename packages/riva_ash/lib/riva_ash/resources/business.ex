@@ -11,22 +11,15 @@ defmodule RivaAsh.Resources.Business do
     extensions: [
       AshJsonApi.Resource,
       AshGraphql.Resource,
+      AshPaperTrail.Resource,
       AshArchival.Resource,
       AshAdmin.Resource
     ]
 
-  postgres do
-    table("businesses")
-    repo(RivaAsh.Repo)
-  end
+  import RivaAsh.ResourceHelpers
 
-  # Configure soft delete functionality
-  archive do
-    # Use archived_at field for soft deletes
-    attribute(:archived_at)
-    # Allow both soft and hard deletes
-    base_filter?(false)
-  end
+  standard_postgres("businesses")
+  standard_archive()
 
   policies do
     # Any authenticated user can create a business (they become the owner)
@@ -41,13 +34,13 @@ defmodule RivaAsh.Resources.Business do
 
     # Business owners can update or delete their own businesses
     policy action_type([:update, :destroy]) do
-      authorize_if(relates_to_actor_via(:owner))
+      authorize_if(expr(owner_id == ^actor(:id)))
     end
 
     # Users can see their own businesses
     policy action_type(:read) do
       authorize_if actor_attribute_equals(:role, :admin)
-      authorize_if relates_to_actor_via(:owner)
+      authorize_if expr(owner_id == ^actor(:id))
     end
   end
 
@@ -204,14 +197,9 @@ defmodule RivaAsh.Resources.Business do
       description("Plots owned or managed by this business")
     end
 
-    belongs_to :owner, RivaAsh.Accounts.User do
-      attribute_writable?(true)
-      public?(true)
-      allow_nil?(true)
-      source_attribute(:owner_id)
-      destination_attribute(:id)
-      description("The user who owns this business")
-    end
+    # Note: owner relationship removed due to cross-domain constraints
+    # Business ownership is managed at the application level via owner_id attribute
+    # Use RivaAsh.Accounts.User.get(owner_id) to fetch owner when needed
   end
 
   identities do
@@ -225,5 +213,24 @@ defmodule RivaAsh.Resources.Business do
     |> Enum.map(fn business ->
       {business.id, business.name}
     end)
+  end
+
+  @doc """
+  Fetches the owner user for a business.
+  Since User is in a different domain, we handle this at the application level.
+  """
+  def get_owner(%__MODULE__{owner_id: owner_id}) when not is_nil(owner_id) do
+    Ash.get(RivaAsh.Accounts.User, owner_id, domain: RivaAsh.Accounts)
+  end
+  def get_owner(_), do: {:ok, nil}
+
+  @doc """
+  Fetches the owner user for a business by business ID.
+  """
+  def get_owner_by_business_id(business_id) do
+    case Ash.get(__MODULE__, business_id, domain: RivaAsh.Domain) do
+      {:ok, business} -> get_owner(business)
+      error -> error
+    end
   end
 end

@@ -67,12 +67,14 @@ defmodule RivaAshWeb.Components.AtomicComponents do
   - PageHeader: For consistent page headers
   - BusinessForm: For creating/editing businesses
   - BusinessCard: For displaying business information
+  - EmployeeForm: For creating/editing employees
   """
   defmacro organisms do
     quote do
       import RivaAshWeb.Components.Organisms.PageHeader
       import RivaAshWeb.Components.Organisms.BusinessForm
       import RivaAshWeb.Components.Organisms.BusinessCard
+      import RivaAshWeb.Components.Organisms.EmployeeForm
     end
   end
 

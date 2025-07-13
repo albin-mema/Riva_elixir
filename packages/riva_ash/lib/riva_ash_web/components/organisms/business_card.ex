@@ -71,7 +71,7 @@ defmodule RivaAshWeb.Components.Organisms.BusinessCard do
 
       <%= if @is_admin && @business.owner_id != @current_user.id do %>
         <.badge variant="outline" icon={:user} size="sm">
-          <%= @business.owner.name || "User #{String.slice(@business.owner_id, 0, 4)}..." %>
+          User <%= String.slice(@business.owner_id, 0, 8) %>...
         </.badge>
       <% end %>
     </div>
@@ -97,13 +97,13 @@ defmodule RivaAshWeb.Components.Organisms.BusinessCard do
   defp business_metadata(assigns) do
     ~H"""
     <div class="flex flex-wrap items-center gap-4">
-      <div class="flex items-center gap-1.5 text-sm text-muted-foreground">
+      <div class="flex items-center gap-1.5 text-muted-foreground text-sm">
         <.icon name={:calendar} size="sm" />
         <span>Created: <%= format_date(@business.inserted_at) %></span>
       </div>
 
       <%= if @business.updated_at != @business.inserted_at do %>
-        <div class="flex items-center gap-1.5 text-sm text-muted-foreground">
+        <div class="flex items-center gap-1.5 text-muted-foreground text-sm">
           <.icon name={:clock} size="sm" />
           <span>Updated: <%= format_date(@business.updated_at) %></span>
         </div>
@@ -114,7 +114,7 @@ defmodule RivaAshWeb.Components.Organisms.BusinessCard do
 
   defp business_actions(assigns) do
     ~H"""
-    <div class="flex items-center gap-2 ml-4 flex-shrink-0">
+    <div class="flex flex-shrink-0 items-center gap-2 ml-4">
       <.button
         variant="outline"
         size="sm"
