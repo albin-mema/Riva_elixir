@@ -29,136 +29,136 @@ defmodule RivaAshWeb.Components.Navigation.ExpandedSidebar do
           <.icon name={if @collapsed, do: :chevron_right, else: :chevron_left} />
         </button>
       </div>
-      
+
       <div class="sidebar-content">
         <!-- Dashboard -->
         <div class="nav-section">
           <.nav_item
-            path={~p"/dashboard"}
+            path="/dashboard"
             current_path={@current_path}
             icon={:home}
             label="Dashboard"
             collapsed={@collapsed}
           />
         </div>
-        
+
         <!-- Core Management -->
         <div class="nav-section">
           <.nav_section_header label="Management" collapsed={@collapsed} />
-          
+
           <.nav_item
-            path={~p"/plots"}
+            path="/plots"
             current_path={@current_path}
             icon={:map}
             label="Plots"
             collapsed={@collapsed}
           />
-          
+
           <.nav_item
-            path={~p"/sections"}
+            path="/sections"
             current_path={@current_path}
             icon={:squares_2x2}
             label="Sections"
             collapsed={@collapsed}
           />
-          
+
           <.nav_item
-            path={~p"/items"}
+            path="/items"
             current_path={@current_path}
             icon={:cube}
             label="Items"
             collapsed={@collapsed}
           />
-          
+
           <.nav_item
-            path={~p"/item-types"}
+            path="/item-types"
             current_path={@current_path}
             icon={:tag}
             label="Item Types"
             collapsed={@collapsed}
           />
-          
+
           <.nav_item
-            path={~p"/layouts"}
+            path="/layouts"
             current_path={@current_path}
             icon={:view_columns}
             label="Layouts"
             collapsed={@collapsed}
           />
         </div>
-        
+
         <!-- Reservations -->
         <div class="nav-section">
           <.nav_section_header label="Reservations" collapsed={@collapsed} />
-          
+
           <.nav_item
-            path={~p"/reservations"}
+            path="/reservations"
             current_path={@current_path}
             icon={:calendar_days}
             label="Reservations"
             collapsed={@collapsed}
           />
-          
+
           <.nav_item
-            path={~p"/calendar"}
+            path="/calendar"
             current_path={@current_path}
             icon={:calendar}
             label="Calendar"
             collapsed={@collapsed}
           />
-          
+
           <.nav_item
-            path={~p"/clients"}
+            path="/clients"
             current_path={@current_path}
             icon={:users}
             label="Clients"
             collapsed={@collapsed}
           />
         </div>
-        
+
         <!-- Financial -->
         <div class="nav-section">
           <.nav_section_header label="Financial" collapsed={@collapsed} />
-          
+
           <.nav_item
-            path={~p"/pricing"}
+            path="/pricing"
             current_path={@current_path}
             icon={:currency_dollar}
             label="Pricing"
             collapsed={@collapsed}
           />
-          
+
           <.nav_item
-            path={~p"/payments"}
+            path="/payments"
             current_path={@current_path}
             icon={:credit_card}
             label="Payments"
             collapsed={@collapsed}
           />
         </div>
-        
+
         <!-- Administration -->
         <div class="nav-section">
           <.nav_section_header label="Administration" collapsed={@collapsed} />
-          
+
           <.nav_item
-            path={~p"/employees"}
+            path="/employees"
             current_path={@current_path}
             icon={:user_group}
             label="Employees"
             collapsed={@collapsed}
           />
-          
+
           <.nav_item
-            path={~p"/permissions"}
+            path="/permissions"
             current_path={@current_path}
             icon={:shield_check}
             label="Permissions"
             collapsed={@collapsed}
           />
-          
+
           <.nav_item
-            path={~p"/businesses"}
+            path="/businesses"
             current_path={@current_path}
             icon={:building_office}
             label="Business"
@@ -166,16 +166,16 @@ defmodule RivaAshWeb.Components.Navigation.ExpandedSidebar do
           />
         </div>
       </div>
-      
+
       <div class="sidebar-footer">
         <.nav_item
-          path={~p"/profile"}
+          path="/profile"
           current_path={@current_path}
           icon={:user_circle}
           label="Profile"
           collapsed={@collapsed}
         />
-        
+
         <button phx-click="sign_out" class="nav-item sign-out">
           <.icon name={:arrow_right_on_rectangle} />
           <span :if={!@collapsed}>Sign Out</span>
@@ -195,7 +195,7 @@ defmodule RivaAshWeb.Components.Navigation.ExpandedSidebar do
 
   defp nav_item(assigns) do
     ~H"""
-    <a 
+    <a
       href={@path}
       class={[
         "nav-item",

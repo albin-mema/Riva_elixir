@@ -30,7 +30,7 @@ defmodule RivaAshWeb.Components.Templates.ListViewTemplate do
   slot :col, required: true do
     attr :label, :string, required: true
     attr :field, :atom
-    attr :sortable, :boolean, default: false
+    attr :sortable, :boolean
   end
 
   def list_view_template(assigns) do
@@ -42,7 +42,7 @@ defmodule RivaAshWeb.Components.Templates.ListViewTemplate do
           <%= render_slot(action) %>
         </:action>
       </.page_header>
-      
+
       <div :if={@show_filters && @filters != []} class="list-filters">
         <.filter_panel
           filters={@filters}
@@ -51,7 +51,7 @@ defmodule RivaAshWeb.Components.Templates.ListViewTemplate do
           on_clear="clear_filters"
         />
       </div>
-      
+
       <div :if={@items == [] && @empty_state != %{}} class="list-empty">
         <.empty_state
           icon={@empty_state[:icon] || :document}
@@ -59,7 +59,7 @@ defmodule RivaAshWeb.Components.Templates.ListViewTemplate do
           description={@empty_state[:description] || "Create your first item to get started"}
         />
       </div>
-      
+
       <div :if={@items != []} class="list-content">
         <.data_table
           items={@items}
