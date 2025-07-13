@@ -20,9 +20,45 @@ defmodule RivaAshWeb.Components.Atoms.Input do
   attr :rest, :global
 
   def input(assigns) do
+    assigns = assign(assigns, :input_class, input_class(assigns))
+
     ~H"""
-    <!-- Input implementation will go here -->
-    <input {@rest} />
+    <input
+      type={@type}
+      class={@input_class}
+      value={@value}
+      placeholder={@placeholder}
+      disabled={@disabled}
+      readonly={@readonly}
+      required={@required}
+      {@rest}
+    />
     """
+  end
+
+  defp input_class(assigns) do
+    base = "flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+    size = size_classes(assigns.size)
+    variant = variant_classes(assigns.variant)
+
+    Enum.join([base, size, variant, assigns.class], " ")
+  end
+
+  defp size_classes(size) do
+    case size do
+      "sm" -> "h-8 px-2 text-xs"
+      "md" -> "h-9 px-3 text-sm"
+      "lg" -> "h-10 px-4 text-base"
+      _ -> "h-9 px-3 text-sm"
+    end
+  end
+
+  defp variant_classes(variant) do
+    case variant do
+      "default" -> ""
+      "error" -> "border-destructive focus-visible:ring-destructive"
+      "success" -> "border-green-500 focus-visible:ring-green-500"
+      _ -> ""
+    end
   end
 end
