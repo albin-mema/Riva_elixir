@@ -1,6 +1,6 @@
 defmodule RivaAshWeb.EmployeeLive do
   use RivaAshWeb, :live_view
-  import OK, only: [success: 1, failure: 1, ~>>: 2, for: 1, required: 2]
+  alias RivaAsh.ErrorHelpers
 
   require Ash.Query
 
@@ -16,26 +16,24 @@ defmodule RivaAshWeb.EmployeeLive do
 
   @impl true
   def mount(_params, session, socket) do
-    get_current_user_from_session(session)
-    |> OK.required(:user_not_authenticated)
-    ~>> fn user ->
-      socket
-      |> assign(:current_user, user)
-      |> assign(:businesses, list_user_businesses(user))
-      |> assign(:form, AshPhoenix.Form.for_create(Employee, :create, actor: user) |> to_form())
-      |> assign(:show_form, false)
-      |> assign(:editing_employee, nil)
-      |> assign(:loading, false)
-      |> assign(:is_admin, user.role == :admin)
-      |> assign(:page_title, "Employee Management")
-    end
-    |> case do
-      {:ok, socket} -> success(socket)
+    case ErrorHelpers.required(get_current_user_from_session(session), :user_not_authenticated) do
+      {:ok, user} ->
+        socket
+        |> assign(:current_user, user)
+        |> assign(:businesses, list_user_businesses(user))
+        |> assign(:form, AshPhoenix.Form.for_create(Employee, :create, actor: user) |> to_form())
+        |> assign(:show_form, false)
+        |> assign(:editing_employee, nil)
+        |> assign(:loading, false)
+        |> assign(:is_admin, user.role == :admin)
+        |> assign(:page_title, "Employee Management")
+        |> ErrorHelpers.success()
       {:error, :user_not_authenticated} ->
         socket
         |> put_flash(:error, "You must be logged in to access this page.")
         |> redirect(to: "/sign-in")
-        |> success()
+        |> ErrorHelpers.success()
+      {:error, reason} -> ErrorHelpers.failure(reason)
     end
   end
 
@@ -44,15 +42,13 @@ defmodule RivaAshWeb.EmployeeLive do
     user = socket.assigns.current_user
 
     # Use Flop to handle pagination, sorting, and filtering
-    list_employees_with_flop(user, params)
-    ~> fn {employees, meta} ->
-      socket
-      |> assign(:employees, employees)
-      |> assign(:meta, meta)
-    end
-    |> case do
-      {:ok, socket} -> {:noreply, socket}
-      {:error, _} ->
+    case list_employees_with_flop(user, params) do
+      {employees, meta} ->
+        socket
+        |> assign(:employees, employees)
+        |> assign(:meta, meta)
+        |> then(&{:noreply, &1})
+      _ -> # This case should ideally not be hit if list_employees_with_flop always returns {employees, meta}
         socket =
           socket
           |> assign(:employees, [])
@@ -522,15 +518,15 @@ defmodule RivaAshWeb.EmployeeLive do
   defp load_employees_simple(user) do
     try do
       IO.puts("DEBUG: Loading employees for user: #{inspect(user.email)} (role: #{user.role})")
-      
+
       if user.role == :admin do
         # Admins can see all employees - use authorize?: false to bypass permission issues
         IO.puts("DEBUG: User is admin, loading all employees")
         case Employee.read(authorize?: false) do
-          {:ok, employees} -> 
+          {:ok, employees} ->
             IO.puts("DEBUG: Successfully loaded #{length(employees)} employees")
             employees
-          error -> 
+          error ->
             IO.puts("DEBUG: Error loading employees: #{inspect(error)}")
             []
         end
@@ -546,13 +542,13 @@ defmodule RivaAshWeb.EmployeeLive do
             filtered_employees = Enum.filter(all_employees, fn emp -> emp.business_id in user_business_ids end)
             IO.puts("DEBUG: Filtered to #{length(filtered_employees)} employees for user's businesses")
             filtered_employees
-          error -> 
+          error ->
             IO.puts("DEBUG: Error loading employees: #{inspect(error)}")
             []
         end
       end
     rescue
-      error -> 
+      error ->
         IO.puts("DEBUG: Exception in load_employees_simple: #{inspect(error)}")
         []
     end
@@ -561,15 +557,15 @@ defmodule RivaAshWeb.EmployeeLive do
   defp list_user_businesses_simple(user) do
     try do
       IO.puts("DEBUG: Loading businesses for user: #{inspect(user.email)} (role: #{user.role})")
-      
+
       if user.role == :admin do
         # Admins can see all businesses
         IO.puts("DEBUG: User is admin, loading all businesses")
         case Business.read(authorize?: false) do
-          {:ok, businesses} -> 
+          {:ok, businesses} ->
             IO.puts("DEBUG: Successfully loaded #{length(businesses)} businesses")
             businesses
-          error -> 
+          error ->
             IO.puts("DEBUG: Error loading businesses: #{inspect(error)}")
             []
         end
@@ -581,13 +577,13 @@ defmodule RivaAshWeb.EmployeeLive do
             filtered_businesses = Enum.filter(all_businesses, fn business -> business.owner_id == user.id end)
             IO.puts("DEBUG: Successfully loaded #{length(filtered_businesses)} owned businesses")
             filtered_businesses
-          error -> 
+          error ->
             IO.puts("DEBUG: Error loading businesses for filtering: #{inspect(error)}")
             []
         end
       end
     rescue
-      error -> 
+      error ->
         IO.puts("DEBUG: Exception in list_user_businesses_simple: #{inspect(error)}")
         []
     end
@@ -603,18 +599,14 @@ defmodule RivaAshWeb.EmployeeLive do
     user_token = session["user_token"]
 
     if user_token do
-      case Phoenix.Token.verify(RivaAshWeb.Endpoint, "user_auth", user_token, max_age: 86_400) do
-        {:ok, user_id} ->
-          case Ash.get(RivaAsh.Accounts.User, user_id, domain: RivaAsh.Accounts) do
-            {:ok, user} -> user
-            _ -> nil
-          end
-
-        _ ->
-          nil
+      with {:ok, user_id} <- Phoenix.Token.verify(RivaAshWeb.Endpoint, "user_auth", user_token, max_age: 86_400) |> ErrorHelpers.to_result(),
+           {:ok, user} <- Ash.get(RivaAsh.Accounts.User, user_id, domain: RivaAsh.Accounts) |> ErrorHelpers.to_result() do
+        ErrorHelpers.success(user)
+      else
+        _ -> ErrorHelpers.failure(:not_authenticated)
       end
     else
-      nil
+      ErrorHelpers.failure(:not_authenticated)
     end
   end
 

@@ -2,7 +2,6 @@ defmodule RivaAsh.Mermaid do
   @moduledoc """
   Generates Mermaid.js diagrams from Ash resources.
   """
-  import OK, only: [success: 1, failure: 1, ~>>: 2, for: 1, map_all: 2]
 
   @doc """
   Generates a Mermaid ERD diagram from Ash resources.
@@ -12,38 +11,56 @@ defmodule RivaAsh.Mermaid do
       iex> RivaAsh.Mermaid.generate_erd(RivaAsh.Domain)
   """
   def generate_erd(domain) do
-    OK.for do
-      resources <- OK.wrap(Ash.Domain.Info.resources(domain))
-      mermaid_resources <- OK.map_all(resources, &resource_to_mermaid/1)
-    after
-      """
+    try do
+      resources = Ash.Domain.Info.resources(domain)
+      mermaid_resources = Enum.map(resources, fn resource ->
+        case resource_to_mermaid(resource) do
+          {:ok, result} -> result
+          {:error, _} -> ""
+        end
+      end)
+
+      result = """
       erDiagram
       #{Enum.join(mermaid_resources, "\n\n")}
       """
       |> String.trim()
+
+      {:ok, result}
+    rescue
+      error -> {:error, error}
     end
   end
 
   defp resource_to_mermaid(resource) do
-    OK.for do
-      attributes <- OK.wrap(resource.__info__(:attributes))
-      relationships <- OK.wrap(Ash.Resource.Info.relationships(resource))
-      resource_name <- resource |> Module.split() |> List.last() |> success()
-      attributes_str <- format_attributes(attributes)
-      relationships_str <- format_relationships(resource_name, relationships)
-    after
-      """
-      #{resource_name} {
-        #{attributes_str}
-        #{relationships_str}
-      }
-      """
-      |> String.trim()
+    try do
+      attributes = resource.__info__(:attributes)
+      relationships = Ash.Resource.Info.relationships(resource)
+      resource_name = resource |> Module.split() |> List.last()
+
+      case format_attributes(attributes) do
+        {:ok, attributes_str} ->
+          case format_relationships(resource_name, relationships) do
+            {:ok, relationships_str} ->
+              result = """
+              #{resource_name} {
+                #{attributes_str}
+                #{relationships_str}
+              }
+              """
+              |> String.trim()
+              {:ok, result}
+            {:error, error} -> {:error, error}
+          end
+        {:error, error} -> {:error, error}
+      end
+    rescue
+      error -> {:error, error}
     end
   end
 
   defp format_attributes(attributes) do
-    attributes
+    result = attributes
     |> Enum.map(fn {name, types} ->
       type =
         case types do
@@ -54,14 +71,19 @@ defmodule RivaAsh.Mermaid do
       "    #{name} #{type}"
     end)
     |> Enum.join("\n")
-    |> success()
+
+    {:ok, result}
   end
 
   defp format_relationships(resource_name, relationships) do
-    relationships
-    |> OK.map_all(&relationship_to_mermaid(resource_name, &1))
-    ~>> fn relationship_strings ->
-      Enum.join(relationship_strings, "\n")
+    relationship_results = Enum.map(relationships, &relationship_to_mermaid(resource_name, &1))
+    errors = Enum.filter(relationship_results, &match?({:error, _}, &1))
+
+    if Enum.empty?(errors) do
+      relationship_strings = Enum.map(relationship_results, fn {:ok, str} -> str end)
+      {:ok, Enum.join(relationship_strings, "\n")}
+    else
+      {:error, errors}
     end
   end
 
@@ -71,23 +93,23 @@ defmodule RivaAsh.Mermaid do
          cardinality: cardinality,
          type: type
        }) do
-    OK.for do
-      dest_resource <- format_destination_resource(destination)
-      relationship_line <- format_relationship_line(source_resource, dest_resource, name, cardinality, type)
-    after
-      relationship_line
+    with {:ok, dest_resource} <- format_destination_resource(destination),
+         {:ok, relationship_line} <- format_relationship_line(source_resource, dest_resource, name, cardinality, type) do
+      {:ok, relationship_line}
+    else
+      {:error, error} -> {:error, error}
     end
   end
 
   defp format_destination_resource(destination) do
     case destination do
-      mod when is_atom(mod) -> mod |> Module.split() |> List.last() |> success()
-      _ -> "#{destination}" |> success()
+      mod when is_atom(mod) -> {:ok, mod |> Module.split() |> List.last()}
+      _ -> {:ok, "#{destination}"}
     end
   end
 
   defp format_relationship_line(source_resource, dest_resource, name, cardinality, type) do
-    case type do
+    result = case type do
       :belongs_to ->
         "    #{source_resource} ||--o{ #{dest_resource} : " <>
           if(cardinality == :one, do: "belongs_to", else: "has_many") <>
@@ -105,6 +127,7 @@ defmodule RivaAsh.Mermaid do
       _ ->
         "    #{source_resource} -- #{dest_resource} : #{name} (#{inspect(type)})"
     end
-    |> success()
+
+    {:ok, result}
   end
 end

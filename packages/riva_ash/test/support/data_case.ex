@@ -50,8 +50,7 @@ defmodule RivaAsh.DataCase do
         pid = Ecto.Adapters.SQL.Sandbox.start_owner!(RivaAsh.Repo, shared: not tags[:async])
         on_exit(fn -> Ecto.Adapters.SQL.Sandbox.stop_owner(pid) end)
       _ ->
-        # Fallback for non-sandbox environments
-        :ok = Ecto.Adapters.SQL.Sandbox.checkout(RivaAsh.Repo)
+        Ecto.Adapters.SQL.Sandbox.checkout(RivaAsh.Repo)
         on_exit(fn -> Ecto.Adapters.SQL.Sandbox.checkin(RivaAsh.Repo) end)
     end
   end

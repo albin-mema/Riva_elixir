@@ -2,7 +2,7 @@ defmodule RivaAshWeb.AuthController do
   use RivaAshWeb, :controller
   alias RivaAsh.Accounts
   alias RivaAshWeb.AuthHelpers
-  import OK, only: [success: 1, failure: 1, ~>>: 2]
+  alias RivaAsh.ErrorHelpers
 
   plug(:put_layout, {RivaAshWeb.Layouts, :app})
 
@@ -19,17 +19,16 @@ defmodule RivaAshWeb.AuthController do
   end
 
   def sign_in_submit(conn, %{"email" => email, "password" => password}) do
-    Accounts.sign_in(email, password)
-    ~>> case do
-      %{resource: user, token: token} ->
+    case Accounts.sign_in(email, password) do
+      {:ok, %{resource: user, token: token}} ->
         conn
         |> put_session(:user_token, token)
         |> assign(:current_user, user)
         |> put_flash(:info, "Successfully signed in!")
         |> redirect(to: "/businesses")
-        |> success()
+        |> ErrorHelpers.success()
 
-      user when is_struct(user) ->
+      {:ok, user} when is_struct(user) ->
         # Handle case where AshAuthentication returns user without token wrapper
         token = Phoenix.Token.sign(RivaAshWeb.Endpoint, "user_auth", user.id)
 
@@ -38,16 +37,15 @@ defmodule RivaAshWeb.AuthController do
         |> assign(:current_user, user)
         |> put_flash(:info, "Successfully signed in!")
         |> redirect(to: "/businesses")
-        |> success()
-    end
-    |> case do
-      {:ok, result} -> result
+        |> ErrorHelpers.success()
+
       {:error, reason} when is_binary(reason) ->
         IO.inspect(reason, label: "Sign in error")
 
         conn
         |> put_flash(:error, reason)
         |> redirect(to: "/sign-in")
+        |> ErrorHelpers.failure(reason)
 
       {:error, error} ->
         IO.inspect(error, label: "Unexpected authentication error")
@@ -55,6 +53,7 @@ defmodule RivaAshWeb.AuthController do
         conn
         |> put_flash(:error, "An error occurred during sign in. Please try again.")
         |> redirect(to: "/sign-in")
+        |> ErrorHelpers.failure(error)
     end
   end
 
@@ -81,24 +80,23 @@ defmodule RivaAshWeb.AuthController do
       |> put_flash(:error, "Password confirmation does not match")
       |> redirect(to: "/register")
     else
-      Accounts.register(%{
+      case Accounts.register(%{
         "name" => name,
         "email" => email,
         "password" => password
-      })
-      ~>> fn _user ->
-        conn
-        |> put_flash(:info, "Registration successful! Please sign in.")
-        |> redirect(to: "/sign-in")
-      end
-      |> case do
-        {:ok, result} -> result
+      }) do
+        {:ok, _user} ->
+          conn
+          |> put_flash(:info, "Registration successful! Please sign in.")
+          |> redirect(to: "/sign-in")
+          |> ErrorHelpers.success()
         {:error, changeset} ->
           error_messages = format_changeset_errors(changeset)
 
           conn
           |> put_flash(:error, "Registration failed: #{error_messages}")
           |> redirect(to: "/register")
+          |> ErrorHelpers.failure(changeset)
       end
     end
   end

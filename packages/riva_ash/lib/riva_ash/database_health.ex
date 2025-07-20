@@ -7,7 +7,6 @@ defmodule RivaAsh.DatabaseHealth do
   """
 
   require Logger
-  import OK, only: [success: 1, failure: 1, ~>>: 2]
 
   @max_retries 30
   @retry_interval 2_000
@@ -31,7 +30,7 @@ defmodule RivaAsh.DatabaseHealth do
   defp wait_for_database(0) do
     error_msg = "Database connection failed after #{@max_retries} attempts"
     Logger.error(error_msg)
-    failure(error_msg)
+    {:error, error_msg}
   end
 
   defp wait_for_database(retries_left) do
@@ -61,14 +60,16 @@ defmodule RivaAsh.DatabaseHealth do
   @spec check_database_connection() :: :ok | {:error, any()}
   def check_database_connection do
     try do
-      RivaAsh.Repo.query("SELECT 1", [], timeout: @connection_timeout)
-      ~>> fn _result -> :ok end
+      case RivaAsh.Repo.query("SELECT 1", [], timeout: @connection_timeout) do
+        {:ok, _result} -> {:ok, :ok}
+        {:error, error} -> {:error, error}
+      end
     rescue
       exception ->
-        failure(exception)
+        {:error, exception}
     catch
       :exit, reason ->
-        failure(reason)
+        {:error, reason}
     end
   end
 
@@ -81,33 +82,37 @@ defmodule RivaAsh.DatabaseHealth do
   def check_database_extensions do
     required_extensions = RivaAsh.Repo.installed_extensions()
     
-    OK.for do
-      installed <- get_installed_extensions()
-      missing = required_extensions -- installed
-      _ <- validate_extensions(missing, required_extensions)
-    after
+    with {:ok, installed} <- get_installed_extensions(),
+         missing = required_extensions -- installed,
+         {:ok, _} <- validate_extensions(missing, required_extensions) do
       Logger.info("All required database extensions are installed: #{inspect(required_extensions)}")
-      :ok
+      {:ok, :ok}
     else
+      {:error, error} ->
+        Logger.error("Failed to check database extensions: #{inspect(error)}")
+        {:error, error}
       error ->
         Logger.error("Failed to check database extensions: #{inspect(error)}")
-        failure(error)
+        {:error, error}
     end
   end
 
-  defp validate_extensions([], _required), do: success(:ok)
+  defp validate_extensions([], _required), do: {:ok, :ok}
   defp validate_extensions(missing, _required) do
     Logger.error("Missing database extensions: #{inspect(missing)}")
-    failure(missing)
+    {:error, missing}
   end
 
   @spec get_installed_extensions() :: {:ok, [String.t()]} | {:error, any()}
   defp get_installed_extensions do
     query = "SELECT extname FROM pg_extension"
     
-    RivaAsh.Repo.query(query, [], timeout: @connection_timeout)
-    ~>> fn %{rows: rows} ->
-      Enum.map(rows, fn [name] -> name end)
+    case RivaAsh.Repo.query(query, [], timeout: @connection_timeout) do
+      {:ok, %{rows: rows}} ->
+        extensions = Enum.map(rows, fn [name] -> name end)
+        {:ok, extensions}
+      {:error, error} ->
+        {:error, error}
     end
   end
 
@@ -125,15 +130,14 @@ defmodule RivaAsh.DatabaseHealth do
   def comprehensive_health_check do
     Logger.info("Performing comprehensive database health check...")
     
-    OK.for do
-      _ <- check_database_connection() |> log_check_result("Database connectivity")
-      _ <- check_database_extensions() |> log_check_result("Database extensions")
-      _ <- check_postgres_version() |> log_check_result("PostgreSQL version")
-    after
+    with {:ok, _} <- check_database_connection() |> log_check_result("Database connectivity"),
+         {:ok, _} <- check_database_extensions() |> log_check_result("Database extensions"),
+         {:ok, _} <- check_postgres_version() |> log_check_result("PostgreSQL version") do
       Logger.info("All database health checks passed!")
       :ok
     else
-      error -> failure([inspect(error)])
+      {:error, error} -> {:error, [inspect(error)]}
+      error -> {:error, [inspect(error)]}
     end
   end
 
@@ -142,13 +146,13 @@ defmodule RivaAsh.DatabaseHealth do
     |> case do
       :ok ->
         Logger.info("✓ #{check_name} check passed")
-        success(:ok)
+        {:ok, :ok}
       {:ok, _} ->
         Logger.info("✓ #{check_name} check passed")
-        success(:ok)
+        {:ok, :ok}
       {:error, reason} ->
         Logger.error("✗ #{check_name} check failed: #{inspect(reason)}")
-        failure("#{check_name}: #{inspect(reason)}")
+        {:error, "#{check_name}: #{inspect(reason)}"}
     end
   end
 
@@ -156,32 +160,32 @@ defmodule RivaAsh.DatabaseHealth do
   defp check_postgres_version do
     min_version = RivaAsh.Repo.min_pg_version()
     
-    OK.for do
-      current_version <- get_postgres_version()
-      _ <- validate_postgres_version(current_version, min_version)
-    after
+    with {:ok, current_version} <- get_postgres_version(),
+         {:ok, _} <- validate_postgres_version(current_version, min_version) do
       Logger.info("PostgreSQL version #{current_version} meets minimum requirement #{min_version}")
-      :ok
+      {:ok, :ok}
     else
-      error -> failure("Failed to validate PostgreSQL version: #{inspect(error)}")
+      {:error, error} -> {:error, "Failed to validate PostgreSQL version: #{inspect(error)}"}
+      error -> {:error, "Failed to validate PostgreSQL version: #{inspect(error)}"}
     end
   end
 
   defp validate_postgres_version(current_version, min_version) do
     if Version.compare(current_version, min_version) in [:gt, :eq] do
-      success(:ok)
+      {:ok, :ok}
     else
-      failure("PostgreSQL version #{current_version} is below minimum requirement #{min_version}")
+      {:error, "PostgreSQL version #{current_version} is below minimum requirement #{min_version}"}
     end
   end
 
   @spec get_postgres_version() :: {:ok, Version.t()} | {:error, any()}
   defp get_postgres_version do
-    RivaAsh.Repo.query("SELECT version()", [], timeout: @connection_timeout)
-    ~>> fn %{rows: [[version_string]]} ->
-      parse_postgres_version(version_string)
+    case RivaAsh.Repo.query("SELECT version()", [], timeout: @connection_timeout) do
+      {:ok, %{rows: [[version_string]]}} ->
+        parse_postgres_version(version_string)
+      {:error, error} ->
+        {:error, error}
     end
-    ~>> fn result -> result end
   end
 
   @spec parse_postgres_version(String.t()) :: {:ok, Version.t()} | {:error, String.t()}
@@ -195,7 +199,7 @@ defmodule RivaAsh.DatabaseHealth do
         Version.parse("#{major}.#{minor}.#{patch}")
 
       _ ->
-        failure("Could not parse PostgreSQL version from: #{version_string}")
+        {:error, "Could not parse PostgreSQL version from: #{version_string}"}
     end
   end
 end

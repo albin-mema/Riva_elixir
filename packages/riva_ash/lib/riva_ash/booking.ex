@@ -9,7 +9,7 @@ defmodule RivaAsh.Booking do
   """
 
   use Timex
-  
+
   alias RivaAsh.Resources.{Client, Reservation, Item}
   alias RivaAsh.Domain
   alias RivaAsh.Repo
@@ -17,7 +17,6 @@ defmodule RivaAsh.Booking do
 
   import Ash.Expr
   require Ash.Query
-  import OK, only: [success: 1, failure: 1, ~>>: 2]
 
   @min_booking_minutes 30
   @max_booking_hours 4
@@ -47,7 +46,8 @@ defmodule RivaAsh.Booking do
   The transaction will be rolled back if any step fails.
   """
   def create_booking(booking_params) do
-    RivaAsh.ErrorHelpers.with_error_handling(fn ->
+    require Logger
+    RivaAsh.ErrorHelpers.with_error_handling fn ->
       Multi.new()
       |> Multi.run(:client, fn _repo, _changes ->
         client_params = Map.get(booking_params, :client_info, %{})
@@ -85,7 +85,7 @@ defmodule RivaAsh.Booking do
         {:error, _operation, reason, _changes} ->
           {:error, reason}
       end
-    end)
+    end
   end
 
   @doc """
@@ -104,9 +104,9 @@ defmodule RivaAsh.Booking do
     with {:ok, reservation} <- get_reservation_with_client(reservation_id),
          {:ok, updated_client} <- maybe_register_client(reservation.client, register_client, client_updates),
          {:ok, confirmed_reservation} <- confirm_reservation(reservation) do
-      success(%{client: updated_client, reservation: confirmed_reservation})
+      RivaAsh.ErrorHelpers.success(%{client: updated_client, reservation: confirmed_reservation})
     else
-      {:error, reason} -> failure(reason)
+      {:error, reason} -> RivaAsh.ErrorHelpers.failure(reason)
     end
   end
 
@@ -128,9 +128,9 @@ defmodule RivaAsh.Booking do
          {:ok, existing_reservations} <- get_existing_reservations(item_id, date) do
       time_slots = generate_time_slots(date, duration_minutes, business_hours)
       available_slots = mark_availability(time_slots, existing_reservations)
-      success(available_slots)
+      RivaAsh.ErrorHelpers.success(available_slots)
     else
-      {:error, reason} -> failure(reason)
+      {:error, reason} -> RivaAsh.ErrorHelpers.failure(reason)
     end
   end
 
@@ -145,9 +145,9 @@ defmodule RivaAsh.Booking do
         # Create new client if not found
         Client.create(Map.put(params, :is_registered, register_immediately))
         |> case do
-          {:ok, client} -> success(client)
+          {:ok, client} -> RivaAsh.ErrorHelpers.success(client)
           {:error, changeset} ->
-            failure(%{
+            RivaAsh.ErrorHelpers.failure(%{
               code: :client_creation_failed,
               message: "Failed to create client",
               errors: changeset.errors
@@ -156,7 +156,7 @@ defmodule RivaAsh.Booking do
 
       client ->
         # Return existing client
-        success(client)
+        RivaAsh.ErrorHelpers.success(client)
     end
   end
 
@@ -164,9 +164,9 @@ defmodule RivaAsh.Booking do
     # Create unregistered client without email
     Client.create(Map.put(params, :is_registered, register_immediately))
     |> case do
-      {:ok, client} -> success(client)
+      {:ok, client} -> RivaAsh.ErrorHelpers.success(client)
       {:error, changeset} ->
-        failure(%{
+        RivaAsh.ErrorHelpers.failure(%{
           code: :client_creation_failed,
           message: "Failed to create client",
           errors: changeset.errors
@@ -178,10 +178,10 @@ defmodule RivaAsh.Booking do
     Reservation.create(params)
     |> case do
       {:ok, reservation} ->
-        success(reservation)
+        RivaAsh.ErrorHelpers.success(reservation)
 
       {:error, changeset} ->
-        failure(%{
+        RivaAsh.ErrorHelpers.failure(%{
           code: :reservation_creation_failed,
           message: "Failed to create reservation",
           errors: changeset.errors
@@ -192,16 +192,16 @@ defmodule RivaAsh.Booking do
   defp validate_booking_times(reserved_from, reserved_until) do
     cond do
       Timex.compare(reserved_from, Timex.now()) == -1 ->
-        failure("Cannot create reservation in the past")
+        RivaAsh.ErrorHelpers.failure("Cannot create reservation in the past")
 
       Timex.diff(reserved_until, reserved_from, :minutes) < @min_booking_minutes ->
-        failure("Reservation must be at least #{@min_booking_minutes} minutes")
+        RivaAsh.ErrorHelpers.failure("Reservation must be at least #{@min_booking_minutes} minutes")
 
       Timex.diff(reserved_until, reserved_from, :hours) > @max_booking_hours ->
-        failure("Reservation cannot exceed #{@max_booking_hours} hours")
+        RivaAsh.ErrorHelpers.failure("Reservation cannot exceed #{@max_booking_hours} hours")
 
       true ->
-        success(:ok)
+        RivaAsh.ErrorHelpers.success(:ok)
     end
   end
 
@@ -210,12 +210,12 @@ defmodule RivaAsh.Booking do
     Repo.get(Item, item_id)
     |> case do
       nil ->
-        failure(%{code: :not_found, message: "Item not found"})
+        RivaAsh.ErrorHelpers.failure(%{code: :not_found, message: "Item not found"})
 
       item ->
         # Check if item is active
         if item.status != :active do
-          failure(%{code: :unavailable, message: "Item is not available for booking"})
+          RivaAsh.ErrorHelpers.failure(%{code: :unavailable, message: "Item is not available for booking"})
         else
           # Check for overlapping reservations using Ash query
           Reservation
@@ -230,14 +230,14 @@ defmodule RivaAsh.Booking do
           )
           |> Ash.read(domain: Domain)
           |> case do
-            {:ok, []} -> success(:ok)
+            {:ok, []} -> RivaAsh.ErrorHelpers.success(:ok)
             {:ok, _overlapping_reservations} ->
-              failure(%{
+              RivaAsh.ErrorHelpers.failure(%{
                 code: :time_slot_unavailable,
                 message: "Item is already booked for the selected time slot"
               })
             {:error, _} ->
-              failure(%{
+              RivaAsh.ErrorHelpers.failure(%{
                 code: :availability_check_failed,
                 message: "Could not check item availability"
               })
@@ -249,24 +249,24 @@ defmodule RivaAsh.Booking do
   defp get_reservation_with_client(reservation_id) do
     Reservation.by_id(reservation_id, domain: Domain, load: [:client])
     |> case do
-      {:ok, reservation} -> success(reservation)
-      {:error, error} -> failure(format_error(error))
+      {:ok, reservation} -> RivaAsh.ErrorHelpers.success(reservation)
+      {:error, error} -> RivaAsh.ErrorHelpers.failure(format_error(error))
     end
   end
 
-  defp maybe_register_client(client, false, _client_updates), do: success(client)
+  defp maybe_register_client(client, false, _client_updates), do: RivaAsh.ErrorHelpers.success(client)
 
   defp maybe_register_client(client, true, client_updates) do
     if client.is_registered do
-      success(client)
+      RivaAsh.ErrorHelpers.success(client)
     else
       # Upgrade to registered client
       update_attrs = Map.merge(client_updates, %{is_registered: true})
 
       Client.register(client, update_attrs, domain: Domain)
       |> case do
-        {:ok, updated_client} -> success(updated_client)
-        {:error, error} -> failure(format_error(error))
+        {:ok, updated_client} -> RivaAsh.ErrorHelpers.success(updated_client)
+        {:error, error} -> RivaAsh.ErrorHelpers.failure(format_error(error))
       end
     end
   end
@@ -274,8 +274,8 @@ defmodule RivaAsh.Booking do
   defp confirm_reservation(reservation) do
     Reservation.update(reservation, %{status: :confirmed}, domain: Domain)
     |> case do
-      {:ok, updated_reservation} -> success(updated_reservation)
-      {:error, error} -> failure(format_error(error))
+      {:ok, updated_reservation} -> RivaAsh.ErrorHelpers.success(updated_reservation)
+      {:error, error} -> RivaAsh.ErrorHelpers.failure(format_error(error))
     end
   end
 
@@ -291,9 +291,9 @@ defmodule RivaAsh.Booking do
           Timex.compare(res.reserved_until, end_of_day) != 1 and
           res.status in [:confirmed, :pending]
         end)
-        success(filtered)
+        RivaAsh.ErrorHelpers.success(filtered)
 
-      {:error, error} -> failure(format_error(error))
+      {:error, error} -> RivaAsh.ErrorHelpers.failure(format_error(error))
     end
   end
 

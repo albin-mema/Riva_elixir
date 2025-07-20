@@ -9,7 +9,7 @@ defmodule RivaAshWeb.HealthController do
   use Phoenix.Controller, formats: [:json]
 
   alias Plug.Conn
-  import OK, only: [success: 1, failure: 1, ~>>: 2]
+  alias RivaAsh.ErrorHelpers
 
   @type health_response :: %{
           status: String.t(),
@@ -33,7 +33,7 @@ defmodule RivaAshWeb.HealthController do
         "service" => "riva_ash_api"
       }
       ```
-    
+
     * 503 - Service unavailable (database disconnected)
       ```elixir
       %{

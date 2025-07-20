@@ -1,18 +1,16 @@
 defmodule RivaAshWeb.SwaggerController do
   use Phoenix.Controller, formats: [:html]
-  import OK, only: [success: 1, failure: 1, ~>>: 2, for: 1]
+  alias RivaAsh.ErrorHelpers
 
   def index(conn, _params) do
-    OK.for do
-      html <- generate_swagger_html()
-      response_conn <- conn
-                     |> put_resp_content_type("text/html")
-                     |> send_resp(200, html)
-                     |> OK.wrap()
-    after
+    with {:ok, html} <- generate_swagger_html(),
+         {:ok, response_conn} <- conn
+                                 |> put_resp_content_type("text/html")
+                                 |> send_resp(200, html)
+                                 |> ErrorHelpers.to_result() do
       response_conn
     else
-      error ->
+      {:error, error} ->
         conn
         |> put_resp_content_type("text/plain")
         |> send_resp(500, "Failed to generate API documentation: #{inspect(error)}")
@@ -67,7 +65,7 @@ defmodule RivaAshWeb.SwaggerController do
     </body>
     </html>
     """
-    
-    success(html)
+
+    ErrorHelpers.success(html)
   end
 end

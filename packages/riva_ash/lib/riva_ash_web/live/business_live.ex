@@ -1,6 +1,6 @@
 defmodule RivaAshWeb.BusinessLive do
   use RivaAshWeb, :live_view
-  import OK, only: [success: 1, failure: 1, ~>>: 2]
+  alias RivaAsh.ErrorHelpers
 
   require Ash.Query
   import Ash.Expr
@@ -19,33 +19,32 @@ defmodule RivaAshWeb.BusinessLive do
   @impl true
   def mount(_params, session, socket) do
     # Get the current user from the session
-    user = get_current_user_from_session(session)
+    case get_current_user_from_session(session) do
+      {:ok, user} ->
+        changeset = Business |> Ash.Changeset.for_create(:create) |> Map.put(:action, :validate)
 
-    if user do
-      changeset = Business |> Ash.Changeset.for_create(:create) |> Map.put(:action, :validate)
+        socket =
+          socket
+          |> assign(:current_user, user)
+          |> assign(:businesses, list_user_businesses(user))
+          |> assign(:form, AshPhoenix.Form.for_create(Business, :create, actor: user) |> to_form())
+          |> assign(:changeset, changeset)
+          |> assign(:show_form, false)
+          |> assign(:editing_business, nil)
+          |> assign(:loading, false)
+          |> assign(:is_admin, user.role == :admin)
+          |> assign(:business_count, count_user_businesses(user))
+          |> assign(:page_title, "Business Management")
 
-      socket =
-        socket
-        |> assign(:current_user, user)
-        |> assign(:businesses, list_user_businesses(user))
-        |> assign(:form, AshPhoenix.Form.for_create(Business, :create, actor: user) |> to_form())
-        |> assign(:changeset, changeset)
-        |> assign(:show_form, false)
-        |> assign(:editing_business, nil)
-        |> assign(:loading, false)
-        |> assign(:is_admin, user.role == :admin)
-        |> assign(:business_count, count_user_businesses(user))
-        |> assign(:page_title, "Business Management")
+        ErrorHelpers.success(socket)
+      {:error, _} ->
+        # User not authenticated, redirect to sign in
+        socket =
+          socket
+          |> put_flash(:error, "You must be logged in to access this page.")
+          |> redirect(to: "/sign-in")
 
-      success(socket)
-    else
-      # User not authenticated, redirect to sign in
-      socket =
-        socket
-        |> put_flash(:error, "You must be logged in to access this page.")
-        |> redirect(to: "/sign-in")
-
-      success(socket)
+        ErrorHelpers.success(socket)
     end
   end
 
@@ -179,24 +178,22 @@ defmodule RivaAshWeb.BusinessLive do
     user = socket.assigns.current_user
 
     # The Business resource will automatically set owner_id from the actor
-    AshPhoenix.Form.submit(socket.assigns.form, params: params, actor: user)
-    ~>> fn business ->
-      action_text = if socket.assigns.editing_business, do: "updated", else: "created"
+    case AshPhoenix.Form.submit(socket.assigns.form, params: params, actor: user) do
+      {:ok, business} ->
+        action_text = if socket.assigns.editing_business, do: "updated", else: "created"
 
-      socket
-      |> assign(:businesses, list_user_businesses(user))
-      |> assign(:business_count, count_user_businesses(user))
-      |> assign(:show_form, false)
-      |> assign(:editing_business, nil)
-      |> assign(
-        :form,
-        AshPhoenix.Form.for_create(Business, :create, actor: user) |> to_form()
-      )
-      |> assign(:loading, false)
-      |> put_flash(:info, "Business \"#{business.name}\" #{action_text} successfully!")
-    end
-    |> case do
-      {:ok, socket} -> {:noreply, socket}
+        socket
+        |> assign(:businesses, list_user_businesses(user))
+        |> assign(:business_count, count_user_businesses(user))
+        |> assign(:show_form, false)
+        |> assign(:editing_business, nil)
+        |> assign(
+          :form,
+          AshPhoenix.Form.for_create(Business, :create, actor: user) |> to_form()
+        )
+        |> assign(:loading, false)
+        |> put_flash(:info, "Business \"#{business.name}\" #{action_text} successfully!")
+        |> then(&{:noreply, &1})
 
       {:error, %Ash.Error.Forbidden{}} ->
         socket =
@@ -223,13 +220,11 @@ defmodule RivaAshWeb.BusinessLive do
   def handle_event("edit_business", %{"id" => id}, socket) do
     user = socket.assigns.current_user
 
-    OK.for do
-      business <- Business 
-                 |> Ash.get(id, actor: user) 
-                 |> OK.required(:business_not_found)
-      _ <- authorize_business_access(business, user)
+    with {:ok, business} <- Business
+                            |> Ash.get(id, actor: user)
+                            |> ErrorHelpers.to_result(),
+         {:ok, _} <- authorize_business_access(business, user) do
       form = AshPhoenix.Form.for_update(business, :update, actor: user) |> to_form()
-    after
       socket =
         socket
         |> assign(:show_form, true)
@@ -237,11 +232,11 @@ defmodule RivaAshWeb.BusinessLive do
         |> assign(:form, form)
       {:noreply, socket}
     else
-      :business_not_found ->
+      {:error, :business_not_found} ->
         {:noreply, put_flash(socket, :error, "Business not found or access denied.")}
-      :access_denied ->
+      {:error, :access_denied} ->
         {:noreply, put_flash(socket, :error, "You do not have permission to edit this business.")}
-      error ->
+      {:error, error} ->
         {:noreply, put_flash(socket, :error, "An error occurred: #{inspect(error)}")}
     end
   end
@@ -250,30 +245,25 @@ defmodule RivaAshWeb.BusinessLive do
   def handle_event("delete_business", %{"id" => id}, socket) do
     user = socket.assigns.current_user
 
-    OK.for do
-      business <- Business 
-                 |> Ash.get(id, actor: user) 
-                 |> OK.required(:business_not_found)
-      _ <- authorize_business_access(business, user)
-      _ <- business |> Ash.destroy(actor: user)
-    after
+    with {:ok, business} <- Business
+                            |> Ash.get(id, actor: user)
+                            |> ErrorHelpers.to_result(),
+         {:ok, _} <- authorize_business_access(business, user),
+         {:ok, _} <- business |> Ash.destroy(actor: user) |> ErrorHelpers.to_result() do
       socket
       |> assign(:businesses, list_user_businesses(user))
       |> assign(:business_count, count_user_businesses(user))
       |> put_flash(:info, "Business \"#{business.name}\" deleted successfully!")
+      |> then(&{:noreply, &1})
     else
-      :business_not_found ->
-        put_flash(socket, :error, "Business not found or access denied.")
-      :access_denied ->
-        put_flash(socket, :error, "You do not have permission to delete this business.")
-      %Ash.Error.Forbidden{} ->
-        put_flash(socket, :error, "You do not have permission to delete this business.")
-      error ->
-        put_flash(socket, :error, "Failed to delete business: #{inspect(error)}")
-    end
-    |> case do
-      {:ok, updated_socket} -> {:noreply, updated_socket}
-      {:error, updated_socket} -> {:noreply, updated_socket}
+      {:error, :business_not_found} ->
+        {:noreply, put_flash(socket, :error, "Business not found or access denied.")}
+      {:error, :access_denied} ->
+        {:noreply, put_flash(socket, :error, "You do not have permission to delete this business.")}
+      {:error, %Ash.Error.Forbidden{}} ->
+        {:noreply, put_flash(socket, :error, "You do not have permission to delete this business.")}
+      {:error, error} ->
+        {:noreply, put_flash(socket, :error, "Failed to delete business: #{inspect(error)}")}
     end
   end
 
@@ -281,9 +271,9 @@ defmodule RivaAshWeb.BusinessLive do
 
   defp authorize_business_access(business, user) do
     if business.owner_id == user.id || user.role == :admin do
-      success(:ok)
+      ErrorHelpers.success(:ok)
     else
-      failure(:access_denied)
+      ErrorHelpers.failure(:access_denied)
     end
   end
 
@@ -300,11 +290,8 @@ defmodule RivaAshWeb.BusinessLive do
 
     query
     |> Ash.read(actor: user)
-    ~>> fn businesses ->
-      Enum.sort_by(businesses, & &1.inserted_at, {:desc, DateTime})
-    end
     |> case do
-      {:ok, businesses} -> businesses
+      {:ok, businesses} -> Enum.sort_by(businesses, & &1.inserted_at, {:desc, DateTime})
       {:error, _} -> []
     end
   end
@@ -327,14 +314,12 @@ defmodule RivaAshWeb.BusinessLive do
   end
 
   defp get_current_user_from_session(session) do
-    OK.for do
-      user_token <- session["user_token"] |> OK.required(:no_token)
-      user_id <- Phoenix.Token.verify(RivaAshWeb.Endpoint, "user_auth", user_token, max_age: 86_400)
-      user <- Ash.get(RivaAsh.Accounts.User, user_id, domain: RivaAsh.Accounts)
-    after
-      user
+    with {:ok, user_token} <- (if session["user_token"], do: ErrorHelpers.success(session["user_token"]), else: ErrorHelpers.failure(:no_token)),
+         {:ok, user_id} <- Phoenix.Token.verify(RivaAshWeb.Endpoint, "user_auth", user_token, max_age: 86_400) |> ErrorHelpers.to_result(),
+         {:ok, user} <- Ash.get(RivaAsh.Accounts.User, user_id, domain: RivaAsh.Accounts) |> ErrorHelpers.to_result() do
+      ErrorHelpers.success(user)
     else
-      _ -> nil
+      _ -> ErrorHelpers.failure(:not_authenticated)
     end
   end
 end

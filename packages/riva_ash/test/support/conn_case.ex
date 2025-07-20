@@ -33,6 +33,6 @@ defmodule RivaAshWeb.ConnCase do
 
     # Skip mock setup for now - using real repo in sandbox mode
 
-    {:ok, conn: Phoenix.ConnTest.build_conn()}
+    conn = Phoenix.ConnTest.build_conn()
   end
 end

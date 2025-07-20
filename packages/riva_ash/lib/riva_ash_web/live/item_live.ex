@@ -3,7 +3,7 @@ defmodule RivaAshWeb.ItemLive do
   Item management LiveView with positioning support.
   """
   use RivaAshWeb, :live_view
-  import OK, only: [success: 1, failure: 1, ~>>: 2, for: 1, required: 2]
+  alias RivaAsh.ErrorHelpers
 
   import RivaAshWeb.Components.Organisms.PageHeader
   import RivaAshWeb.Components.Organisms.DataTable
@@ -14,23 +14,21 @@ defmodule RivaAshWeb.ItemLive do
 
   @impl true
   def mount(_params, session, socket) do
-    get_current_user_from_session(session)
-    |> OK.required(:user_not_authenticated)
-    ~>> fn user ->
-      socket
-      |> assign(:current_user, user)
-      |> assign(:page_title, "Item Management")
-      |> assign(:items, load_items(user))
-      |> assign(:meta, %{})
-      |> assign(:show_form, false)
-      |> assign(:editing_item, nil)
-      |> assign(:form, nil)
-      |> assign(:sections, load_sections(user))
-      |> assign(:item_types, load_item_types(user))
-    end
-    |> case do
-      {:ok, socket} -> success(socket)
-      {:error, :user_not_authenticated} -> success(redirect(socket, to: "/sign-in"))
+    case ErrorHelpers.required(get_current_user_from_session(session), :user_not_authenticated) do
+      {:ok, user} ->
+        socket
+        |> assign(:current_user, user)
+        |> assign(:page_title, "Item Management")
+        |> assign(:items, load_items(user))
+        |> assign(:meta, %{})
+        |> assign(:show_form, false)
+        |> assign(:editing_item, nil)
+        |> assign(:form, nil)
+        |> assign(:sections, load_sections(user))
+        |> assign(:item_types, load_item_types(user))
+        |> ErrorHelpers.success()
+      {:error, :user_not_authenticated} -> ErrorHelpers.success(redirect(socket, to: "/sign-in"))
+      {:error, reason} -> ErrorHelpers.failure(reason) # Should not happen with :user_not_authenticated
     end
   end
 
@@ -107,53 +105,54 @@ defmodule RivaAshWeb.ItemLive do
   end
 
   def handle_event("edit_item", %{"id" => id}, socket) do
-    OK.for do
-      item <- Item.by_id(id)
-      form <- OK.wrap(AshPhoenix.Form.for_update(item, :update, actor: socket.assigns.current_user))
-    after
+    with {:ok, item} <- Item.by_id(id) |> ErrorHelpers.to_result(),
+         {:ok, form} <- AshPhoenix.Form.for_update(item, :update, actor: socket.assigns.current_user) |> ErrorHelpers.to_result() do
       socket
       |> assign(:editing_item, item)
       |> assign(:form, form |> to_form())
       |> assign(:show_form, true)
+      |> then(&{:noreply, &1})
     else
       _ ->
         socket
         |> put_flash(:error, "Failed to load item for editing")
+        |> then(&{:noreply, &1})
     end
-    |> then(&{:noreply, &1})
   end
 
   def handle_event("delete_item", %{"id" => id}, socket) do
-    Item.by_id(id)
-    ~>> fn item ->
-      Item.destroy(item, actor: socket.assigns.current_user)
-    end
-    |> case do
-      {:ok, _} ->
-        socket
-        |> put_flash(:info, "Item deleted successfully")
-        |> assign(:items, load_items(socket.assigns.current_user))
+    case Item.by_id(id) do
+      {:ok, item} ->
+        case Item.destroy(item, actor: socket.assigns.current_user) do
+          {:ok, _} ->
+            socket
+            |> put_flash(:info, "Item deleted successfully")
+            |> assign(:items, load_items(socket.assigns.current_user))
+            |> then(&{:noreply, &1})
+          {:error, error} ->
+            socket
+            |> put_flash(:error, "Failed to delete item: #{inspect(error)}")
+            |> then(&{:noreply, &1})
+        end
       {:error, error} ->
         socket
-        |> put_flash(:error, "Failed to delete item: #{inspect(error)}")
+        |> put_flash(:error, "Failed to find item for deletion: #{inspect(error)}")
+        |> then(&{:noreply, &1})
     end
-    |> then(&{:noreply, &1})
   end
 
   def handle_event("save_item", %{"form" => params}, socket) do
-    AshPhoenix.Form.submit(socket.assigns.form, params: params, actor: socket.assigns.current_user)
-    ~>> fn item ->
-      action_text = if socket.assigns.editing_item, do: "updated", else: "created"
-      
-      socket
-      |> assign(:items, load_items(socket.assigns.current_user))
-      |> assign(:show_form, false)
-      |> assign(:editing_item, nil)
-      |> assign(:form, nil)
-      |> put_flash(:info, "Item #{action_text} successfully")
-    end
-    |> case do
-      {:ok, socket} -> {:noreply, socket}
+    case AshPhoenix.Form.submit(socket.assigns.form, params: params, actor: socket.assigns.current_user) do
+      {:ok, item} ->
+        action_text = if socket.assigns.editing_item, do: "updated", else: "created"
+
+        socket
+        |> assign(:items, load_items(socket.assigns.current_user))
+        |> assign(:show_form, false)
+        |> assign(:editing_item, nil)
+        |> assign(:form, nil)
+        |> put_flash(:info, "Item #{action_text} successfully")
+        |> then(&{:noreply, &1})
       {:error, form} ->
         socket =
           socket
@@ -218,5 +217,4 @@ defmodule RivaAshWeb.ItemLive do
       {:error, _} -> []
     end
   end
-end
 end

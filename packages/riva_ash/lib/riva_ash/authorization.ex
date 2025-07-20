@@ -6,7 +6,6 @@ defmodule RivaAsh.Authorization do
 
   import Ash.Expr
   require Ash.Query
-  import OK, only: [success: 1, failure: 1, ~>>: 2]
 
   @doc """
   Checks if an actor has a specific permission.

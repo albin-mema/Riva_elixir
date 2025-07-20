@@ -1,6 +1,5 @@
 defmodule RivaAshWeb.FallbackController do
   use Phoenix.Controller
-  import OK, only: [success: 1, failure: 1, ~>>: 2]
 
   def call(conn, {:error, %Ash.Error.Query.NotFound{}}) do
     conn
@@ -35,10 +34,6 @@ defmodule RivaAshWeb.FallbackController do
     |> json(%{error: "Internal server error", details: inspect(error)})
   end
 
-  # Handle OK library failures
-  def call(conn, failure) when is_tuple(failure) and elem(failure, 0) == :error do
-    call(conn, failure)
-  end
 
   defp format_changeset_errors(%Ash.Error.Invalid{errors: errors}) do
     Enum.map(errors, fn error ->

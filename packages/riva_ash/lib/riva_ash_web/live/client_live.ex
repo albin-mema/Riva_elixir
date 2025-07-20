@@ -3,7 +3,7 @@ defmodule RivaAshWeb.ClientLive do
   Client management LiveView for registration and management.
   """
   use RivaAshWeb, :live_view
-  import OK, only: [success: 1, failure: 1, ~>>: 2, for: 1, required: 2]
+  alias RivaAsh.ErrorHelpers
 
   import RivaAshWeb.Components.Organisms.PageHeader
   import RivaAshWeb.Components.Organisms.DataTable
@@ -14,21 +14,19 @@ defmodule RivaAshWeb.ClientLive do
 
   @impl true
   def mount(_params, session, socket) do
-    get_current_user_from_session(session)
-    |> OK.required(:user_not_authenticated)
-    ~>> fn user ->
-      socket
-      |> assign(:current_user, user)
-      |> assign(:page_title, "Client Management")
-      |> assign(:clients, load_clients(user))
-      |> assign(:meta, %{})
-      |> assign(:show_form, false)
-      |> assign(:editing_client, nil)
-      |> assign(:form, nil)
-    end
-    |> case do
-      {:ok, socket} -> success(socket)
-      {:error, :user_not_authenticated} -> success(redirect(socket, to: "/sign-in"))
+    case ErrorHelpers.required(get_current_user_from_session(session), :user_not_authenticated) do
+      {:ok, user} ->
+        socket
+        |> assign(:current_user, user)
+        |> assign(:page_title, "Client Management")
+        |> assign(:clients, load_clients(user))
+        |> assign(:meta, %{})
+        |> assign(:show_form, false)
+        |> assign(:editing_client, nil)
+        |> assign(:form, nil)
+        |> ErrorHelpers.success()
+      {:error, :user_not_authenticated} -> ErrorHelpers.success(redirect(socket, to: "/sign-in"))
+      {:error, reason} -> ErrorHelpers.failure(reason)
     end
   end
 
@@ -101,20 +99,19 @@ defmodule RivaAshWeb.ClientLive do
   end
 
   def handle_event("edit_client", %{"id" => id}, socket) do
-    OK.for do
-      client <- Client.by_id(id)
-      form <- OK.wrap(AshPhoenix.Form.for_update(client, :update, actor: socket.assigns.current_user))
-    after
+    with {:ok, client} <- Client.by_id(id) |> ErrorHelpers.to_result(),
+         {:ok, form} <- AshPhoenix.Form.for_update(client, :update, actor: socket.assigns.current_user) |> ErrorHelpers.to_result() do
       socket
       |> assign(:editing_client, client)
       |> assign(:form, form |> to_form())
       |> assign(:show_form, true)
+      |> then(&{:noreply, &1})
     else
       _ ->
         socket
         |> put_flash(:error, "Failed to load client for editing")
+        |> then(&{:noreply, &1})
     end
-    |> then(&{:noreply, &1})
   end
 
   def handle_event("view_reservations", %{"id" => id}, socket) do
@@ -124,36 +121,38 @@ defmodule RivaAshWeb.ClientLive do
   end
 
   def handle_event("delete_client", %{"id" => id}, socket) do
-    Client.by_id(id)
-    ~>> fn client ->
-      Client.destroy(client, actor: socket.assigns.current_user)
-    end
-    |> case do
-      {:ok, _} ->
-        socket
-        |> put_flash(:info, "Client deleted successfully")
-        |> assign(:clients, load_clients(socket.assigns.current_user))
+    case Client.by_id(id) do
+      {:ok, client} ->
+        case Client.destroy(client, actor: socket.assigns.current_user) do
+          {:ok, _} ->
+            socket
+            |> put_flash(:info, "Client deleted successfully")
+            |> assign(:clients, load_clients(socket.assigns.current_user))
+            |> then(&{:noreply, &1})
+          {:error, error} ->
+            socket
+            |> put_flash(:error, "Failed to delete client: #{inspect(error)}")
+            |> then(&{:noreply, &1})
+        end
       {:error, error} ->
         socket
-        |> put_flash(:error, "Failed to delete client: #{inspect(error)}")
+        |> put_flash(:error, "Failed to find client for deletion: #{inspect(error)}")
+        |> then(&{:noreply, &1})
     end
-    |> then(&{:noreply, &1})
   end
 
   def handle_event("save_client", %{"form" => params}, socket) do
-    AshPhoenix.Form.submit(socket.assigns.form, params: params, actor: socket.assigns.current_user)
-    ~>> fn client ->
-      action_text = if socket.assigns.editing_client, do: "updated", else: "created"
-      
-      socket
-      |> assign(:clients, load_clients(socket.assigns.current_user))
-      |> assign(:show_form, false)
-      |> assign(:editing_client, nil)
-      |> assign(:form, nil)
-      |> put_flash(:info, "Client #{action_text} successfully")
-    end
-    |> case do
-      {:ok, socket} -> {:noreply, socket}
+    case AshPhoenix.Form.submit(socket.assigns.form, params: params, actor: socket.assigns.current_user) do
+      {:ok, client} ->
+        action_text = if socket.assigns.editing_client, do: "updated", else: "created"
+
+        socket
+        |> assign(:clients, load_clients(socket.assigns.current_user))
+        |> assign(:show_form, false)
+        |> assign(:editing_client, nil)
+        |> assign(:form, nil)
+        |> put_flash(:info, "Client #{action_text} successfully")
+        |> then(&{:noreply, &1})
       {:error, form} ->
         socket =
           socket
@@ -184,10 +183,11 @@ defmodule RivaAshWeb.ClientLive do
   # Private helper functions
 
   defp get_current_user_from_session(session) do
-    # Implementation will be added when auth system is integrated
-    case Map.get(session, "user_token") do
-      nil -> nil
-      _token -> %{id: "user-1", role: :user} # Mock user for now
+    # Mock user for now, replace with actual authentication logic
+    if Map.has_key?(session, "user_token") do
+      ErrorHelpers.success(%{id: "mock-user-id", role: :admin, business_id: "mock-business-id"})
+    else
+      ErrorHelpers.failure(:not_authenticated)
     end
   end
 
@@ -198,6 +198,5 @@ defmodule RivaAshWeb.ClientLive do
       {:ok, clients} -> clients
       {:error, _} -> []
     end
-  end
   end
 end

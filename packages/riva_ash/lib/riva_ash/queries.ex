@@ -6,7 +6,7 @@ defmodule RivaAsh.Queries do
 
   import Ash.Expr
   require Ash.Query
-  import OK, only: [success: 1, failure: 1, ~>>: 2]
+
   alias RivaAsh.Resources.{Item, Reservation}
 
   @doc """
@@ -15,48 +15,41 @@ defmodule RivaAsh.Queries do
   """
   def check_item_availability(item_id, start_datetime, end_datetime) do
     try do
-      OK.for do
-        item <- Item 
-               |> Ash.get(item_id, domain: RivaAsh.Domain) 
-               |> OK.required(:item_not_found)
-        _ <- validate_item_active(item)
-        _ <- validate_item_not_archived(item)
-        result <- check_reservations_and_holds(item_id, start_datetime, end_datetime)
-      after
-        result
+      with {:ok, item} <- (Item 
+                         |> Ash.get(item_id, domain: RivaAsh.Domain) 
+                         |> case do
+                           {:ok, item} -> {:ok, item}
+                           _ -> {:error, :item_not_found}
+                         end),
+           {:ok, _} <- validate_item_active(item),
+           {:ok, _} <- validate_item_not_archived(item),
+           {:ok, result} <- check_reservations_and_holds(item_id, start_datetime, end_datetime) do
+        {:ok, result}
       else
-        :item_not_found -> success({:unavailable, "Item not found"})
-        :item_inactive -> success({:unavailable, "Item is not active"})
-        :item_archived -> success({:unavailable, "Item is archived"})
-        error -> failure("Failed to check availability: #{inspect(error)}")
+        {:error, :item_not_found} -> {:ok, {:unavailable, "Item not found"}}
+        {:error, :item_inactive} -> {:ok, {:unavailable, "Item is not active"}}
+        {:error, :item_archived} -> {:ok, {:unavailable, "Item is archived"}}
+        {:error, error} -> {:error, "Failed to check availability: #{inspect(error)}"}
+        error -> {:error, "Failed to check availability: #{inspect(error)}"}
       end
     rescue
-      e -> failure("Exception during availability check: #{inspect(e)}")
+      e -> {:error, "Exception during availability check: #{inspect(e)}"}
     end
   end
 
-  defp validate_item_active(%{is_active: true}), do: success(:ok)
-  defp validate_item_active(_), do: failure(:item_inactive)
+  defp validate_item_active(%{is_active: true}), do: {:ok, :ok}
+  defp validate_item_active(_), do: {:error, :item_inactive}
 
-  defp validate_item_not_archived(%{archived_at: nil}), do: success(:ok)
-  defp validate_item_not_archived(_), do: failure(:item_archived)
+  defp validate_item_not_archived(%{archived_at: nil}), do: {:ok, :ok}
+  defp validate_item_not_archived(_), do: {:error, :item_archived}
 
   defp check_reservations_and_holds(item_id, start_datetime, end_datetime) do
-    OK.for do
-      _ <- RivaAsh.Validations.check_reservation_overlap(item_id, start_datetime, end_datetime)
-           |> case do
-             {:ok, :no_overlap} -> success(:ok)
-             {:error, reason} -> failure(reason)
-           end
-      
-      result <- RivaAsh.Validations.check_active_holds(item_id, start_datetime, end_datetime)
-                |> case do
-                  {:ok, :available} -> success(:available)
-                  {:ok, :unavailable, reason} -> success({:unavailable, reason})
-                  {:error, reason} -> failure(reason)
-                end
-    after
-      result
+    with {:ok, :no_overlap} <- RivaAsh.Validations.check_reservation_overlap(item_id, start_datetime, end_datetime),
+         {:ok, :available} <- RivaAsh.Validations.check_active_holds(item_id, start_datetime, end_datetime) do
+      {:ok, :available}
+    else
+      {:error, reason} -> {:error, reason}
+      error -> {:error, error}
     end
   end
 
@@ -68,19 +61,20 @@ defmodule RivaAsh.Queries do
       start_datetime = DateTime.new!(date, ~T[00:00:00], "Etc/UTC")
       end_datetime = DateTime.new!(date, ~T[23:59:59], "Etc/UTC")
 
-      OK.for do
-        items <- Item
-                |> Ash.Query.filter(expr(section.plot.business_id == ^business_id))
-                |> Ash.Query.filter(expr(is_active == true))
-                |> Ash.Query.filter(expr(is_nil(archived_at)))
-                |> Ash.read(domain: RivaAsh.Domain)
-        
+      with {:ok, items} <- Item
+                          |> Ash.Query.filter(expr(section.plot.business_id == ^business_id))
+                          |> Ash.Query.filter(expr(is_active == true))
+                          |> Ash.Query.filter(expr(is_nil(archived_at)))
+                          |> Ash.read(domain: RivaAsh.Domain) do
+        # Check each item's availability
         available_items = filter_available_items(items, start_datetime, end_datetime)
-      after
-        available_items
+        {:ok, available_items}
+      else
+        {:error, error} -> {:error, error}
+        error -> {:error, error}
       end
     rescue
-      e -> failure("Exception during query: #{inspect(e)}")
+      e -> {:error, "Failed to get available items: #{inspect(e)}"}
     end
   end
 
@@ -107,9 +101,8 @@ defmodule RivaAsh.Queries do
       |> Ash.Query.sort(reserved_from: :asc)
       |> Ash.Query.limit(limit)
       |> Ash.read(domain: RivaAsh.Domain)
-      |> OK.wrap_error(:query_failed)
     rescue
-      e -> failure("Exception during query: #{inspect(e)}")
+      e -> {:error, "Failed to get upcoming reservations: #{inspect(e)}"}
     end
   end
 
@@ -123,9 +116,8 @@ defmodule RivaAsh.Queries do
       |> Ash.Query.sort(reserved_from: :desc)
       |> Ash.Query.limit(limit)
       |> Ash.read(domain: RivaAsh.Domain)
-      |> OK.wrap_error(:query_failed)
     rescue
-      e -> failure("Exception during query: #{inspect(e)}")
+      e -> {:error, "Failed to get client reservation history: #{inspect(e)}"}
     end
   end
 
@@ -137,18 +129,18 @@ defmodule RivaAsh.Queries do
       period = Keyword.get(opts, :period, :month)
       {start_date, end_date} = get_period_range(period)
 
-      OK.for do
-        reservations <- Reservation
-                       |> Ash.Query.filter(expr(item.section.plot.business_id == ^business_id))
-                       |> Ash.Query.filter(expr(reserved_from >= ^start_date and reserved_from <= ^end_date))
-                       |> Ash.read(domain: RivaAsh.Domain)
-        
+      with {:ok, reservations} <- Reservation
+                                 |> Ash.Query.filter(expr(item.section.plot.business_id == ^business_id))
+                                 |> Ash.Query.filter(expr(reserved_from >= ^start_date and reserved_from <= ^end_date))
+                                 |> Ash.read(domain: RivaAsh.Domain) do
         metrics = calculate_metrics(reservations, period, start_date, end_date)
-      after
-        metrics
+        {:ok, metrics}
+      else
+        {:error, error} -> {:error, error}
+        error -> {:error, error}
       end
     rescue
-      e -> failure("Exception during metrics calculation: #{inspect(e)}")
+      e -> {:error, "Failed to calculate metrics: #{inspect(e)}"}
     end
   end
 
@@ -178,9 +170,8 @@ defmodule RivaAsh.Queries do
       |> Ash.Query.sort(reserved_from: :desc)
       |> Ash.Query.limit(limit)
       |> Ash.read(domain: RivaAsh.Domain)
-      |> OK.wrap_error(:query_failed)
     rescue
-      e -> failure("Exception during query: #{inspect(e)}")
+      e -> {:error, "Failed to get business reservations: #{inspect(e)}"}
     end
   end
 
@@ -189,18 +180,18 @@ defmodule RivaAsh.Queries do
   """
   def items_with_conflicts(business_id, start_datetime, end_datetime) do
     try do
-      OK.for do
-        items <- Item
-                |> Ash.Query.filter(expr(section.plot.business_id == ^business_id))
-                |> Ash.Query.filter(expr(is_active == true))
-                |> Ash.read(domain: RivaAsh.Domain)
-        
+      with {:ok, items} <- Item
+                          |> Ash.Query.filter(expr(section.plot.business_id == ^business_id))
+                          |> Ash.Query.filter(expr(is_active == true))
+                          |> Ash.read(domain: RivaAsh.Domain) do
         conflicted_items = find_conflicted_items(items, start_datetime, end_datetime)
-      after
-        conflicted_items
+        {:ok, conflicted_items}
+      else
+        {:error, error} -> {:error, error}
+        error -> {:error, error}
       end
     rescue
-      e -> failure("Exception during conflict check: #{inspect(e)}")
+      e -> {:error, "Failed to find conflicted items: #{inspect(e)}"}
     end
   end
 
@@ -221,18 +212,18 @@ defmodule RivaAsh.Queries do
       period = Keyword.get(opts, :period, :week)
       {start_date, end_date} = get_period_range(period)
 
-      OK.for do
-        reservations <- Reservation
-                       |> Ash.Query.filter(expr(employee_id == ^employee_id))
-                       |> Ash.Query.filter(expr(reserved_from >= ^start_date and reserved_from <= ^end_date))
-                       |> Ash.read(domain: RivaAsh.Domain)
-        
+      with {:ok, reservations} <- Reservation
+                                 |> Ash.Query.filter(expr(employee_id == ^employee_id))
+                                 |> Ash.Query.filter(expr(reserved_from >= ^start_date and reserved_from <= ^end_date))
+                                 |> Ash.read(domain: RivaAsh.Domain) do
         workload = calculate_workload(reservations, period, start_date, end_date)
-      after
-        workload
+        {:ok, workload}
+      else
+        {:error, error} -> {:error, error}
+        error -> {:error, error}
       end
     rescue
-      e -> failure("Exception during workload calculation: #{inspect(e)}")
+      e -> {:error, "Failed to calculate workload: #{inspect(e)}"}
     end
   end
 
@@ -252,19 +243,19 @@ defmodule RivaAsh.Queries do
   """
   def popular_items_for_business(business_id, limit \\ 10) do
     try do
-      OK.for do
-        items <- Item
-                |> Ash.Query.filter(expr(section.plot.business_id == ^business_id))
-                |> Ash.Query.filter(expr(is_active == true))
-                |> Ash.read(domain: RivaAsh.Domain)
-        
+      with {:ok, items} <- Item
+                          |> Ash.Query.filter(expr(section.plot.business_id == ^business_id))
+                          |> Ash.Query.filter(expr(is_active == true))
+                          |> Ash.read(domain: RivaAsh.Domain) do
         items_with_counts = calculate_item_popularity(items)
         popular_items = extract_popular_items(items_with_counts, limit)
-      after
-        popular_items
+        {:ok, popular_items}
+      else
+        {:error, error} -> {:error, error}
+        error -> {:error, error}
       end
     rescue
-      e -> failure("Exception during query: #{inspect(e)}")
+      e -> {:error, "Failed to get popular items: #{inspect(e)}"}
     end
   end
 
@@ -311,9 +302,8 @@ defmodule RivaAsh.Queries do
 
       query
       |> Ash.read(domain: RivaAsh.Domain)
-      |> OK.wrap_error(:search_failed)
     rescue
-      e -> failure("Exception during search: #{inspect(e)}")
+      e -> {:error, "Failed to search items: #{inspect(e)}"}
     end
   end
 
@@ -331,9 +321,8 @@ defmodule RivaAsh.Queries do
       |> Ash.Query.filter(expr(status in [:confirmed, :pending]))
       |> Ash.Query.sort(reserved_from: :asc)
       |> Ash.read(domain: RivaAsh.Domain)
-      |> OK.wrap_error(:calendar_query_failed)
     rescue
-      e -> failure("Exception during calendar query: #{inspect(e)}")
+      e -> {:error, "Failed to get calendar data: #{inspect(e)}"}
     end
   end
 

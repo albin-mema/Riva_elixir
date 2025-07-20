@@ -15,7 +15,6 @@ defmodule RivaAsh.Jobs.HoldCleanupJob do
 
   use GenServer
   require Logger
-  import OK, only: [success: 1, failure: 1, ~>>: 2, for: 1, required: 2, map_all: 2, check: 3]
 
   import Ash.Expr
   require Ash.Query
@@ -46,14 +45,11 @@ defmodule RivaAsh.Jobs.HoldCleanupJob do
 
   @impl true
   def handle_info(:cleanup_expired_holds, state) do
-    perform_cleanup_with_retry(state)
-    ~> fn {count, new_state} ->
-      schedule_cleanup()
-      {:noreply, new_state}
-    end
-    |> case do
-      {:ok, result} -> result
-      {:error, _} -> 
+    case perform_cleanup_with_retry(state) do
+      {count, new_state} ->
+        schedule_cleanup()
+        {:noreply, new_state}
+      _ ->
         schedule_cleanup()
         {:noreply, state}
     end
@@ -62,11 +58,9 @@ defmodule RivaAsh.Jobs.HoldCleanupJob do
   @impl true
   def handle_info({:retry_cleanup, attempt}, state) do
     Logger.info("Retrying hold cleanup, attempt #{attempt}")
-    perform_cleanup_with_retry(state, attempt)
-    ~> fn {count, new_state} -> {:noreply, new_state} end
-    |> case do
-      {:ok, result} -> result
-      {:error, _} -> {:noreply, state}
+    case perform_cleanup_with_retry(state, attempt) do
+      {count, new_state} -> {:noreply, new_state}
+      _ -> {:noreply, state}
     end
   end
 
@@ -80,11 +74,9 @@ defmodule RivaAsh.Jobs.HoldCleanupJob do
 
   @impl true
   def handle_call(:cleanup_now, _from, state) do
-    perform_cleanup_with_retry(state)
-    ~> fn {count, new_state} -> {:reply, count, new_state} end
-    |> case do
-      {:ok, result} -> result
-      {:error, _} -> {:reply, 0, state}
+    case perform_cleanup_with_retry(state) do
+      {count, new_state} -> {:reply, count, new_state}
+      _ -> {:reply, 0, state}
     end
   end
 
@@ -98,16 +90,14 @@ defmodule RivaAsh.Jobs.HoldCleanupJob do
   end
 
   defp perform_cleanup_with_retry(state, attempt \\ 1) do
-    OK.for do
-      count <- cleanup_expired_holds()
-      new_state = %{state |
-        cleanup_count: state.cleanup_count + count,
-        last_cleanup: DateTime.utc_now()
-      }
-    after
-      {count, new_state}
-    else
-      error ->
+    case cleanup_expired_holds() do
+      {:ok, count} ->
+        new_state = %{state |
+          cleanup_count: state.cleanup_count + count,
+          last_cleanup: DateTime.utc_now()
+        }
+        {count, new_state}
+      {:error, error} ->
         Logger.error("Hold cleanup failed on attempt #{attempt}: #{inspect(error)}")
 
         new_state = %{state |
@@ -129,27 +119,30 @@ defmodule RivaAsh.Jobs.HoldCleanupJob do
   defp cleanup_expired_holds do
     Logger.info("Starting cleanup of expired item holds")
 
-    OK.for do
-      now = DateTime.utc_now()
-      expired_holds <- ItemHold
-                      |> Ash.Query.filter(expr(is_active == true and expires_at < ^now))
-                      |> Ash.read(domain: Domain)
-      count = length(expired_holds)
-      _ <- OK.check(count >= 0, &(&1 >= 0), :invalid_count)
-    after
-      if count > 0 do
-        Logger.info("Found #{count} expired holds to clean up")
-        process_expired_holds(expired_holds, count)
-      else
-        Logger.debug("No expired holds found")
-      end
-      count
+    now = DateTime.utc_now()
+    case ItemHold
+         |> Ash.Query.filter(expr(is_active == true and expires_at < ^now))
+         |> Ash.read(domain: Domain) do
+      {:ok, expired_holds} ->
+        count = length(expired_holds)
+        if count >= 0 do
+          if count > 0 do
+            Logger.info("Found #{count} expired holds to clean up")
+            process_expired_holds(expired_holds, count)
+          else
+            Logger.debug("No expired holds found")
+          end
+          {:ok, count}
+        else
+          {:error, :invalid_count}
+        end
+      {:error, error} -> {:error, error}
     end
   end
 
   defp process_expired_holds(expired_holds, count) do
     batch_size = 50
-    
+
     expired_holds
     |> Enum.chunk_every(batch_size)
     |> Enum.with_index()
@@ -162,32 +155,35 @@ defmodule RivaAsh.Jobs.HoldCleanupJob do
   end
 
   defp process_hold_batch(holds) do
-    holds
-    |> OK.map_all(&deactivate_hold_safely/1)
-    |> case do
-      {:ok, _results} -> :ok
-      {:error, errors} -> 
-        Logger.error("Batch processing failed: #{inspect(errors)}")
+    results = Enum.map(holds, &deactivate_hold_safely/1)
+    errors = Enum.filter(results, &match?({:error, _}, &1))
+
+    if Enum.empty?(errors) do
+      :ok
+    else
+      Logger.error("Batch processing failed: #{inspect(errors)}")
     end
   end
 
   defp deactivate_hold_safely(hold) do
-    deactivate_hold(hold)
-    ~> fn _updated_hold ->
-      Logger.debug("Deactivated expired hold #{hold.id}")
-      hold.id
+    case deactivate_hold(hold) do
+      {:ok, _updated_hold} ->
+        Logger.debug("Deactivated expired hold #{hold.id}")
+        {:ok, hold.id}
+      {:error, error} -> {:error, error}
     end
   end
 
   defp deactivate_hold(hold) do
-    OK.required(hold, :hold_required)
-    ~>> fn validated_hold ->
-      validated_hold
+    if hold do
+      hold
       |> Ash.Changeset.for_update(:update, %{
         is_active: false,
         updated_at: DateTime.utc_now()
       })
       |> Ash.update(domain: Domain)
+    else
+      {:error, :hold_required}
     end
   end
 
@@ -195,13 +191,11 @@ defmodule RivaAsh.Jobs.HoldCleanupJob do
   Get comprehensive statistics about hold cleanup operations.
   """
   def get_stats do
-    OK.for do
-      active_holds <- count_active_holds()
-      expired_holds <- count_expired_holds()
-      total_holds <- count_total_holds()
-      job_state <- get_job_state()
-    after
-      %{
+    with {:ok, active_holds} <- count_active_holds(),
+         {:ok, expired_holds} <- count_expired_holds(),
+         {:ok, total_holds} <- count_total_holds(),
+         {:ok, job_state} <- get_job_state() do
+      {:ok, %{
         total_holds: total_holds,
         active_holds: active_holds,
         expired_holds_pending_cleanup: expired_holds,
@@ -212,11 +206,11 @@ defmodule RivaAsh.Jobs.HoldCleanupJob do
           last_error: job_state.last_error
         },
         timestamp: DateTime.utc_now()
-      }
+      }}
     else
-      reason ->
+      {:error, reason} ->
         Logger.error("Failed to get hold cleanup stats: #{inspect(reason)}")
-        %{error: "Failed to retrieve statistics", reason: reason}
+        {:error, %{error: "Failed to retrieve statistics", reason: reason}}
     end
   end
 
@@ -224,7 +218,6 @@ defmodule RivaAsh.Jobs.HoldCleanupJob do
     ItemHold
     |> Ash.Query.filter(expr(is_active == true))
     |> Ash.count(domain: Domain)
-    ~> fn count -> count end
   end
 
   defp count_expired_holds do
@@ -232,20 +225,19 @@ defmodule RivaAsh.Jobs.HoldCleanupJob do
     ItemHold
     |> Ash.Query.filter(expr(is_active == true and expires_at < ^now))
     |> Ash.count(domain: Domain)
-    ~> fn count -> count end
   end
 
   defp count_total_holds do
     ItemHold
     |> Ash.count(domain: Domain)
-    ~> fn count -> count end
   end
 
   defp get_job_state do
-    OK.for do
-      state <- OK.wrap(GenServer.call(__MODULE__, :get_state, 5_000))
-    after
-      state
+    try do
+      state = GenServer.call(__MODULE__, :get_state, 5_000)
+      {:ok, state}
+    rescue
+      error -> {:error, error}
     end
   end
 
@@ -254,13 +246,23 @@ defmodule RivaAsh.Jobs.HoldCleanupJob do
   Returns :ok if healthy, {:error, reason} if not.
   """
   def health_check do
-    OK.for do
-      pid <- Process.whereis(__MODULE__) |> OK.required("HoldCleanupJob process not running")
-      _ <- OK.check(pid, &Process.alive?/1, "HoldCleanupJob process not alive")
-      state <- GenServer.call(__MODULE__, :get_state, 5_000) |> OK.wrap()
-      _ <- OK.check(state, &is_map/1, "Job not responding properly")
-    after
-      :ok
+    case Process.whereis(__MODULE__) do
+      nil -> {:error, "HoldCleanupJob process not running"}
+      pid ->
+        if Process.alive?(pid) do
+          try do
+            state = GenServer.call(__MODULE__, :get_state, 5_000)
+            if is_map(state) do
+              :ok
+            else
+              {:error, "Job not responding properly"}
+            end
+          rescue
+            error -> {:error, "Failed to get job state: #{inspect(error)}"}
+          end
+        else
+          {:error, "HoldCleanupJob process not alive"}
+        end
     end
   end
 end

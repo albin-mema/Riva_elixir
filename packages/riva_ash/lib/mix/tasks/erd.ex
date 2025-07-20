@@ -8,15 +8,14 @@ defmodule Mix.Tasks.Erd do
 
       # Generate ERD in Mermaid format (default)
       mix erd
-      
+
       # Generate and open in browser (requires Mermaid CLI)
       mix erd --open
-      
+
       # Generate SVG output
       mix erd --format svg
   """
   use Mix.Task
-  import OK, only: [success: 1, failure: 1, ~>>: 2, for: 1, required: 2]
 
   @shortdoc "Generate an ERD for the application"
 
@@ -28,61 +27,70 @@ defmodule Mix.Tasks.Erd do
 
   @impl true
   def run(args) do
-    OK.for do
-      {opts, _} <- OK.wrap(OptionParser.parse!(args, strict: @switches))
+    try do
+      {opts, _} = OptionParser.parse!(args, strict: @switches)
       format = opts[:format] || "mmd"
       type = opts[:type] || "er"
-      _ <- generate_diagram(type, format)
-      output_file = "lib/riva_ash/domain-mermaid-#{type}-diagram.#{format}"
-      _ <- OK.required(File.exists?(output_file), :output_file_not_found)
-    after
-      if opts[:open] do
-        open_diagram(output_file, format)
-      else
-        IO.puts("\nERD generated at: #{output_file}")
-        IO.puts("To view: mix erd --open")
+
+      case generate_diagram(type, format) do
+        :ok ->
+          output_file = "lib/riva_ash/domain-mermaid-#{type}-diagram.#{format}"
+          if File.exists?(output_file) do
+            if opts[:open] do
+              open_diagram(output_file, format)
+            else
+              IO.puts("\nERD generated at: #{output_file}")
+              IO.puts("To view: mix erd --open")
+            end
+          else
+            IO.puts("Failed to generate ERD: output file not found")
+          end
+        {:error, error} ->
+          IO.puts("Failed to generate ERD: #{inspect(error)}")
       end
-    else
+    rescue
       error ->
         IO.puts("Failed to generate ERD: #{inspect(error)}")
     end
   end
 
   defp generate_diagram(type, format) do
-    Mix.Task.run("ash.generate_resource_diagrams", [
-      "--type",
-      type,
-      "--format",
-      format
-    ])
-    |> OK.wrap()
+    try do
+      Mix.Task.run("ash.generate_resource_diagrams", [
+        "--type",
+        type,
+        "--format",
+        format
+      ])
+      :ok
+    rescue
+      error -> {:error, error}
+    end
   end
 
   defp open_diagram(file, "svg") do
-    System.find_executable("xdg-open")
-    |> OK.required(:xdg_open_not_found)
-    ~>> fn _ ->
-      System.cmd("xdg-open", [file])
-    end
-    |> case do
-      {:ok, _} -> :ok
-      {:error, :xdg_open_not_found} ->
+    case System.find_executable("xdg-open") do
+      nil ->
         IO.puts("Could not find xdg-open. Please open manually: #{file}")
+      _path ->
+        System.cmd("xdg-open", [file])
+        :ok
     end
   end
 
   defp open_diagram(file, "mmd") do
-    OK.for do
-      content <- File.read(file)
-      html = create_html_content(content)
-      html_file = "erd_viewer.html"
-      _ <- File.write(html_file, html)
-      _ <- open_html_file(html_file)
-    after
-      :ok
-    else
-      error ->
-        IO.puts("Failed to open diagram: #{inspect(error)}")
+    case File.read(file) do
+      {:ok, content} ->
+        html = create_html_content(content)
+        html_file = "erd_viewer.html"
+        case File.write(html_file, html) do
+          :ok ->
+            open_html_file(html_file)
+          {:error, error} ->
+            IO.puts("Failed to write HTML file: #{inspect(error)}")
+        end
+      {:error, error} ->
+        IO.puts("Failed to read diagram file: #{inspect(error)}")
     end
   end
 
@@ -95,7 +103,7 @@ defmodule Mix.Tasks.Erd do
       <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
       <style>
         body { margin: 0; padding: 20px; }
-        .mermaid { 
+        .mermaid {
           font-family: Arial, sans-serif;
           margin: 20px auto;
           max-width: 1200px;
@@ -115,16 +123,13 @@ defmodule Mix.Tasks.Erd do
   end
 
   defp open_html_file(html_file) do
-    System.find_executable("xdg-open")
-    |> OK.required(:xdg_open_not_found)
-    ~>> fn _ ->
-      System.cmd("xdg-open", [html_file])
-    end
-    |> case do
-      {:ok, _} -> success(:opened)
-      {:error, :xdg_open_not_found} ->
+    case System.find_executable("xdg-open") do
+      nil ->
         IO.puts("Could not find xdg-open. Please open manually: #{html_file}")
-        success(:manual_open_required)
+        :manual_open_required
+      _path ->
+        System.cmd("xdg-open", [html_file])
+        :opened
     end
   end
 

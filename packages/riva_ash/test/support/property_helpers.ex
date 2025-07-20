@@ -19,7 +19,7 @@ defmodule RivaAsh.PropertyHelpers do
   def assert_valid_creation(resource_module, attrs) do
     case resource_module.create(attrs) do
       {:ok, resource} ->
-        assert resource.id != nil
+        assert resource.id
         resource
       {:error, error} ->
         flunk("Expected successful creation but got error: #{inspect(error)}")

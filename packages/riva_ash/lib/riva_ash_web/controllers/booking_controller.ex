@@ -13,7 +13,7 @@ defmodule RivaAshWeb.BookingController do
 
   alias RivaAsh.Booking
   alias RivaAsh.Resources.{Item, Client}
-  import OK, only: [success: 1, failure: 1, ~>>: 2]
+  alias RivaAsh.ErrorHelpers
 
   action_fallback RivaAshWeb.FallbackController
 
@@ -29,12 +29,10 @@ defmodule RivaAshWeb.BookingController do
   - end_hour: Business end hour (default: 17)
   """
   def availability(conn, %{"item_id" => item_id} = params) do
-    OK.for do
-      date <- parse_date(params["date"])
-      duration = parse_duration(params["duration"])
-      business_hours = parse_business_hours(params)
-      slots <- Booking.get_availability(item_id, date, duration, business_hours)
-    after
+    with {:ok, date} <- parse_date(params["date"]),
+         duration = parse_duration(params["duration"]),
+         business_hours = parse_business_hours(params),
+         {:ok, slots} <- Booking.get_availability(item_id, date, duration, business_hours) do
       conn
       |> put_status(:ok)
       |> json(%{
@@ -47,7 +45,7 @@ defmodule RivaAshWeb.BookingController do
         }
       })
     else
-      {:error, reason} -> {:error, reason}
+      {:error, reason} -> ErrorHelpers.failure(reason)
     end
   end
 
@@ -73,10 +71,8 @@ defmodule RivaAshWeb.BookingController do
   }
   """
   def create(conn, params) do
-    OK.for do
-      booking_params <- parse_booking_params(params)
-      result <- Booking.create_booking(booking_params)
-    after
+    with {:ok, booking_params} <- parse_booking_params(params),
+         {:ok, result} <- Booking.create_booking(booking_params) do
       conn
       |> put_status(:created)
       |> json(%{
@@ -92,7 +88,7 @@ defmodule RivaAshWeb.BookingController do
         }
       })
     else
-      {:error, reason} -> {:error, reason}
+      {:error, reason} -> ErrorHelpers.failure(reason)
     end
   end
 
@@ -113,26 +109,23 @@ defmodule RivaAshWeb.BookingController do
     register_client = Map.get(params, "register_client", false)
     client_updates = Map.get(params, "client_updates", %{})
 
-    Booking.confirm_booking(booking_id, register_client, client_updates)
-    ~>> fn result ->
-      conn
-      |> put_status(:ok)
-      |> json(%{
-        data: %{
-          booking_id: result.reservation.id,
-          client: format_client(result.client),
-          reservation: format_reservation(result.reservation),
-          status: "confirmed",
-          message: if(result.client.is_registered and register_client,
-            do: "Booking confirmed and you are now registered! Welcome!",
-            else: "Booking confirmed successfully!"
-          )
-        }
-      })
-    end
-    |> case do
-      {:ok, response} -> response
-      {:error, reason} -> {:error, reason}
+    case Booking.confirm_booking(booking_id, register_client, client_updates) do
+      {:ok, result} ->
+        conn
+        |> put_status(:ok)
+        |> json(%{
+          data: %{
+            booking_id: result.reservation.id,
+            client: format_client(result.client),
+            reservation: format_reservation(result.reservation),
+            status: "confirmed",
+            message: if(result.client.is_registered and register_client,
+              do: "Booking confirmed and you are now registered! Welcome!",
+              else: "Booking confirmed successfully!"
+            )
+          }
+        })
+      {:error, reason} -> ErrorHelpers.failure(reason)
     end
   end
 
@@ -160,36 +153,33 @@ defmodule RivaAshWeb.BookingController do
   Get client bookings by email (for unregistered clients or simple lookup).
   """
   def client_bookings(conn, %{"email" => email}) do
-    Client.by_email(email, domain: RivaAsh.Domain, load: [:reservations])
-    ~>> fn client ->
-      conn
-      |> put_status(:ok)
-      |> json(%{
-        data: %{
-          client: format_client(client),
-          bookings: Enum.map(client.reservations, &format_reservation/1)
-        }
-      })
-    end
-    |> case do
-      {:ok, response} -> response
+    case Client.by_email(email, domain: RivaAsh.Domain, load: [:reservations]) do
+      {:ok, client} ->
+        conn
+        |> put_status(:ok)
+        |> json(%{
+          data: %{
+            client: format_client(client),
+            bookings: Enum.map(client.reservations, &format_reservation/1)
+          }
+        })
       {:error, %Ash.Error.Query.NotFound{}} ->
         conn
         |> put_status(:not_found)
         |> json(%{error: "No bookings found for this email address"})
-      {:error, reason} -> {:error, reason}
+      {:error, reason} -> ErrorHelpers.failure(reason)
     end
   end
 
   # Private helper functions
 
-  defp parse_date(nil), do: failure("Date parameter is required")
+  defp parse_date(nil), do: ErrorHelpers.failure("Date parameter is required")
   defp parse_date(date_string) do
     date_string
     |> Date.from_iso8601()
     |> case do
-      {:ok, date} -> success(date)
-      {:error, _} -> failure("Invalid date format. Use YYYY-MM-DD")
+      {:ok, date} -> ErrorHelpers.success(date)
+      {:error, _} -> ErrorHelpers.failure("Invalid date format. Use YYYY-MM-DD")
     end
   end
 
@@ -220,57 +210,59 @@ defmodule RivaAshWeb.BookingController do
   defp parse_hour(_, default), do: default
 
   defp parse_booking_params(params) do
-    OK.for do
-      client_info <- extract_client_info(params)
-      booking_info <- extract_booking_info(params)
-      register_client = Map.get(params, "register_client", false)
-    after
-      %{
+    with {:ok, client_info} <- extract_client_info(params),
+         {:ok, booking_info} <- extract_booking_info(params),
+         register_client = Map.get(params, "register_client", false) do
+      ErrorHelpers.success(%{
         client_info: client_info,
         item_id: booking_info.item_id,
         reserved_from: booking_info.reserved_from,
         reserved_until: booking_info.reserved_until,
         notes: booking_info[:notes],
         register_client: register_client
-      }
+      })
+    else
+      {:error, reason} -> ErrorHelpers.failure(reason)
     end
   end
 
   defp extract_client_info(%{"client" => client_params}) do
     case client_params do
       %{"name" => name} when is_binary(name) and name != "" ->
-        success(%{
+        ErrorHelpers.success(%{
           name: name,
           email: client_params["email"],
           phone: client_params["phone"]
         })
 
-      _ -> failure("Client name is required")
+      _ -> ErrorHelpers.failure("Client name is required")
     end
   end
-  defp extract_client_info(_), do: failure("Client information is required")
+  defp extract_client_info(_), do: ErrorHelpers.failure("Client information is required")
 
   defp extract_booking_info(%{"booking" => booking_params}) do
-    OK.for do
-      reserved_from <- parse_datetime(booking_params["reserved_from"])
-      reserved_until <- parse_datetime(booking_params["reserved_until"])
-    after
-      %{
+    with {:ok, reserved_from} <- parse_datetime(booking_params["reserved_from"]),
+         {:ok, reserved_until} <- parse_datetime(booking_params["reserved_until"]) do
+      ErrorHelpers.success(%{
         item_id: booking_params["item_id"],
         reserved_from: reserved_from,
         reserved_until: reserved_until,
         notes: booking_params["notes"]
-      }
+      })
+    else
+      {:error, reason} -> ErrorHelpers.failure(reason)
     end
   end
-  defp extract_booking_info(_), do: failure("Booking information is required")
+  defp extract_booking_info(_), do: ErrorHelpers.failure("Booking information is required")
 
-  defp parse_datetime(nil), do: failure("DateTime is required")
+  defp parse_datetime(nil), do: ErrorHelpers.failure("DateTime is required")
   defp parse_datetime(datetime_string) when is_binary(datetime_string) do
     datetime_string
     |> DateTime.from_iso8601()
-    ~>> fn {datetime, _offset} -> datetime end
-    |> OK.map_error(fn _ -> "Invalid datetime format. Use ISO8601 format" end)
+    |> case do
+      {:ok, datetime, _offset} -> ErrorHelpers.success(datetime)
+      {:error, _} -> ErrorHelpers.failure("Invalid datetime format. Use ISO8601 format")
+    end
   end
 
   # Formatting functions

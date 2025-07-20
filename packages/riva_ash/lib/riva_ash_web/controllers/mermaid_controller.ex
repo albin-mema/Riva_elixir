@@ -1,6 +1,6 @@
 defmodule RivaAshWeb.MermaidController do
   use RivaAshWeb, :controller
-  import OK, only: [success: 1, failure: 1, ~>>: 2, for: 1]
+  alias RivaAsh.ErrorHelpers
 
   def show(conn, _params) do
     # Generate the Mermaid diagram using Ash's built-in functionality
@@ -24,23 +24,23 @@ defmodule RivaAshWeb.MermaidController do
     <body>
       <div class="container">
         <h1>Ash Entity Relationship Diagram</h1>
-        
+
         <h2>Interactive Diagram</h2>
         <div class="mermaid">
           #{mermaid_code}
         </div>
-        
+
         <h2>Mermaid Code</h2>
         <pre><code>#{mermaid_code}</code></pre>
-        
+
         <p>
           <a href="/admin" class="btn">Back to Admin</a>
         </p>
       </div>
-      
+
       <script>
-        mermaid.initialize({ 
-          startOnLoad: true, 
+        mermaid.initialize({
+          startOnLoad: true,
           theme: 'default',
           flowchart: {
             useMaxWidth: true,
@@ -58,13 +58,11 @@ defmodule RivaAshWeb.MermaidController do
 
   defp generate_mermaid_diagram do
     # Generate Mermaid diagram using Ash's built-in functionality
-    OK.for do
-      _ <- OK.wrap(Mix.Task.run("ash.generate_resource_diagrams", ["--domain", "RivaAsh.Domain"]))
-      content <- read_generated_diagram()
-    after
-      content
+    with {:ok, _} <- Mix.Task.run("ash.generate_resource_diagrams", ["--domain", "RivaAsh.Domain"]) |> ErrorHelpers.to_result(),
+         {:ok, content} <- read_generated_diagram() do
+      ErrorHelpers.success(content)
     else
-      _ -> "%% Error: Could not generate or read the diagram file"
+      _ -> ErrorHelpers.failure("%% Error: Could not generate or read the diagram file")
     end
   end
 
@@ -73,6 +71,9 @@ defmodule RivaAshWeb.MermaidController do
     path = "priv/static/ash_resource_diagrams/riva_ash_domain.mmd"
 
     File.read(path)
-    ~> fn content -> content end
+    |> case do
+      {:ok, content} -> ErrorHelpers.success(content)
+      {:error, reason} -> ErrorHelpers.failure(reason)
+    end
   end
 end

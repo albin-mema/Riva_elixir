@@ -3,7 +3,7 @@ defmodule RivaAshWeb.DashboardLive do
   Main dashboard LiveView with statistics and quick actions.
   """
   use RivaAshWeb, :live_view
-  import OK, only: [success: 1, failure: 1, ~>>: 2]
+  alias RivaAsh.ErrorHelpers
 
   import RivaAshWeb.Components.Organisms.PageHeader
   import RivaAshWeb.Components.Organisms.DashboardStats
@@ -11,20 +11,19 @@ defmodule RivaAshWeb.DashboardLive do
 
   @impl true
   def mount(_params, session, socket) do
-    user = get_current_user_from_session(session)
+    case get_current_user_from_session(session) do
+      {:ok, user} ->
+        socket =
+          socket
+          |> assign(:current_user, user)
+          |> assign(:page_title, "Dashboard")
+          |> assign(:stats, [])
+          |> assign(:recent_reservations, [])
+          |> assign(:upcoming_events, [])
 
-    if user do
-      socket =
-        socket
-        |> assign(:current_user, user)
-        |> assign(:page_title, "Dashboard")
-        |> assign(:stats, [])
-        |> assign(:recent_reservations, [])
-        |> assign(:upcoming_events, [])
-
-      success(socket)
-    else
-      success(redirect(socket, to: "/sign-in"))
+        ErrorHelpers.success(socket)
+      {:error, _} ->
+        ErrorHelpers.success(redirect(socket, to: "/sign-in"))
     end
   end
 
@@ -34,14 +33,14 @@ defmodule RivaAshWeb.DashboardLive do
     <!-- Dashboard implementation will go here -->
     <div>
       <.page_header title="Dashboard" description="Overview of your business operations" />
-      
+
       <.dashboard_stats stats={@stats} />
-      
+
       <div>
         <h2>Recent Activity</h2>
         <!-- Recent activity content -->
       </div>
-      
+
       <div>
         <h2>Quick Actions</h2>
         <!-- Quick action buttons -->
@@ -56,8 +55,12 @@ defmodule RivaAshWeb.DashboardLive do
   end
 
   # Private helper functions will go here
-  defp get_current_user_from_session(_session) do
-    # Implementation will go here
-    nil
+  defp get_current_user_from_session(session) do
+    # Mock user for now, replace with actual authentication logic
+    if Map.has_key?(session, "user_token") do
+      ErrorHelpers.success(%{id: "mock-user-id", role: :admin, business_id: "mock-business-id"})
+    else
+      ErrorHelpers.failure(:not_authenticated)
+    end
   end
 end

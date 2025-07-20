@@ -1,22 +1,21 @@
 defmodule RivaAsh.ErrorHelpers do
   @moduledoc """
   Provides centralized error handling and formatting for the RivaAsh application.
-  
+
   This module defines standard error structures and formatting for consistent
   error responses across the application.
   """
-  
-  alias OK
-  import OK, only: [success: 1, failure: 1]
-  
+  def success(value), do: {:ok, value}
+  def failure(reason), do: {:error, reason}
+
   @doc """
-  Standardizes error responses from Ash changesets and other error sources.
-  
+  Standardizes error responses using native Elixir error handling.
+
   ## Examples
-  
+
       iex> ErrorHelpers.format_error(%{errors: ["Invalid email format"]})
       %{code: :validation_failed, message: "Invalid email format"}
-      
+
       iex> ErrorHelpers.format_error(%Ash.Error.Invalid{errors: [%{field: :email, message: "has invalid format"}]})
       %{code: :validation_failed, message: "email has invalid format"}
   """
@@ -26,7 +25,7 @@ defmodule RivaAsh.ErrorHelpers do
       message: Enum.map_join(errors, ", ", &format_error/1)
     }
   end
-  
+
   def format_error(%Ash.Error.Invalid{errors: errors}) do
     %{
       code: :validation_failed,
@@ -34,39 +33,39 @@ defmodule RivaAsh.ErrorHelpers do
       message: Enum.map_join(errors, ", ", &format_error/1)
     }
   end
-  
+
   def format_error(%Ash.Error.Forbidden{}) do
     %{
       code: :forbidden,
       message: "You are not authorized to perform this action"
     }
   end
-  
+
   def format_error(%Ash.Error.Changes.Required{field: field}) do
     %{
       code: :validation_failed,
       message: "#{field} is required"
     }
   end
-  
+
   def format_error(%{field: field, message: message}) do
     "#{field} #{message}"
   end
-  
+
   def format_error(error) when is_binary(error) do
     %{
       code: :error,
       message: error
     }
   end
-  
+
   def format_error(error) do
     %{
       code: :error,
       message: "An unexpected error occurred: #{inspect(error)}"
     }
   end
-  
+
   @doc """
   Handles errors in a consistent way, logging them and returning a standardized error map.
   """
@@ -74,40 +73,40 @@ defmodule RivaAsh.ErrorHelpers do
     # Log the full error for debugging
     require Logger
     Logger.error("Error in RivaAsh: #{inspect(error, pretty: true)}")
-    
+
     # Format the error for the client
     format_error(error)
   end
-  
+
   @doc """
   Wraps a function call with error handling.
-  
+
   ## Examples
-  
+
       iex> ErrorHelpers.with_error_handling(fn -> {:ok, :success} end)
       {:ok, :success}
-      
+
       iex> ErrorHelpers.with_error_handling(fn -> {:error, "Something went wrong"} end)
       {:error, %{code: :error, message: "Something went wrong"}}
   """
   def with_error_handling(fun) do
     try do
       case fun.() do
-        {:ok, result} -> 
+        {:ok, result} ->
           success(result)
-          
-        {:error, error} -> 
+
+        {:error, error} ->
           failure(handle_error(error))
-          
-        other -> 
+
+        other ->
           failure(handle_error("Unexpected result: #{inspect(other)}"))
       end
     rescue
-      e -> 
+      e ->
         failure(handle_error(e))
     end
   end
-  
+
   @doc """
   Similar to `with_error_handling/1` but raises on error instead of returning a tuple.
   """
@@ -117,12 +116,22 @@ defmodule RivaAsh.ErrorHelpers do
       {:error, error} -> raise "Operation failed: #{error.message}"
     end
   end
-  
-  # OK library helper functions
-  def map_success(result, fun), do: OK.map(result, fun)
-  def bind_success(result, fun), do: OK.flat_map(result, fun)
-  def map_error({:ok, _} = success, _fun), do: success
-  def map_error({:error, error}, fun), do: {:error, fun.(error)}
-  def to_success(value), do: success(value)
-  def to_error(error), do: failure(handle_error(error))
+
+  @doc """
+  Converts any value into an {:ok, value} tuple, or {:error, value} if it's already an error tuple.
+  """
+  def to_result({:ok, value}), do: {:ok, value}
+  def to_result({:error, error}), do: {:error, error}
+  def to_result(value), do: {:ok, value}
+
+  @doc """
+  Ensures a value is present, returning {:ok, value} or {:error, reason}.
+  """
+  def required(value, error_reason) do
+    if is_nil(value) do
+      failure(error_reason)
+    else
+      success(value)
+    end
+  end
 end
