@@ -14,44 +14,25 @@ defmodule RivaAsh.Queries do
   Uses optimized indexes and minimal data loading.
   """
   def check_item_availability(item_id, start_datetime, end_datetime) do
-    try do
-      with {:ok, item} <- (Item 
-                         |> Ash.get(item_id, domain: RivaAsh.Domain) 
-                         |> case do
-                           {:ok, item} -> {:ok, item}
-                           _ -> {:error, :item_not_found}
-                         end),
-           {:ok, _} <- validate_item_active(item),
-           {:ok, _} <- validate_item_not_archived(item),
-           {:ok, result} <- check_reservations_and_holds(item_id, start_datetime, end_datetime) do
-        {:ok, result}
-      else
-        {:error, :item_not_found} -> {:ok, {:unavailable, "Item not found"}}
-        {:error, :item_inactive} -> {:ok, {:unavailable, "Item is not active"}}
-        {:error, :item_archived} -> {:ok, {:unavailable, "Item is archived"}}
-        {:error, error} -> {:error, "Failed to check availability: #{inspect(error)}"}
-        error -> {:error, "Failed to check availability: #{inspect(error)}"}
-      end
-    rescue
-      e -> {:error, "Exception during availability check: #{inspect(e)}"}
-    end
+    RivaAsh.Validations.check_item_availability(item_id, start_datetime, end_datetime)
   end
 
-  defp validate_item_active(%{is_active: true}), do: {:ok, :ok}
-  defp validate_item_active(_), do: {:error, :item_inactive}
-
-  defp validate_item_not_archived(%{archived_at: nil}), do: {:ok, :ok}
-  defp validate_item_not_archived(_), do: {:error, :item_archived}
-
-  defp check_reservations_and_holds(item_id, start_datetime, end_datetime) do
-    with {:ok, :no_overlap} <- RivaAsh.Validations.check_reservation_overlap(item_id, start_datetime, end_datetime),
-         {:ok, :available} <- RivaAsh.Validations.check_active_holds(item_id, start_datetime, end_datetime) do
-      {:ok, :available}
-    else
-      {:error, reason} -> {:error, reason}
-      error -> {:error, error}
-    end
-  end
+  # Removed duplicate validation functions as they are now handled by Validations module.
+  # defp validate_item_active(%{is_active: true}), do: {:ok, :ok}
+  # defp validate_item_active(_), do: {:error, :item_inactive}
+  #
+  # defp validate_item_not_archived(%{archived_at: nil}), do: {:ok, :ok}
+  # defp validate_item_not_archived(_), do: {:error, :item_archived}
+  #
+  # defp check_reservations_and_holds(item_id, start_datetime, end_datetime) do
+  #   with {:ok, :no_overlap} <- RivaAsh.Validations.check_reservation_overlap(item_id, start_datetime, end_datetime),
+  #        {:ok, :available} <- RivaAsh.Validations.check_active_holds(item_id, start_datetime, end_datetime) do
+  #     {:ok, :available}
+  #   else
+  #     {:error, reason} -> {:error, reason}
+  #     error -> {:error, error}
+  #   end
+  # end
 
   @doc """
   Get all available items for a business on a specific date.

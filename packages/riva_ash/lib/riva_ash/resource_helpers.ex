@@ -393,4 +393,24 @@ defmodule RivaAsh.ResourceHelpers do
       {record.id, record.name}
     end)
   end
+
+  @doc """
+  Standard authorization policies for business-scoped resources.
+  Ensures users can only access resources belonging to their business.
+  """
+  defmacro business_scoped_policies do
+    quote location: :keep do
+      import Ash.Expr
+
+      # Policy for business-scoped access
+      policy action_type([:read, :create, :update, :destroy]) do
+        authorize_if expr(business_id == ^actor(:business_id))
+      end
+
+      # Policy for admin access (bypasses business scope)
+      policy action_type([:read, :create, :update, :destroy]) do
+        authorize_if expr(actor(:role) in [:admin, :super_admin])
+      end
+    end
+  end
 end

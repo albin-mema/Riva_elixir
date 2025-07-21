@@ -65,16 +65,17 @@ defmodule RivaAsh.Booking do
           booking_params
           |> Map.put(:client_id, client.id)
 
-        # Check item availability
-        case check_item_availability(reservation_params.item_id, reservation_params.reserved_from, reservation_params.reserved_until) do
-          {:ok, _} ->
+        case RivaAsh.Validations.check_item_availability(reservation_params.item_id, reservation_params.reserved_from, reservation_params.reserved_until) do
+          {:ok, :available} ->
             case create_reservation(reservation_params) do
               {:ok, reservation} -> {:ok, reservation}
               {:error, error} ->
                 {:error, RivaAsh.ErrorHelpers.format_error(error)}
             end
-          {:error, error} ->
-            {:error, RivaAsh.ErrorHelpers.format_error(error)}
+          {:ok, {:unavailable, reason}} ->
+            {:error, %{code: :item_unavailable, message: reason}}
+          {:error, reason} ->
+            {:error, RivaAsh.ErrorHelpers.format_error(reason)}
         end
       end)
       |> Repo.transaction()
@@ -189,68 +190,20 @@ defmodule RivaAsh.Booking do
     end
   end
 
-  defp validate_booking_times(reserved_from, reserved_until) do
-    cond do
-      Timex.compare(reserved_from, Timex.now()) == -1 ->
-        RivaAsh.ErrorHelpers.failure("Cannot create reservation in the past")
-
-      Timex.diff(reserved_until, reserved_from, :minutes) < @min_booking_minutes ->
-        RivaAsh.ErrorHelpers.failure("Reservation must be at least #{@min_booking_minutes} minutes")
-
-      Timex.diff(reserved_until, reserved_from, :hours) > @max_booking_hours ->
-        RivaAsh.ErrorHelpers.failure("Reservation cannot exceed #{@max_booking_hours} hours")
-
-      true ->
-        RivaAsh.ErrorHelpers.success(:ok)
-    end
-  end
-
-  defp check_item_availability(item_id, reserved_from, reserved_until) do
-    # Check if item exists
-    Repo.get(Item, item_id)
-    |> case do
-      nil ->
-        RivaAsh.ErrorHelpers.failure(%{code: :not_found, message: "Item not found"})
-
-      item ->
-        # Check if item is active
-        if item.status != :active do
-          RivaAsh.ErrorHelpers.failure(%{code: :unavailable, message: "Item is not available for booking"})
-        else
-          # Check for overlapping reservations using Ash query
-          Reservation
-          |> Ash.Query.filter(item_id: item_id)
-          |> Ash.Query.filter(status: [:pending, :confirmed])
-          |> Ash.Query.filter(
-            expr(
-              (reserved_from <= ^reserved_from and reserved_until > ^reserved_from) or
-              (reserved_from < ^reserved_until and reserved_until >= ^reserved_until) or
-              (reserved_from >= ^reserved_from and reserved_until <= ^reserved_until)
-            )
-          )
-          |> Ash.read(domain: Domain)
-          |> case do
-            {:ok, []} -> RivaAsh.ErrorHelpers.success(:ok)
-            {:ok, _overlapping_reservations} ->
-              RivaAsh.ErrorHelpers.failure(%{
-                code: :time_slot_unavailable,
-                message: "Item is already booked for the selected time slot"
-              })
-            {:error, _} ->
-              RivaAsh.ErrorHelpers.failure(%{
-                code: :availability_check_failed,
-                message: "Could not check item availability"
-              })
-          end
-        end
-    end
-  end
+  # Removed validate_booking_times and check_item_availability as they are now handled by Validations module.
+  # defp validate_booking_times(reserved_from, reserved_until) do
+  #   # Logic moved to RivaAsh.Validations
+  # end
+  #
+  # defp check_item_availability(item_id, reserved_from, reserved_until) do
+  #   # Logic moved to RivaAsh.Validations
+  # end
 
   defp get_reservation_with_client(reservation_id) do
     Reservation.by_id(reservation_id, domain: Domain, load: [:client])
     |> case do
       {:ok, reservation} -> RivaAsh.ErrorHelpers.success(reservation)
-      {:error, error} -> RivaAsh.ErrorHelpers.failure(format_error(error))
+      {:error, error} -> RivaAsh.ErrorHelpers.failure(RivaAsh.ErrorHelpers.format_error(error))
     end
   end
 
@@ -266,7 +219,7 @@ defmodule RivaAsh.Booking do
       Client.register(client, update_attrs, domain: Domain)
       |> case do
         {:ok, updated_client} -> RivaAsh.ErrorHelpers.success(updated_client)
-        {:error, error} -> RivaAsh.ErrorHelpers.failure(format_error(error))
+        {:error, error} -> RivaAsh.ErrorHelpers.failure(RivaAsh.ErrorHelpers.format_error(error))
       end
     end
   end
@@ -275,7 +228,7 @@ defmodule RivaAsh.Booking do
     Reservation.update(reservation, %{status: :confirmed}, domain: Domain)
     |> case do
       {:ok, updated_reservation} -> RivaAsh.ErrorHelpers.success(updated_reservation)
-      {:error, error} -> RivaAsh.ErrorHelpers.failure(format_error(error))
+      {:error, error} -> RivaAsh.ErrorHelpers.failure(RivaAsh.ErrorHelpers.format_error(error))
     end
   end
 
@@ -293,7 +246,7 @@ defmodule RivaAsh.Booking do
         end)
         RivaAsh.ErrorHelpers.success(filtered)
 
-      {:error, error} -> RivaAsh.ErrorHelpers.failure(format_error(error))
+      {:error, error} -> RivaAsh.ErrorHelpers.failure(RivaAsh.ErrorHelpers.format_error(error))
     end
   end
 
@@ -330,17 +283,4 @@ defmodule RivaAsh.Booking do
     Timex.compare(start1, end2) == -1 and Timex.compare(end1, start2) == 1
   end
 
-  defp format_error(error) when is_binary(error), do: error
-  defp format_error(%{errors: errors}) when is_list(errors) do
-    errors
-    |> Enum.map(&format_error/1)
-    |> Enum.join(", ")
-  end
-  defp format_error(%{field: field, message: message}), do: "#{field}: #{message}"
-  defp format_error(%Ash.Error.Invalid{errors: errors}) do
-    errors
-    |> Enum.map(&format_error/1)
-    |> Enum.join(", ")
-  end
-  defp format_error(error), do: "An error occurred: #{inspect(error)}"
 end

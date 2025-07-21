@@ -353,9 +353,22 @@ defmodule RivaAsh.Validations do
   def validate_business_access(changeset, _opts) do
     case Ash.Changeset.get_argument_or_attribute(changeset, :business_id) do
       {:ok, business_id} ->
-        # For now, skip actor validation to allow compilation
-        # TODO: Implement proper actor context retrieval
-        :ok
+        # This validation ensures that the business_id on the changeset matches one of the businesses
+        # the current actor (employee) has access to.
+        # It assumes the actor is available in the Ash context.
+        case Ash.Context.get(changeset, :actor) do
+          %{id: actor_id, type: :employee} ->
+            if RivaAsh.Authorization.can_access_business?(actor_id, business_id) do
+              :ok
+            else
+              {:error, field: :business_id, message: "No access to this business"}
+            end
+          _ ->
+            # If no actor in context, or actor is not an employee, allow for now
+            # In a real application, you might want a stricter default or a dedicated
+            # policy for non-employee actors.
+            :ok
+        end
       :error -> :ok
     end
   end

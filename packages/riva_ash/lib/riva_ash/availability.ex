@@ -153,15 +153,20 @@ defmodule RivaAsh.Availability do
     end_time = DateTime.to_time(end_datetime)
 
     # Handle same-day reservations
-    if Timex.to_date(start_datetime) == date do
-      # For same day reservations, check if the time falls within schedule
-      start_in_range = Timex.compare(start_time, schedule.start_time) in [1, 0]
-      end_in_range = Timex.compare(end_time, schedule.end_time) in [-1, 0]
-      start_in_range and end_in_range
-    else
-      # Multi-day reservations need more complex logic
-      true
-    end
+    # Determine the time range to check for the current date based on the overall reservation duration.
+    # For dates within the multi-day reservation, but not the start or end dates, it must be available all day.
+    check_start_time = if Timex.to_date(start_datetime) == date, do: start_time, else: Time.new!(0, 0, 0)
+    check_end_time = if Timex.to_date(end_datetime) == date, do: end_time, else: Time.new!(23, 59, 59)
+
+    # Convert schedule times to current date's DateTime for comparison
+    schedule_start_dt = DateTime.new!(date, schedule.start_time)
+    schedule_end_dt = DateTime.new!(date, schedule.end_time)
+    check_start_dt = DateTime.new!(date, check_start_time)
+    check_end_dt = DateTime.new!(date, check_end_time)
+
+    # Check if the requested segment overlaps with or is fully contained within the schedule
+    # A segment is available if its start is before the schedule's end AND its end is after the schedule's start.
+    Timex.compare(check_start_dt, schedule_end_dt) == -1 && Timex.compare(check_end_dt, schedule_start_dt) == 1
   end
 
   defp check_exceptions(item_id, start_datetime, end_datetime) do
