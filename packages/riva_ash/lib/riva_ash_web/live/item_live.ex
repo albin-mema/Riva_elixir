@@ -1,93 +1,56 @@
 defmodule RivaAshWeb.ItemLive do
   @moduledoc """
-  Item management LiveView with positioning support.
+  LiveView for managing Items.
   """
   use RivaAshWeb, :live_view
-  alias RivaAsh.ErrorHelpers
 
   import RivaAshWeb.Components.Organisms.PageHeader
   import RivaAshWeb.Components.Organisms.DataTable
-  import RivaAshWeb.Components.Organisms.ItemForm
-  import RivaAshWeb.Components.Molecules.EmptyState
+  import RivaAshWeb.Components.Atoms.AllAtoms
 
   alias RivaAsh.Resources.Item
 
   @impl true
-  def mount(_params, session, socket) do
-    case ErrorHelpers.required(get_current_user_from_session(session), :user_not_authenticated) do
-      {:ok, user} ->
-        socket
-        |> assign(:current_user, user)
-        |> assign(:page_title, "Item Management")
-        |> assign(:items, load_items(user))
-        |> assign(:meta, %{})
-        |> assign(:show_form, false)
-        |> assign(:editing_item, nil)
-        |> assign(:form, nil)
-        |> assign(:sections, load_sections(user))
-        |> assign(:item_types, load_item_types(user))
-        |> ErrorHelpers.success()
-      {:error, :user_not_authenticated} -> ErrorHelpers.success(redirect(socket, to: "/sign-in"))
-      {:error, reason} -> ErrorHelpers.failure(reason) # Should not happen with :user_not_authenticated
-    end
+  def mount(_params, _session, socket) do
+    items = RivaAsh.read(Item)
+
+    socket =
+      socket
+      |> assign(:page_title, "Items")
+      |> assign(:items, items)
+      |> assign(:meta, %{}) # Placeholder for pagination/metadata
+
+    {:ok, socket}
   end
 
   @impl true
   def render(assigns) do
     ~H"""
-    <!-- Item management implementation will go here -->
     <div>
-      <.page_header title="Item Management" description="Manage your reservable items and their positions">
+      <.page_header title="Items" description="Manage items available for booking">
         <:action>
-          <button phx-click="new_item">Add Item</button>
+          <.button phx-click="new_item" class="bg-blue-600 hover:bg-blue-700">New Item</.button>
         </:action>
       </.page_header>
 
-      <div :if={@show_form}>
-        <.item_form
-          form={@form}
-          sections={@sections}
-          item_types={@item_types}
-          editing={@editing_item != nil}
-          on_submit="save_item"
-          on_change="validate_item"
-          on_cancel="cancel_form"
-        />
-      </div>
-
-      <div :if={@items == [] && !@show_form}>
-        <.empty_state
-          icon={:cube}
-          title="No items found"
-          description="Create your first reservable item to start taking bookings"
-        />
-      </div>
-
       <.data_table
-        :if={@items != [] && !@show_form}
+        id="items-table"
         items={@items}
         meta={@meta}
         path="/items"
-        id="items-table"
       >
         <:col :let={item} label="Name" field={:name} sortable>
           <%= item.name %>
         </:col>
-        <:col :let={item} label="Section" field={:section} sortable>
-          <%= item.section.name %>
+        <:col :let={item} label="Description">
+          <%= item.description %>
         </:col>
-        <:col :let={item} label="Type" field={:item_type} sortable>
-          <%= item.item_type.name %>
-        </:col>
-        <:col :let={item} label="Position">
-          Row <%= item.grid_row %>, Col <%= item.grid_column %>
-        </:col>
-        <:col :let={item} label="Status">
-          <%= if item.is_active, do: "Active", else: "Inactive" %>
+        <:col :let={item} label="Price">
+          <%= item.price %>
         </:col>
         <:col :let={item} label="Actions">
-          <button phx-click="edit_item" phx-value-id={item.id}>Edit</button>
-          <button phx-click="delete_item" phx-value-id={item.id}>Delete</button>
+          <.button phx-click="edit_item" phx-value-id={item.id} class="bg-green-600 hover:bg-green-700">Edit</.button>
+          <.button phx-click="delete_item" phx-value-id={item.id} class="bg-red-600 hover:bg-red-700">Delete</.button>
         </:col>
       </.data_table>
     </div>
@@ -96,125 +59,20 @@ defmodule RivaAshWeb.ItemLive do
 
   @impl true
   def handle_event("new_item", _params, socket) do
-    form = AshPhoenix.Form.for_create(Item, :create, actor: socket.assigns.current_user) |> to_form()
-
-    socket
-    |> assign(:show_form, true)
-    |> assign(:form, form)
-    |> then(&{:noreply, &1})
+    {:noreply, push_patch(socket, to: "/items/new")}
   end
 
   def handle_event("edit_item", %{"id" => id}, socket) do
-    with {:ok, item} <- Item.by_id(id) |> ErrorHelpers.to_result(),
-         {:ok, form} <- AshPhoenix.Form.for_update(item, :update, actor: socket.assigns.current_user) |> ErrorHelpers.to_result() do
-      socket
-      |> assign(:editing_item, item)
-      |> assign(:form, form |> to_form())
-      |> assign(:show_form, true)
-      |> then(&{:noreply, &1})
-    else
-      _ ->
-        socket
-        |> put_flash(:error, "Failed to load item for editing")
-        |> then(&{:noreply, &1})
-    end
+    {:noreply, push_patch(socket, to: "/items/#{id}/edit")}
   end
 
   def handle_event("delete_item", %{"id" => id}, socket) do
-    case Item.by_id(id) do
-      {:ok, item} ->
-        case Item.destroy(item, actor: socket.assigns.current_user) do
-          {:ok, _} ->
-            socket
-            |> put_flash(:info, "Item deleted successfully")
-            |> assign(:items, load_items(socket.assigns.current_user))
-            |> then(&{:noreply, &1})
-          {:error, error} ->
-            socket
-            |> put_flash(:error, "Failed to delete item: #{inspect(error)}")
-            |> then(&{:noreply, &1})
-        end
-      {:error, error} ->
-        socket
-        |> put_flash(:error, "Failed to find item for deletion: #{inspect(error)}")
-        |> then(&{:noreply, &1})
-    end
-  end
-
-  def handle_event("save_item", %{"form" => params}, socket) do
-    case AshPhoenix.Form.submit(socket.assigns.form, params: params, actor: socket.assigns.current_user) do
-      {:ok, item} ->
-        action_text = if socket.assigns.editing_item, do: "updated", else: "created"
-
-        socket
-        |> assign(:items, load_items(socket.assigns.current_user))
-        |> assign(:show_form, false)
-        |> assign(:editing_item, nil)
-        |> assign(:form, nil)
-        |> put_flash(:info, "Item #{action_text} successfully")
-        |> then(&{:noreply, &1})
-      {:error, form} ->
-        socket =
-          socket
-          |> assign(:form, form |> to_form())
-          |> put_flash(:error, "Please fix the errors below")
-        {:noreply, socket}
-    end
-  end
-
-  def handle_event("validate_item", %{"form" => params}, socket) do
-    form = AshPhoenix.Form.validate(socket.assigns.form, params) |> to_form()
-    socket = assign(socket, :form, form)
+    # Placeholder for delete logic
+    IO.puts("Deleting item with ID: #{id}")
     {:noreply, socket}
-  end
-
-  def handle_event("cancel_form", _params, socket) do
-    socket
-    |> assign(:show_form, false)
-    |> assign(:editing_item, nil)
-    |> assign(:form, nil)
-    |> then(&{:noreply, &1})
   end
 
   def handle_event(_event, _params, socket) do
     {:noreply, socket}
-  end
-
-  # Private helper functions
-
-  defp get_current_user_from_session(session) do
-    # Implementation will be added when auth system is integrated
-    case Map.get(session, "user_token") do
-      nil -> nil
-      _token -> %{id: "user-1", role: :user} # Mock user for now
-    end
-  end
-
-  defp load_items(user) do
-    Item
-    |> Ash.Query.load([:section, :item_type])
-    |> Ash.read(actor: user)
-    |> case do
-      {:ok, items} -> items
-      {:error, _} -> []
-    end
-  end
-
-  defp load_sections(user) do
-    RivaAsh.Resources.Section
-    |> Ash.read(actor: user)
-    |> case do
-      {:ok, sections} -> sections
-      {:error, _} -> []
-    end
-  end
-
-  defp load_item_types(user) do
-    RivaAsh.Resources.ItemType
-    |> Ash.read(actor: user)
-    |> case do
-      {:ok, types} -> types
-      {:error, _} -> []
-    end
   end
 end

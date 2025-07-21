@@ -1,71 +1,53 @@
 defmodule RivaAshWeb.ItemTypeLive do
   @moduledoc """
-  Item type management LiveView for CRUD operations.
+  LiveView for managing Item Types.
   """
   use RivaAshWeb, :live_view
 
   import RivaAshWeb.Components.Organisms.PageHeader
   import RivaAshWeb.Components.Organisms.DataTable
-  import RivaAshWeb.Components.Molecules.EmptyState
+  import RivaAshWeb.Components.Atoms.AllAtoms
 
   alias RivaAsh.Resources.ItemType
 
   @impl true
-  def mount(_params, session, socket) do
-    user = get_current_user_from_session(session)
+  def mount(_params, _session, socket) do
+    item_types = RivaAsh.read(ItemType)
 
-    if user do
-      socket =
-        socket
-        |> assign(:current_user, user)
-        |> assign(:page_title, "Item Type Management")
-        |> assign(:item_types, [])
-        |> assign(:meta, %{})
-        |> assign(:show_form, false)
-        |> assign(:editing_item_type, nil)
-        |> assign(:form, nil)
+    socket =
+      socket
+      |> assign(:page_title, "Item Types")
+      |> assign(:item_types, item_types)
+      |> assign(:meta, %{}) # Placeholder for pagination/metadata
 
-      {:ok, socket}
-    else
-      {:ok, redirect(socket, to: "/sign-in")}
-    end
+    {:ok, socket}
   end
 
   @impl true
   def render(assigns) do
     ~H"""
-    <!-- Item type management implementation will go here -->
     <div>
-      <.page_header title="Item Type Management" description="Manage categories and types of reservable items">
+      <.page_header title="Item Types" description="Categorize and manage types of items">
         <:action>
-          <button phx-click="new_item_type">Add Item Type</button>
+          <.button phx-click="new_item_type" class="bg-blue-600 hover:bg-blue-700">New Item Type</.button>
         </:action>
       </.page_header>
 
-      <div :if={@item_types == []}>
-        <.empty_state
-          icon={:tag}
-          title="No item types found"
-          description="Create item types to categorize your reservable items"
-        />
-      </div>
-
       <.data_table
-        :if={@item_types != []}
+        id="item-types-table"
         items={@item_types}
         meta={@meta}
         path="/item-types"
-        id="item-types-table"
       >
-        <:col :let={item} label="Name" field={:name} sortable>
-          <%= item.name %>
+        <:col :let={item_type} label="Name" field={:name} sortable>
+          <%= item_type.name %>
         </:col>
-        <:col :let={item} label="Description">
-          <%= item.description %>
+        <:col :let={item_type} label="Description">
+          <%= item_type.description %>
         </:col>
-        <:col :let={item} label="Actions">
-          <button phx-click="edit_item_type" phx-value-id={item.id}>Edit</button>
-          <button phx-click="delete_item_type" phx-value-id={item.id}>Delete</button>
+        <:col :let={item_type} label="Actions">
+          <.button phx-click="edit_item_type" phx-value-id={item_type.id} class="bg-green-600 hover:bg-green-700">Edit</.button>
+          <.button phx-click="delete_item_type" phx-value-id={item_type.id} class="bg-red-600 hover:bg-red-700">Delete</.button>
         </:col>
       </.data_table>
     </div>
@@ -74,26 +56,20 @@ defmodule RivaAshWeb.ItemTypeLive do
 
   @impl true
   def handle_event("new_item_type", _params, socket) do
-    {:noreply, assign(socket, :show_form, true)}
+    {:noreply, push_patch(socket, to: "/item-types/new")}
   end
 
   def handle_event("edit_item_type", %{"id" => id}, socket) do
-    # Implementation will go here
-    {:noreply, socket}
+    {:noreply, push_patch(socket, to: "/item-types/#{id}/edit")}
   end
 
   def handle_event("delete_item_type", %{"id" => id}, socket) do
-    # Implementation will go here
+    # Placeholder for delete logic
+    IO.puts("Deleting item type with ID: #{id}")
     {:noreply, socket}
   end
 
   def handle_event(_event, _params, socket) do
     {:noreply, socket}
-  end
-
-  # Private helper functions will go here
-  defp get_current_user_from_session(_session) do
-    # Implementation will go here
-    nil
   end
 end

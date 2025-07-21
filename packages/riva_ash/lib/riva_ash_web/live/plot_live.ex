@@ -1,71 +1,56 @@
 defmodule RivaAshWeb.PlotLive do
   @moduledoc """
-  Plot management LiveView for CRUD operations.
+  LiveView for managing Plots.
   """
   use RivaAshWeb, :live_view
 
   import RivaAshWeb.Components.Organisms.PageHeader
   import RivaAshWeb.Components.Organisms.DataTable
-  import RivaAshWeb.Components.Molecules.EmptyState
+  import RivaAshWeb.Components.Atoms.AllAtoms
 
   alias RivaAsh.Resources.Plot
 
   @impl true
-  def mount(_params, session, socket) do
-    user = get_current_user_from_session(session)
+  def mount(_params, _session, socket) do
+    plots = RivaAsh.read(Plot)
 
-    if user do
-      socket =
-        socket
-        |> assign(:current_user, user)
-        |> assign(:page_title, "Plot Management")
-        |> assign(:plots, [])
-        |> assign(:meta, %{})
-        |> assign(:show_form, false)
-        |> assign(:editing_plot, nil)
-        |> assign(:form, nil)
+    socket =
+      socket
+      |> assign(:page_title, "Plots")
+      |> assign(:plots, plots)
+      |> assign(:meta, %{}) # Placeholder for pagination/metadata
 
-      {:ok, socket}
-    else
-      {:ok, redirect(socket, to: "/sign-in")}
-    end
+    {:ok, socket}
   end
 
   @impl true
   def render(assigns) do
     ~H"""
-    <!-- Plot management implementation will go here -->
     <div>
-      <.page_header title="Plot Management" description="Manage your business plots and locations">
+      <.page_header title="Plots" description="Manage plots and their attributes">
         <:action>
-          <button phx-click="new_plot">Add Plot</button>
+          <.button phx-click="new_plot" class="bg-blue-600 hover:bg-blue-700">New Plot</.button>
         </:action>
       </.page_header>
 
-      <div :if={@plots == []}>
-        <.empty_state
-          icon={:map}
-          title="No plots found"
-          description="Create your first plot to organize your business space"
-        />
-      </div>
-
       <.data_table
-        :if={@plots != []}
+        id="plots-table"
         items={@plots}
         meta={@meta}
         path="/plots"
-        id="plots-table"
       >
-        <:col :let={item} label="Name" field={:name} sortable>
-          <%= item.name %>
+        <:col :let={plot} label="Name" field={:name} sortable>
+          <%= plot.name %>
         </:col>
-        <:col :let={item} label="Business" field={:business} sortable>
-          <%= item.business.name %>
+        <:col :let={plot} label="Capacity">
+          <%= plot.capacity %>
         </:col>
-        <:col :let={item} label="Actions">
-          <button phx-click="edit_plot" phx-value-id={item.id}>Edit</button>
-          <button phx-click="delete_plot" phx-value-id={item.id}>Delete</button>
+        <:col :let={plot} label="Description">
+          <%= plot.description %>
+        </:col>
+        <:col :let={plot} label="Actions">
+          <.button phx-click="edit_plot" phx-value-id={plot.id} class="bg-green-600 hover:bg-green-700">Edit</.button>
+          <.button phx-click="delete_plot" phx-value-id={plot.id} class="bg-red-600 hover:bg-red-700">Delete</.button>
         </:col>
       </.data_table>
     </div>
@@ -74,26 +59,20 @@ defmodule RivaAshWeb.PlotLive do
 
   @impl true
   def handle_event("new_plot", _params, socket) do
-    {:noreply, assign(socket, :show_form, true)}
+    {:noreply, push_patch(socket, to: "/plots/new")}
   end
 
   def handle_event("edit_plot", %{"id" => id}, socket) do
-    # Implementation will go here
-    {:noreply, socket}
+    {:noreply, push_patch(socket, to: "/plots/#{id}/edit")}
   end
 
   def handle_event("delete_plot", %{"id" => id}, socket) do
-    # Implementation will go here
+    # Placeholder for delete logic
+    IO.puts("Deleting plot with ID: #{id}")
     {:noreply, socket}
   end
 
   def handle_event(_event, _params, socket) do
     {:noreply, socket}
-  end
-
-  # Private helper functions will go here
-  defp get_current_user_from_session(_session) do
-    # Implementation will go here
-    nil
   end
 end

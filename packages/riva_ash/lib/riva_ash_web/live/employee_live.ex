@@ -10,6 +10,7 @@ defmodule RivaAshWeb.EmployeeLive do
   import RivaAshWeb.Components.Molecules.EmptyState
   import RivaAshWeb.Components.Organisms.PageHeader
   import RivaAshWeb.Components.Organisms.EmployeeForm
+  import RivaAshWeb.Components.Molecules.ConfirmModal
 
   alias RivaAsh.Resources.Employee
   alias RivaAsh.Resources.Business
@@ -27,6 +28,8 @@ defmodule RivaAshWeb.EmployeeLive do
         |> assign(:loading, false)
         |> assign(:is_admin, user.role == :admin)
         |> assign(:page_title, "Employee Management")
+        |> assign(:show_confirm_delete_modal, false)
+        |> assign(:employee_to_delete, nil)
         |> ErrorHelpers.success()
       {:error, :user_not_authenticated} ->
         socket
@@ -178,12 +181,18 @@ defmodule RivaAshWeb.EmployeeLive do
                   <.button
                     variant="destructive"
                     size="sm"
-                    phx-click="delete_employee"
-                    phx-value-id={employee.id}
-                    data-confirm="Are you sure you want to delete this employee?"
+                    phx-click={JS.push("prepare_delete_employee", value: %{id: employee.id})}
                   >
                     Delete
                   </.button>
+                  <ConfirmModal
+                    id="delete-employee-modal"
+                    show={@show_confirm_delete_modal}
+                    title="Delete Employee"
+                    description={"Are you sure you want to delete employee \"#{@employee_to_delete.first_name} #{@employee_to_delete.last_name}\"?"}
+                    on_confirm={JS.push("confirm_delete_employee", value: %{id: @employee_to_delete.id})}
+                    on_cancel={JS.hide("delete-employee-modal")}
+                  />
                 </div>
               </:col>
             </Flop.Phoenix.table>
@@ -304,8 +313,30 @@ defmodule RivaAshWeb.EmployeeLive do
   end
 
   @impl true
-  def handle_event("delete_employee", %{"id" => id}, socket) do
+  def handle_event("prepare_delete_employee", %{"id" => id}, socket) do
     user = socket.assigns.current_user
+
+    case Employee.by_id(id, actor: user) do
+      {:ok, employee} ->
+        socket =
+          socket
+          |> assign(:show_confirm_delete_modal, true)
+          |> assign(:employee_to_delete, employee)
+          |> JS.show("delete-employee-modal")
+
+        {:noreply, socket}
+
+      {:error, _reason} ->
+        socket = put_flash(socket, :error, "Employee not found.")
+        {:noreply, socket}
+    end
+  end
+
+  @impl true
+  def handle_event("confirm_delete_employee", %{"id" => id}, socket) do
+    user = socket.assigns.current_user
+
+    socket = assign(socket, :show_confirm_delete_modal, false) # Hide modal immediately
 
     case Employee.by_id(id, actor: user) do
       {:ok, employee} ->

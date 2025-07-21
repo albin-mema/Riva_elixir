@@ -8,6 +8,7 @@ defmodule RivaAshWeb.PermissionLive do
   import RivaAshWeb.Components.Organisms.DataTable
   import RivaAshWeb.Components.Organisms.PermissionMatrix
   import RivaAshWeb.Components.Molecules.TabNavigation
+  import RivaAshWeb.Components.Atoms.AllAtoms
 
   alias RivaAsh.Resources.{Permission, Employee, EmployeePermission}
 
@@ -40,7 +41,7 @@ defmodule RivaAshWeb.PermissionLive do
     <div>
       <.page_header title="Permission Management" description="Manage employee roles and permissions">
         <:action>
-          <button phx-click="create_permission">Create Permission</button>
+          <.button phx-click="create_permission" class="bg-blue-600 hover:bg-blue-700">Create Permission</.button>
         </:action>
       </.page_header>
 
@@ -82,7 +83,7 @@ defmodule RivaAshWeb.PermissionLive do
             <%= length(item.permissions || []) %>
           </:col>
           <:col :let={item} label="Actions">
-            <button phx-click="manage_permissions" phx-value-id={item.id}>Manage Permissions</button>
+            <.button phx-click="manage_permissions" phx-value-id={item.id} class="bg-indigo-600 hover:bg-indigo-700">Manage Permissions</.button>
           </:col>
         </.data_table>
       </div>
@@ -101,8 +102,8 @@ defmodule RivaAshWeb.PermissionLive do
             <%= item.description %>
           </:col>
           <:col :let={item} label="Actions">
-            <button phx-click="edit_permission" phx-value-id={item.id}>Edit</button>
-            <button phx-click="delete_permission" phx-value-id={item.id}>Delete</button>
+            <.button phx-click="edit_permission" phx-value-id={item.id} class="bg-green-600 hover:bg-green-700">Edit</.button>
+            <.button phx-click="delete_permission" phx-value-id={item.id} class="bg-red-600 hover:bg-red-700">Delete</.button>
           </:col>
         </.data_table>
       </div>
