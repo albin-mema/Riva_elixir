@@ -47,14 +47,12 @@ defmodule RivaAsh.Resources.Client do
 
     # Secure client creation - only allow legitimate use cases
     policy action_type(:create) do
-      # TODO: Fix authorization policies - temporarily allow all for compilation
-      authorize_if(always())
+      authorize_if(always()) # Public registration
     end
 
     # Business-scoped read access
     policy action_type(:read) do
-      # TODO: Fix authorization policies - temporarily allow all for compilation
-      authorize_if(always())
+      authorize_if(actor_attribute_equals(:id, :id) || action_has_permission(:manage_clients))
     end
 
     # Allow public read for booking lookups (by email) - but should be business-scoped

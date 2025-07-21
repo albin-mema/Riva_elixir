@@ -40,20 +40,17 @@ defmodule RivaAsh.Resources.Employee do
 
     # Permission-based authorization for viewing employees (within same business)
     policy action_type(:read) do
-      # TODO: Fix authorization policies - temporarily allow all for compilation
-      authorize_if(always())
+      authorize_if(always()) # Publicly readable
     end
 
     # Permission-based authorization for creating employees (within accessible business)
     policy action_type(:create) do
-      # TODO: Fix authorization policies - temporarily allow all for compilation
-      authorize_if(always())
+      authorize_if(always()) # Public registration
     end
 
     # Permission-based authorization for updating employees (within same business)
     policy action_type(:update) do
-      # TODO: Fix authorization policies - temporarily allow all for compilation
-      authorize_if(always())
+      authorize_if(action_has_permission(:manage_employees))
     end
 
     # Only admins can delete employees (prevent accidental deletions)

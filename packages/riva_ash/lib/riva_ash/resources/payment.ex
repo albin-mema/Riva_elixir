@@ -52,8 +52,7 @@ defmodule RivaAsh.Resources.Payment do
 
     # Employees can manage payments within their business (optimized)
     policy action_type([:read, :create, :update]) do
-      # TODO: Fix authorization policy - temporarily allow all for compilation
-      authorize_if(always())
+      authorize_if(action_has_permission(:manage_payments))
     end
 
     # Clients can view their own payments

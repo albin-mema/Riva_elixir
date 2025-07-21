@@ -50,14 +50,12 @@ defmodule RivaAsh.Resources.Reservation do
 
     # Managers can manage all reservations within their business
     policy actor_attribute_equals(:role, :manager) do
-      # TODO: Fix authorization policies - temporarily allow all for compilation
-      authorize_if(always())
+      authorize_if(action_has_permission(:manage_reservations))
     end
 
     # Staff can only read reservations they created within their business
     policy actor_attribute_equals(:role, :staff) do
-      # TODO: Fix authorization policies - temporarily allow all for compilation
-      authorize_if(always())
+      authorize_if(action_has_permission(:read_reservations))
     end
 
     # Clients can only access their own reservations
@@ -73,10 +71,9 @@ defmodule RivaAsh.Resources.Reservation do
       authorize_if(expr(employee_id == ^actor(:id)))
     end
 
-    # Secure reservation creation - require business context
+    # Secure reservation creation - require business context for employees/managers
     policy action_type(:create) do
-      # TODO: Fix authorization policies - temporarily allow all for compilation
-      authorize_if(always())
+      authorize_if(action_has_permission(:create_reservations))
     end
   end
 

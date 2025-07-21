@@ -22,20 +22,19 @@ defmodule RivaAsh.Resources.Pricing do
     ]
 
   import RivaAsh.ResourceHelpers
+  import RivaAsh.Authorization
 
   standard_postgres("pricing")
   standard_archive()
 
   # Authorization policies
   policies do
-    # TODO: Re-enable business_scoped_policies() after fixing macro
-    # business_scoped_policies()
-    # employee_accessible_policies(:manage_pricing)
+    business_scoped_policies()
+    employee_accessible_policies(:manage_pricing)
 
     # Special restrictions for pricing management
     policy action_type([:create, :update, :destroy]) do
-      # TODO: Fix authorization policies - temporarily allow all for compilation
-      authorize_if(always())
+      authorize_if(action_has_permission(:manage_pricing))
     end
   end
 
@@ -358,11 +357,14 @@ defmodule RivaAsh.Resources.Pricing do
     validate(&RivaAsh.Validations.validate_single_active_base_pricing/2)
   end
 
-  # TODO: Add calculations for pricing effectiveness
-  # calculations do
-  #   calculate :is_currently_effective, :boolean, expr(is_active == true) do
-  #     public?(true)
-  #     description("Whether this pricing is currently effective")
-  #   end
-  # end
+  calculations do
+    calculate :is_currently_effective, :boolean, expr(
+      is_active == true and
+      (is_nil(effective_from) or effective_from <= fragment("NOW()::date")) and
+      (is_nil(effective_until) or effective_until >= fragment("NOW()::date"))
+    ) do
+      public?(true)
+      description("Whether this pricing is currently effective based on dates and active status")
+    end
+  end
 end
