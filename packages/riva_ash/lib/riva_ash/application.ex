@@ -15,10 +15,11 @@ defmodule RivaAsh.Application do
     require Logger
     Logger.info("Configured SAT solver: #{inspect(sat_solver)}")
 
+    # Check if we should skip database setup
+    skip_db = Application.get_env(:riva_ash, :skip_database, false) or System.get_env("SKIP_DB") == "true"
+
     # Define the children to be supervised
     children = [
-      # Start the Ecto repository
-      RivaAsh.Repo,
       # Start the Telemetry supervisor
       RivaAshWeb.Telemetry,
       # Start the PubSub system
@@ -33,7 +34,20 @@ defmodule RivaAsh.Application do
       RivaAsh.Jobs.HoldCleanupJob,
       # DNS cluster for distributed nodes
       {DNSCluster, query: Application.get_env(:riva_ash, :dns_cluster_query) || :ignore}
-    ]
+    ] ++
+    # Conditionally add database-related children
+    if skip_db do
+      []
+    else
+      [
+        # Start the Ecto repository
+        RivaAsh.Repo
+      ]
+    end
+
+    # Log the final children list for debugging
+    require Logger
+    Logger.debug("Starting application with children: #{inspect(children)}")
 
     # See https://hexdocs.pm/elixir/Supervisor.html
     # for other strategies and supported options

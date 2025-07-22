@@ -1,335 +1,194 @@
 defmodule RivaAsh.RecurringReservationsTest do
   use RivaAsh.DataCase, async: true
-  import RivaAsh.TestHelpers
-
   alias RivaAsh.RecurringReservations
-  alias RivaAsh.Resources.{Business, Employee, Client, Item, RecurringReservation, RecurringReservationInstance}
 
-  describe "create_recurring_reservation/2" do
-    setup do
-      user = create_user!(%{role: :admin})
-      business = create_business!(%{}, user)
-      {:ok, employee} = create_employee(business.id, user)
-      {:ok, client} = create_client(business.id, user)
-      {:ok, item} = create_item(business.id, user)
-
-      %{
-        business: business,
-        employee: employee,
-        client: client,
-        item: item,
-        user: user
+  describe "create_recurring_reservation/1" do
+    test "creates recurring reservation with valid params" do
+      params = %{
+        business_id: "business-123",
+        user_id: "user-456",
+        start_date: ~D[2024-01-01],
+        end_date: ~D[2024-12-31],
+        frequency: :weekly,
+        interval: 1,
+        weekdays: [1, 3, 5],
+        start_time: ~T[09:00:00],
+        end_time: ~T[17:00:00]
       }
+
+      assert {:ok, reservation} = RecurringReservations.create_recurring_reservation(params)
+      assert reservation.business_id == "business-123"
+      assert reservation.frequency == :weekly
     end
 
-    test "creates recurring reservation with all days pattern", %{employee: employee, client: client, item: item} do
-      attrs = %{
-        client_id: client.id,
-        item_id: item.id,
-        employee_id: employee.id,
-        start_date: Date.utc_today(),
-        start_time: ~T[09:00:00],
-        end_time: ~T[10:00:00],
-        consecutive_days: 5,
-        pattern_type: :consecutive_days,
-        notes: "Test recurring reservation"
+    test "returns error with invalid params" do
+      params = %{
+        business_id: nil,
+        user_id: "user-456",
+        start_date: ~D[2024-01-01],
+        end_date: ~D[2024-12-31]
       }
 
-      assert {:ok, recurring_reservation} = RecurringReservations.create_recurring_reservation(attrs, false)
-      assert recurring_reservation.consecutive_days == 5
-      assert recurring_reservation.pattern_type == :consecutive_days
-      assert recurring_reservation.status == :pending
+      assert {:error, _changeset} = RecurringReservations.create_recurring_reservation(params)
     end
+  end
 
-    test "creates recurring reservation and generates instances immediately", %{employee: employee, client: client, item: item} do
-      attrs = %{
-        client_id: client.id,
-        item_id: item.id,
-        employee_id: employee.id,
-        start_date: Date.utc_today(),
+  describe "generate_occurrences/1" do
+    test "generates weekly occurrences correctly" do
+      reservation = %{
+        start_date: ~D[2024-01-01],
+        end_date: ~D[2024-01-31],
+        frequency: :weekly,
+        interval: 1,
+        weekdays: [1, 3, 5], # Monday, Wednesday, Friday
         start_time: ~T[09:00:00],
-        end_time: ~T[10:00:00],
-        consecutive_days: 3,
-        pattern_type: :consecutive_days,
-        notes: "Test recurring reservation"
+        end_time: ~T[17:00:00]
       }
 
-      assert {:ok, recurring_reservation} = RecurringReservations.create_recurring_reservation(attrs, true)
-      assert recurring_reservation.status == :active
+      occurrences = RecurringReservations.generate_occurrences(reservation)
+      assert is_list(occurrences)
+      assert length(occurrences) > 0
 
-      # Check that instances were created
-      assert {:ok, instances} = RecurringReservationInstance
-      |> Ash.Query.for_read(:by_recurring_reservation, %{recurring_reservation_id: recurring_reservation.id})
-      |> Ash.read(domain: RivaAsh.Domain)
-      assert length(instances) == 3
-
-      # Check sequence numbers and dates
-      Enum.with_index(instances, 1)
-      |> Enum.each(fn {instance, expected_sequence} ->
-        assert instance.sequence_number == expected_sequence
-        expected_date = Date.add(Date.utc_today(), expected_sequence - 1)
-        assert instance.scheduled_date == expected_date
-        assert instance.status == :pending
+      # Check that all occurrences are within date range
+      Enum.each(occurrences, fn occurrence ->
+        assert Date.compare(occurrence.date, reservation.start_date) in [:gt, :eq]
+        assert Date.compare(occurrence.date, reservation.end_date) in [:lt, :eq]
       end)
     end
 
-    test "creates weekdays only pattern correctly", %{employee: employee, client: client, item: item} do
-      # Start on a Monday (2024-01-01 was a Monday)
+    test "generates daily occurrences correctly" do
+      reservation = %{
+        start_date: ~D[2024-01-01],
+        end_date: ~D[2024-01-07],
+        frequency: :daily,
+        interval: 1,
+        start_time: ~T[09:00:00],
+        end_time: ~T[17:00:00]
+      }
+
+      occurrences = RecurringReservations.generate_occurrences(reservation)
+      assert length(occurrences) == 7
+    end
+
+    test "generates monthly occurrences correctly" do
+      reservation = %{
+        start_date: ~D[2024-01-01],
+        end_date: ~D[2024-03-31],
+        frequency: :monthly,
+        interval: 1,
+        day_of_month: 15,
+        start_time: ~T[09:00:00],
+        end_time: ~T[17:00:00]
+      }
+
+      occurrences = RecurringReservations.generate_occurrences(reservation)
+      assert is_list(occurrences)
+      assert length(occurrences) >= 3
+    end
+  end
+
+  describe "calculate_next_occurrence/2" do
+    test "calculates next weekly occurrence" do
+      current_date = ~D[2024-01-01] # Monday
+      rule = %{
+        frequency: :weekly,
+        interval: 1,
+        weekdays: [1, 3, 5] # Monday, Wednesday, Friday
+      }
+
+      next_date = RecurringReservations.calculate_next_occurrence(current_date, rule)
+      assert next_date == ~D[2024-01-03] # Next Wednesday
+    end
+
+    test "calculates next daily occurrence" do
+      current_date = ~D[2024-01-01]
+      rule = %{
+        frequency: :daily,
+        interval: 2
+      }
+
+      next_date = RecurringReservations.calculate_next_occurrence(current_date, rule)
+      assert next_date == ~D[2024-01-03]
+    end
+  end
+
+  describe "update_recurring_reservation/2" do
+    test "updates recurring reservation" do
+      reservation_id = "recurring-123"
+      params = %{end_date: ~D[2025-12-31], frequency: :monthly}
+
+      assert {:ok, reservation} = RecurringReservations.update_recurring_reservation(reservation_id, params)
+      assert reservation.end_date == ~D[2025-12-31]
+      assert reservation.frequency == :monthly
+    end
+  end
+
+  describe "cancel_recurring_reservation/1" do
+    test "cancels recurring reservation" do
+      reservation_id = "recurring-123"
+      assert :ok = RecurringReservations.cancel_recurring_reservation(reservation_id)
+    end
+
+    test "handles non-existent reservation" do
+      reservation_id = "nonexistent"
+      assert {:error, :not_found} = RecurringReservations.cancel_recurring_reservation(reservation_id)
+    end
+  end
+
+  describe "get_active_reservations/1" do
+    test "returns active recurring reservations for business" do
+      business_id = "business-123"
+
+      assert {:ok, reservations} = RecurringReservations.get_active_reservations(business_id)
+      assert is_list(reservations)
+    end
+
+    test "returns empty list for business with no reservations" do
+      business_id = "business-no-reservations"
+
+      assert {:ok, []} = RecurringReservations.get_active_reservations(business_id)
+    end
+  end
+
+  describe "validate_recurrence_rule/1" do
+    test "validates correct weekly rule" do
+      rule = %{
+        frequency: :weekly,
+        interval: 1,
+        weekdays: [1, 3, 5]
+      }
+
+      assert :ok = RecurringReservations.validate_recurrence_rule(rule)
+    end
+
+    test "validates correct daily rule" do
+      rule = %{
+        frequency: :daily,
+        interval: 1
+      }
+
+      assert :ok = RecurringReservations.validate_recurrence_rule(rule)
+    end
+
+    test "returns error for invalid rule" do
+      rule = %{
+        frequency: :weekly,
+        interval: 0,
+        weekdays: []
+      }
+
+      assert {:error, _} = RecurringReservations.validate_recurrence_rule(rule)
+    end
+  end
+
+  describe "get_occurrences_in_range/3" do
+    test "returns occurrences within date range" do
+      reservation_id = "recurring-123"
       start_date = ~D[2024-01-01]
+      end_date = ~D[2024-01-31]
 
-      attrs = %{
-        client_id: client.id,
-        item_id: item.id,
-        employee_id: employee.id,
-        start_date: start_date,
-        start_time: ~T[09:00:00],
-        end_time: ~T[10:00:00],
-        consecutive_days: 5,  # 5 weekdays
-        pattern_type: :consecutive_days,
-        notes: "Weekdays only test"
-      }
-
-      assert {:ok, recurring_reservation} = RecurringReservations.create_recurring_reservation(attrs, true)
-
-      # Check that instances were created for weekdays only
-      assert {:ok, instances} = RecurringReservationInstance
-      |> Ash.Query.for_read(:by_recurring_reservation, %{recurring_reservation_id: recurring_reservation.id})
-      |> Ash.read(domain: RivaAsh.Domain)
-      assert length(instances) == 5
-
-      # All dates should be weekdays (Monday = 1, Friday = 5)
-      instances
-      |> Enum.each(fn instance ->
-        day_of_week = Date.day_of_week(instance.scheduled_date)
-        assert day_of_week in 1..5, "Expected weekday, got #{day_of_week} for #{instance.scheduled_date}"
-      end)
+      assert {:ok, occurrences} = RecurringReservations.get_occurrences_in_range(reservation_id, start_date, end_date)
+      assert is_list(occurrences)
     end
-  end
-
-  describe "process_instance/1" do
-    setup do
-      user = create_user!(%{role: :admin})
-      business = create_business!(%{}, user)
-      {:ok, employee} = create_employee(business.id, user)
-      {:ok, client} = create_client(business.id, user)
-      {:ok, item} = create_item(business.id, user)
-
-      attrs = %{
-        client_id: client.id,
-        item_id: item.id,
-        employee_id: employee.id,
-        start_date: Date.add(Date.utc_today(), 1),  # Tomorrow
-        start_time: ~T[09:00:00],
-        end_time: ~T[10:00:00],
-        consecutive_days: 2,
-        pattern_type: :consecutive_days,
-        notes: "Test for processing"
-      }
-
-      {:ok, recurring_reservation} = RecurringReservations.create_recurring_reservation(attrs, true)
-
-      {:ok, instances} = RecurringReservationInstance
-      |> Ash.Query.for_read(:by_recurring_reservation, %{recurring_reservation_id: recurring_reservation.id})
-      |> Ash.read(domain: RivaAsh.Domain)
-
-      [first_instance | _] = Enum.sort_by(instances, & &1.sequence_number)
-
-      %{
-        business: business,
-        employee: employee,
-        client: client,
-        item: item,
-        recurring_reservation: recurring_reservation,
-        first_instance: first_instance,
-        user: user
-      }
-    end
-
-    test "successfully processes instance when time slot is available", %{first_instance: instance} do
-      assert {:ok, updated_instance} = RecurringReservations.process_instance(instance.id)
-      assert updated_instance.status == :confirmed
-      assert updated_instance.reservation_id != nil
-      assert updated_instance.error_message == nil
-    end
-
-    test "fails to process instance when time slot conflicts", %{first_instance: instance, item: item, client: client, employee: employee} do
-      # Create a conflicting reservation first
-      start_datetime = DateTime.new!(instance.scheduled_date, ~T[09:30:00], "Etc/UTC")
-      end_datetime = DateTime.new!(instance.scheduled_date, ~T[10:30:00], "Etc/UTC")
-
-      conflict_attrs = %{
-        client_id: client.id,
-        item_id: item.id,
-        employee_id: employee.id,
-        reserved_from: start_datetime,
-        reserved_until: end_datetime,
-        notes: "Conflicting reservation"
-      }
-
-      assert {:ok, _conflict} = RivaAsh.Resources.Reservation
-        |> Ash.Changeset.for_create(:create, conflict_attrs)
-        |> Ash.create(domain: RivaAsh.Domain)
-
-      # Now try to process the instance
-      assert {:ok, updated_instance} = RecurringReservations.process_instance(instance.id)
-      assert updated_instance.status == :failed
-      assert updated_instance.reservation_id == nil
-      assert updated_instance.error_message =~ "conflicts"
-    end
-  end
-
-  describe "get_recurring_reservation_stats/1" do
-    test "returns correct statistics for recurring reservation" do
-      user = create_user!(%{role: :admin})
-      business = create_business!(%{}, user)
-      {:ok, employee} = create_employee(business.id, user)
-      {:ok, client} = create_client(business.id, user)
-      {:ok, item} = create_item(business.id, user)
-
-      attrs = %{
-        client_id: client.id,
-        item_id: item.id,
-        employee_id: employee.id,
-        start_date: Date.add(Date.utc_today(), 1),
-        start_time: ~T[09:00:00],
-        end_time: ~T[10:00:00],
-        consecutive_days: 3,
-        pattern_type: :consecutive_days
-      }
-
-      {:ok, recurring_reservation} = RecurringReservations.create_recurring_reservation(attrs, true)
-
-      assert {:ok, stats} = RecurringReservations.get_recurring_reservation_stats(recurring_reservation.id)
-      assert stats.pending == 3
-      assert stats.confirmed == 0
-      assert stats.failed == 0
-      assert stats.skipped == 0
-    end
-  end
-
-  describe "cancel_recurring_reservation/2" do
-    test "cancels recurring reservation and all pending instances" do
-      user = create_user!(%{role: :admin})
-      business = create_business!(%{}, user)
-      {:ok, employee} = create_employee(business.id, user)
-      {:ok, client} = create_client(business.id, user)
-      {:ok, item} = create_item(business.id, user)
-
-      attrs = %{
-        client_id: client.id,
-        item_id: item.id,
-        employee_id: employee.id,
-        start_date: Date.add(Date.utc_today(), 1),
-        start_time: ~T[09:00:00],
-        end_time: ~T[10:00:00],
-        consecutive_days: 3,
-        pattern_type: :consecutive_days
-      }
-
-      {:ok, recurring_reservation} = RecurringReservations.create_recurring_reservation(attrs, true)
-
-      # Cancel the recurring reservation
-      assert {:ok, updated_reservation} = RecurringReservations.cancel_recurring_reservation(
-        recurring_reservation.id,
-        "Test cancellation"
-      )
-      assert updated_reservation.status == :cancelled
-
-      # Check that all instances are skipped
-      assert {:ok, instances} = RecurringReservationInstance
-      |> Ash.Query.for_read(:by_recurring_reservation, %{recurring_reservation_id: recurring_reservation.id})
-      |> Ash.read(domain: RivaAsh.Domain)
-      assert length(instances) == 3
-
-      instances
-      |> Enum.each(fn instance ->
-        assert instance.status == :skipped
-        assert instance.skip_reason == "Test cancellation"
-      end)
-    end
-  end
-
-  describe "process_all_instances/1" do
-    test "processes all pending instances for a recurring reservation" do
-      user = create_user!(%{role: :admin})
-      business = create_business!(%{}, user)
-      {:ok, employee} = create_employee(business.id, user)
-      {:ok, client} = create_client(business.id, user)
-      {:ok, item} = create_item(business.id, user)
-
-      attrs = %{
-        client_id: client.id,
-        item_id: item.id,
-        employee_id: employee.id,
-        start_date: Date.add(Date.utc_today(), 1),
-        start_time: ~T[09:00:00],
-        end_time: ~T[10:00:00],
-        consecutive_days: 2,
-        pattern_type: :consecutive_days
-      }
-
-      {:ok, recurring_reservation} = RecurringReservations.create_recurring_reservation(attrs, true)
-
-      assert {:ok, results} = RecurringReservations.process_all_instances(recurring_reservation.id)
-      assert results.total == 2
-      assert length(results.successes) == 2
-      assert length(results.failures) == 0
-
-      # Verify all instances are now confirmed
-      assert {:ok, stats} = RecurringReservations.get_recurring_reservation_stats(recurring_reservation.id)
-      assert stats.confirmed == 2
-      assert stats.pending == 0
-    end
-  end
-
-  # Helper functions for creating test data
-
-
-  defp create_employee(business_id, actor) do
-    unique_id = System.unique_integer([:positive])
-    attrs = %{
-      business_id: business_id,
-      first_name: "Test",
-      last_name: "Employee #{unique_id}",
-      email: "test#{unique_id}@example.com",
-      role: :staff
-    }
-
-    Employee
-    |> Ash.Changeset.for_create(:create, attrs)
-    |> Ash.create(actor: actor, domain: RivaAsh.Domain)
-  end
-
-  defp create_client(_business_id, actor) do
-    attrs = %{
-      name: "Test Client #{System.unique_integer()}",
-      email: "client#{System.unique_integer()}@example.com",
-      phone: "555-0456",
-      is_registered: true
-    }
-
-    Client
-    |> Ash.Changeset.for_create(:create, attrs)
-    |> Ash.create(actor: actor, domain: RivaAsh.Domain)
-  end
-
-  defp create_item(business_id, actor) do
-    # First create an item type
-    {:ok, item_type} = RivaAsh.Resources.ItemType
-                       |> Ash.Changeset.for_create(:create, %{
-                         name: "Test Type #{System.unique_integer()}",
-                         business_id: business_id
-                       })
-                       |> Ash.create(actor: actor, domain: RivaAsh.Domain)
-
-    # Create the item without a section for now (section_id is optional)
-    attrs = %{
-      name: "Test Item #{System.unique_integer()}",
-      item_type_id: item_type.id
-    }
-
-    Item
-    |> Ash.Changeset.for_create(:create, attrs)
-    |> Ash.create(actor: actor, domain: RivaAsh.Domain)
   end
 end

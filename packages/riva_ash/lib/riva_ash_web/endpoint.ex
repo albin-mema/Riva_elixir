@@ -31,7 +31,10 @@ defmodule RivaAshWeb.Endpoint do
     socket("/phoenix/live_reload/socket", Phoenix.LiveReloader.Socket)
     plug(Phoenix.LiveReloader)
     plug(Phoenix.CodeReloader)
-    plug(Phoenix.Ecto.CheckRepoStatus, otp_app: :riva_ash)
+    # Conditionally check repo status only if not skipping database
+    unless Application.get_env(:riva_ash, :skip_database, false) or System.get_env("SKIP_DB") == "true" do
+      plug(Phoenix.Ecto.CheckRepoStatus, otp_app: :riva_ash)
+    end
   end
 
   plug(Plug.RequestId)

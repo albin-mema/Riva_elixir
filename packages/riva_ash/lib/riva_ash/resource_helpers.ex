@@ -404,7 +404,7 @@ defmodule RivaAsh.ResourceHelpers do
 
       # Policy for business-scoped access
       policy action_type([:read, :create, :update, :destroy]) do
-        authorize_if expr(business_id == ^actor(:business_id))
+        authorize_if expr(^actor(:current_business_id) == record.business_id)
       end
 
       # Policy for admin access (bypasses business scope)

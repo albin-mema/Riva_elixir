@@ -8,7 +8,8 @@ defmodule RivaAsh.MixProject do
       elixir: "~> 1.18",
       start_permanent: Mix.env() == :prod,
       deps: deps(),
-      aliases: aliases()
+      aliases: aliases(),
+      test_coverage: [tool: ExCoveralls]
     ]
   end
 
@@ -99,7 +100,8 @@ defmodule RivaAsh.MixProject do
       # Test
       {:stream_data, "~> 1.0"},
       {:mox, "~> 1.1", only: :test},
-      {:phoenix_test, "~> 0.7.0", only: :test, runtime: false}
+      {:phoenix_test, "~> 0.7.0", only: :test, runtime: false},
+      {:excoveralls, "~> 0.18", only: :test}
     ]
   end
 
@@ -108,7 +110,13 @@ defmodule RivaAsh.MixProject do
       setup: ["deps.get", "ecto.setup"],
       "ecto.setup": ["ecto.create", "ecto.migrate", "run priv/repo/seeds.exs"],
       "ecto.reset": ["ecto.drop", "ecto.setup"],
-      test: ["ecto.create --quiet", "ecto.migrate --quiet", "test"],
+      test: fn _ ->
+        if System.get_env("SKIP_DB") == "true" do
+          ["test"]
+        else
+          ["ecto.create --quiet", "ecto.migrate --quiet", "test"]
+        end
+      end,
       "assets.deploy": [
         "tailwind default --minify",
         "tailwind storybook --minify",
