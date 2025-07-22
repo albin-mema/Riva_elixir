@@ -1,287 +1,572 @@
 defmodule RivaAsh.TestHelpers do
   @moduledoc """
-  Helper functions for testing.
-
-  This module provides common test helpers for setting up test data,
-  making requests, and asserting responses in a consistent way.
-
-  ## Usage
-
-  Add this to your test module:
-
-      use RivaAsh.TestHelpers
-
-  Or import specific functions:
-
-      import RivaAsh.TestHelpers, only: [create_item: 1]
+  Test helpers for RivaAsh application.
   """
 
-  import ExUnit.Assertions
-  import Plug.Conn
-  import Phoenix.ConnTest
-
-  alias RivaAsh.Resources.Item
-  alias RivaAsh.Accounts.User
-  alias RivaAsh.Domain
-  alias RivaAsh.Accounts
-  alias Plug.Conn
+  alias RivaAsh.Repo
 
   @doc """
-  Setup the SQL sandbox for tests.
-
-  This should be called in the `setup` block of test modules.
+  Creates a test business with default attributes.
   """
-  @spec setup_sandbox(Keyword.t()) :: :ok
-  def setup_sandbox(tags) do
-    :ok = Ecto.Adapters.SQL.Sandbox.checkout(RivaAsh.Repo)
-
-    unless tags[:async] do
-      Ecto.Adapters.SQL.Sandbox.mode(RivaAsh.Repo, {:shared, self()})
-    end
-
-    :ok
-  end
-
-  @doc """
-  Run a function in a sandbox transaction.
-
-  This is useful for isolating test data within a test case.
-  """
-  @spec sandboxed((-> any())) :: any()
-  def sandboxed(fun) when is_function(fun, 0) do
-    :ok = Ecto.Adapters.SQL.Sandbox.checkout(RivaAsh.Repo)
-    fun.()
-  end
-
-  @doc """
-  Create a test item with the given attributes.
-
-  ## Examples
-
-      # Create with default name
-      {:ok, item} = create_item()
-
-      # Create with custom attributes
-      {:ok, item} = create_item(%{name: "Custom Name"})
-
-  """
-  @spec create_item(map()) :: {:ok, Item.t()} | {:error, any()}
-  def create_item(attrs) when is_map(attrs) do
-    defaults = %{
-      name: "Test Item #{System.unique_integer([:positive, :monotonic])}"
-    }
-
-    attrs = Map.merge(defaults, attrs)
-    Ash.create(Item, attrs, domain: Domain)
-  end
-
-  @doc """
-  Create a test item with default attributes.
-  """
-  @spec create_item() :: {:ok, Item.t()} | {:error, any()}
-  def create_item do
-    create_item(%{})
-  end
-
-  @doc """
-  Create a test item and return it, raising on error.
-
-  ## Examples
-
-      # Create with default name
-      item = create_item!()
-
-      # Create with custom attributes
-      item = create_item!(%{name: "Custom Name"})
-
-  """
-  @spec create_item!(map()) :: Item.t()
-  def create_item!(attrs) when is_map(attrs) do
-    case create_item(attrs) do
-      {:ok, item} -> item
-      {:error, error} -> raise "Failed to create test item: #{inspect(error)}"
-    end
-  end
-
-  @doc """
-  Create a test item with default attributes and return it, raising on error.
-  """
-  @spec create_item!() :: Item.t()
-  def create_item! do
-    create_item!(%{})
-  end
-
-  @doc """
-  Recursively assert that all key-value pairs in expected exist in actual.
-
-  This is more flexible than a direct comparison as it allows for partial matches.
-  """
-  @spec assert_maps_match(any(), any(), [String.t()]) :: :ok | no_return()
-  def assert_maps_match(expected, actual, path \\ []) do
-    cond do
-      is_map(expected) and is_map(actual) ->
-        Enum.each(expected, fn {key, expected_value} ->
-          assert Map.has_key?(actual, key),
-                 "Expected key `#{key}` not found in #{inspect(actual)} at path #{inspect(path)}"
-
-          assert_maps_match(
-            expected_value,
-            actual[key] || actual[to_string(key)],
-            path ++ [to_string(key)]
-          )
-        end)
-
-      is_list(expected) and is_list(actual) ->
-        assert length(expected) == length(actual),
-               "Expected list of length #{length(expected)} but got #{length(actual)} at path #{inspect(path)}"
-
-        Enum.zip(expected, actual)
-        |> Enum.with_index()
-        |> Enum.each(fn {{expected_item, actual_item}, index} ->
-          assert_maps_match(expected_item, actual_item, path ++ ["[#{index}]"])
-        end)
-
-      true ->
-        assert expected == actual,
-               "Expected #{inspect(expected)} but got #{inspect(actual)} at path #{inspect(path)}"
-    end
-
-    :ok
-  end
-
-  @doc """
-  Create a test user with the given attributes.
-
-  ## Examples
-
-      # Create with default attributes
-      {:ok, user} = create_user()
-
-      # Create with custom attributes
-      {:ok, user} = create_user(%{email: "test@example.com", role: :admin})
-
-  """
-  @spec create_user(map()) :: {:ok, User.t()} | {:error, any()}
-  def create_user(attrs \\ %{}) do
-    defaults = %{
-      email: "test_#{System.unique_integer([:positive, :monotonic])}@example.com",
-      password: "password123",
-      name: "Test User",
-      role: :admin
-    }
-
-    attrs = Map.merge(defaults, attrs)
-
-    User
-    |> Ash.Changeset.for_create(:register_with_password, attrs)
-    |> Ash.create(domain: RivaAsh.Accounts)
-  end
-
-  @doc """
-  Create a test user and return it, raising on error.
-  """
-  @spec create_user!(map()) :: User.t()
-  def create_user!(attrs \\ %{}) do
-    case create_user(attrs) do
-      {:ok, user} -> user
-      {:error, error} -> raise "Failed to create test user: #{inspect(error)}"
-    end
-  end
-
-  @doc """
-  Sign in a user for testing by setting up the session and assigns.
-
-  ## Examples
-
-      conn = build_conn() |> sign_in_user(user)
-
-  """
-  @spec sign_in_user(Conn.t(), User.t()) :: Conn.t()
-  def sign_in_user(conn, user) do
-    token = Phoenix.Token.sign(RivaAshWeb.Endpoint, "user_auth", user.id)
-
-    conn
-    |> Plug.Test.init_test_session(%{})
-    |> put_session(:user_token, token)
-    |> assign(:current_user, user)
-  end
-
-  @doc """
-  Create a user and sign them in for testing.
-
-  ## Examples
-
-      {conn, user} = build_conn() |> create_and_sign_in_user()
-      {conn, user} = build_conn() |> create_and_sign_in_user(%{role: :admin})
-
-  """
-  @spec create_and_sign_in_user(Conn.t(), map()) :: {Conn.t(), User.t()}
-  def create_and_sign_in_user(conn, attrs \\ %{}) do
-    user = create_user!(attrs)
-    conn = sign_in_user(conn, user)
-    {conn, user}
-  end
-
-  @doc """
-  Create a test business with the given attributes and actor.
-
-  ## Examples
-
-      # Create with default attributes and admin user
-      user = create_user!(%{role: :admin})
-      {:ok, business} = create_business(%{name: "Test Business"}, user)
-
-  """
-  @spec create_business(map(), User.t()) :: {:ok, any()} | {:error, any()}
-  def create_business(attrs \\ %{}, actor) do
-    defaults = %{
-      name: "Test Business #{System.unique_integer([:positive, :monotonic])}",
+  def create_business(attrs \\ %{}) do
+    default_attrs = %{
+      name: "Test Business",
       description: "A test business",
-      owner_id: actor.id
+      email: "test@business.com",
+      phone: "123-456-7890",
+      address: "123 Test St",
+      timezone: "UTC"
     }
 
-    attrs = Map.merge(defaults, attrs)
+    attrs = Map.merge(default_attrs, attrs)
 
-    RivaAsh.Resources.Business
-    |> Ash.Changeset.for_create(:create, attrs)
-    |> Ash.create(actor: actor, domain: RivaAsh.Domain)
+    %RivaAsh.Business{}
+    |> RivaAsh.Business.changeset(attrs)
+    |> Repo.insert!()
   end
 
   @doc """
-  Create a test business and return it, raising on error.
+  Creates a test user with default attributes.
   """
-  @spec create_business!(map(), User.t()) :: any()
-  def create_business!(attrs \\ %{}, actor) do
-    case create_business(attrs, actor) do
-      {:ok, business} -> business
-      {:error, error} -> raise "Failed to create test business: #{inspect(error)}"
-    end
+  def create_user(attrs \\ %{}) do
+    default_attrs = %{
+      name: "Test User",
+      email: "test@user.com",
+      password: "password123",
+      password_confirmation: "password123"
+    }
+
+    attrs = Map.merge(default_attrs, attrs)
+
+    %RivaAsh.User{}
+    |> RivaAsh.User.changeset(attrs)
+    |> Repo.insert!()
   end
 
   @doc """
-  Generate a unique string for testing.
-
-  This is useful for creating unique values in tests to avoid conflicts.
-
-  ## Examples
-
-      # Generate a unique string
-      unique = unique_string()
-
-      # With a prefix
-      email = unique_string("user_") <> "@example.com"
-
+  Creates a test service with default attributes.
   """
-  @spec unique_string(String.t()) :: String.t()
-  def unique_string(prefix) when is_binary(prefix) do
-    "#{prefix}#{System.unique_integer([:positive, :monotonic])}"
+  def create_service(business_id, attrs \\ %{}) do
+    default_attrs = %{
+      name: "Test Service",
+      description: "A test service",
+      duration: 60,
+      price: 100.00,
+      business_id: business_id
+    }
+
+    attrs = Map.merge(default_attrs, attrs)
+
+    %RivaAsh.Service{}
+    |> RivaAsh.Service.changeset(attrs)
+    |> Repo.insert!()
   end
 
   @doc """
-  Generate a unique string with no prefix.
+  Creates a test booking with default attributes.
   """
-  @spec unique_string() :: String.t()
-  def unique_string do
-    unique_string("")
+  def create_booking(user_id, business_id, service_id, attrs \\ %{}) do
+    default_attrs = %{
+      user_id: user_id,
+      business_id: business_id,
+      service_id: service_id,
+      start_time: DateTime.utc_now() |> DateTime.add(3600, :second),
+      end_time: DateTime.utc_now() |> DateTime.add(7200, :second),
+      status: :pending
+    }
+
+    attrs = Map.merge(default_attrs, attrs)
+
+    %RivaAsh.Booking{}
+    |> RivaAsh.Booking.changeset(attrs)
+    |> Repo.insert!()
+  end
+
+  @doc """
+  Creates a test reservation with default attributes.
+  """
+  def create_reservation(user_id, business_id, attrs \\ %{}) do
+    default_attrs = %{
+      user_id: user_id,
+      business_id: business_id,
+      start_date: Date.utc_today(),
+      end_date: Date.add(Date.utc_today(), 7),
+      frequency: :weekly,
+      status: :active
+    }
+
+    attrs = Map.merge(default_attrs, attrs)
+
+    %RivaAsh.RecurringReservation{}
+    |> RivaAsh.RecurringReservation.changeset(attrs)
+    |> Repo.insert!()
+  end
+
+  @doc """
+  Creates a test availability slot with default attributes.
+  """
+  def create_availability(business_id, attrs \\ %{}) do
+    default_attrs = %{
+      business_id: business_id,
+      start_time: ~T[09:00:00],
+      end_time: ~T[17:00:00],
+      day_of_week: 1,
+      is_available: true
+    }
+
+    attrs = Map.merge(default_attrs, attrs)
+
+    %RivaAsh.Availability{}
+    |> RivaAsh.Availability.changeset(attrs)
+    |> Repo.insert!()
+  end
+
+  @doc """
+  Creates a test blocked time slot with default attributes.
+  """
+  def create_blocked_time(business_id, attrs \\ %{}) do
+    start_time = DateTime.utc_now() |> DateTime.add(3600, :second)
+    end_time = DateTime.utc_now() |> DateTime.add(7200, :second)
+
+    default_attrs = %{
+      business_id: business_id,
+      start_time: start_time,
+      end_time: end_time,
+      reason: "Test block"
+    }
+
+    attrs = Map.merge(default_attrs, attrs)
+
+    %RivaAsh.BlockedTime{}
+    |> RivaAsh.BlockedTime.changeset(attrs)
+    |> Repo.insert!()
+  end
+
+  @doc """
+  Creates a test change record with default attributes.
+  """
+  def create_change(resource_id, attrs \\ %{}) do
+    default_attrs = %{
+      resource_id: resource_id,
+      change_type: :update,
+      changes: %{name: "Updated Name"},
+      user_id: "user-123"
+    }
+
+    attrs = Map.merge(default_attrs, attrs)
+
+    %RivaAsh.Change{}
+    |> RivaAsh.Change.changeset(attrs)
+    |> Repo.insert!()
+  end
+
+  @doc """
+  Creates a test permission with default attributes.
+  """
+  def create_permission(resource_id, user_id, attrs \\ %{}) do
+    default_attrs = %{
+      resource_id: resource_id,
+      user_id: user_id,
+      permission: :read
+    }
+
+    attrs = Map.merge(default_attrs, attrs)
+
+    %RivaAsh.Permission{}
+    |> RivaAsh.Permission.changeset(attrs)
+    |> Repo.insert!()
+  end
+
+  @doc """
+  Creates a test role with default attributes.
+  """
+  def create_role(user_id, role_name \\ :business_owner) do
+    %RivaAsh.Role{}
+    |> RivaAsh.Role.changeset(%{
+      user_id: user_id,
+      role: role_name
+    })
+    |> Repo.insert!()
+  end
+
+  @doc """
+  Creates a test validation with default attributes.
+  """
+  def create_validation(resource_id, attrs \\ %{}) do
+    default_attrs = %{
+      resource_id: resource_id,
+      validation_type: :required,
+      field: "name",
+      value: "Test Value",
+      is_valid: true
+    }
+
+    attrs = Map.merge(default_attrs, attrs)
+
+    %RivaAsh.Validation{}
+    |> RivaAsh.Validation.changeset(attrs)
+    |> Repo.insert!()
+  end
+
+  @doc """
+  Creates a test database health record with default attributes.
+  """
+  def create_database_health(attrs \\ %{}) do
+    default_attrs = %{
+      check_name: "test_check",
+      status: :healthy,
+      message: "All systems operational",
+      last_checked: DateTime.utc_now()
+    }
+
+    attrs = Map.merge(default_attrs, attrs)
+
+    %RivaAsh.DatabaseHealth{}
+    |> RivaAsh.DatabaseHealth.changeset(attrs)
+    |> Repo.insert!()
+  end
+
+  @doc """
+  Creates a test mermaid diagram with default attributes.
+  """
+  def create_mermaid_diagram(attrs \\ %{}) do
+    default_attrs = %{
+      name: "Test Diagram",
+      type: "flowchart",
+      content: "A-->B",
+      metadata: %{}
+    }
+
+    attrs = Map.merge(default_attrs, attrs)
+
+    %RivaAsh.Mermaid{}
+    |> RivaAsh.Mermaid.changeset(attrs)
+    |> Repo.insert!()
+  end
+
+  @doc """
+  Creates a test query with default attributes.
+  """
+  def create_query(attrs \\ %{}) do
+    default_attrs = %{
+      name: "Test Query",
+      query: "SELECT * FROM users",
+      parameters: %{},
+      result_count: 0
+    }
+
+    attrs = Map.merge(default_attrs, attrs)
+
+    %RivaAsh.Query{}
+    |> RivaAsh.Query.changeset(attrs)
+    |> Repo.insert!()
+  end
+
+  @doc """
+  Creates a test recurring reservation with default attributes.
+  """
+  def create_recurring_reservation(user_id, business_id, attrs \\ %{}) do
+    default_attrs = %{
+      user_id: user_id,
+      business_id: business_id,
+      start_date: Date.utc_today(),
+      end_date: Date.add(Date.utc_today(), 30),
+      frequency: :weekly,
+      day_of_week: 1,
+      time_slot: ~T[09:00:00],
+      status: :active
+    }
+
+    attrs = Map.merge(default_attrs, attrs)
+
+    %RivaAsh.RecurringReservation{}
+    |> RivaAsh.RecurringReservation.changeset(attrs)
+    |> Repo.insert!()
+  end
+
+  @doc """
+  Creates a test error with default attributes.
+  """
+  def create_error(attrs \\ %{}) do
+    default_attrs = %{
+      error_type: "test_error",
+      message: "Test error message",
+      context: %{test: true},
+      severity: :low
+    }
+
+    attrs = Map.merge(default_attrs, attrs)
+
+    %RivaAsh.Error{}
+    |> RivaAsh.Error.changeset(attrs)
+    |> Repo.insert!()
+  end
+
+  @doc """
+  Creates a test datetime helper record with default attributes.
+  """
+  def create_datetime_helper(attrs \\ %{}) do
+    default_attrs = %{
+      timezone: "UTC",
+      format: "iso8601",
+      offset: 0
+    }
+
+    attrs = Map.merge(default_attrs, attrs)
+
+    %RivaAsh.DateTimeHelper{}
+    |> RivaAsh.DateTimeHelper.changeset(attrs)
+    |> Repo.insert!()
+  end
+
+  @doc """
+  Creates a test resource helper record with default attributes.
+  """
+  def create_resource_helper(attrs \\ %{}) do
+    default_attrs = %{
+      resource_type: "test",
+      resource_id: "test-123",
+      helper_type: "validation",
+      data: %{}
+    }
+
+    attrs = Map.merge(default_attrs, attrs)
+
+    %RivaAsh.ResourceHelper{}
+    |> RivaAsh.ResourceHelper.changeset(attrs)
+    |> Repo.insert!()
+  end
+
+  @doc """
+  Creates a test validation helper record with default attributes.
+  """
+  def create_validation_helper(attrs \\ %{}) do
+    default_attrs = %{
+      field: "test_field",
+      validator: "required",
+      options: %{},
+      is_valid: true
+    }
+
+    attrs = Map.merge(default_attrs, attrs)
+
+    %RivaAsh.ValidationHelper{}
+    |> RivaAsh.ValidationHelper.changeset(attrs)
+    |> Repo.insert!()
+  end
+
+  @doc """
+  Creates a test permission helper record with default attributes.
+  """
+  def create_permission_helper(attrs \\ %{}) do
+    default_attrs = %{
+      action: "read",
+      resource: "test_resource",
+      conditions: %{},
+      is_allowed: true
+    }
+
+    attrs = Map.merge(default_attrs, attrs)
+
+    %RivaAsh.PermissionHelper{}
+    |> RivaAsh.PermissionHelper.changeset(attrs)
+    |> Repo.insert!()
+  end
+
+  @doc """
+  Creates a test authorization helper record with default attributes.
+  """
+  def create_authorization_helper(attrs \\ %{}) do
+    default_attrs = %{
+      user_id: "user-123",
+      resource_id: "resource-123",
+      action: "read",
+      is_authorized: true
+    }
+
+    attrs = Map.merge(default_attrs, attrs)
+
+    %RivaAsh.AuthorizationHelper{}
+    |> RivaAsh.AuthorizationHelper.changeset(attrs)
+    |> Repo.insert!()
+  end
+
+  @doc """
+  Creates a test availability helper record with default attributes.
+  """
+  def create_availability_helper(attrs \\ %{}) do
+    default_attrs = %{
+      business_id: "business-123",
+      date: Date.utc_today(),
+      slots: [],
+      is_available: true
+    }
+
+    attrs = Map.merge(default_attrs, attrs)
+
+    %RivaAsh.AvailabilityHelper{}
+    |> RivaAsh.AvailabilityHelper.changeset(attrs)
+    |> Repo.insert!()
+  end
+
+  @doc """
+  Creates a test booking helper record with default attributes.
+  """
+  def create_booking_helper(attrs \\ %{}) do
+    default_attrs = %{
+      booking_id: "booking-123",
+      status: "pending",
+      price: 100.00,
+      duration: 60
+    }
+
+    attrs = Map.merge(default_attrs, attrs)
+
+    %RivaAsh.BookingHelper{}
+    |> RivaAsh.BookingHelper.changeset(attrs)
+    |> Repo.insert!()
+  end
+
+  @doc """
+  Creates a test changes helper record with default attributes.
+  """
+  def create_changes_helper(attrs \\ %{}) do
+    default_attrs = %{
+      change_type: "update",
+      resource_id: "resource-123",
+      changes: %{},
+      user_id: "user-123"
+    }
+
+    attrs = Map.merge(default_attrs, attrs)
+
+    %RivaAsh.ChangesHelper{}
+    |> RivaAsh.ChangesHelper.changeset(attrs)
+    |> Repo.insert!()
+  end
+
+  @doc """
+  Creates a test database health helper record with default attributes.
+  """
+  def create_database_health_helper(attrs \\ %{}) do
+    default_attrs = %{
+      check_name: "test_check",
+      status: "healthy",
+      message: "Test message",
+      last_checked: DateTime.utc_now()
+    }
+
+    attrs = Map.merge(default_attrs, attrs)
+
+    %RivaAsh.DatabaseHealthHelper{}
+    |> RivaAsh.DatabaseHealthHelper.changeset(attrs)
+    |> Repo.insert!()
+  end
+
+  @doc """
+  Creates a test mermaid helper record with default attributes.
+  """
+  def create_mermaid_helper(attrs \\ %{}) do
+    default_attrs = %{
+      diagram_type: "flowchart",
+      content: "A-->B",
+      metadata: %{}
+    }
+
+    attrs = Map.merge(default_attrs, attrs)
+
+    %RivaAsh.MermaidHelper{}
+    |> RivaAsh.MermaidHelper.changeset(attrs)
+    |> Repo.insert!()
+  end
+
+  @doc """
+  Creates a test queries helper record with default attributes.
+  """
+  def create_queries_helper(attrs \\ %{}) do
+    default_attrs = %{
+      query_type: "select",
+      table: "users",
+      conditions: %{},
+      order_by: "id"
+    }
+
+    attrs = Map.merge(default_attrs, attrs)
+
+    %RivaAsh.QueriesHelper{}
+    |> RivaAsh.QueriesHelper.changeset(attrs)
+    |> Repo.insert!()
+  end
+
+  @doc """
+  Creates a test permissions helper record with default attributes.
+  """
+  def create_permissions_helper(attrs \\ %{}) do
+    default_attrs = %{
+      user_id: "user-123",
+      resource_id: "resource-123",
+      permission: "read",
+      is_granted: true
+    }
+
+    attrs = Map.merge(default_attrs, attrs)
+
+    %RivaAsh.PermissionsHelper{}
+    |> RivaAsh.PermissionsHelper.changeset(attrs)
+    |> Repo.insert!()
+  end
+
+  @doc """
+  Creates a test recurring reservations helper record with default attributes.
+  """
+  def create_recurring_reservations_helper(attrs \\ %{}) do
+    default_attrs = %{
+      user_id: "user-123",
+      business_id: "business-123",
+      start_date: Date.utc_today(),
+      end_date: Date.add(Date.utc_today(), 30),
+      frequency: "weekly"
+    }
+
+    attrs = Map.merge(default_attrs, attrs)
+
+    %RivaAsh.RecurringReservationsHelper{}
+    |> RivaAsh.RecurringReservationsHelper.changeset(attrs)
+    |> Repo.insert!()
+  end
+
+  @doc """
+  Creates a test release helper record with default attributes.
+  """
+  def create_release_helper(attrs \\ %{}) do
+    default_attrs = %{
+      version: "1.0.0",
+      environment: "test",
+      status: "deployed"
+    }
+
+    attrs = Map.merge(default_attrs, attrs)
+
+    %RivaAsh.ReleaseHelper{}
+    |> RivaAsh.ReleaseHelper.changeset(attrs)
+    |> Repo.insert!()
+  end
+
+  @doc """
+  Creates a test validations helper record with default attributes.
+  """
+  def create_validations_helper(attrs \\ %{}) do
+    default_attrs = %{
+      field: "test_field",
+      validator: "required",
+      is_valid: true,
+      message: "Field is required"
+    }
+
+    attrs = Map.merge(default_attrs, attrs)
+
+    %RivaAsh.ValidationsHelper{}
+    |> RivaAsh.ValidationsHelper.changeset(attrs)
+    |> Repo.insert!()
   end
 end
