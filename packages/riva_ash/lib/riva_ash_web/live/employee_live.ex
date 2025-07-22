@@ -10,7 +10,7 @@ defmodule RivaAshWeb.EmployeeLive do
   import RivaAshWeb.Components.Molecules.EmptyState
   import RivaAshWeb.Components.Organisms.PageHeader
   import RivaAshWeb.Components.Organisms.EmployeeForm
-  import RivaAshWeb.Components.Molecules.ConfirmModal
+  import RivaAshWeb.Components.Molecules.ConfirmDialog
 
   alias RivaAsh.Resources.Employee
   alias RivaAsh.Resources.Business
@@ -185,11 +185,11 @@ defmodule RivaAshWeb.EmployeeLive do
                   >
                     Delete
                   </.button>
-                  <ConfirmModal
+                  <.confirm_dialog
                     id="delete-employee-modal"
                     show={@show_confirm_delete_modal}
                     title="Delete Employee"
-                    description={"Are you sure you want to delete employee \"#{@employee_to_delete.first_name} #{@employee_to_delete.last_name}\"?"}
+                    message={"Are you sure you want to delete employee \"#{@employee_to_delete.first_name} #{@employee_to_delete.last_name}\"?"}
                     on_confirm={JS.push("confirm_delete_employee", value: %{id: @employee_to_delete.id})}
                     on_cancel={JS.hide("delete-employee-modal")}
                   />

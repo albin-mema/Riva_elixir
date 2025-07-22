@@ -1,9 +1,11 @@
-defmodule RivaAshWeb.Storybook do
-  use PhoenixStorybook,
-    otp_app: :riva_ash_web,
-    content_path: Path.expand("../../storybook", __DIR__),
-    # assets path are remote path, not local file-system paths
-    css_path: "/assets/storybook.css",
-    js_path: "/assets/storybook.js",
-    sandbox_class: "riva-ash-web"
+if Mix.env() == :dev do
+  defmodule RivaAshWeb.Storybook do
+    use PhoenixStorybook,
+      otp_app: :riva_ash_web,
+      content_path: Path.expand("../../storybook", __DIR__),
+      # assets path are remote path, not local file-system paths
+      css_path: "/assets/storybook.css",
+      js_path: "/assets/storybook.js",
+      sandbox_class: "riva-ash-web"
+  end
 end
