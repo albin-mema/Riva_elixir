@@ -17,6 +17,7 @@ defmodule RivaAsh.Resources.Employee do
     ]
 
   import RivaAsh.ResourceHelpers
+  import RivaAsh.Authorization
 
   postgres do
     table("employees")

@@ -17,6 +17,7 @@ defmodule RivaAsh.Resources.Client do
     ]
 
   import RivaAsh.ResourceHelpers
+  import RivaAsh.Authorization
 
   standard_postgres("clients")
   standard_archive()

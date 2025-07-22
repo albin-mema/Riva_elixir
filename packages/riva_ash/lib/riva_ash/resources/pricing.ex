@@ -22,7 +22,7 @@ defmodule RivaAsh.Resources.Pricing do
     ]
 
   import RivaAsh.ResourceHelpers
-  import RivaAsh.Authorization
+  import RivaAsh.Authorization, except: [business_scoped_policies: 0]
 
   standard_postgres("pricing")
   standard_archive()

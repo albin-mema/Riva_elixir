@@ -29,6 +29,7 @@ defmodule RivaAsh.Resources.Payment do
     ]
 
   import RivaAsh.ResourceHelpers
+  import RivaAsh.Authorization
 
   postgres do
     table("payments")

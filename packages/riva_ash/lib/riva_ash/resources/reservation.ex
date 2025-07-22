@@ -20,6 +20,7 @@ defmodule RivaAsh.Resources.Reservation do
     ]
 
   import RivaAsh.ResourceHelpers
+  import RivaAsh.Authorization
 
   standard_postgres("reservations")
   standard_archive()
