@@ -100,6 +100,16 @@ defmodule RivaAsh.Authorization do
   end
 
   @doc """
+  Helper macro for checking if an action has a specific permission.
+  Used in Ash policies for permission-based authorization.
+  """
+  defmacro action_has_permission(permission_name) do
+    quote do
+      expr(^actor(:permissions) |> contains(unquote(permission_name)))
+    end
+  end
+
+  @doc """
   Standard policy for client-owned resources.
   """
   defmacro client_owned_policies do

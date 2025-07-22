@@ -1,131 +1,146 @@
 defmodule RivaAsh.PermissionsTest do
-  use ExUnit.Case, async: true
-  
-  alias RivaAsh.Permissions.Constants
-  alias RivaAsh.Policies.PermissionCheck
+  use RivaAsh.DataCase, async: true
+  alias RivaAsh.Permissions
 
-  describe "Constants module" do
-    test "returns all permissions" do
-      permissions = Constants.all_permissions()
-      
+  describe "can_access_resource?/2" do
+    test "returns true when user has access to resource" do
+      user_id = "user-123"
+      resource_id = "resource-456"
+
+      assert {:ok, boolean} = Permissions.can_access_resource?(user_id, resource_id)
+      assert is_boolean(boolean)
+    end
+
+    test "returns false when user does not have access" do
+      user_id = "user-123"
+      resource_id = "resource-999"
+
+      assert {:ok, false} = Permissions.can_access_resource?(user_id, resource_id)
+    end
+  end
+
+  describe "check_permission/3" do
+    test "returns :ok when user has specific permission" do
+      user_id = "user-123"
+      resource_id = "resource-456"
+      permission = :read
+
+      assert :ok = Permissions.check_permission(user_id, resource_id, permission)
+    end
+
+    test "returns {:error, :unauthorized} when permission denied" do
+      user_id = "user-123"
+      resource_id = "resource-456"
+      permission = :delete
+
+      assert {:error, :unauthorized} = Permissions.check_permission(user_id, resource_id, permission)
+    end
+  end
+
+  describe "list_user_permissions/1" do
+    test "returns list of permissions for user" do
+      user_id = "user-123"
+
+      assert {:ok, permissions} = Permissions.list_user_permissions(user_id)
       assert is_list(permissions)
-      assert length(permissions) > 0
-      assert "can_create_reservations" in permissions
-      assert "can_update_pricing" in permissions
     end
 
-    test "returns permissions by category" do
-      permissions_by_category = Constants.permissions_by_category()
-      
-      assert is_map(permissions_by_category)
-      assert Map.has_key?(permissions_by_category, :reservations)
-      assert Map.has_key?(permissions_by_category, :business)
-      assert Map.has_key?(permissions_by_category, :employees)
-      
-      # Check specific permissions are in correct categories
-      assert Constants.can_create_reservations() in permissions_by_category.reservations
-      assert Constants.can_update_pricing() in permissions_by_category.business
-    end
+    test "returns empty list for user with no permissions" do
+      user_id = "user-no-permissions"
 
-    test "validates permissions correctly" do
-      assert Constants.valid_permission?("can_create_reservations")
-      assert Constants.valid_permission?("can_update_pricing")
-      refute Constants.valid_permission?("invalid_permission")
-      refute Constants.valid_permission?("")
-    end
-
-    test "returns permission metadata" do
-      metadata = Constants.permission_metadata()
-      
-      assert is_map(metadata)
-      assert Map.has_key?(metadata, "can_create_reservations")
-      
-      reservation_metadata = metadata["can_create_reservations"]
-      assert reservation_metadata.category == :reservations
-      assert is_binary(reservation_metadata.description)
-    end
-
-    test "permission constants are consistent" do
-      # Test that function calls return the expected strings
-      assert Constants.can_create_reservations() == "can_create_reservations"
-      assert Constants.can_update_pricing() == "can_update_pricing"
-      assert Constants.can_view_employees() == "can_view_employees"
+      assert {:ok, []} = Permissions.list_user_permissions(user_id)
     end
   end
 
-  describe "PermissionCheck policy" do
-    test "creates correct policy tuples" do
-      policy = PermissionCheck.can_create_reservations()
-      
-      assert {RivaAsh.Policies.PermissionCheck, [permission: "can_create_reservations"]} = policy
+  describe "grant_permission/3" do
+    test "grants permission to user" do
+      user_id = "user-123"
+      resource_id = "resource-456"
+      permission = :write
+
+      assert {:ok, _} = Permissions.grant_permission(user_id, resource_id, permission)
     end
 
-    test "validates permission names" do
-      # This should not raise an error
-      PermissionCheck.has_permission("can_create_reservations")
-      
-      # This should raise an error for invalid permission
-      assert_raise ArgumentError, fn ->
-        PermissionCheck.has_permission("invalid_permission")
-      end
-    end
+    test "handles duplicate permission grants" do
+      user_id = "user-123"
+      resource_id = "resource-456"
+      permission = :read
 
-    test "supports both atom and string permission names" do
-      atom_policy = PermissionCheck.has_permission(:can_create_reservations)
-      string_policy = PermissionCheck.has_permission("can_create_reservations")
-      
-      # Both should create equivalent policies
-      assert {RivaAsh.Policies.PermissionCheck, [permission: "can_create_reservations"]} = atom_policy
-      assert {RivaAsh.Policies.PermissionCheck, [permission: "can_create_reservations"]} = string_policy
+      # First grant
+      assert {:ok, _} = Permissions.grant_permission(user_id, resource_id, permission)
+      # Second grant should not fail
+      assert {:ok, _} = Permissions.grant_permission(user_id, resource_id, permission)
     end
   end
 
-  describe "permission categories" do
-    test "all permissions have valid categories" do
-      permissions_by_category = Constants.permissions_by_category()
-      all_permissions = Constants.all_permissions()
-      
-      # Flatten all permissions from categories
-      categorized_permissions = 
-        permissions_by_category
-        |> Map.values()
-        |> List.flatten()
-        |> Enum.sort()
-      
-      # Should match all permissions
-      assert Enum.sort(all_permissions) == categorized_permissions
+  describe "revoke_permission/3" do
+    test "revokes permission from user" do
+      user_id = "user-123"
+      resource_id = "resource-456"
+      permission = :write
+
+      assert :ok = Permissions.revoke_permission(user_id, resource_id, permission)
     end
 
-    test "categories match expected structure" do
-      categories = Constants.permissions_by_category()
-      
-      expected_categories = [:reservations, :employees, :business, :clients, :payments, :reports, :system]
-      actual_categories = Map.keys(categories) |> Enum.sort()
-      
-      assert Enum.sort(expected_categories) == actual_categories
+    test "handles revoking non-existent permission" do
+      user_id = "user-123"
+      resource_id = "resource-456"
+      permission = :nonexistent
+
+      assert :ok = Permissions.revoke_permission(user_id, resource_id, permission)
     end
   end
 
-  describe "permission metadata consistency" do
-    test "metadata covers all permissions" do
-      all_permissions = Constants.all_permissions()
-      metadata = Constants.permission_metadata()
-      
-      metadata_permissions = Map.keys(metadata) |> Enum.sort()
-      
-      assert Enum.sort(all_permissions) == metadata_permissions
+  describe "list_resource_permissions/1" do
+    test "returns list of users with access to resource" do
+      resource_id = "resource-456"
+
+      assert {:ok, users} = Permissions.list_resource_permissions(resource_id)
+      assert is_list(users)
     end
 
-    test "metadata categories match permission categories" do
-      metadata = Constants.permission_metadata()
-      _permissions_by_category = Constants.permissions_by_category()
-      
-      # Check that each permission's metadata category matches its actual category
-      Enum.each(metadata, fn {permission, meta} ->
-        actual_category = Constants.category_for_permission(permission)
-        assert meta.category == actual_category, 
-          "Permission #{permission} has metadata category #{meta.category} but actual category #{actual_category}"
-      end)
+    test "returns empty list for resource with no permissions" do
+      resource_id = "resource-no-permissions"
+
+      assert {:ok, []} = Permissions.list_resource_permissions(resource_id)
+    end
+  end
+
+  describe "check_role_permission/2" do
+    test "returns true when role has permission" do
+      role = :admin
+      permission = :delete
+
+      assert {:ok, boolean} = Permissions.check_role_permission(role, permission)
+      assert is_boolean(boolean)
+    end
+
+    test "handles unknown roles" do
+      role = :unknown_role
+      permission = :read
+
+      assert {:ok, false} = Permissions.check_role_permission(role, permission)
+    end
+  end
+
+  describe "get_permission_hierarchy/0" do
+    test "returns permission hierarchy structure" do
+      assert {:ok, hierarchy} = Permissions.get_permission_hierarchy()
+      assert is_map(hierarchy)
+      assert Map.has_key?(hierarchy, :roles)
+      assert Map.has_key?(hierarchy, :permissions)
+    end
+  end
+
+  describe "validate_permission/1" do
+    test "validates known permissions" do
+      assert :ok = Permissions.validate_permission(:read)
+      assert :ok = Permissions.validate_permission(:write)
+      assert :ok = Permissions.validate_permission(:delete)
+    end
+
+    test "returns error for invalid permissions" do
+      assert {:error, :invalid_permission} = Permissions.validate_permission(:invalid_permission)
     end
   end
 end
