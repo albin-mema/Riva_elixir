@@ -60,7 +60,7 @@ defmodule RivaAshWeb.HealthController do
   defp send_health_response(conn, status, health_status, db_status) do
     response = %{
       status: health_status,
-      timestamp: DateTime.utc_now() |> DateTime.to_iso8601(),
+      timestamp: Timex.now() |> DateTime.to_iso8601(),
       database: db_status,
       service: "riva_ash_api"
     }
