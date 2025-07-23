@@ -148,7 +148,7 @@ defmodule RivaAsh.Resources.Employee do
     update :update_last_login do
       accept([])
       require_atomic? false
-      change(set_attribute(:last_login_at, &DateTime.utc_now/0))
+      change(set_attribute(:last_login_at, &Timex.now/0))
     end
 
     update :deactivate do
