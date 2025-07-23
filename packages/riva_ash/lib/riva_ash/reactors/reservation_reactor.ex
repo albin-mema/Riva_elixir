@@ -88,13 +88,13 @@ defmodule RivaAsh.Reactors.ReservationReactor do
 
     run fn %{start_datetime: start_dt, end_datetime: end_dt}, _context ->
       cond do
-        DateTime.compare(start_dt, end_dt) != :lt ->
+        Timex.compare(start_dt, end_dt) != -1 ->
           {:error, "Start datetime must be before end datetime"}
 
-        DateTime.compare(start_dt, DateTime.utc_now()) == :lt ->
+        Timex.compare(start_dt, Timex.utc_now()) == -1 ->
           {:error, "Cannot create reservations in the past"}
 
-        DateTime.diff(end_dt, start_dt, :hour) > 24 ->
+        Timex.diff(end_dt, start_dt, :hours) > 24 ->
           {:error, "Reservation cannot exceed 24 hours"}
 
         true ->
@@ -129,7 +129,7 @@ defmodule RivaAsh.Reactors.ReservationReactor do
 
     run fn %{item: item, start_datetime: start_dt, end_datetime: end_dt}, _context ->
       # Calculate number of days (minimum 1 day)
-      hours = DateTime.diff(end_dt, start_dt, :hour)
+      hours = Timex.diff(end_dt, start_dt, :hours)
       days = max(1, ceil(hours / 24))
 
       # Get pricing for the item type

@@ -4,7 +4,7 @@ defmodule RivaAsh.SecurityTest do
   Tests all the security fixes implemented in the system.
   """
   use ExUnit.Case, async: true
-  
+
   import Ash.Test
   alias RivaAsh.Resources.{Business, Employee, Client, Item, Reservation, Payment, Pricing}
 
@@ -16,7 +16,7 @@ defmodule RivaAsh.SecurityTest do
     }) |> Ash.create!(domain: RivaAsh.Domain)
 
     business2 = Business |> Ash.Changeset.for_create(:create, %{
-      name: "Test Business 2", 
+      name: "Test Business 2",
       description: "Second test business"
     }) |> Ash.create!(domain: RivaAsh.Domain)
 
@@ -32,7 +32,7 @@ defmodule RivaAsh.SecurityTest do
 
     owner2 = Employee |> Ash.Changeset.for_create(:create, %{
       business_id: business2.id,
-      email: "owner2@test.com", 
+      email: "owner2@test.com",
       first_name: "Owner",
       last_name: "Two",
       role: :admin,
@@ -49,7 +49,7 @@ defmodule RivaAsh.SecurityTest do
 
     client2 = Client |> Ash.Changeset.for_create(:create, %{
       business_id: business2.id,
-      name: "Client Two", 
+      name: "Client Two",
       email: "client2@test.com",
       is_registered: true
     }) |> Ash.create!(domain: RivaAsh.Domain)
@@ -73,13 +73,13 @@ defmodule RivaAsh.SecurityTest do
     } do
       # Owner1 should be able to read business1
       assert {:ok, _} = Business |> Ash.get(business1.id, actor: owner1, domain: RivaAsh.Domain)
-      
+
       # Owner1 should NOT be able to read business2
       assert {:error, %Ash.Error.Forbidden{}} = Business |> Ash.get(business2.id, actor: owner1, domain: RivaAsh.Domain)
-      
+
       # Owner2 should be able to read business2
       assert {:ok, _} = Business |> Ash.get(business2.id, actor: owner2, domain: RivaAsh.Domain)
-      
+
       # Owner2 should NOT be able to read business1
       assert {:error, %Ash.Error.Forbidden{}} = Business |> Ash.get(business1.id, actor: owner2, domain: RivaAsh.Domain)
     end
@@ -93,7 +93,7 @@ defmodule RivaAsh.SecurityTest do
       # Client1 should be able to read clients from business1
       clients1 = Client |> Ash.Query.filter(business_id == ^business1.id) |> Ash.read!(actor: client1, domain: RivaAsh.Domain)
       assert length(clients1) >= 1
-      
+
       # Client1 should NOT be able to read clients from business2
       assert_raise Ash.Error.Forbidden, fn ->
         Client |> Ash.Query.filter(business_id == ^business2.id) |> Ash.read!(actor: client1, domain: RivaAsh.Domain)
@@ -107,7 +107,7 @@ defmodule RivaAsh.SecurityTest do
       client2: client2
     } do
       # Owner1 should NOT be able to create clients for business2
-      assert {:error, %Ash.Error.Forbidden{}} = 
+      assert {:error, %Ash.Error.Forbidden{}} =
         Client |> Ash.Changeset.for_create(:create, %{
           business_id: business2.id,
           name: "Unauthorized Client",
@@ -119,7 +119,7 @@ defmodule RivaAsh.SecurityTest do
   describe "Client Authorization Security" do
     test "client creation requires proper business context", %{business1: business1, owner1: owner1} do
       # Valid client creation with proper business context
-      assert {:ok, _client} = 
+      assert {:ok, _client} =
         Client |> Ash.Changeset.for_create(:create, %{
           business_id: business1.id,
           name: "Valid Client",
@@ -127,7 +127,7 @@ defmodule RivaAsh.SecurityTest do
         }) |> Ash.create(actor: owner1, domain: RivaAsh.Domain)
 
       # Invalid client creation without actor should fail
-      assert {:error, %Ash.Error.Forbidden{}} = 
+      assert {:error, %Ash.Error.Forbidden{}} =
         Client |> Ash.Changeset.for_create(:create, %{
           business_id: business1.id,
           name: "Invalid Client",
@@ -142,9 +142,9 @@ defmodule RivaAsh.SecurityTest do
       owner2: owner2
     } do
       email = "duplicate@test.com"
-      
+
       # Create client with same email in business1
-      assert {:ok, _} = 
+      assert {:ok, _} =
         Client |> Ash.Changeset.for_create(:create, %{
           business_id: business1.id,
           name: "Client 1",
@@ -152,15 +152,15 @@ defmodule RivaAsh.SecurityTest do
         }) |> Ash.create(actor: owner1, domain: RivaAsh.Domain)
 
       # Should be able to create client with same email in business2
-      assert {:ok, _} = 
+      assert {:ok, _} =
         Client |> Ash.Changeset.for_create(:create, %{
           business_id: business2.id,
-          name: "Client 2", 
+          name: "Client 2",
           email: email
         }) |> Ash.create(actor: owner2, domain: RivaAsh.Domain)
 
       # Should NOT be able to create duplicate email in same business
-      assert {:error, %Ash.Error.Invalid{}} = 
+      assert {:error, %Ash.Error.Invalid{}} =
         Client |> Ash.Changeset.for_create(:create, %{
           business_id: business1.id,
           name: "Duplicate Client",
@@ -177,7 +177,7 @@ defmodule RivaAsh.SecurityTest do
       owner2: owner2
     } do
       # Owner1 can create pricing for business1
-      assert {:ok, pricing1} = 
+      assert {:ok, pricing1} =
         Pricing |> Ash.Changeset.for_create(:create, %{
           business_id: business1.id,
           pricing_type: :base,
@@ -192,12 +192,12 @@ defmodule RivaAsh.SecurityTest do
         business_id: business2.id,
         pricing_type: :base,
         price_per_day: Decimal.new("150.00"),
-        currency: "USD", 
+        currency: "USD",
         effective_from: Date.utc_today(),
         is_active: true
       }) |> Ash.create!(actor: owner2, domain: RivaAsh.Domain)
 
-      assert {:error, %Ash.Error.Forbidden{}} = 
+      assert {:error, %Ash.Error.Forbidden{}} =
         Pricing |> Ash.get(pricing2.id, actor: owner1, domain: RivaAsh.Domain)
     end
 
@@ -213,8 +213,8 @@ defmodule RivaAsh.SecurityTest do
       }
 
       # Create first pricing rule
-      assert {:ok, _} = 
-        Pricing |> Ash.Changeset.for_create(:create, base_attrs) 
+      assert {:ok, _} =
+        Pricing |> Ash.Changeset.for_create(:create, base_attrs)
         |> Ash.create(actor: owner1, domain: RivaAsh.Domain)
 
       # Attempt to create overlapping pricing rule should fail
@@ -223,7 +223,7 @@ defmodule RivaAsh.SecurityTest do
         effective_until: Date.add(Date.utc_today(), 45)
       })
 
-      assert {:error, %Ash.Error.Invalid{}} = 
+      assert {:error, %Ash.Error.Invalid{}} =
         Pricing |> Ash.Changeset.for_create(:create, overlapping_attrs)
         |> Ash.create(actor: owner1, domain: RivaAsh.Domain)
     end
@@ -246,8 +246,8 @@ defmodule RivaAsh.SecurityTest do
       reservation = Reservation |> Ash.Changeset.for_create(:create, %{
         client_id: client1.id,
         item_id: item.id,
-        reserved_from: DateTime.utc_now(),
-        reserved_until: DateTime.add(DateTime.utc_now(), 1, :day)
+        reserved_from: Timex.now(),
+        reserved_until: Timex.shift(Timex.now(), days: 1)
       }) |> Ash.create!(actor: owner1, domain: RivaAsh.Domain)
 
       # Verify business_id was automatically set
@@ -268,9 +268,9 @@ defmodule RivaAsh.SecurityTest do
       # This test would verify that queries use the denormalized business_id
       # instead of deep joins. In a real implementation, you might use
       # query analysis tools or database query logs to verify this.
-      
+
       business_id = Ash.UUID.generate()
-      
+
       # Test that the optimized query functions work
       assert is_list(RivaAsh.Queries.upcoming_reservations_for_business(business_id))
       assert is_map(RivaAsh.Queries.business_metrics(business_id))

@@ -1,7 +1,7 @@
 defmodule RivaAsh.Validations.ConsecutiveDays do
   @moduledoc """
   Validates that multi-day reservations span consecutive calendar days.
-  
+
   According to business rules:
   - Multi-day reservations must be for consecutive days
   - No gaps are allowed between reservation days
@@ -34,12 +34,12 @@ defmodule RivaAsh.Validations.ConsecutiveDays do
   end
 
   defp consecutive_days?(reserved_from, reserved_until) do
-    from_date = DateTime.to_date(reserved_from)
-    until_date = DateTime.to_date(reserved_until)
-    
+    from_date = Timex.to_date(reserved_from)
+    until_date = Timex.to_date(reserved_until)
+
     # Calculate the number of days between start and end
-    days_diff = Date.diff(until_date, from_date)
-    
+    days_diff = Timex.diff(until_date, from_date, :days)
+
     # For single day reservations (same day), always valid
     if days_diff == 0 do
       true
@@ -53,9 +53,9 @@ defmodule RivaAsh.Validations.ConsecutiveDays do
 
   defp consecutive_date_range?(start_date, end_date) do
     # Generate all dates in the range and check if they are consecutive
-    expected_dates = Date.range(start_date, end_date) |> Enum.to_list()
-    actual_days = Date.diff(end_date, start_date) + 1
-    
+    expected_dates = Timex.Interval.new(from: start_date, until: end_date) |> Timex.Interval.to_list()
+    actual_days = Timex.diff(end_date, start_date, :days) + 1
+
     # The number of expected dates should match the actual day difference + 1
     length(expected_dates) == actual_days
   end

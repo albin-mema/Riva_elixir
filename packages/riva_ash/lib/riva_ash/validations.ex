@@ -178,14 +178,14 @@ defmodule RivaAsh.Validations do
   defp check_exceptions_for_date(exceptions, item_id, reservation_date) do
     Enum.any?(exceptions, fn exception ->
       exception.item_id == item_id and
-      Date.compare(exception.exception_date, reservation_date) == :eq and
+      Timex.compare(exception.exception_date, reservation_date) == 0 and
       not exception.is_available
     end)
   end
 
   def check_active_holds(item_id, reserved_from, reserved_until) do
     # Check for active holds that would conflict with this reservation
-    now = DateTime.utc_now()
+    now = Timex.utc_now()
 
     try do
       query = RivaAsh.Resources.ItemHold
@@ -247,7 +247,7 @@ defmodule RivaAsh.Validations do
     with {:ok, start_time} <- Ash.Changeset.get_argument_or_attribute(changeset, start_field),
          {:ok, end_time} <- Ash.Changeset.get_argument_or_attribute(changeset, end_field) do
 
-      if DateTime.compare(end_time, start_time) == :gt do
+      if Timex.compare(end_time, start_time) == 1 do
         :ok
       else
         {:error, field: end_field, message: "End time must be after start time"}
@@ -265,8 +265,8 @@ defmodule RivaAsh.Validations do
 
     case Ash.Changeset.get_argument_or_attribute(changeset, field) do
       {:ok, date} ->
-        today = Date.utc_today()
-        if Date.compare(date, today) != :lt do
+        today = Timex.today()
+        if Timex.compare(date, today) != -1 do
           :ok
         else
           {:error, field: field, message: "Date cannot be in the past"}
@@ -607,7 +607,7 @@ defmodule RivaAsh.Validations do
 
       if pricing_type == :base do
         current_id = Ash.Changeset.get_attribute(changeset, :id)
-        today = Date.utc_today()
+        today = Timex.today()
 
         # Query for other active base pricing rules
         query = RivaAsh.Resources.Pricing
@@ -653,12 +653,12 @@ defmodule RivaAsh.Validations do
   # Helper function to check if two date ranges overlap
   defp date_ranges_overlap?({from1, until1}, {from2, until2}) do
     # Convert nil dates to appropriate boundaries
-    from1 = from1 || ~D[1900-01-01]
-    until1 = until1 || ~D[2100-12-31]
-    from2 = from2 || ~D[1900-01-01]
-    until2 = until2 || ~D[2100-12-31]
+    from1 = from1 || Timex.parse!("1900-01-01", "{YYYY}-{0M}-{0D}")
+    until1 = until1 || Timex.parse!("2100-12-31", "{YYYY}-{0M}-{0D}")
+    from2 = from2 || Timex.parse!("1900-01-01", "{YYYY}-{0M}-{0D}")
+    until2 = until2 || Timex.parse!("2100-12-31", "{YYYY}-{0M}-{0D}")
 
     # Check for overlap: start1 < end2 && start2 < end1
-    Date.compare(from1, until2) == :lt && Date.compare(from2, until1) == :lt
+    Timex.compare(from1, until2) == -1 && Timex.compare(from2, until1) == -1
   end
 end

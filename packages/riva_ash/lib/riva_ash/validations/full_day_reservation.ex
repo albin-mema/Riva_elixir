@@ -1,7 +1,7 @@
 defmodule RivaAsh.Validations.FullDayReservation do
   @moduledoc """
   Validates that a reservation is for full calendar days only.
-  
+
   According to business rules:
   - Reservations must start at the beginning of a day (00:00:00)
   - Reservations must end at the end of a day (23:59:59) or beginning of next day (00:00:00)
@@ -37,17 +37,17 @@ defmodule RivaAsh.Validations.FullDayReservation do
     # Convert to date and time components
     from_date = DateTime.to_date(reserved_from)
     from_time = DateTime.to_time(reserved_from)
-    
+
     until_date = DateTime.to_date(reserved_until)
     until_time = DateTime.to_time(reserved_until)
 
     # Check if start time is at beginning of day (00:00:00)
-    start_is_beginning_of_day = Time.compare(from_time, ~T[00:00:00]) == :eq
+    start_is_beginning_of_day = Timex.compare(from_time, ~T[00:00:00]) == 0
 
     # Check if end time is at end of day (23:59:59) or beginning of next day (00:00:00)
-    end_is_end_of_day = 
-      Time.compare(until_time, ~T[23:59:59]) == :eq or
-      (Time.compare(until_time, ~T[00:00:00]) == :eq and Date.diff(until_date, from_date) >= 1)
+    end_is_end_of_day =
+      Timex.compare(until_time, ~T[23:59:59]) == 0 or
+      (Timex.compare(until_time, ~T[00:00:00]) == 0 and Timex.diff(until_date, from_date, :days) >= 1)
 
     start_is_beginning_of_day and end_is_end_of_day
   end

@@ -94,7 +94,7 @@ defmodule RivaAsh.Jobs.HoldCleanupJob do
       {:ok, count} ->
         new_state = %{state |
           cleanup_count: state.cleanup_count + count,
-          last_cleanup: DateTime.utc_now()
+          last_cleanup: Timex.now()
         }
         {count, new_state}
       {:error, error} ->
@@ -102,7 +102,7 @@ defmodule RivaAsh.Jobs.HoldCleanupJob do
 
         new_state = %{state |
           error_count: state.error_count + 1,
-          last_error: {DateTime.utc_now(), error}
+          last_error: {Timex.now(), error}
         }
 
         if attempt < @max_retries do
@@ -119,7 +119,7 @@ defmodule RivaAsh.Jobs.HoldCleanupJob do
   defp cleanup_expired_holds do
     Logger.info("Starting cleanup of expired item holds")
 
-    now = DateTime.utc_now()
+    now = Timex.now()
     case ItemHold
          |> Ash.Query.filter(expr(is_active == true and expires_at < ^now))
          |> Ash.read(domain: Domain) do
@@ -179,7 +179,7 @@ defmodule RivaAsh.Jobs.HoldCleanupJob do
       hold
       |> Ash.Changeset.for_update(:update, %{
         is_active: false,
-        updated_at: DateTime.utc_now()
+        updated_at: Timex.now()
       })
       |> Ash.update(domain: Domain)
     else
@@ -205,7 +205,7 @@ defmodule RivaAsh.Jobs.HoldCleanupJob do
           last_cleanup: job_state.last_cleanup,
           last_error: job_state.last_error
         },
-        timestamp: DateTime.utc_now()
+        timestamp: Timex.now()
       }}
     else
       {:error, reason} ->
@@ -221,7 +221,7 @@ defmodule RivaAsh.Jobs.HoldCleanupJob do
   end
 
   defp count_expired_holds do
-    now = DateTime.utc_now()
+    now = Timex.now()
     ItemHold
     |> Ash.Query.filter(expr(is_active == true and expires_at < ^now))
     |> Ash.count(domain: Domain)

@@ -58,7 +58,7 @@ defmodule RivaAsh.Resources.ReservationTest do
         {:ok, item} = Item.create(item_attrs)
 
         # Create reservation with invalid time ordering
-        now = DateTime.utc_now()
+        now = Timex.now()
         invalid_attrs = %{
           client_id: client.id,
           item_id: item.id,
@@ -125,7 +125,7 @@ defmodule RivaAsh.Resources.ReservationTest do
         {:ok, client} = Client.create(client_attrs)
         {:ok, item} = Item.create(item_attrs)
 
-        now = DateTime.utc_now()
+        now = Timex.now()
 
         # Create past reservation
         past_attrs = %{
@@ -151,7 +151,7 @@ defmodule RivaAsh.Resources.ReservationTest do
         future_attrs = %{
           client_id: client.id,
           item_id: item.id,
-          reserved_from: DateTime.add(now, 3600),   # 1 hour from now
+          reserved_from:  .add(now, 3600),   # 1 hour from now
           reserved_until: DateTime.add(now, 7200),  # 2 hours from now
           status: :pending
         }

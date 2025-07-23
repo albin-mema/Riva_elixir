@@ -70,8 +70,8 @@ defmodule RivaAsh.TestHelpers do
       user_id: user_id,
       business_id: business_id,
       service_id: service_id,
-      start_time: DateTime.utc_now() |> DateTime.add(3600, :second),
-      end_time: DateTime.utc_now() |> DateTime.add(7200, :second),
+      start_time: Timex.now() |> Timex.shift(seconds: 3600),
+      end_time: Timex.now() |> Timex.shift(seconds: 7200),
       status: :pending
     }
 
@@ -125,8 +125,8 @@ defmodule RivaAsh.TestHelpers do
   Creates a test blocked time slot with default attributes.
   """
   def create_blocked_time(business_id, attrs \\ %{}) do
-    start_time = DateTime.utc_now() |> DateTime.add(3600, :second)
-    end_time = DateTime.utc_now() |> DateTime.add(7200, :second)
+    start_time = Timex.now() |> Timex.shift(seconds: 3600)
+    end_time = Timex.now() |> Timex.shift(seconds: 7200)
 
     default_attrs = %{
       business_id: business_id,
@@ -216,7 +216,7 @@ defmodule RivaAsh.TestHelpers do
       check_name: "test_check",
       status: :healthy,
       message: "All systems operational",
-      last_checked: DateTime.utc_now()
+      last_checked: Timex.now()
     }
 
     attrs = Map.merge(default_attrs, attrs)
@@ -453,7 +453,7 @@ defmodule RivaAsh.TestHelpers do
       check_name: "test_check",
       status: "healthy",
       message: "Test message",
-      last_checked: DateTime.utc_now()
+      last_checked: Timex.now()
     }
 
     attrs = Map.merge(default_attrs, attrs)

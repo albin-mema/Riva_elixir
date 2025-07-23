@@ -73,7 +73,7 @@ defmodule RivaAsh.Queries do
   """
   def upcoming_reservations_for_business(business_id, limit \\ 10) do
     try do
-      now = DateTime.utc_now()
+      now = Timex.utc_now()
 
       Reservation
       |> Ash.Query.filter(expr(item.section.plot.business_id == ^business_id))
@@ -309,31 +309,27 @@ defmodule RivaAsh.Queries do
 
   # Helper function to get date ranges for different periods
   defp get_period_range(period) do
-    today = Date.utc_today()
+    today = Timex.today()
 
     case period do
       :day ->
-        start_datetime = DateTime.new!(today, ~T[00:00:00], "Etc/UTC")
-        end_datetime = DateTime.new!(today, ~T[23:59:59], "Etc/UTC")
+        start_datetime = Timex.beginning_of_day(today)
+        end_datetime = Timex.end_of_day(today)
         {start_datetime, end_datetime}
       :week ->
-        start_date = Date.beginning_of_week(today)
-        end_date = Date.end_of_week(today)
-        start_datetime = DateTime.new!(start_date, ~T[00:00:00], "Etc/UTC")
-        end_datetime = DateTime.new!(end_date, ~T[23:59:59], "Etc/UTC")
-        {start_datetime, end_datetime}
+        start_date = Timex.beginning_of_week(today, :mon)
+        end_date = Timex.end_of_week(today, :mon)
+        {start_date, end_date}
       :month ->
-        start_date = Date.beginning_of_month(today)
-        end_date = Date.end_of_month(today)
-        start_datetime = DateTime.new!(start_date, ~T[00:00:00], "Etc/UTC")
-        end_datetime = DateTime.new!(end_date, ~T[23:59:59], "Etc/UTC")
-        {start_datetime, end_datetime}
+        start_date = Timex.beginning_of_month(today)
+        end_date = Timex.end_of_month(today)
+        {start_date, end_date}
       _ ->
         # Default to current month
-        start_date = Date.beginning_of_month(today)
-        end_date = Date.end_of_month(today)
-        start_datetime = DateTime.new!(start_date, ~T[00:00:00], "Etc/UTC")
-        end_datetime = DateTime.new!(end_date, ~T[23:59:59], "Etc/UTC")
+        start_date = Timex.beginning_of_month(today)
+        end_date = Timex.end_of_month(today)
+        start_datetime = Timex.beginning_of_day(start_date)
+        end_datetime = Timex.end_of_day(end_date)
         {start_datetime, end_datetime}
     end
   end

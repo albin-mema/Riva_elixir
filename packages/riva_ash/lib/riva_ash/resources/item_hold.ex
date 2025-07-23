@@ -115,12 +115,12 @@ defmodule RivaAsh.Resources.ItemHold do
     end
 
     read :active do
-      now = DateTime.utc_now()
+      now = Timex.utc_now()
       filter(expr(is_active == true and expires_at > ^now))
     end
 
     read :expired do
-      now = DateTime.utc_now()
+      now = Timex.utc_now()
       filter(expr(is_active == true and expires_at <= ^now))
     end
 
@@ -264,7 +264,7 @@ defmodule RivaAsh.Resources.ItemHold do
     validate fn changeset, _context ->
       expires_at = Ash.Changeset.get_attribute(changeset, :expires_at)
 
-      if expires_at && DateTime.compare(expires_at, DateTime.utc_now()) == :lt do
+      if expires_at && Timex.compare(expires_at, Timex.utc_now()) == :lt do
         {:error, field: :expires_at, message: "Hold expiration time cannot be in the past"}
       else
         :ok

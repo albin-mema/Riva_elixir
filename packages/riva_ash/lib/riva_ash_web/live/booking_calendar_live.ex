@@ -13,8 +13,8 @@ defmodule RivaAshWeb.BookingCalendarLive do
     user = get_current_user_from_session(session)
 
     if user do
-      current_date = Date.utc_today() |> Date.to_string()
-      
+      current_date = Timex.today() |> Timex.format!("{YYYY}-{0M}-{0D}")
+
       socket =
         socket
         |> assign(:current_user, user)
@@ -41,7 +41,7 @@ defmodule RivaAshWeb.BookingCalendarLive do
           <button phx-click="new_booking">Quick Booking</button>
         </:action>
       </.page_header>
-      
+
       <.filter_panel
         filters={[
           %{type: "select", field: "item_id", label: "Item", options: []},
@@ -51,7 +51,7 @@ defmodule RivaAshWeb.BookingCalendarLive do
         on_apply="apply_filters"
         on_clear="clear_filters"
       />
-      
+
       <.calendar_view
         events={@events}
         current_date={@current_date}
@@ -62,7 +62,7 @@ defmodule RivaAshWeb.BookingCalendarLive do
         on_navigate="navigate_calendar"
         editable={true}
       />
-      
+
       <div :if={@selected_event}>
         <!-- Event details modal/panel will go here -->
         <div>
