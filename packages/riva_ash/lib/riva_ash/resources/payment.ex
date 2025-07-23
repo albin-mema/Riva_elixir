@@ -366,7 +366,7 @@ defmodule RivaAsh.Resources.Payment do
     validate fn changeset, _context ->
       payment_date = Ash.Changeset.get_attribute(changeset, :payment_date)
 
-      if payment_date && Date.compare(payment_date, Date.utc_today()) == :gt do
+      if payment_date && Timex.compare(payment_date, Timex.today()) == :gt do
         {:error, field: :payment_date, message: "Payment date cannot be in the future"}
       else
         :ok
