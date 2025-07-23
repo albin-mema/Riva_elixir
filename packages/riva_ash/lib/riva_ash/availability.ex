@@ -57,7 +57,7 @@ defmodule RivaAsh.Availability do
   def get_available_slots(item_id, date, slot_duration_minutes \\ 60) do
     with {:ok, item} <- get_item(item_id),
          :ok <- validate_item_active(item) do
-      day_of_week = Timex.weekday(date) |> convert_to_sunday_start()
+      day_of_week = if RivaAsh.DateTimeHelpers.weekend?(date), do: 0, else: Timex.weekday(date)
 
       base_slots = if item.is_always_available do
                      # 24/7 availability - create hourly slots
@@ -121,7 +121,7 @@ defmodule RivaAsh.Availability do
     |> Timex.Interval.with_step(days: 1)
     |> Enum.map(&Timex.to_date/1)
     |> Enum.all?(fn date ->
-      day_of_week = Timex.weekday(date) |> convert_to_sunday_start()
+      day_of_week = if RivaAsh.DateTimeHelpers.weekend?(date), do: 0, else: Timex.weekday(date)
       check_day_schedule(item.id, day_of_week, start_datetime, end_datetime, date)
     end)
     |> case do
@@ -240,15 +240,9 @@ defmodule RivaAsh.Availability do
 
   # Helper functions for slot generation
 
-  defp convert_to_sunday_start(day_of_week) do
-    # Timex uses Monday=1, but we need Sunday=0 format
-    case day_of_week do
-      # Sunday (Timex returns 7 for Sunday)
-      7 -> 0
-      # Monday=1, Tuesday=2, etc. stay the same
-      n -> n
-    end
-  end
+  # The convert_to_sunday_start/1 function has been removed as its functionality
+  # is now handled by direct use of RivaAsh.DateTimeHelpers.weekend?/1
+  # to determine if a day should be treated as 0 (weekend) or its Timex weekday value.
 
   defp create_24_hour_slots(_date, slot_duration_minutes) do
     # Create slots from 00:00 to 23:59
@@ -258,7 +252,7 @@ defmodule RivaAsh.Availability do
       |> Enum.take_every(slot_duration_minutes)
       |> Enum.map(fn minute ->
         start_time = Time.new!(hour, minute, 0)
-        end_time = Time.add(start_time, slot_duration_minutes, :minute)
+        end_time = Timex.shift(start_time, minutes: slot_duration_minutes)
         {start_time, end_time}
       end)
     end)
