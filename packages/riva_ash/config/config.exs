@@ -73,7 +73,9 @@ config :ash_json_api, :open_api,
 # Configure AshAdmin
 config :ash_admin,
   domains: [RivaAsh.Domain],
-  show_sensitive_fields: [:change, :create]
+  show_sensitive_fields: [:change, :create],
+  actor: {RivaAshWeb.AshAdminConfig, :actor, []},
+  set_actor: {RivaAshWeb.AshAdminConfig, :set_actor, []}
 
 # Configure Tailwind CSS
 config :tailwind,

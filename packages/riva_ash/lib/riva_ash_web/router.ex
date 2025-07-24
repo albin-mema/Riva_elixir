@@ -182,7 +182,7 @@ defmodule RivaAshWeb.Router do
 
   # Admin interface
   scope "/admin" do
-    pipe_through(:browser)
+    pipe_through([:browser, :require_authenticated_user])
     ash_admin("/", domains: [RivaAsh.Domain])
   end
 end
