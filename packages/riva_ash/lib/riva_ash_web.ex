@@ -49,7 +49,7 @@ defmodule RivaAshWeb do
   def live_view do
     quote do
       use Phoenix.LiveView,
-        layout: false
+        layout: {RivaAshWeb.Layouts, :authenticated}
 
       unquote(html_helpers())
     end
