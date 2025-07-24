@@ -108,7 +108,7 @@ defmodule RivaAshWeb.Router do
   scope "/", RivaAshWeb do
     pipe_through([:browser])
 
-    get("/", AuthController, :redirect_to_sign_in)
+    get("/", AuthController, :redirect_to_dashboard)
 
     # Authentication routes
     get("/sign-in", AuthController, :sign_in)
@@ -122,14 +122,14 @@ defmodule RivaAshWeb.Router do
   scope "/", RivaAshWeb do
     pipe_through([:browser, :require_authenticated_user, :authenticated_layout])
 
+    live("/dashboard", DashboardLive, :index)
     live("/businesses", BusinessLive, :index)
+    live("/businesses/new", BusinessLive, :new)
+    live("/businesses/:id/edit", BusinessLive, :edit)
     live("/employees", EmployeeLive, :index)
     live("/clients", ClientLive, :index)
     live("/clients/new", ClientLive, :new)
     live("/clients/:id/edit", ClientLive, :edit)
-    live("/businesses", BusinessLive, :index)
-    live("/businesses/new", BusinessLive, :new)
-    live("/businesses/:id/edit", BusinessLive, :edit)
     live("/items", ItemLive, :index)
     live("/items/new", ItemLive, :new)
     live("/items/:id/edit", ItemLive, :edit)
