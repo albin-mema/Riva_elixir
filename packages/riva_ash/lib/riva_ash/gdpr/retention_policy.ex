@@ -1,11 +1,11 @@
 defmodule RivaAsh.GDPR.RetentionPolicy do
   @moduledoc """
   Implements GDPR data retention policies and automated cleanup.
-  
+
   GDPR Article 5(1)(e): Storage limitation principle
-  "Personal data shall be kept in a form which permits identification of data subjects 
+  "Personal data shall be kept in a form which permits identification of data subjects
   for no longer than is necessary for the purposes for which the personal data are processed"
-  
+
   This module defines retention periods for different types of data and provides
   automated cleanup functionality.
   """
@@ -15,33 +15,34 @@ defmodule RivaAsh.GDPR.RetentionPolicy do
   alias RivaAsh.GDPR.ConsentRecord
 
   require Logger
+  import Ash.Expr
 
   # Retention periods in days
   @retention_periods %{
     # User account data - keep for 7 years after account closure (legal requirement)
     user_accounts: 365 * 7,
-    
+
     # Employee data - keep for 3 years after employment ends
     employee_records: 365 * 3,
-    
+
     # Client data - keep for 2 years after last interaction
     client_records: 365 * 2,
-    
+
     # Reservation data - keep for 5 years (business records requirement)
     reservations: 365 * 5,
-    
+
     # Consent records - keep for 3 years after withdrawal
     consent_records: 365 * 3,
-    
+
     # Audit logs - keep for 1 year
     audit_logs: 365,
-    
+
     # Session data - keep for 30 days
     session_data: 30,
-    
+
     # System logs - keep for 90 days
     system_logs: 90,
-    
+
     # Marketing data - delete immediately upon consent withdrawal
     marketing_data: 0
   }
@@ -59,7 +60,7 @@ defmodule RivaAsh.GDPR.RetentionPolicy do
   """
   def run_retention_cleanup do
     Logger.info("GDPR: Starting automated retention cleanup")
-    
+
     results = %{
       users_processed: cleanup_expired_users(),
       employees_processed: cleanup_expired_employees(),
@@ -69,7 +70,7 @@ defmodule RivaAsh.GDPR.RetentionPolicy do
       audit_logs_processed: cleanup_expired_audit_logs(),
       sessions_processed: cleanup_expired_sessions()
     }
-    
+
     Logger.info("GDPR: Retention cleanup completed", extra: results)
     {:ok, results}
   end
@@ -80,7 +81,7 @@ defmodule RivaAsh.GDPR.RetentionPolicy do
   def should_delete?(data_type, last_activity_date) do
     retention_days = retention_period(data_type)
     cutoff_date = DateTime.utc_now() |> DateTime.add(-retention_days, :day)
-    
+
     DateTime.compare(last_activity_date, cutoff_date) == :lt
   end
 
@@ -101,24 +102,25 @@ defmodule RivaAsh.GDPR.RetentionPolicy do
 
   defp cleanup_expired_users do
     cutoff_date = DateTime.utc_now() |> DateTime.add(-@retention_periods.user_accounts, :day)
-    
+
     # Find users that have been archived and are past retention period
-    expired_users = User.read!(
-      filter: expr(not is_nil(archived_at) and archived_at < ^cutoff_date),
-      domain: RivaAsh.Accounts
-    )
-    
+    # Note: We need to unset the base filter to include archived records
+    expired_users = User
+    |> Ash.Query.unset([:filter])
+    |> Ash.Query.filter(expr(not is_nil(archived_at) and archived_at < ^cutoff_date))
+    |> Ash.read!(domain: RivaAsh.Accounts)
+
     count = length(expired_users)
-    
+
     Enum.each(expired_users, fn user ->
       case hard_delete_user(user) do
-        :ok -> 
+        :ok ->
           Logger.info("GDPR: Hard deleted expired user #{user.id}")
-        {:error, reason} -> 
+        {:error, reason} ->
           Logger.error("GDPR: Failed to delete user #{user.id}: #{inspect(reason)}")
       end
     end)
-    
+
     count
   rescue
     error ->
@@ -128,7 +130,7 @@ defmodule RivaAsh.GDPR.RetentionPolicy do
 
   defp cleanup_expired_employees do
     cutoff_date = DateTime.utc_now() |> DateTime.add(-@retention_periods.employee_records, :day)
-    
+
     # This would need to be implemented based on your Employee resource structure
     # For now, returning 0 as placeholder
     0
@@ -136,7 +138,7 @@ defmodule RivaAsh.GDPR.RetentionPolicy do
 
   defp cleanup_expired_clients do
     cutoff_date = DateTime.utc_now() |> DateTime.add(-@retention_periods.client_records, :day)
-    
+
     # Find clients with no recent activity
     # This would need custom logic to determine "last activity"
     0
@@ -144,34 +146,34 @@ defmodule RivaAsh.GDPR.RetentionPolicy do
 
   defp cleanup_expired_reservations do
     cutoff_date = DateTime.utc_now() |> DateTime.add(-@retention_periods.reservations, :day)
-    
+
     # Reservations might need anonymization rather than deletion for business records
     0
   end
 
   defp cleanup_expired_consent_records do
     cutoff_date = DateTime.utc_now() |> DateTime.add(-@retention_periods.consent_records, :day)
-    
+
     # Only delete consent records that have been withdrawn and are past retention
-    expired_consents = ConsentRecord.read!(
-      filter: expr(
-        consent_given == false and 
-        not is_nil(withdrawal_date) and 
-        withdrawal_date < ^cutoff_date
-      )
-    )
-    
+    expired_consents = ConsentRecord
+    |> Ash.Query.filter(expr(
+      consent_given == false and
+      not is_nil(withdrawal_date) and
+      withdrawal_date < ^cutoff_date
+    ))
+    |> Ash.read!(domain: RivaAsh.Domain)
+
     count = length(expired_consents)
-    
+
     Enum.each(expired_consents, fn consent ->
       case Ash.destroy(consent) do
-        :ok -> 
+        :ok ->
           Logger.info("GDPR: Deleted expired consent record #{consent.id}")
-        {:error, reason} -> 
+        {:error, reason} ->
           Logger.error("GDPR: Failed to delete consent #{consent.id}: #{inspect(reason)}")
       end
     end)
-    
+
     count
   rescue
     error ->
@@ -188,7 +190,7 @@ defmodule RivaAsh.GDPR.RetentionPolicy do
   defp cleanup_expired_sessions do
     # Clean up expired session tokens and authentication data
     cutoff_date = DateTime.utc_now() |> DateTime.add(-@retention_periods.session_data, :day)
-    
+
     # This would need to integrate with your authentication token cleanup
     0
   end
@@ -196,12 +198,12 @@ defmodule RivaAsh.GDPR.RetentionPolicy do
   defp hard_delete_user(user) do
     # This is a permanent deletion - use with extreme caution
     # Should only be called after retention period has expired
-    
+
     try do
       # Delete related data first (foreign key constraints)
       delete_user_businesses(user.id)
       delete_user_consent_records(user.id)
-      
+
       # Finally delete the user record
       case Ash.destroy(user, domain: RivaAsh.Accounts) do
         :ok -> :ok
@@ -235,7 +237,7 @@ defmodule RivaAsh.GDPR.RetentionPolicy do
       email: "anonymized_#{user.id}@deleted.local",
       # Keep ID for referential integrity but remove personal data
     }
-    
+
     case Ash.update(user, anonymized_data, domain: RivaAsh.Accounts) do
       {:ok, updated_user} -> {:ok, updated_user}
       {:error, reason} -> {:error, reason}

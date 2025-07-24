@@ -1,11 +1,11 @@
 defmodule RivaAsh.GDPR.ConsentRecord do
   @moduledoc """
   Tracks user consent for various data processing purposes as required by GDPR.
-  
+
   This resource maintains a complete audit trail of consent given, withdrawn,
   or modified by users for different processing purposes such as marketing,
   analytics, or other non-essential data processing activities.
-  
+
   GDPR Articles: 6 (Lawfulness), 7 (Conditions for consent), 13-14 (Information)
   """
 
@@ -44,18 +44,18 @@ defmodule RivaAsh.GDPR.ConsentRecord do
 
   json_api do
     type("consent_record")
-    
+
     routes do
       base("/consent-records")
       get(:read)
       index(:read)
-      post(:create)
+      post(:give_consent)
       patch(:update)
     end
   end
 
   actions do
-    defaults([:read, :update])
+    defaults([:read, :create, :update])
 
     create :give_consent do
       accept([:user_id, :business_id, :purpose, :consent_version, :ip_address, :user_agent])
@@ -116,19 +116,19 @@ defmodule RivaAsh.GDPR.ConsentRecord do
       description("Business context for the consent (if applicable)")
     end
 
-    attribute :purpose, :string do
+    attribute :purpose, :atom do
       allow_nil?(false)
       public?(true)
       constraints([
         one_of: [
-          "marketing_emails",
-          "analytics_tracking",
-          "performance_monitoring",
-          "third_party_integrations",
-          "data_sharing",
-          "automated_decision_making",
-          "profiling",
-          "cross_border_transfer"
+          :marketing_emails,
+          :analytics_tracking,
+          :performance_monitoring,
+          :third_party_integrations,
+          :data_sharing,
+          :automated_decision_making,
+          :profiling,
+          :cross_border_transfer
         ]
       ])
       description("The specific purpose for which consent was given")
@@ -170,12 +170,12 @@ defmodule RivaAsh.GDPR.ConsentRecord do
       description("User agent when consent was given (for audit purposes)")
     end
 
-    attribute :consent_method, :string do
+    attribute :consent_method, :atom do
       allow_nil?(false)
-      default("web_form")
+      default(:web_form)
       public?(true)
       constraints([
-        one_of: ["web_form", "api", "email", "phone", "in_person", "import"]
+        one_of: [:web_form, :api, :email, :phone, :in_person, :import]
       ])
       description("How the consent was collected")
     end
@@ -209,7 +209,7 @@ defmodule RivaAsh.GDPR.ConsentRecord do
       description("Whether this consent record represents active consent")
     end
 
-    calculate :days_since_consent, :integer, 
+    calculate :days_since_consent, :integer,
       expr(fragment("EXTRACT(DAY FROM (NOW() - ?))", consent_date)) do
       public?(true)
       description("Number of days since consent was given")
