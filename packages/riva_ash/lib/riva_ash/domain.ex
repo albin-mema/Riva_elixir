@@ -33,6 +33,7 @@ defmodule RivaAsh.Domain do
     resource(RivaAsh.Resources.AvailabilityException)
     resource(RivaAsh.Resources.RecurringReservation)
     resource(RivaAsh.Resources.RecurringReservationInstance)
+    resource(RivaAsh.GDPR.ConsentRecord)
   end
 
   json_api do
@@ -56,6 +57,7 @@ defmodule RivaAsh.Domain do
       tag("Availability Exceptions")
       tag("Recurring Reservations")
       tag("Recurring Reservation Instances")
+      tag("GDPR Consent Records")
       group_by(:resource)
     end
   end
