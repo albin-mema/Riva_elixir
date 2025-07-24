@@ -1,0 +1,73 @@
+defmodule RivaAshWeb.Live.AuthHelpers do
+  @moduledoc """
+  Authentication helpers for LiveViews.
+  """
+
+  alias RivaAsh.ErrorHelpers
+
+  @doc """
+  Gets the current user from the LiveView session.
+  Returns {:ok, user} if authenticated, {:error, reason} otherwise.
+  """
+  def get_current_user_from_session(session) do
+    user_token = session["user_token"]
+
+    if user_token do
+      with {:ok, user_id} <- Phoenix.Token.verify(RivaAshWeb.Endpoint, "user_auth", user_token, max_age: 86_400) |> ErrorHelpers.to_result(),
+           {:ok, user} <- Ash.get(RivaAsh.Accounts.User, user_id, domain: RivaAsh.Accounts) |> ErrorHelpers.to_result() do
+        ErrorHelpers.success(user)
+      else
+        _ -> ErrorHelpers.failure(:not_authenticated)
+      end
+    else
+      ErrorHelpers.failure(:not_authenticated)
+    end
+  end
+
+  @doc """
+  Handles authentication in LiveView mount/3 callback.
+  Returns {:ok, socket} with user assigned if authenticated, 
+  {:ok, redirect_socket} if not authenticated.
+  """
+  def require_authentication(socket, session, redirect_to \\ "/sign-in") do
+    case get_current_user_from_session(session) do
+      {:ok, user} ->
+        socket_with_user = Phoenix.LiveView.assign(socket, :current_user, user)
+        ErrorHelpers.success(socket_with_user)
+      {:error, _} ->
+        redirect_socket = Phoenix.LiveView.redirect(socket, to: redirect_to)
+        ErrorHelpers.success(redirect_socket)
+    end
+  end
+
+  @doc """
+  Macro to be used in LiveViews that require authentication.
+  Usage:
+  
+  ```elixir
+  defmodule MyLive do
+    use RivaAshWeb, :live_view
+    import RivaAshWeb.Live.AuthHelpers
+    
+    def mount(_params, session, socket) do
+      with_authentication socket, session do
+        # Your authenticated mount logic here
+        {:ok, assign(socket, :data, load_data(socket.assigns.current_user))}
+      end
+    end
+  end
+  ```
+  """
+  defmacro with_authentication(socket, session, do: block) do
+    quote do
+      case RivaAshWeb.Live.AuthHelpers.require_authentication(unquote(socket), unquote(session)) do
+        {:ok, socket_with_user} ->
+          # Rebind socket to include current_user
+          socket = socket_with_user
+          unquote(block)
+        {:ok, redirect_socket} ->
+          {:ok, redirect_socket}
+      end
+    end
+  end
+end
