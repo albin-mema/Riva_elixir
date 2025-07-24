@@ -27,7 +27,7 @@ defmodule RivaAsh.Resources.Item do
 
   # Authorization policies
   policies do
-    # Admin bypass
+    # Admin bypass (for both User and Employee actors)
     bypass actor_attribute_equals(:role, :admin) do
       authorize_if(always())
     end
@@ -45,6 +45,16 @@ defmodule RivaAsh.Resources.Item do
     # Employees can read items
     policy action_type(:read) do
       authorize_if(actor_attribute_equals(:role, :employee))
+    end
+
+    # Staff employees can read items
+    policy action_type(:read) do
+      authorize_if(actor_attribute_equals(:role, :staff))
+    end
+
+    # Regular users can read items (for business owners who are Users, not Employees)
+    policy action_type(:read) do
+      authorize_if(actor_attribute_equals(:role, :user))
     end
   end
 

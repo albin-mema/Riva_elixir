@@ -50,6 +50,16 @@ defmodule RivaAsh.Resources.ItemType do
     policy action_type(:read) do
       authorize_if(actor_attribute_equals(:role, :employee))
     end
+
+    # Staff employees can read item types
+    policy action_type(:read) do
+      authorize_if(actor_attribute_equals(:role, :staff))
+    end
+
+    # Regular users can read item types (for business owners who are Users, not Employees)
+    policy action_type(:read) do
+      authorize_if(actor_attribute_equals(:role, :user))
+    end
   end
 
   json_api do

@@ -61,6 +61,11 @@ defmodule RivaAsh.Resources.Client do
       # This should be restricted in production - consider requiring business context
       authorize_if(always())
     end
+
+    # Regular users (business owners) can read clients
+    policy action_type(:read) do
+      authorize_if(actor_attribute_equals(:role, :user))
+    end
   end
 
   json_api do
