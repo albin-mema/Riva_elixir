@@ -54,13 +54,19 @@ defmodule RivaAshWeb.DashboardLive do
     {:noreply, socket}
   end
 
-  # Private helper functions will go here
+  # Private helper functions
   defp get_current_user_from_session(session) do
-    # Mock user for now, replace with actual authentication logic
-    if Map.has_key?(session, "user_token") do
-      ErrorHelpers.success(%{id: "mock-user-id", role: :admin, business_id: "mock-business-id"})
+    user_token = session["user_token"]
+
+    if user_token do
+      with {:ok, user_id} <- Phoenix.Token.verify(RivaAshWeb.Endpoint, "user_auth", user_token, max_age: 86_400) |> RivaAsh.ErrorHelpers.to_result(),
+           {:ok, user} <- Ash.get(RivaAsh.Accounts.User, user_id, domain: RivaAsh.Accounts) |> RivaAsh.ErrorHelpers.to_result() do
+        RivaAsh.ErrorHelpers.success(user)
+      else
+        _ -> RivaAsh.ErrorHelpers.failure(:not_authenticated)
+      end
     else
-      ErrorHelpers.failure(:not_authenticated)
+      RivaAsh.ErrorHelpers.failure(:not_authenticated)
     end
   end
 end
