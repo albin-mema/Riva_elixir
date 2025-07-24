@@ -9,12 +9,18 @@ defmodule RivaAshWeb.PlotLive do
   import RivaAshWeb.Components.Atoms.Button
 
   alias RivaAsh.Resources.Plot
+  alias RivaAsh.Resources.Business
 
   @impl true
   def mount(_params, session, socket) do
     case get_current_user_from_session(session) do
       {:ok, user} ->
-        plots = Plot.read!(actor: user)
+        # Get user's businesses first
+        businesses = Business.read!(actor: user)
+        business_ids = Enum.map(businesses, & &1.id)
+
+        # Get plots for user's businesses
+        plots = Plot.read!(actor: user, filter: [business_id: [in: business_ids]])
 
         socket =
           socket
