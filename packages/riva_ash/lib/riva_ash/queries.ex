@@ -73,7 +73,7 @@ defmodule RivaAsh.Queries do
   """
   def upcoming_reservations_for_business(business_id, limit \\ 10) do
     try do
-      now = Timex.utc_now()
+      now = Timex.now()
 
       Reservation
       |> Ash.Query.filter(expr(item.section.plot.business_id == ^business_id))

@@ -91,7 +91,7 @@ defmodule RivaAsh.Reactors.ReservationReactor do
         Timex.compare(start_dt, end_dt) != -1 ->
           {:error, "Start datetime must be before end datetime"}
 
-        Timex.compare(start_dt, Timex.utc_now()) == -1 ->
+        Timex.compare(start_dt, Timex.now()) == -1 ->
           {:error, "Cannot create reservations in the past"}
 
         Timex.diff(end_dt, start_dt, :hours) > 24 ->

@@ -226,7 +226,7 @@ defmodule RivaAsh.Resources.Reservation do
     end
 
     read :active do
-      now = Timex.utc_now()
+      now = Timex.now()
 
       filter(
         expr(
@@ -238,7 +238,7 @@ defmodule RivaAsh.Resources.Reservation do
     end
 
     read :upcoming do
-      now = Timex.utc_now()
+      now = Timex.now()
 
       filter(
         expr(
@@ -249,7 +249,7 @@ defmodule RivaAsh.Resources.Reservation do
     end
 
     read :past do
-      now = Timex.utc_now()
+      now = Timex.now()
 
       filter(
         expr(
@@ -264,7 +264,7 @@ defmodule RivaAsh.Resources.Reservation do
     end
 
     read :expired_provisional do
-      now = Timex.utc_now()
+      now = Timex.now()
       filter(
         expr(
           status == :provisional and
@@ -275,7 +275,7 @@ defmodule RivaAsh.Resources.Reservation do
     end
 
     read :active_provisional do
-      now = Timex.utc_now()
+      now = Timex.now()
       filter(
         expr(
           status == :provisional and

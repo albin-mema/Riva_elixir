@@ -36,8 +36,10 @@ pnpm dev                 # Start the application
 
 **📖 Need Help?**
 
-- **[SETUP_GUIDE.md](SETUP_GUIDE.md)** - Complete setup guide with troubleshooting
-- **[DEVELOPMENT_WORKFLOW.md](DEVELOPMENT_WORKFLOW.md)** - Development workflow and best practices
+- **[documentation/](documentation/)** - Complete documentation index
+- **[documentation/SETUP_GUIDE.md](documentation/SETUP_GUIDE.md)** - Complete setup guide with troubleshooting
+- **[documentation/DEVELOPMENT_WORKFLOW.md](documentation/DEVELOPMENT_WORKFLOW.md)** - Development workflow and best practices
+- **[documentation/CONTRIBUTING.md](documentation/CONTRIBUTING.md)** - Comprehensive contribution guide
 
 ### Alternative Setup Methods
 
@@ -278,6 +280,22 @@ The system includes the following main resources:
 5. Update documentation as needed
 6. Commit with conventional commit messages
 7. Create pull request
+
+## Contributing
+
+We welcome contributions! Please see our [documentation/CONTRIBUTING.md](documentation/CONTRIBUTING.md) for detailed guidelines on:
+
+- Setting up your development environment
+- Code standards and conventions
+- Testing requirements
+- Pull request process
+- Architectural patterns
+
+For quick contributions:
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes following our guidelines
+4. Submit a pull request
 
 ## Technology Stack
 
