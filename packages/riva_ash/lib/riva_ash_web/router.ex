@@ -180,9 +180,24 @@ defmodule RivaAshWeb.Router do
     live("/availability-exceptions/:id/edit", AvailabilityExceptionLive, :edit)
   end
 
+  # Error pages
+  scope "/", RivaAshWeb do
+    pipe_through([:browser])
+
+    live("/404", Error.NotFoundLive, :index)
+    live("/access-denied", Error.AccessDeniedLive, :index)
+  end
+
   # Admin interface
   scope "/admin" do
     pipe_through([:browser, :require_authenticated_user])
     ash_admin("/", domains: [RivaAsh.Domain])
+  end
+
+  # Catch-all route for 404 errors (must be last)
+  scope "/", RivaAshWeb do
+    pipe_through([:browser])
+
+    live("/*path", Error.NotFoundLive, :index)
   end
 end

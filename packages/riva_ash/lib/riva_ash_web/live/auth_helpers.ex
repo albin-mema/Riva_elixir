@@ -25,6 +25,24 @@ defmodule RivaAshWeb.Live.AuthHelpers do
   end
 
   @doc """
+  Handles Ash authorization errors and redirects appropriately.
+  Returns {:ok, redirect_socket} for authorization failures.
+  """
+  def handle_ash_error(socket, error) do
+    case error do
+      %Ash.Error.Forbidden{} ->
+        {:ok, Phoenix.LiveView.redirect(socket, to: "/access-denied")}
+
+      %Ash.Error.Invalid{} ->
+        {:ok, Phoenix.LiveView.redirect(socket, to: "/access-denied")}
+
+      _ ->
+        # For other errors, redirect to 404
+        {:ok, Phoenix.LiveView.redirect(socket, to: "/404")}
+    end
+  end
+
+  @doc """
   Handles authentication in LiveView mount/3 callback.
   Returns {:ok, socket} with user assigned if authenticated,
   {:ok, redirect_socket} if not authenticated.
@@ -57,6 +75,7 @@ defmodule RivaAshWeb.Live.AuthHelpers do
     def mount(_params, session, socket) do
       with_authentication socket, session do
         # Your authenticated mount logic here
+        # This will automatically handle Ash authorization errors
         {:ok, assign(socket, :data, load_data(socket.assigns.current_user))}
       end
     end
@@ -69,7 +88,15 @@ defmodule RivaAshWeb.Live.AuthHelpers do
         {:ok, socket_with_user} ->
           # Rebind socket to include current_user
           socket = socket_with_user
-          unquote(block)
+
+          # Execute the block and handle any Ash authorization errors
+          try do
+            unquote(block)
+          rescue
+            error in [Ash.Error.Forbidden, Ash.Error.Invalid] ->
+              RivaAshWeb.Live.AuthHelpers.handle_ash_error(socket, error)
+          end
+
         {:ok, redirect_socket} ->
           {:ok, redirect_socket}
       end

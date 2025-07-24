@@ -15,21 +15,26 @@ defmodule RivaAshWeb.LayoutLive do
   def mount(_params, session, socket) do
     case get_current_user_from_session(session) do
       {:ok, user} ->
-        # Get user's businesses first
-        businesses = Business.read!(actor: user)
-        business_ids = Enum.map(businesses, & &1.id)
+        try do
+          # Get user's businesses first
+          businesses = Business.read!(actor: user)
+          business_ids = Enum.map(businesses, & &1.id)
 
-        # Get layouts for user's businesses
-        layouts = Layout.read!(actor: user, filter: [business_id: [in: business_ids]])
+          # Get layouts for user's businesses
+          layouts = Layout.read!(actor: user, filter: [business_id: [in: business_ids]])
 
-        socket =
-          socket
-          |> assign(:current_user, user)
-          |> assign(:page_title, "Layouts")
-          |> assign(:layouts, layouts)
-          |> assign(:meta, %{}) # Placeholder for pagination/metadata
+          socket =
+            socket
+            |> assign(:current_user, user)
+            |> assign(:page_title, "Layouts")
+            |> assign(:layouts, layouts)
+            |> assign(:meta, %{}) # Placeholder for pagination/metadata
 
-        {:ok, socket}
+          {:ok, socket}
+        rescue
+          error in [Ash.Error.Forbidden, Ash.Error.Invalid] ->
+            {:ok, redirect(socket, to: "/access-denied")}
+        end
 
       {:error, :not_authenticated} ->
         {:ok, redirect(socket, to: "/sign-in")}
