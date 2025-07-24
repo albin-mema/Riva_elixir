@@ -6,9 +6,17 @@ defmodule RivaAshWeb.AuthController do
 
   plug(:put_layout, {RivaAshWeb.Layouts, :app})
 
+  def redirect_to_dashboard(conn, _params) do
+    if conn.assigns[:current_user] do
+      redirect(conn, to: "/dashboard")
+    else
+      redirect(conn, to: "/sign-in")
+    end
+  end
+
   def redirect_to_sign_in(conn, _params) do
     if conn.assigns[:current_user] do
-      redirect(conn, to: "/businesses")
+      redirect(conn, to: "/dashboard")
     else
       redirect(conn, to: "/sign-in")
     end
