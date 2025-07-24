@@ -8,7 +8,5 @@ defmodule RivaAshWeb.Components.Atoms.AllAtoms do
   import RivaAshWeb.Components.Atoms.Button
   import RivaAshWeb.Components.Atoms.TextInput
 
-  # Re-export components for convenience
-  def button(assigns), do: Button.button(assigns)
-  def text_input(assigns), do: TextInput.text_input(assigns)
+  # Components are available through imports above
 end

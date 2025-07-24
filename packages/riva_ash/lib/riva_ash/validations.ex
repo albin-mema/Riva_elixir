@@ -185,7 +185,7 @@ defmodule RivaAsh.Validations do
 
   def check_active_holds(item_id, reserved_from, reserved_until) do
     # Check for active holds that would conflict with this reservation
-    now = Timex.utc_now()
+    now = Timex.now()
 
     try do
       query = RivaAsh.Resources.ItemHold
