@@ -6,13 +6,13 @@ defmodule RivaAshWeb.LayoutLive do
 
   import RivaAshWeb.Components.Organisms.PageHeader
   import RivaAshWeb.Components.Organisms.DataTable
-  import RivaAshWeb.Components.Atoms.AllAtoms
+  import RivaAshWeb.Components.Atoms.Button
 
   alias RivaAsh.Resources.Layout
 
   @impl true
   def mount(_params, _session, socket) do
-    layouts = RivaAsh.read(Layout)
+    layouts = Layout.read!()
 
     socket =
       socket

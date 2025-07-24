@@ -6,13 +6,13 @@ defmodule RivaAshWeb.PlotLive do
 
   import RivaAshWeb.Components.Organisms.PageHeader
   import RivaAshWeb.Components.Organisms.DataTable
-  import RivaAshWeb.Components.Atoms.AllAtoms
+  import RivaAshWeb.Components.Atoms.Button
 
   alias RivaAsh.Resources.Plot
 
   @impl true
   def mount(_params, _session, socket) do
-    plots = RivaAsh.read(Plot)
+    plots = Plot.read!()
 
     socket =
       socket

@@ -6,13 +6,13 @@ defmodule RivaAshWeb.ItemPositionLive do
 
   import RivaAshWeb.Components.Organisms.PageHeader
   import RivaAshWeb.Components.Organisms.DataTable
-  import RivaAshWeb.Components.Atoms.AllAtoms
+  import RivaAshWeb.Components.Atoms.Button
 
   alias RivaAsh.Resources.ItemPosition
 
   @impl true
   def mount(_params, _session, socket) do
-    item_positions = RivaAsh.read(ItemPosition)
+    item_positions = ItemPosition.read!()
 
     socket =
       socket

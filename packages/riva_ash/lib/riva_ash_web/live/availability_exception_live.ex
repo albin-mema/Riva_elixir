@@ -6,13 +6,13 @@ defmodule RivaAshWeb.AvailabilityExceptionLive do
 
   import RivaAshWeb.Components.Organisms.PageHeader
   import RivaAshWeb.Components.Organisms.DataTable
-  import RivaAshWeb.Components.Atoms.AllAtoms
+  import RivaAshWeb.Components.Atoms.Button
 
   alias RivaAsh.Resources.AvailabilityException
 
   @impl true
   def mount(_params, _session, socket) do
-    exceptions = RivaAsh.read(AvailabilityException)
+    exceptions = AvailabilityException.read!()
 
     socket =
       socket

@@ -6,13 +6,13 @@ defmodule RivaAshWeb.ItemHoldLive do
 
   import RivaAshWeb.Components.Organisms.PageHeader
   import RivaAshWeb.Components.Organisms.DataTable
-  import RivaAshWeb.Components.Atoms.AllAtoms
+  import RivaAshWeb.Components.Atoms.Button
 
   alias RivaAsh.Resources.ItemHold
 
   @impl true
   def mount(_params, _session, socket) do
-    item_holds = RivaAsh.read(ItemHold)
+    item_holds = ItemHold.read!()
 
     socket =
       socket

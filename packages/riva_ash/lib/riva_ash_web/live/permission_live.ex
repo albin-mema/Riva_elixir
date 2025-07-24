@@ -8,7 +8,7 @@ defmodule RivaAshWeb.PermissionLive do
   import RivaAshWeb.Components.Organisms.DataTable
   import RivaAshWeb.Components.Organisms.PermissionMatrix
   import RivaAshWeb.Components.Molecules.TabNavigation
-  import RivaAshWeb.Components.Atoms.AllAtoms
+  import RivaAshWeb.Components.Atoms.Button
 
   alias RivaAsh.Resources.{Permission, Employee, EmployeePermission}
 
