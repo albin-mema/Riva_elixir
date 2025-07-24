@@ -14,6 +14,7 @@ defmodule RivaAshWeb.Error.AccessDeniedLive do
           |> assign(:current_user, user)
           |> assign(:page_title, "Access Denied")
           |> assign(:authenticated, true)
+          |> put_layout(html: {RivaAshWeb.Layouts, :app})
 
         {:ok, socket}
 
@@ -23,6 +24,7 @@ defmodule RivaAshWeb.Error.AccessDeniedLive do
           |> assign(:current_user, nil)
           |> assign(:page_title, "Access Denied")
           |> assign(:authenticated, false)
+          |> put_layout(html: {RivaAshWeb.Layouts, :app})
 
         {:ok, socket}
     end
@@ -31,11 +33,11 @@ defmodule RivaAshWeb.Error.AccessDeniedLive do
   @impl true
   def render(assigns) do
     ~H"""
-    <div class="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div class="max-w-md w-full space-y-8 text-center">
+    <div class="flex justify-center items-center bg-gray-50 px-4 sm:px-6 lg:px-8 py-12 min-h-screen">
+      <div class="space-y-8 w-full max-w-md text-center">
         <!-- Access Denied Icon -->
         <div>
-          <div class="mx-auto h-32 w-32 text-red-400">
+          <div class="mx-auto w-32 h-32 text-red-400">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" class="w-full h-full">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
             </svg>
@@ -44,29 +46,29 @@ defmodule RivaAshWeb.Error.AccessDeniedLive do
 
         <!-- Error Message -->
         <div>
-          <h1 class="text-6xl font-bold text-red-600 mb-4">403</h1>
-          <h2 class="text-2xl font-semibold text-gray-700 mb-2">Access Denied</h2>
-          
+          <h1 class="mb-4 font-bold text-red-600 text-6xl">403</h1>
+          <h2 class="mb-2 font-semibold text-gray-700 text-2xl">Access Denied</h2>
+
           <%= if @authenticated do %>
-            <p class="text-gray-500 mb-8">
+            <p class="mb-8 text-gray-500">
               You don't have permission to access this resource. This could be because:
             </p>
-            <ul class="text-left text-gray-500 mb-8 space-y-2">
+            <ul class="space-y-2 mb-8 text-gray-500 text-left">
               <li class="flex items-start">
-                <span class="text-red-500 mr-2">•</span>
+                <span class="mr-2 text-red-500">•</span>
                 You don't own the business associated with this resource
               </li>
               <li class="flex items-start">
-                <span class="text-red-500 mr-2">•</span>
+                <span class="mr-2 text-red-500">•</span>
                 Your user role doesn't have the required permissions
               </li>
               <li class="flex items-start">
-                <span class="text-red-500 mr-2">•</span>
+                <span class="mr-2 text-red-500">•</span>
                 The resource has been restricted by an administrator
               </li>
             </ul>
           <% else %>
-            <p class="text-gray-500 mb-8">
+            <p class="mb-8 text-gray-500">
               You need to be signed in to access this resource. Please sign in with your account to continue.
             </p>
           <% end %>
@@ -77,9 +79,9 @@ defmodule RivaAshWeb.Error.AccessDeniedLive do
           <%= if @authenticated do %>
             <.link
               navigate="/dashboard"
-              class="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+              class="flex justify-center bg-blue-600 hover:bg-blue-700 shadow-sm px-4 py-3 border border-transparent rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 w-full font-medium text-white text-sm transition-colors"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg xmlns="http://www.w3.org/2000/svg" class="mr-2 w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
               </svg>
               Go to Dashboard
@@ -87,9 +89,9 @@ defmodule RivaAshWeb.Error.AccessDeniedLive do
 
             <.link
               navigate="/businesses"
-              class="w-full flex justify-center py-3 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+              class="flex justify-center bg-white hover:bg-gray-50 shadow-sm px-4 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 w-full font-medium text-gray-700 text-sm transition-colors"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg xmlns="http://www.w3.org/2000/svg" class="mr-2 w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
               </svg>
               View Your Businesses
@@ -97,9 +99,9 @@ defmodule RivaAshWeb.Error.AccessDeniedLive do
           <% else %>
             <.link
               navigate="/sign-in"
-              class="w-full flex justify-center py-3 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+              class="flex justify-center bg-blue-600 hover:bg-blue-700 shadow-sm px-4 py-3 border border-transparent rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 w-full font-medium text-white text-sm transition-colors"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg xmlns="http://www.w3.org/2000/svg" class="mr-2 w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
               </svg>
               Sign In
@@ -107,9 +109,9 @@ defmodule RivaAshWeb.Error.AccessDeniedLive do
 
             <.link
               navigate="/register"
-              class="w-full flex justify-center py-3 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+              class="flex justify-center bg-white hover:bg-gray-50 shadow-sm px-4 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 w-full font-medium text-gray-700 text-sm transition-colors"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg xmlns="http://www.w3.org/2000/svg" class="mr-2 w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
               </svg>
               Create Account
@@ -118,9 +120,9 @@ defmodule RivaAshWeb.Error.AccessDeniedLive do
 
           <button
             onclick="history.back()"
-            class="w-full flex justify-center py-3 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+            class="flex justify-center bg-white hover:bg-gray-50 shadow-sm px-4 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 w-full font-medium text-gray-700 text-sm transition-colors"
           >
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <svg xmlns="http://www.w3.org/2000/svg" class="mr-2 w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
             </svg>
             Go Back
@@ -128,7 +130,7 @@ defmodule RivaAshWeb.Error.AccessDeniedLive do
         </div>
 
         <!-- Help Text -->
-        <div class="text-sm text-gray-400">
+        <div class="text-gray-400 text-sm">
           <p>If you believe you should have access to this resource, please contact your administrator or support.</p>
         </div>
       </div>
