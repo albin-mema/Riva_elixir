@@ -7,20 +7,23 @@ defmodule RivaAshWeb.ReservationLive do
   import RivaAshWeb.Components.Organisms.PageHeader
   import RivaAshWeb.Components.Organisms.DataTable
   import RivaAshWeb.Components.Atoms.Button
+  import RivaAshWeb.Live.AuthHelpers
 
   alias RivaAsh.Resources.Reservation
 
   @impl true
-  def mount(_params, _session, socket) do
-    reservations = Reservation.read!()
+  def mount(_params, session, socket) do
+    with_authentication socket, session do
+      reservations = Reservation.read!(actor: socket.assigns.current_user)
 
-    socket =
-      socket
-      |> assign(:page_title, "Reservations")
-      |> assign(:reservations, reservations)
-      |> assign(:meta, %{}) # Placeholder for pagination/metadata
+      socket =
+        socket
+        |> assign(:page_title, "Reservations")
+        |> assign(:reservations, reservations)
+        |> assign(:meta, %{}) # Placeholder for pagination/metadata
 
-    {:ok, socket}
+      {:ok, socket}
+    end
   end
 
   @impl true

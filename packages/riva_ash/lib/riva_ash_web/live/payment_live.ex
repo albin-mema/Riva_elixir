@@ -7,20 +7,23 @@ defmodule RivaAshWeb.PaymentLive do
   import RivaAshWeb.Components.Organisms.PageHeader
   import RivaAshWeb.Components.Organisms.DataTable
   import RivaAshWeb.Components.Atoms.Button
+  import RivaAshWeb.Live.AuthHelpers
 
   alias RivaAsh.Resources.Payment
 
   @impl true
-  def mount(_params, _session, socket) do
-    payments = Payment.read!()
+  def mount(_params, session, socket) do
+    with_authentication socket, session do
+      payments = Payment.read!(actor: socket.assigns.current_user)
 
-    socket =
-      socket
-      |> assign(:page_title, "Payments")
-      |> assign(:payments, payments)
-      |> assign(:meta, %{}) # Placeholder for pagination/metadata
+      socket =
+        socket
+        |> assign(:page_title, "Payments")
+        |> assign(:payments, payments)
+        |> assign(:meta, %{}) # Placeholder for pagination/metadata
 
-    {:ok, socket}
+      {:ok, socket}
+    end
   end
 
   @impl true
