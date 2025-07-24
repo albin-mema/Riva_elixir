@@ -6,13 +6,13 @@ defmodule RivaAshWeb.ReservationLive do
 
   import RivaAshWeb.Components.Organisms.PageHeader
   import RivaAshWeb.Components.Organisms.DataTable
-  import RivaAshWeb.Components.Atoms.AllAtoms
+  import RivaAshWeb.Components.Atoms.Button
 
   alias RivaAsh.Resources.Reservation
 
   @impl true
   def mount(_params, _session, socket) do
-    reservations = RivaAsh.read(Reservation)
+    reservations = Reservation.read!()
 
     socket =
       socket

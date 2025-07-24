@@ -6,13 +6,13 @@ defmodule RivaAshWeb.UserLive do
 
   import RivaAshWeb.Components.Organisms.PageHeader
   import RivaAshWeb.Components.Organisms.DataTable
-  import RivaAshWeb.Components.Atoms.AllAtoms
+  import RivaAshWeb.Components.Atoms.Button
 
   alias RivaAsh.Resources.User
 
   @impl true
   def mount(_params, _session, socket) do
-    users = RivaAsh.read(User)
+    users = User.read!()
 
     socket =
       socket

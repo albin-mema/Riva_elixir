@@ -6,13 +6,13 @@ defmodule RivaAshWeb.PricingLive do
 
   import RivaAshWeb.Components.Organisms.PageHeader
   import RivaAshWeb.Components.Organisms.DataTable
-  import RivaAshWeb.Components.Atoms.AllAtoms
+  import RivaAshWeb.Components.Atoms.Button
 
   alias RivaAsh.Resources.Pricing
 
   @impl true
   def mount(_params, _session, socket) do
-    pricings = RivaAsh.read(Pricing)
+    pricings = Pricing.read!()
 
     socket =
       socket

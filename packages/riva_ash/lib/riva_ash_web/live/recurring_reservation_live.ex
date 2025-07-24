@@ -6,13 +6,13 @@ defmodule RivaAshWeb.RecurringReservationLive do
 
   import RivaAshWeb.Components.Organisms.PageHeader
   import RivaAshWeb.Components.Organisms.DataTable
-  import RivaAshWeb.Components.Atoms.AllAtoms
+  import RivaAshWeb.Components.Atoms.Button
 
   alias RivaAsh.Resources.RecurringReservation
 
   @impl true
   def mount(_params, _session, socket) do
-    recurring_reservations = RivaAsh.read(RecurringReservation)
+    recurring_reservations = RecurringReservation.read!()
 
     socket =
       socket

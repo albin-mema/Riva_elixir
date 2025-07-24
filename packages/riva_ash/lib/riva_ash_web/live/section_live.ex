@@ -6,13 +6,13 @@ defmodule RivaAshWeb.SectionLive do
 
   import RivaAshWeb.Components.Organisms.PageHeader
   import RivaAshWeb.Components.Organisms.DataTable
-  import RivaAshWeb.Components.Atoms.AllAtoms
+  import RivaAshWeb.Components.Atoms.Button
 
   alias RivaAsh.Resources.Section
 
   @impl true
   def mount(_params, _session, socket) do
-    sections = RivaAsh.read(Section)
+    sections = Section.read!()
 
     socket =
       socket
