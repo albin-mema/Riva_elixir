@@ -26,16 +26,21 @@ defmodule RivaAshWeb.Live.AuthHelpers do
 
   @doc """
   Handles authentication in LiveView mount/3 callback.
-  Returns {:ok, socket} with user assigned if authenticated, 
+  Returns {:ok, socket} with user assigned if authenticated,
   {:ok, redirect_socket} if not authenticated.
+
+  Note: This function should be called from within a LiveView context
+  where assign/3 and redirect/2 are available.
   """
   def require_authentication(socket, session, redirect_to \\ "/sign-in") do
     case get_current_user_from_session(session) do
       {:ok, user} ->
-        socket_with_user = Phoenix.LiveView.assign(socket, :current_user, user)
+        # Use the socket's assign function (available in LiveView context)
+        socket_with_user = socket |> Phoenix.Component.assign(:current_user, user)
         ErrorHelpers.success(socket_with_user)
       {:error, _} ->
-        redirect_socket = Phoenix.LiveView.redirect(socket, to: redirect_to)
+        # Use Phoenix.LiveView.push_redirect instead
+        redirect_socket = socket |> Phoenix.LiveView.push_redirect(to: redirect_to)
         ErrorHelpers.success(redirect_socket)
     end
   end
@@ -43,12 +48,12 @@ defmodule RivaAshWeb.Live.AuthHelpers do
   @doc """
   Macro to be used in LiveViews that require authentication.
   Usage:
-  
+
   ```elixir
   defmodule MyLive do
     use RivaAshWeb, :live_view
     import RivaAshWeb.Live.AuthHelpers
-    
+
     def mount(_params, session, socket) do
       with_authentication socket, session do
         # Your authenticated mount logic here
