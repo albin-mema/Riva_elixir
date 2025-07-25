@@ -7,7 +7,7 @@ defmodule RivaAshWeb.Endpoint do
   @session_options [
     store: :cookie,
     key: "_riva_ash_key",
-    signing_salt: "riva_ash",
+    signing_salt: "riva_ash_session_salt",
     same_site: "Lax"
   ]
 

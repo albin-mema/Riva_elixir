@@ -8,11 +8,11 @@ defmodule RivaAshWeb.UserLive do
   import RivaAshWeb.Components.Organisms.DataTable
   import RivaAshWeb.Components.Atoms.Button
 
-  alias RivaAsh.Resources.User
+  alias RivaAsh.Accounts.User
 
   @impl true
   def mount(_params, _session, socket) do
-    users = User.read!()
+    users = User |> Ash.read!(domain: RivaAsh.Accounts)
 
     socket =
       socket
