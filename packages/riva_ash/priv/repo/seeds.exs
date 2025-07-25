@@ -1,123 +1,255 @@
-# Script for populating the database. You can run it as:
+# Script for populating the database with realistic test data using Faker
 #
 #     mix run priv/repo/seeds.exs
 #
-# Inside the script, you can read and write to any of your
-# repositories directly:
-#
-#     RivaAsh.Repo.insert!(%RivaAsh.SomeSchema{})
-#
-# We recommend using the bang functions (`insert!`, `update!`
-# and so on) as they will fail if something goes wrong.
+# This script creates a comprehensive set of test data including:
+# - Admin and regular users
+# - Multiple businesses with realistic data
+# - Employees, clients, items, and reservations
+# - Proper relationships and realistic quantities
 
-alias RivaAsh.Resources.{Business, Section, Item}
+alias RivaAsh.Resources.{Business, Section, Item, Employee, Client, Reservation, ItemType, Plot, Layout}
 alias RivaAsh.Accounts.User
 alias RivaAsh.Domain
 import Ash.Expr
 require Ash.Query
 
-IO.puts("Creating admin user...")
+# Configure Faker locale
+Faker.start()
 
-# Check if admin user already exists by email
-admin_user = case User |> Ash.Query.filter(expr(email == "admin@example.com")) |> Ash.read_one() do
-  {:ok, user} when not is_nil(user) ->
-    IO.puts("Admin user already exists: #{user.email} (ID: #{user.id})")
-    user
+# Configuration for data generation
+config = %{
+  users: %{admin: 1, regular: 5},
+  businesses: %{count: 3..8},
+  employees_per_business: %{count: 2..8},
+  clients_per_business: %{count: 5..15},
+  sections_per_business: %{count: 2..5},
+  items_per_section: %{count: 3..12},
+  reservations_per_client: %{count: 0..3}
+}
 
-  {:ok, nil} ->
-    # Create the admin user
-    case User
-         |> Ash.Changeset.for_create(:register_with_password, %{
-           email: "admin@example.com",
-           name: "Admin User",
-           role: :admin,
-           password: "admin123456"
-         })
-         |> Ash.create() do
-      {:ok, user} ->
-        IO.puts("Created admin user: #{user.email} (ID: #{user.id})")
+# Helper functions for seeding
+defmodule SeedHelpers do
+  def create_or_find_user(email, attrs) do
+    case User |> Ash.Query.filter(expr(email == ^email)) |> Ash.read_one() do
+      {:ok, user} when not is_nil(user) ->
+        IO.puts("User already exists: #{user.email} (ID: #{user.id})")
         user
 
-      {:error, error} ->
-        IO.puts("Failed to create admin user: #{inspect(error)}")
-        System.halt(1)
-    end
+      {:ok, nil} ->
+        case User
+             |> Ash.Changeset.for_create(:register_with_password, attrs)
+             |> Ash.create() do
+          {:ok, user} ->
+            IO.puts("Created user: #{user.email} (ID: #{user.id})")
+            user
 
-  {:error, error} ->
-    IO.puts("Error checking for admin user: #{inspect(error)}")
-    System.halt(1)
+          {:error, error} ->
+            IO.puts("Failed to create user '#{email}': #{inspect(error)}")
+            nil
+        end
+
+      {:error, error} ->
+        IO.puts("Error checking for user '#{email}': #{inspect(error)}")
+        nil
+    end
+  end
+
+  def random_count(range), do: Enum.random(range)
+
+  def create_business(owner_id, actor) do
+    company_name = Faker.Company.name()
+
+    attrs = %{
+      name: company_name,
+      description: Faker.Company.catch_phrase(),
+      owner_id: owner_id
+    }
+
+    case Business |> Ash.Changeset.for_create(:create, attrs, actor: actor) |> Ash.create() do
+      {:ok, business} ->
+        IO.puts("Created business: #{business.name} (ID: #{business.id})")
+        business
+      {:error, error} ->
+        IO.puts("Failed to create business '#{company_name}': #{inspect(error)}")
+        nil
+    end
+  end
 end
 
-# Create or get sample businesses
-sample_businesses = [
-  %{name: "Tech Solutions Inc", description: "A technology consulting company"},
-  %{name: "Green Energy Corp", description: "Renewable energy solutions provider"},
-  %{name: "Creative Design Studio", description: "Digital design and marketing agency"}
-]
+IO.puts("🌱 Starting comprehensive database seeding with Faker...")
 
-IO.puts("Creating/finding sample businesses...")
+# Create admin user
+IO.puts("Creating admin user...")
+admin_user = SeedHelpers.create_or_find_user("admin@example.com", %{
+  email: "admin@example.com",
+  name: "Admin User",
+  role: :admin,
+  password: "admin123456"
+})
 
-businesses = Enum.map(sample_businesses, fn business_attrs ->
-  business_name = business_attrs.name
-  
-  # Check if business already exists
-  case Business |> Ash.Query.filter(expr(name == ^business_name)) |> Ash.read_one() do
-    {:ok, existing_business} when not is_nil(existing_business) ->
-      IO.puts("Business already exists: #{existing_business.name} (ID: #{existing_business.id})")
-      existing_business
-    
-    {:ok, nil} ->
-      # Create new business
-      business_attrs_with_owner = Map.put(business_attrs, :owner_id, admin_user.id)
-      case Business |> Ash.Changeset.for_create(:create, business_attrs_with_owner, actor: admin_user) |> Ash.create() do
-        {:ok, business} ->
-          IO.puts("Created business: #{business.name} (ID: #{business.id})")
-          business
-        {:error, error} ->
-          IO.puts("Failed to create business '#{business_attrs.name}': #{inspect(error)}")
-          nil
-      end
-    
-    {:error, error} ->
-      IO.puts("Error checking for business '#{business_name}': #{inspect(error)}")
-      nil
-  end
+unless admin_user do
+  IO.puts("❌ Failed to create admin user. Exiting.")
+  System.halt(1)
+end
+
+# Create regular users
+IO.puts("Creating regular users...")
+regular_users = Enum.map(1..config.users.regular, fn i ->
+  email = "user#{i}@example.com"
+  SeedHelpers.create_or_find_user(email, %{
+    email: email,
+    name: Faker.Person.name(),
+    role: :user,
+    password: "password123"
+  })
 end) |> Enum.filter(&(&1 != nil))
 
-# Create sample sections for each business
-sample_sections_data = [
-  %{business_name: "Tech Solutions Inc", sections: [
-    %{name: "Hardware", description: "Computer hardware and peripherals"},
-    %{name: "Software", description: "Software applications and licenses"},
-    %{name: "Services", description: "IT consulting and support services"}
-  ]},
-  %{business_name: "Green Energy Corp", sections: [
-    %{name: "Solar", description: "Solar panel systems and components"},
-    %{name: "Wind", description: "Wind energy equipment"},
-    %{name: "Storage", description: "Energy storage solutions"}
-  ]},
-  %{business_name: "Creative Design Studio", sections: [
-    %{name: "Web Design", description: "Website design and development"},
-    %{name: "Branding", description: "Logo and brand identity design"},
-    %{name: "Marketing", description: "Digital marketing campaigns"}
-  ]}
-]
+all_users = [admin_user | regular_users]
 
-IO.puts("Creating sample sections...")
+# Create businesses
+IO.puts("Creating businesses...")
+business_count = SeedHelpers.random_count(config.businesses.count)
+businesses = Enum.map(1..business_count, fn _i ->
+  owner = Enum.random(all_users)
+  SeedHelpers.create_business(owner.id, admin_user)
+end) |> Enum.filter(&(&1 != nil))
 
-sections = Enum.flat_map(sample_sections_data, fn %{business_name: business_name, sections: sections_list} ->
-  business = Enum.find(businesses, &(&1.name == business_name))
+IO.puts("✅ Created #{length(businesses)} businesses")
 
-  if business do
-    Enum.map(sections_list, fn section_attrs ->
-      section_attrs_with_business = Map.put(section_attrs, :business_id, business.id)
+# Create employees for each business
+IO.puts("Creating employees...")
+all_employees = Enum.flat_map(businesses, fn business ->
+  employee_count = SeedHelpers.random_count(config.employees_per_business.count)
 
-      case Section |> Ash.Changeset.for_create(:create, section_attrs_with_business, actor: admin_user) |> Ash.create() do
-        {:ok, section} ->
-          IO.puts("Created section: #{section.name} for #{business.name} (ID: #{section.id})")
-          section
-        {:error, error} ->
-          IO.puts("Failed to create section '#{section_attrs.name}': #{inspect(error)}")
+  Enum.map(1..employee_count, fn _i ->
+    first_name = Faker.Person.first_name()
+    last_name = Faker.Person.last_name()
+
+    attrs = %{
+      first_name: first_name,
+      last_name: last_name,
+      email: "#{String.downcase(first_name)}.#{String.downcase(last_name)}@#{String.downcase(String.replace(business.name, " ", ""))}.com",
+      role: Enum.random([:manager, :staff, :admin]),
+      phone: Faker.Phone.EnUs.phone(),
+      business_id: business.id
+    }
+
+    case Employee |> Ash.Changeset.for_create(:create, attrs, actor: admin_user) |> Ash.create() do
+      {:ok, employee} ->
+        employee
+      {:error, _error} ->
+        nil
+    end
+  end) |> Enum.filter(&(&1 != nil))
+end)
+
+IO.puts("✅ Created #{length(all_employees)} employees")
+
+# Create clients for each business
+IO.puts("Creating clients...")
+all_clients = Enum.flat_map(businesses, fn business ->
+  client_count = SeedHelpers.random_count(config.clients_per_business.count)
+
+  Enum.map(1..client_count, fn _i ->
+    attrs = %{
+      name: Faker.Person.name(),
+      email: Faker.Internet.email(),
+      phone: "#{Enum.random(200..999)}-#{Enum.random(200..999)}-#{Enum.random(1000..9999)}",
+      business_id: business.id
+    }
+
+    case Client |> Ash.Changeset.for_create(:create, attrs, actor: admin_user) |> Ash.create() do
+      {:ok, client} ->
+        client
+      {:error, _error} ->
+        nil
+    end
+  end) |> Enum.filter(&(&1 != nil))
+end)
+
+IO.puts("✅ Created #{length(all_clients)} clients")
+
+# Create sections for each business
+IO.puts("Creating sections...")
+all_sections = Enum.flat_map(businesses, fn business ->
+  section_count = SeedHelpers.random_count(config.sections_per_business.count)
+
+  # Generate realistic section names based on business type
+  section_types = [
+    "Sales", "Marketing", "Operations", "Customer Service", "Administration",
+    "Finance", "Human Resources", "IT Support", "Research & Development",
+    "Quality Assurance", "Logistics", "Procurement"
+  ]
+
+  Enum.map(1..section_count, fn _i ->
+    section_name = Enum.random(section_types)
+
+    attrs = %{
+      name: section_name,
+      description: "#{section_name} department for #{business.name}",
+      business_id: business.id
+    }
+
+    case Section |> Ash.Changeset.for_create(:create, attrs, actor: admin_user) |> Ash.create() do
+      {:ok, section} ->
+        section
+      {:error, _error} ->
+        nil
+    end
+  end) |> Enum.filter(&(&1 != nil))
+end)
+
+IO.puts("✅ Created #{length(all_sections)} sections")
+
+# Create items for each section
+IO.puts("Creating items...")
+all_items = Enum.flat_map(all_sections, fn section ->
+  item_count = SeedHelpers.random_count(config.items_per_section.count)
+
+  Enum.map(1..item_count, fn _i ->
+    attrs = %{
+      name: Faker.Commerce.product_name(),
+      description: Faker.Lorem.sentence(),
+      section_id: section.id
+    }
+
+    case Item |> Ash.Changeset.for_create(:create, attrs, actor: admin_user) |> Ash.create() do
+      {:ok, item} ->
+        item
+      {:error, _error} ->
+        nil
+    end
+  end) |> Enum.filter(&(&1 != nil))
+end)
+
+IO.puts("✅ Created #{length(all_items)} items")
+
+# Create some reservations
+IO.puts("Creating reservations...")
+
+all_reservations = Enum.flat_map(all_clients, fn client ->
+  reservation_count_for_client = SeedHelpers.random_count(config.reservations_per_client.count)
+
+  if reservation_count_for_client > 0 and length(all_items) > 0 do
+    Enum.map(1..reservation_count_for_client, fn _i ->
+      item = Enum.random(all_items)
+      start_time = Faker.DateTime.between(~N[2024-01-01 09:00:00], ~N[2024-12-31 17:00:00])
+      end_time = NaiveDateTime.add(start_time, Enum.random([3600, 7200, 10800]), :second) # 1-3 hours
+
+      attrs = %{
+        client_id: client.id,
+        item_id: item.id,
+        start_time: start_time,
+        end_time: end_time,
+        status: Enum.random([:pending, :confirmed, :completed, :cancelled]),
+        notes: Faker.Lorem.sentence()
+      }
+
+      case Reservation |> Ash.Changeset.for_create(:create, attrs, actor: admin_user) |> Ash.create() do
+        {:ok, reservation} ->
+          reservation
+        {:error, _error} ->
           nil
       end
     end) |> Enum.filter(&(&1 != nil))
@@ -126,88 +258,16 @@ sections = Enum.flat_map(sample_sections_data, fn %{business_name: business_name
   end
 end)
 
-# Create sample items for sections
-sample_items_data = [
-  %{section_name: "Hardware", items: ["Laptop Computer", "Desktop PC", "Monitor", "Keyboard", "Mouse"]},
-  %{section_name: "Software", items: ["Office Suite", "Antivirus Software", "Design Software", "Database License"]},
-  %{section_name: "Services", items: ["IT Consultation", "System Setup", "Technical Support", "Training"]},
-  %{section_name: "Solar", items: ["Solar Panels", "Inverter", "Mounting System", "Monitoring System"]},
-  %{section_name: "Wind", items: ["Wind Turbine", "Control System", "Power Converter", "Maintenance Kit"]},
-  %{section_name: "Storage", items: ["Battery Pack", "Charge Controller", "Power Management System"]},
-  %{section_name: "Web Design", items: ["Website Template", "Custom Design", "Mobile App Design", "E-commerce Site"]},
-  %{section_name: "Branding", items: ["Logo Design", "Business Cards", "Letterhead", "Brand Guidelines"]},
-  %{section_name: "Marketing", items: ["Social Media Campaign", "Email Marketing", "SEO Optimization", "Content Creation"]}
-]
+IO.puts("✅ Created #{length(all_reservations)} reservations")
 
-IO.puts("Creating sample items...")
-
-Enum.each(sample_items_data, fn %{section_name: section_name, items: items_list} ->
-  section = Enum.find(sections, &(&1.name == section_name))
-
-  if section do
-    Enum.each(items_list, fn item_name ->
-      case Item |> Ash.Changeset.for_create(:create, %{name: item_name, section_id: section.id}, actor: admin_user) |> Ash.create() do
-        {:ok, item} ->
-          IO.puts("Created item: #{item.name} in section #{section.name} (ID: #{item.id})")
-        {:error, error} ->
-          IO.puts("Failed to create item '#{item_name}': #{inspect(error)}")
-      end
-    end)
-  end
-end)
-
-# Create sample employees for each business
-alias RivaAsh.Resources.Employee
-
-sample_employees = [
-  %{first_name: "John", last_name: "Doe", email: "john.doe@techsolutions.com", role: :manager, phone: "+1-555-0101"},
-  %{first_name: "Jane", last_name: "Smith", email: "jane.smith@techsolutions.com", role: :staff, phone: "+1-555-0102"},
-  %{first_name: "Mike", last_name: "Johnson", email: "mike.johnson@greenenergy.com", role: :manager, phone: "+1-555-0201"},
-  %{first_name: "Sarah", last_name: "Williams", email: "sarah.williams@greenenergy.com", role: :staff, phone: "+1-555-0202"},
-  %{first_name: "David", last_name: "Brown", email: "david.brown@creativedesign.com", role: :manager, phone: "+1-555-0301"},
-  %{first_name: "Lisa", last_name: "Davis", email: "lisa.davis@creativedesign.com", role: :staff, phone: "+1-555-0302"}
-]
-
-IO.puts("Creating sample employees...")
-
-# Map business names to business IDs
-business_map = %{
-  "Tech Solutions Inc" => Enum.find(businesses, &(&1.name == "Tech Solutions Inc")),
-  "Green Energy Corp" => Enum.find(businesses, &(&1.name == "Green Energy Corp")),
-  "Creative Design Studio" => Enum.find(businesses, &(&1.name == "Creative Design Studio"))
-}
-
-Enum.each(sample_employees, fn employee_attrs ->
-  # Determine business based on email domain
-  business = cond do
-    String.contains?(employee_attrs.email, "techsolutions") -> business_map["Tech Solutions Inc"]
-    String.contains?(employee_attrs.email, "greenenergy") -> business_map["Green Energy Corp"]
-    String.contains?(employee_attrs.email, "creativedesign") -> business_map["Creative Design Studio"]
-    true -> nil
-  end
-
-  if business do
-    # Check if employee already exists
-    case Employee |> Ash.Query.filter(expr(email == ^employee_attrs.email)) |> Ash.read_one() do
-      {:ok, existing_employee} when not is_nil(existing_employee) ->
-        IO.puts("Employee already exists: #{existing_employee.first_name} #{existing_employee.last_name} (#{existing_employee.email})")
-      
-      {:ok, nil} ->
-        # Create new employee
-        employee_attrs_with_business = Map.put(employee_attrs, :business_id, business.id)
-        case Employee |> Ash.Changeset.for_create(:create, employee_attrs_with_business, actor: admin_user) |> Ash.create() do
-          {:ok, employee} ->
-            IO.puts("Created employee: #{employee.first_name} #{employee.last_name} (#{employee.email}) for #{business.name}")
-          {:error, error} ->
-            IO.puts("Failed to create employee '#{employee_attrs.first_name} #{employee_attrs.last_name}': #{inspect(error)}")
-        end
-      
-      {:error, error} ->
-        IO.puts("Error checking for employee '#{employee_attrs.email}': #{inspect(error)}")
-    end
-  else
-    IO.puts("Could not find business for employee: #{employee_attrs.first_name} #{employee_attrs.last_name}")
-  end
-end)
-
-IO.puts("Seeding completed!")
+# Summary
+IO.puts("\n🎉 Seeding completed successfully!")
+IO.puts("📊 Summary:")
+IO.puts("  👥 Users: #{length(all_users)} (1 admin, #{length(regular_users)} regular)")
+IO.puts("  🏢 Businesses: #{length(businesses)}")
+IO.puts("  👔 Employees: #{length(all_employees)}")
+IO.puts("  👤 Clients: #{length(all_clients)}")
+IO.puts("  📂 Sections: #{length(all_sections)}")
+IO.puts("  📦 Items: #{length(all_items)}")
+IO.puts("  📅 Reservations: #{length(all_reservations)}")
+IO.puts("\n✨ Your database is now populated with realistic test data!")
