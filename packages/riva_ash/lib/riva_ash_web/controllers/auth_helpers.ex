@@ -37,7 +37,7 @@ defmodule RivaAshWeb.AuthHelpers do
     else
       _ ->
         conn
-        |> clear_session()
+        |> delete_session(:user_token)
         |> assign(:current_user, nil)
     end
   end
@@ -58,7 +58,7 @@ defmodule RivaAshWeb.AuthHelpers do
   # Helper function to sign out a user
   def sign_out_user(conn) do
     conn
-    |> clear_session()
+    |> delete_session(:user_token)
     |> assign(:current_user, nil)
   end
 end

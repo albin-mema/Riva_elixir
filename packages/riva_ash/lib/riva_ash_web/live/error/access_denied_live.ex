@@ -50,23 +50,53 @@ defmodule RivaAshWeb.Error.AccessDeniedLive do
           <h2 class="mb-2 font-semibold text-gray-700 text-2xl">Access Denied</h2>
 
           <%= if @authenticated do %>
-            <p class="mb-8 text-gray-500">
+            <p class="mb-6 text-gray-500">
               You don't have permission to access this resource. This could be because:
             </p>
-            <ul class="space-y-2 mb-8 text-gray-500 text-left">
+            <ul class="space-y-3 mb-8 text-gray-500 text-left">
               <li class="flex items-start">
-                <span class="mr-2 text-red-500">•</span>
-                You don't own the business associated with this resource
+                <span class="mr-3 text-red-500">•</span>
+                <div>
+                  <strong>No Business Ownership:</strong> You don't own any businesses, or the resource belongs to a business you don't own
+                </div>
               </li>
               <li class="flex items-start">
-                <span class="mr-2 text-red-500">•</span>
-                Your user role doesn't have the required permissions
+                <span class="mr-3 text-red-500">•</span>
+                <div>
+                  <strong>Insufficient Role:</strong> Your user role (<%= String.capitalize(to_string(@current_user.role)) %>) doesn't have the required permissions
+                </div>
               </li>
               <li class="flex items-start">
-                <span class="mr-2 text-red-500">•</span>
-                The resource has been restricted by an administrator
+                <span class="mr-3 text-red-500">•</span>
+                <div>
+                  <strong>Employee Access Required:</strong> This resource may require employee-level access within a business
+                </div>
+              </li>
+              <li class="flex items-start">
+                <span class="mr-3 text-red-500">•</span>
+                <div>
+                  <strong>Admin Restriction:</strong> The resource has been restricted by an administrator
+                </div>
               </li>
             </ul>
+
+            <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+              <div class="flex">
+                <svg class="flex-shrink-0 w-5 h-5 text-blue-400 mt-0.5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <div class="ml-3">
+                  <h3 class="text-sm font-medium text-blue-800">What you can do:</h3>
+                  <div class="mt-2 text-sm text-blue-700">
+                    <ul class="list-disc list-inside space-y-1">
+                      <li>Create your own business to access business resources</li>
+                      <li>Contact a business owner to be added as an employee</li>
+                      <li>Contact an administrator if you believe this is an error</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            </div>
           <% else %>
             <p class="mb-8 text-gray-500">
               You need to be signed in to access this resource. Please sign in with your account to continue.
@@ -85,6 +115,16 @@ defmodule RivaAshWeb.Error.AccessDeniedLive do
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
               </svg>
               Go to Dashboard
+            </.link>
+
+            <.link
+              navigate="/businesses/new"
+              class="flex justify-center bg-green-600 hover:bg-green-700 shadow-sm px-4 py-3 border border-transparent rounded-md focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 w-full font-medium text-white text-sm transition-colors"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" class="mr-2 w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+              </svg>
+              Create New Business
             </.link>
 
             <.link

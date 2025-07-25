@@ -34,7 +34,6 @@ defmodule RivaAshWeb.AuthController do
         |> assign(:current_user, user)
         |> put_flash(:info, "Successfully signed in!")
         |> redirect(to: "/businesses")
-        |> ErrorHelpers.success()
 
       {:ok, user} when is_struct(user) ->
         # Handle case where AshAuthentication returns user without token wrapper
@@ -45,7 +44,6 @@ defmodule RivaAshWeb.AuthController do
         |> assign(:current_user, user)
         |> put_flash(:info, "Successfully signed in!")
         |> redirect(to: "/businesses")
-        |> ErrorHelpers.success()
 
       {:error, reason} when is_binary(reason) ->
         IO.inspect(reason, label: "Sign in error")
@@ -53,7 +51,6 @@ defmodule RivaAshWeb.AuthController do
         conn
         |> put_flash(:error, reason)
         |> redirect(to: "/sign-in")
-        |> ErrorHelpers.failure(reason)
 
       {:error, error} ->
         IO.inspect(error, label: "Unexpected authentication error")
@@ -61,7 +58,6 @@ defmodule RivaAshWeb.AuthController do
         conn
         |> put_flash(:error, "An error occurred during sign in. Please try again.")
         |> redirect(to: "/sign-in")
-        |> ErrorHelpers.failure(error)
     end
   end
 
@@ -114,14 +110,12 @@ defmodule RivaAshWeb.AuthController do
           conn
           |> put_flash(:info, "Registration successful! Please sign in.")
           |> redirect(to: "/sign-in")
-          |> ErrorHelpers.success()
         {:error, changeset} ->
           error_messages = format_changeset_errors(changeset)
 
           conn
           |> put_flash(:error, "Registration failed: #{error_messages}")
           |> redirect(to: "/register")
-          |> ErrorHelpers.failure(changeset)
       end
     end
   end

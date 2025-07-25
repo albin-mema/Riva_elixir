@@ -1,6 +1,5 @@
 defmodule RivaAshWeb.Auth.RegisterLive do
   use RivaAshWeb, :live_view
-  import AshPhoenix.Form
   alias RivaAsh.Accounts
 
   def mount(_params, _session, socket) do

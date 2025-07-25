@@ -4,6 +4,7 @@ defmodule RivaAshWeb.Live.AuthHelpers do
   """
 
   alias RivaAsh.ErrorHelpers
+  alias RivaAsh.Resources.Business
 
   @doc """
   Gets the current user from the LiveView session.
@@ -101,5 +102,92 @@ defmodule RivaAshWeb.Live.AuthHelpers do
           {:ok, redirect_socket}
       end
     end
+  end
+
+  @doc """
+  Loads business-scoped resources for a user.
+  This is the standard pattern for resources that belong to businesses.
+
+  ## Examples
+
+      # For resources with direct business_id
+      load_business_scoped_resources(user, ItemType, :business_id)
+
+      # For resources with nested business relationship
+      load_business_scoped_resources(user, Item, [:section, :plot, :business_id])
+  """
+  def load_business_scoped_resources(user, resource_module, business_path) do
+    try do
+      # Get user's businesses first
+      businesses = Business.read!(actor: user)
+      business_ids = Enum.map(businesses, & &1.id)
+
+      # Build the filter based on the business path
+      filter = build_business_filter(business_path, business_ids)
+
+      # Load the resources with the filter
+      resource_module.read!(actor: user, filter: filter)
+    rescue
+      error in [Ash.Error.Forbidden, Ash.Error.Invalid] ->
+        # Re-raise the error to be handled by the calling LiveView
+        raise error
+    end
+  end
+
+  @doc """
+  Standard mount pattern for business-scoped LiveViews.
+  Handles authentication, business filtering, and error handling.
+
+  ## Example
+
+      def mount(_params, session, socket) do
+        mount_business_scoped(socket, session, ItemType, :business_id, "Item Types")
+      end
+  """
+  def mount_business_scoped(socket, session, resource_module, business_path, page_title) do
+    case get_current_user_from_session(session) do
+      {:ok, user} ->
+        try do
+          resources = load_business_scoped_resources(user, resource_module, business_path)
+
+          socket =
+            socket
+            |> Phoenix.Component.assign(:current_user, user)
+            |> Phoenix.Component.assign(:page_title, page_title)
+            |> Phoenix.Component.assign(resource_key(resource_module), resources)
+            |> Phoenix.Component.assign(:meta, %{}) # Placeholder for pagination/metadata
+
+          {:ok, socket}
+        rescue
+          error in [Ash.Error.Forbidden, Ash.Error.Invalid] ->
+            {:ok, Phoenix.LiveView.redirect(socket, to: "/access-denied")}
+        end
+      {:error, _} ->
+        {:ok, Phoenix.LiveView.redirect(socket, to: "/sign-in")}
+    end
+  end
+
+  # Private helper to build nested filters
+  defp build_business_filter(business_path, business_ids) when is_list(business_path) do
+    # For nested paths like [:section, :plot, :business_id]
+    # Build nested filter structure
+    Enum.reduce(Enum.reverse(business_path), [in: business_ids], fn key, acc ->
+      [{key, acc}]
+    end)
+  end
+
+  defp build_business_filter(business_field, business_ids) when is_atom(business_field) do
+    # For direct business_id fields
+    [{business_field, [in: business_ids]}]
+  end
+
+  # Helper to generate the assign key from the resource module name
+  defp resource_key(resource_module) do
+    resource_module
+    |> Module.split()
+    |> List.last()
+    |> Macro.underscore()
+    |> String.to_atom()
+    |> then(fn name -> :"#{name}s" end) # Pluralize
   end
 end
