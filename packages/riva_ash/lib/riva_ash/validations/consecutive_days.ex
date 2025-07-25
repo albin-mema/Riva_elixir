@@ -53,7 +53,7 @@ defmodule RivaAsh.Validations.ConsecutiveDays do
 
   defp consecutive_date_range?(start_date, end_date) do
     # Generate all dates in the range and check if they are consecutive
-    expected_dates = Timex.Interval.new(from: start_date, until: end_date) |> Timex.Interval.to_list()
+    expected_dates = Timex.Interval.new(from: start_date, until: end_date) |> Enum.to_list()
     actual_days = Timex.diff(end_date, start_date, :days) + 1
 
     # The number of expected dates should match the actual day difference + 1
