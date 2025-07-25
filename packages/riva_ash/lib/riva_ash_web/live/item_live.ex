@@ -4,26 +4,40 @@ defmodule RivaAshWeb.ItemLive do
   """
   use RivaAshWeb, :live_view
 
+  # Explicitly set the authenticated layout
+  @layout {RivaAshWeb.Layouts, :authenticated}
+
   import RivaAshWeb.Components.Organisms.PageHeader
   import RivaAshWeb.Components.Organisms.DataTable
   import RivaAshWeb.Components.Atoms.Button
 
   alias RivaAsh.Resources.Item
+  alias RivaAsh.Resources.Business
 
   @impl true
   def mount(_params, session, socket) do
     case get_current_user_from_session(session) do
       {:ok, user} ->
-        items = Item.read!(actor: user)
+        try do
+          # Get user's businesses first
+          businesses = Business.read!(actor: user)
+          business_ids = Enum.map(businesses, & &1.id)
 
-        socket =
-          socket
-          |> assign(:current_user, user)
-          |> assign(:page_title, "Items")
-          |> assign(:items, items)
-          |> assign(:meta, %{}) # Placeholder for pagination/metadata
+          # Get items for user's businesses (through section -> plot -> business relationship)
+          items = Item.read!(actor: user, filter: [section: [plot: [business_id: [in: business_ids]]]])
 
-        {:ok, socket}
+          socket =
+            socket
+            |> assign(:current_user, user)
+            |> assign(:page_title, "Items")
+            |> assign(:items, items)
+            |> assign(:meta, %{}) # Placeholder for pagination/metadata
+
+          {:ok, socket}
+        rescue
+          error in [Ash.Error.Forbidden, Ash.Error.Invalid] ->
+            {:ok, redirect(socket, to: "/access-denied")}
+        end
       {:error, _} ->
         {:ok, redirect(socket, to: "/sign-in")}
     end

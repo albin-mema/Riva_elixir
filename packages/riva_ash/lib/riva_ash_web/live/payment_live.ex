@@ -7,27 +7,13 @@ defmodule RivaAshWeb.PaymentLive do
   import RivaAshWeb.Components.Organisms.PageHeader
   import RivaAshWeb.Components.Organisms.DataTable
   import RivaAshWeb.Components.Atoms.Button
+  import RivaAshWeb.Live.AuthHelpers
 
   alias RivaAsh.Resources.Payment
 
   @impl true
   def mount(_params, session, socket) do
-    case get_current_user_from_session(session) do
-      {:ok, user} ->
-        payments = Payment.read!(actor: user)
-
-        socket =
-          socket
-          |> assign(:current_user, user)
-          |> assign(:page_title, "Payments")
-          |> assign(:payments, payments)
-          |> assign(:meta, %{}) # Placeholder for pagination/metadata
-
-        {:ok, socket}
-
-      {:error, :not_authenticated} ->
-        {:ok, redirect(socket, to: "/sign-in")}
-    end
+    mount_business_scoped(socket, session, Payment, :business_id, "Payments")
   end
 
   @impl true
@@ -83,19 +69,5 @@ defmodule RivaAshWeb.PaymentLive do
     {:noreply, socket}
   end
 
-  # Private helper functions
-  defp get_current_user_from_session(session) do
-    user_token = session["user_token"]
 
-    if user_token do
-      with {:ok, user_id} <- Phoenix.Token.verify(RivaAshWeb.Endpoint, "user_auth", user_token, max_age: 86_400) |> RivaAsh.ErrorHelpers.to_result(),
-           {:ok, user} <- Ash.get(RivaAsh.Accounts.User, user_id, domain: RivaAsh.Accounts) |> RivaAsh.ErrorHelpers.to_result() do
-        RivaAsh.ErrorHelpers.success(user)
-      else
-        _ -> RivaAsh.ErrorHelpers.failure(:not_authenticated)
-      end
-    else
-      RivaAsh.ErrorHelpers.failure(:not_authenticated)
-    end
-  end
 end

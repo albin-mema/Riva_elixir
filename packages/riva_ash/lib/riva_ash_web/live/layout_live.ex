@@ -4,6 +4,9 @@ defmodule RivaAshWeb.LayoutLive do
   """
   use RivaAshWeb, :live_view
 
+  # Explicitly set the authenticated layout
+  @layout {RivaAshWeb.Layouts, :authenticated}
+
   import RivaAshWeb.Components.Organisms.PageHeader
   import RivaAshWeb.Components.Organisms.DataTable
   import RivaAshWeb.Components.Atoms.Button

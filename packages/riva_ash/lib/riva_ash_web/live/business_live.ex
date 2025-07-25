@@ -4,6 +4,9 @@ defmodule RivaAshWeb.BusinessLive do
   """
   use RivaAshWeb, :live_view
 
+  # Explicitly set the authenticated layout
+  @layout {RivaAshWeb.Layouts, :authenticated}
+
   import RivaAshWeb.Components.Organisms.PageHeader
   import RivaAshWeb.Components.Organisms.DataTable
   import RivaAshWeb.Components.Atoms.Button
@@ -27,6 +30,11 @@ defmodule RivaAshWeb.BusinessLive do
       {:error, _} ->
         {:ok, redirect(socket, to: "/sign-in")}
     end
+  end
+
+  @impl true
+  def handle_params(_params, _url, socket) do
+    {:noreply, socket}
   end
 
   @impl true

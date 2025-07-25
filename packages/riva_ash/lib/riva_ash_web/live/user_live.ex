@@ -7,20 +7,32 @@ defmodule RivaAshWeb.UserLive do
   import RivaAshWeb.Components.Organisms.PageHeader
   import RivaAshWeb.Components.Organisms.DataTable
   import RivaAshWeb.Components.Atoms.Button
+  import RivaAshWeb.Live.AuthHelpers
 
   alias RivaAsh.Accounts.User
 
   @impl true
-  def mount(_params, _session, socket) do
-    users = User |> Ash.read!(domain: RivaAsh.Accounts)
+  def mount(_params, session, socket) do
+    case get_current_user_from_session(session) do
+      {:ok, user} ->
+        # Only admins can view all users
+        if user.role == :admin do
+          users = User |> Ash.read!(domain: RivaAsh.Accounts)
 
-    socket =
-      socket
-      |> assign(:page_title, "Users")
-      |> assign(:users, users)
-      |> assign(:meta, %{}) # Placeholder for pagination/metadata
+          socket =
+            socket
+            |> assign(:current_user, user)
+            |> assign(:page_title, "Users")
+            |> assign(:users, users)
+            |> assign(:meta, %{}) # Placeholder for pagination/metadata
 
-    {:ok, socket}
+          {:ok, socket}
+        else
+          {:ok, redirect(socket, to: "/access-denied")}
+        end
+      {:error, _} ->
+        {:ok, redirect(socket, to: "/sign-in")}
+    end
   end
 
   @impl true

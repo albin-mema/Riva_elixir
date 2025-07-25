@@ -7,20 +7,13 @@ defmodule RivaAshWeb.RecurringReservationInstanceLive do
   import RivaAshWeb.Components.Organisms.PageHeader
   import RivaAshWeb.Components.Organisms.DataTable
   import RivaAshWeb.Components.Atoms.Button
+  import RivaAshWeb.Live.AuthHelpers
 
   alias RivaAsh.Resources.RecurringReservationInstance
 
   @impl true
-  def mount(_params, _session, socket) do
-    recurring_reservation_instances = RecurringReservationInstance.read!()
-
-    socket =
-      socket
-      |> assign(:page_title, "Recurring Reservation Instances")
-      |> assign(:recurring_reservation_instances, recurring_reservation_instances)
-      |> assign(:meta, %{}) # Placeholder for pagination/metadata
-
-    {:ok, socket}
+  def mount(_params, session, socket) do
+    mount_business_scoped(socket, session, RecurringReservationInstance, [:recurring_reservation, :item, :business_id], "Recurring Reservation Instances")
   end
 
   @impl true

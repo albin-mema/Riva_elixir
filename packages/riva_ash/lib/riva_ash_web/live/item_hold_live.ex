@@ -7,20 +7,13 @@ defmodule RivaAshWeb.ItemHoldLive do
   import RivaAshWeb.Components.Organisms.PageHeader
   import RivaAshWeb.Components.Organisms.DataTable
   import RivaAshWeb.Components.Atoms.Button
+  import RivaAshWeb.Live.AuthHelpers
 
   alias RivaAsh.Resources.ItemHold
 
   @impl true
-  def mount(_params, _session, socket) do
-    item_holds = ItemHold.read!()
-
-    socket =
-      socket
-      |> assign(:page_title, "Item Holds")
-      |> assign(:item_holds, item_holds)
-      |> assign(:meta, %{}) # Placeholder for pagination/metadata
-
-    {:ok, socket}
+  def mount(_params, session, socket) do
+    mount_business_scoped(socket, session, ItemHold, [:item, :business_id], "Item Holds")
   end
 
   @impl true

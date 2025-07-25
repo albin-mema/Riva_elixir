@@ -9,21 +9,32 @@ defmodule RivaAshWeb.SectionLive do
   import RivaAshWeb.Components.Atoms.Button
 
   alias RivaAsh.Resources.Section
+  alias RivaAsh.Resources.Business
 
   @impl true
   def mount(_params, session, socket) do
     case get_current_user_from_session(session) do
       {:ok, user} ->
-        sections = Section.read!(actor: user)
+        try do
+          # Get user's businesses first
+          businesses = Business.read!(actor: user)
+          business_ids = Enum.map(businesses, & &1.id)
 
-        socket =
-          socket
-          |> assign(:current_user, user)
-          |> assign(:page_title, "Sections")
-          |> assign(:sections, sections)
-          |> assign(:meta, %{}) # Placeholder for pagination/metadata
+          # Get sections for user's businesses (through plot -> business relationship)
+          sections = Section.read!(actor: user, filter: [plot: [business_id: [in: business_ids]]])
 
-        {:ok, socket}
+          socket =
+            socket
+            |> assign(:current_user, user)
+            |> assign(:page_title, "Sections")
+            |> assign(:sections, sections)
+            |> assign(:meta, %{}) # Placeholder for pagination/metadata
+
+          {:ok, socket}
+        rescue
+          error in [Ash.Error.Forbidden, Ash.Error.Invalid] ->
+            {:ok, redirect(socket, to: "/access-denied")}
+        end
 
       {:error, :not_authenticated} ->
         {:ok, redirect(socket, to: "/sign-in")}
