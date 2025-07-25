@@ -4,6 +4,7 @@
   "description": "Assets for RivaAsh Phoenix application",
   "private": true,
   "scripts": {
+    "dev": "npm run build:watch",
     "build": "tailwindcss -i css/app.css -o ../priv/static/assets/app.css && esbuild js/app.js --bundle --outdir=../priv/static/assets --external:/fonts/* --external:/images/*",
     "build:watch": "concurrently \"tailwindcss -i css/app.css -o ../priv/static/assets/app.css --watch\" \"esbuild js/app.js --bundle --outdir=../priv/static/assets --external:/fonts/* --external:/images/* --watch\"",
     "deploy": "NODE_ENV=production npm run build"
