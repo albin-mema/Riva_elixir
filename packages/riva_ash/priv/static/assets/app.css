@@ -2401,6 +2401,11 @@ video {
   line-height: 1;
 }
 
+.riva-ash-web :is(.text-6xl) {
+  font-size: 3.75rem;
+  line-height: 1;
+}
+
 .riva-ash-web :is(.text-base) {
   font-size: 1rem;
   line-height: 1.5rem;
@@ -2424,11 +2429,6 @@ video {
 .riva-ash-web :is(.text-xs) {
   font-size: 0.75rem;
   line-height: 1rem;
-}
-
-.riva-ash-web :is(.text-6xl) {
-  font-size: 3.75rem;
-  line-height: 1;
 }
 
 .riva-ash-web :is(.font-bold) {
@@ -2629,6 +2629,11 @@ video {
   color: hsl(var(--primary-foreground));
 }
 
+.riva-ash-web :is(.text-red-400) {
+  --tw-text-opacity: 1;
+  color: rgb(248 113 113 / var(--tw-text-opacity));
+}
+
 .riva-ash-web :is(.text-red-500) {
   --tw-text-opacity: 1;
   color: rgb(239 68 68 / var(--tw-text-opacity));
@@ -2697,11 +2702,6 @@ video {
 .riva-ash-web :is(.text-yellow-800) {
   --tw-text-opacity: 1;
   color: rgb(133 77 14 / var(--tw-text-opacity));
-}
-
-.riva-ash-web :is(.text-red-400) {
-  --tw-text-opacity: 1;
-  color: rgb(248 113 113 / var(--tw-text-opacity));
 }
 
 .riva-ash-web :is(.underline) {
