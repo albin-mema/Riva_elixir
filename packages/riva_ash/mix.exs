@@ -101,7 +101,8 @@ defmodule RivaAsh.MixProject do
       {:stream_data, "~> 1.0"},
       {:mox, "~> 1.1", only: :test},
       {:phoenix_test, "~> 0.7.0", only: :test, runtime: false},
-      {:excoveralls, "~> 0.18", only: :test}
+      {:excoveralls, "~> 0.18", only: :test},
+      {:faker, "~> 0.18", only: [:test, :dev]}
     ]
   end
 
