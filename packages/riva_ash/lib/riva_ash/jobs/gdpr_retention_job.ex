@@ -144,7 +144,7 @@ defmodule RivaAsh.Jobs.GDPRRetentionJob do
 
   # Private helper functions
 
-  defp schedule_next_run(schedule) do
+  defp schedule_next_run(_schedule) do
     # Parse cron schedule and calculate next run time
     # For simplicity, we'll run every 24 hours
     # In production, you'd use a proper cron parser
@@ -172,7 +172,7 @@ defmodule RivaAsh.Jobs.GDPRRetentionJob do
     # In production, this would send emails/notifications to compliance team
     # For now, we'll just log the alert
 
-    alert_data = %{
+    _alert_data = %{
       timestamp: DateTime.utc_now(),
       job: @job_name,
       alert_type: "compliance_issue",
@@ -190,7 +190,7 @@ defmodule RivaAsh.Jobs.GDPRRetentionJob do
     })
 
     # In production, this would send immediate alerts to technical team
-    alert_data = %{
+    _alert_data = %{
       timestamp: DateTime.utc_now(),
       job: @job_name,
       alert_type: "job_failure",

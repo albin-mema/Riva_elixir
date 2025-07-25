@@ -11,10 +11,10 @@ defmodule RivaAsh.GDPR.RetentionPolicy do
   """
 
   alias RivaAsh.Accounts.User
-  alias RivaAsh.Resources.{Business, Employee, Client, Reservation}
   alias RivaAsh.GDPR.ConsentRecord
 
   require Logger
+  require Ash.Query
   import Ash.Expr
 
   # Retention periods in days
@@ -145,7 +145,7 @@ defmodule RivaAsh.GDPR.RetentionPolicy do
   end
 
   defp cleanup_expired_reservations do
-    cutoff_date = DateTime.utc_now() |> DateTime.add(-@retention_periods.reservations, :day)
+    _cutoff_date = DateTime.utc_now() |> DateTime.add(-@retention_periods.reservations, :day)
 
     # Reservations might need anonymization rather than deletion for business records
     0
@@ -189,7 +189,7 @@ defmodule RivaAsh.GDPR.RetentionPolicy do
 
   defp cleanup_expired_sessions do
     # Clean up expired session tokens and authentication data
-    cutoff_date = DateTime.utc_now() |> DateTime.add(-@retention_periods.session_data, :day)
+    _cutoff_date = DateTime.utc_now() |> DateTime.add(-@retention_periods.session_data, :day)
 
     # This would need to integrate with your authentication token cleanup
     0
