@@ -142,8 +142,7 @@ defmodule RivaAsh.DateTimeHelpers do
       %{weekdays: 5, weekends: 2}
   """
   def count_day_types(start_date, end_date) do
-    start_date
-    |> Timex.Interval.new(start_date, end_date)
+    Timex.Interval.new(from: start_date, until: end_date)
     |> Enum.to_list()
     |> Enum.reduce(%{weekdays: 0, weekends: 0}, fn date, acc ->
       if weekend?(date) do
@@ -202,7 +201,7 @@ defmodule RivaAsh.DateTimeHelpers do
     end_date = DateTime.to_date(end_datetime)
 
     date_range = Timex.Interval.new(from: start_date, until: end_date)
-    |> Timex.Interval.to_list()
+    |> Enum.to_list()
 
     has_weekday = Enum.any?(date_range, &weekday?/1)
     has_weekend = Enum.any?(date_range, &weekend?/1)
@@ -221,7 +220,7 @@ defmodule RivaAsh.DateTimeHelpers do
     start_time = DateTime.to_time(start_datetime)
     end_time = DateTime.to_time(end_datetime)
 
-    date_range = Timex.Interval.new(start_date, end_date) |> Enum.to_list()
+    date_range = Timex.Interval.new(from: start_date, until: end_date) |> Enum.to_list()
 
     {weekday_ranges, weekend_ranges} =
       date_range

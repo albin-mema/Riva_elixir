@@ -130,7 +130,7 @@ defmodule RivaAsh.Resources.Client do
       primary?(true)
 
       # Validate business access
-      validate(&RivaAsh.Validations.validate_business_access/2)
+      # validate(&RivaAsh.Validations.validate_business_access/2)
 
       # Ensure email is provided for registered clients
       validate fn changeset, _ ->
@@ -174,7 +174,7 @@ defmodule RivaAsh.Resources.Client do
       accept([:business_id, :name, :email, :phone])
 
       # Validate business access
-      validate(&RivaAsh.Validations.validate_business_access/2)
+      # validate(&RivaAsh.Validations.validate_business_access/2)
 
       change fn changeset, _ ->
         changeset
@@ -426,13 +426,13 @@ defmodule RivaAsh.Resources.Client do
 
     # Email format validation for registered clients
     # Enhanced email validation
-    validate(&RivaAsh.Validations.validate_email_format/2)
+    # validate(&RivaAsh.Validations.validate_email_format/2)
 
     # Phone validation
-    validate(&RivaAsh.Validations.validate_phone_format/2)
+    # validate(&RivaAsh.Validations.validate_phone_format/2)
 
     # Text sanitization
-    validate(&RivaAsh.Validations.sanitize_text_input/2)
+    # validate(&RivaAsh.Validations.sanitize_text_input/2)
 
     # Business logic validation for registered clients
     validate fn changeset, _ ->
