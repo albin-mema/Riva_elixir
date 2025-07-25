@@ -65,6 +65,23 @@ defmodule RivaAshWeb.AuthController do
     end
   end
 
+  def complete_sign_in(conn, %{"token" => token, "user_id" => user_id}) do
+    # Verify the token and set the session
+    case Phoenix.Token.verify(RivaAshWeb.Endpoint, "user_auth", token, max_age: 300) do
+      {:ok, ^user_id} ->
+        # Token is valid, set the session
+        conn
+        |> put_session(:user_token, token)
+        |> put_flash(:info, "Successfully signed in!")
+        |> redirect(to: "/businesses")
+
+      {:error, _} ->
+        conn
+        |> put_flash(:error, "Invalid or expired sign-in token")
+        |> redirect(to: "/sign-in")
+    end
+  end
+
   def sign_out(conn, _params) do
     conn
     |> AuthHelpers.sign_out_user()

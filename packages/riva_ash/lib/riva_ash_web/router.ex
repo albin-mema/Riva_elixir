@@ -111,9 +111,9 @@ defmodule RivaAshWeb.Router do
     get("/", AuthController, :redirect_to_dashboard)
 
     # Authentication routes
-    get("/sign-in", AuthController, :sign_in)
+    live("/sign-in", Auth.SignInLive, :index)
+    get("/auth/complete-sign-in", AuthController, :complete_sign_in)
     get("/register", AuthController, :register)
-    post("/sign-in", AuthController, :sign_in_submit)
     post("/sign-out", AuthController, :sign_out)
     post("/register", AuthController, :register_submit)
   end

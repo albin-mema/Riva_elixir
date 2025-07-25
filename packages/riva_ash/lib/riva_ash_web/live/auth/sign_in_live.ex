@@ -101,16 +101,21 @@ defmodule RivaAshWeb.Auth.SignInLive do
 
   def handle_event("sign_in", %{"email" => email, "password" => password}, socket) do
     case Accounts.sign_in(email, password) do
-      {:ok, user} ->
-        # Store the user in the session
-        socket =
-          socket
-          |> assign(:current_user, user.resource)
+      {:ok, %{resource: user, token: token}} ->
+        # Redirect to a controller action that will set the session
+        {:noreply,
+         socket
+         |> put_flash(:info, "Successfully signed in!")
+         |> redirect(external: "/auth/complete-sign-in?token=#{token}&user_id=#{user.id}")}
+
+      {:ok, user} when is_struct(user) ->
+        # Handle case where AshAuthentication returns user without token wrapper
+        token = Phoenix.Token.sign(RivaAshWeb.Endpoint, "user_auth", user.id)
 
         {:noreply,
          socket
-         |> redirect(to: "/businesses")
-         |> put_flash(:info, "Successfully signed in!")}
+         |> put_flash(:info, "Successfully signed in!")
+         |> redirect(external: "/auth/complete-sign-in?token=#{token}&user_id=#{user.id}")}
 
       {:error, _reason} ->
         error_message = "Invalid email or password"
