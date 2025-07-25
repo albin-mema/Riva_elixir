@@ -2,6 +2,9 @@
 node_modules/
 .pnpm-debug.log*
 
+# Session files
+cookies.txt
+
 # Frontend build outputs
 frontend/dist/
 frontend/build/
