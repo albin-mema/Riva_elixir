@@ -3,44 +3,41 @@ defmodule RivaAsh.TestHelpers do
   Test helpers for RivaAsh application.
   """
 
-  alias RivaAsh.Repo
-
-  @doc """
-  Creates a test business with default attributes.
-  """
-  def create_business(attrs \\ %{}) do
-    default_attrs = %{
-      name: "Test Business",
-      description: "A test business",
-      email: "test@business.com",
-      phone: "123-456-7890",
-      address: "123 Test St",
-      timezone: "UTC"
-    }
-
-    attrs = Map.merge(default_attrs, attrs)
-
-    %RivaAsh.Business{}
-    |> RivaAsh.Business.changeset(attrs)
-    |> Repo.insert!()
-  end
+  alias RivaAsh.Resources.Business
+  alias RivaAsh.Accounts.User
 
   @doc """
   Creates a test user with default attributes.
   """
   def create_user(attrs \\ %{}) do
     default_attrs = %{
-      name: "Test User",
       email: "test@user.com",
       password: "password123",
-      password_confirmation: "password123"
+      role: :user
     }
 
     attrs = Map.merge(default_attrs, attrs)
 
-    %RivaAsh.User{}
-    |> RivaAsh.User.changeset(attrs)
-    |> Repo.insert!()
+    {:ok, user} = User.create(attrs)
+    user
+  end
+
+  @doc """
+  Creates a test business with default attributes.
+  """
+  def create_business(owner_id, attrs \\ %{}) do
+    default_attrs = %{
+      name: "Test Business",
+      description: "A test business",
+      owner_id: owner_id
+    }
+
+    attrs = Map.merge(default_attrs, attrs)
+
+    # Get the user to use as actor
+    {:ok, user} = Ash.get(User, owner_id, domain: RivaAsh.Accounts)
+    {:ok, business} = Business.create(attrs, actor: user)
+    business
   end
 
   @doc """
