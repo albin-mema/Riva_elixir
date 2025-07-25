@@ -25,7 +25,7 @@ defmodule RivaAshWeb.Router do
 
   # Pipeline for authenticated routes with navigation layout
   pipeline :authenticated_layout do
-    plug(:put_layout, html: {RivaAshWeb.Layouts, :authenticated})
+    plug(:put_root_layout, html: {RivaAshWeb.Layouts, :authenticated})
   end
 
   pipeline :browser_no_layout do
@@ -112,6 +112,8 @@ defmodule RivaAshWeb.Router do
 
     # Authentication routes
     live("/sign-in", Auth.SignInLive, :index)
+    get("/sign-in", AuthController, :sign_in)
+    post("/sign-in", AuthController, :sign_in_submit)
     get("/auth/complete-sign-in", AuthController, :complete_sign_in)
     get("/register", AuthController, :register)
     post("/sign-out", AuthController, :sign_out)

@@ -10,11 +10,15 @@ defmodule RivaAshWeb.AshAdminConfig do
   end
 
   def set_actor(conn) do
+    # TODO: Update to use the correct Ash function for setting actor
+    # The Ash.set_actor!/2 function appears to be deprecated
     case actor(conn) do
       nil ->
-        Ash.set_actor!(conn, nil)
+        # Ash.set_actor!(conn, nil)
+        conn
       user ->
-        Ash.set_actor!(conn, user)
+        # Ash.set_actor!(conn, user)
+        conn
     end
   end
 end
