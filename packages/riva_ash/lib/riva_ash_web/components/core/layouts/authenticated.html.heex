@@ -1,29 +1,41 @@
-<div class="flex flex-col min-h-screen">
-  <!-- Top Navigation Bar -->
-  <header class="bg-blue-600 shadow-sm border-gray-200 border-b">
-    <div class="px-4 sm:px-6 lg:px-8">
-      <div class="flex justify-between items-center h-16">
-        <!-- Left side - Logo and breadcrumb -->
-        <div class="flex items-center">
-          <div class="flex-shrink-0">
-            <h1 class="font-semibold text-white text-xl">Riva</h1>
+<!DOCTYPE html>
+<html lang="en" class="[scrollbar-gutter:stable]">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="csrf-token" content={get_csrf_token()} />
+    <title><%= assigns[:page_title] || "RivaAsh" %></title>
+    <link phx-track-static rel="stylesheet" href={~p"/assets/app.css"} />
+    <script defer phx-track-static type="text/javascript" src={~p"/assets/app.js"}>
+    </script>
+  </head>
+  <body class="bg-white antialiased riva-ash-web">
+    <div class="flex flex-col min-h-screen">
+      <!-- Top Navigation Bar -->
+      <header class="bg-blue-600 shadow-sm border-gray-200 border-b">
+      <div class="px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between items-center h-16">
+          <!-- Left side - Logo and breadcrumb -->
+          <div class="flex items-center">
+            <div class="flex-shrink-0">
+              <h1 class="font-semibold text-white text-xl">Riva</h1>
+            </div>
+            <!-- Breadcrumb could go here -->
+            <nav class="hidden md:flex ml-8" aria-label="Breadcrumb">
+              <ol class="flex items-center space-x-4">
+                <li>
+                  <div class="flex items-center">
+                    <svg class="flex-shrink-0 w-5 h-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                      <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z"/>
+                    </svg>
+                    <.link navigate="/dashboard" class="ml-2 font-medium text-gray-500 hover:text-gray-700 text-sm">
+                      Dashboard
+                    </.link>
+                  </div>
+                </li>
+              </ol>
+            </nav>
           </div>
-          <!-- Breadcrumb could go here -->
-          <nav class="hidden md:flex ml-8" aria-label="Breadcrumb">
-            <ol class="flex items-center space-x-4">
-              <li>
-                <div class="flex items-center">
-                  <svg class="flex-shrink-0 w-5 h-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
-                    <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z"/>
-                  </svg>
-                  <.link navigate="/dashboard" class="ml-2 font-medium text-gray-500 hover:text-gray-700 text-sm">
-                    Dashboard
-                  </.link>
-                </div>
-              </li>
-            </ol>
-          </nav>
-        </div>
 
         <!-- Right side - User info and actions -->
         <div class="flex items-center space-x-4">
@@ -35,7 +47,7 @@
             </svg>
           </button>
 
-          <%= if @current_user do %>
+          <div :if={@current_user}>
             <!-- User dropdown -->
             <div class="relative">
               <div class="flex items-center space-x-3">
@@ -48,7 +60,7 @@
                     <%= String.capitalize(to_string(@current_user.role)) %>
                   </div>
                 </div>
-                
+
                 <!-- User avatar -->
                 <div class="flex-shrink-0">
                   <div class="flex justify-center items-center bg-indigo-500 rounded-full w-8 h-8">
@@ -70,7 +82,7 @@
                 </svg>
               </button>
             </form>
-          <% end %>
+          </div>
         </div>
       </div>
     </div>
@@ -346,12 +358,14 @@
       </nav>
     </aside>
 
-    <!-- Main Content -->
-    <main class="flex-1 bg-white overflow-y-auto">
-      <div class="mx-auto p-4 container">
-        <.flash_group flash={@flash} />
-        <%= @inner_content %>
-      </div>
-    </main>
-  </div>
-</div>
+      <!-- Main Content -->
+      <main class="flex-1 bg-white overflow-y-auto">
+        <div class="mx-auto p-4 container">
+          <.flash_group flash={@flash} />
+          <%= @inner_content %>
+        </div>
+      </main>
+    </div>
+    </div>
+  </body>
+</html>
