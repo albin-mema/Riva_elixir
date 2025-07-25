@@ -30,19 +30,19 @@ defmodule RivaAshWeb.Components.Organisms.ReservationForm do
     <form phx-submit={@on_submit} phx-change={@on_change} {@rest}>
       <div :if={@step == 1}>
         <!-- Step 1: Basic info -->
-        <.form_field field={@form[:client_id]} label="Client" type="select" options={@clients} />
-        <.form_field field={@form[:item_id]} label="Item" type="select" options={@items} />
+        <.form_field field={@form[:client_id]} label="Client" type="select" options={Enum.map(@clients, &{&1.name, &1.id})} />
+        <.form_field field={@form[:item_id]} label="Item" type="select" options={Enum.map(@items, &{&1.name, &1.id})} />
       </div>
-      
+
       <div :if={@step == 2}>
         <!-- Step 2: Date/Time -->
         <.date_picker field={@form[:reserved_date]} />
         <.time_picker field={@form[:start_time]} />
         <.time_picker field={@form[:end_time]} />
       </div>
-      
+
       <div>
-        <.button type="submit" loading={@loading}>Create Reservation</.button>
+        <.button type="submit" variant="primary" loading={@loading}>Create Reservation</.button>
         <.button type="button" variant="outline" phx-click={@on_cancel}>Cancel</.button>
       </div>
     </form>

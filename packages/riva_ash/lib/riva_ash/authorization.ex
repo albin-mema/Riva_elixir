@@ -85,7 +85,7 @@ defmodule RivaAsh.Authorization do
   @doc """
   Standard policy for employee-accessible resources.
   """
-  defmacro employee_accessible_policies(permission_name) do
+  defmacro employee_accessible_policies(_permission_name) do
     quote do
       # Employees with specific permission can read
       policy action_type(:read) do

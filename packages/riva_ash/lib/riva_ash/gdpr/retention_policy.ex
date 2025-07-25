@@ -129,18 +129,18 @@ defmodule RivaAsh.GDPR.RetentionPolicy do
   end
 
   defp cleanup_expired_employees do
-    cutoff_date = DateTime.utc_now() |> DateTime.add(-@retention_periods.employee_records, :day)
+    _cutoff_date = DateTime.utc_now() |> DateTime.add(-@retention_periods.employee_records, :day)
 
-    # This would need to be implemented based on your Employee resource structure
-    # For now, returning 0 as placeholder
+    # Placeholder implementation - needs actual Employee resource query
+    # Example: Employee |> Ash.Query.filter(expr(not is_nil(archived_at))) |> Ash.read!()
     0
   end
 
   defp cleanup_expired_clients do
-    cutoff_date = DateTime.utc_now() |> DateTime.add(-@retention_periods.client_records, :day)
+    _cutoff_date = DateTime.utc_now() |> DateTime.add(-@retention_periods.client_records, :day)
 
-    # Find clients with no recent activity
-    # This would need custom logic to determine "last activity"
+    # Placeholder implementation - needs actual Client resource query
+    # Example: Client |> Ash.Query.filter(expr(not is_nil(archived_at))) |> Ash.read!()
     0
   end
 
@@ -214,9 +214,9 @@ defmodule RivaAsh.GDPR.RetentionPolicy do
     end
   end
 
-  defp delete_user_businesses(user_id) do
-    # Delete or transfer businesses owned by the user
-    # This is complex and might require business transfer rather than deletion
+  defp delete_user_businesses(_user_id) do
+    # Placeholder implementation - needs actual Business resource handling
+    # Example: Business |> Ash.Query.filter(owner_id == ^user_id) |> Ash.destroy_all()
     :ok
   end
 

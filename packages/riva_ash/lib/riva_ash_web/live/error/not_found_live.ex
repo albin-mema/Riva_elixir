@@ -4,12 +4,13 @@ defmodule RivaAshWeb.Error.NotFoundLive do
   """
   use RivaAshWeb, :live_view
 
+  @layout {RivaAshWeb.Layouts, :app}
+
   @impl true
   def mount(_params, _session, socket) do
     socket =
       socket
       |> assign(:page_title, "Page Not Found")
-      |> put_layout(html: {RivaAshWeb.Layouts, :app})
 
     {:ok, socket}
   end

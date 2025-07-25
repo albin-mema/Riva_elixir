@@ -24,17 +24,17 @@ defmodule RivaAshWeb.Components.Organisms.PricingForm do
     ~H"""
     <!-- Pricing form implementation will go here -->
     <form phx-submit={@on_submit} phx-change={@on_change} {@rest}>
-      <.form_field field={@form[:item_id]} label="Item" type="select" options={@items} />
+      <.form_field field={@form[:item_id]} label="Item" type="select" options={Enum.map(@items, &{&1.name, &1.id})} />
       <.form_field field={@form[:price_per_day]} label="Price per Day" type="number" step="0.01" />
       <.form_field field={@form[:currency]} label="Currency" value="USD" readonly />
-      
+
       <.form_field field={@form[:effective_from]} label="Effective From" type="date" />
       <.form_field field={@form[:effective_until]} label="Effective Until" type="date" />
-      
+
       <.form_field field={@form[:notes]} label="Notes" type="textarea" />
-      
+
       <div>
-        <.button type="submit" loading={@loading}>
+        <.button type="submit" variant="primary" loading={@loading}>
           <%= if @editing, do: "Update Pricing", else: "Create Pricing" %>
         </.button>
         <.button type="button" variant="outline" phx-click={@on_cancel}>Cancel</.button>

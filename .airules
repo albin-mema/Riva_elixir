@@ -1,0 +1,529 @@
+#  Riva Ash - AI Agent Guidelines
+
+## Project Overview
+
+**Riva** is a comprehensive business management system built with Elixir/Phoenix and Ash Framework, featuring reservation management, employee permissions, and real-time capabilities. The project follows a packages-based architecture with all code organized under the `packages/` directory.
+
+### Key Technologies
+- **Backend**: Elixir 1.19+, Phoenix 1.7+, Ash Framework 3.5+
+- **Database**: PostgreSQL with UUID primary keys
+- **Frontend**: LiveView with React integration (live_react)
+- **Testing**: ExUnit with property-based testing (StreamData)
+- **Authentication**: AshAuthentication with role-based access
+- **Authorization**: Ash Policies with SimpleSat SAT solver
+- **UI**: Tailwind CSS with Atomic Design patterns
+
+## Architecture Patterns
+
+### 1. Ash Framework Patterns
+
+**Resource Definition**: All business entities are Ash Resources with standardized extensions:
+```elixir
+use Ash.Resource,
+  domain: RivaAsh.Domain,
+  data_layer: AshPostgres.DataLayer,
+  authorizers: [Ash.Policy.Authorizer],
+  extensions: [
+    AshJsonApi.Resource,
+    AshGraphql.Resource,
+    AshPaperTrail.Resource,    # Audit trails
+    AshArchival.Resource,      # Soft delete
+    AshAdmin.Resource
+  ]
+```
+
+**Domain Organization**: Resources are grouped in `RivaAsh.Domain` with clear boundaries.
+
+### 2. Complex Business Logic - Use Reactor
+
+**CRITICAL**: For any complex business logic involving multiple resources or multi-step operations, use Reactor workflows instead of regular Ash actions.
+
+**When to use Reactor**:
+- Multi-resource creation/updates
+- Complex validation chains
+- Business workflows with compensation
+- Operations requiring rollback capabilities
+
+**Example**: Business setup, reservation creation with availability checks, employee onboarding.
+
+**Location**: `lib/riva_ash/reactors/`
+
+### 3. UI Component Architecture
+
+**Atomic Design Pattern**: All UI components follow atomic design:
+- **Atoms**: `lib/riva_ash_web/components/atoms/` (Button, Input, Text, etc.)
+- **Molecules**: `lib/riva_ash_web/components/molecules/` (Card, FormField, etc.)
+- **Organisms**: `lib/riva_ash_web/components/organisms/` (DataTable, CalendarView, etc.)
+
+**Custom Components**: Always create reusable custom components instead of inline HTML.
+
+**Flop Integration**: Use Flop library for ALL table functionality and pagination.
+
+**Form Handling**: Use AshPhoenix.Form for all form operations with proper validation.
+
+### 4. Permission System
+
+**Centralized Permissions**: All permissions are defined in `RivaAsh.Permissions.Constants`:
+```elixir
+@can_create_reservations "can_create_reservations"
+def can_create_reservations, do: @can_create_reservations
+```
+
+**Policy Integration**: Permissions work with Ash policies and SimpleSat SAT solver:
+```elixir
+policy action_type(:create) do
+  authorize_if(RivaAsh.Policies.PermissionCheck.new(permission: :can_create_reservations))
+end
+```
+
+**Never hardcode permission strings** - always use constants.
+
+## Project Structure
+
+```
+packages/
+├── riva_ash/                 # Main Ash application
+│   ├── lib/
+│   │   ├── riva_ash/
+│   │   │   ├── resources/    # Ash resources (Business, Item, etc.)
+│   │   │   ├── reactors/     # Complex business logic workflows
+│   │   │   ├── policies/     # Authorization policies
+│   │   │   ├── permissions/  # Permission system
+│   │   │   └── validations/  # Custom validations
+│   │   └── riva_ash_web/
+│   │       ├── components/   # UI components (atomic design)
+│   │       ├── live/         # LiveView pages
+│   │       └── controllers/  # Phoenix controllers
+│   ├── test/                 # Test files
+│   └── priv/                 # Migrations, seeds
+└── test/                     # Shared test utilities
+```
+
+## Development Guidelines
+
+### 1. Resource Development
+
+**Standard Extensions**: Every resource must include:
+- AshPaperTrail (audit trails)
+- AshArchival (soft delete)
+- Proper policies with admin bypass
+- UUID primary keys
+- Timestamps (inserted_at, updated_at)
+
+**Relationships**: Use proper Ash relationships with foreign key constraints.
+
+### 2. Testing Approach - MANDATORY FOR ALL CODE
+
+**CRITICAL REQUIREMENT**: Every piece of generated code MUST include comprehensive tests to verify functionality is correct.
+
+**Property-Based Testing Priority**: Use StreamData for ALL tests where it makes sense:
+- Resource CRUD operations with random valid data
+- Business logic validation with edge cases
+- Form input validation with random inputs
+- API endpoint testing with varied payloads
+- Permission system testing with random user/permission combinations
+
+**Test Types Required**:
+1. **Unit Tests**: Test individual functions and modules
+2. **Integration Tests**: Test resource interactions and workflows
+3. **Property-Based Tests**: Test with randomized data using StreamData
+4. **LiveView Tests**: Test UI interactions with `phoenix_test`
+5. **Feature Tests**: End-to-end user workflows
+6. **Policy Tests**: Authorization and permission verification
+
+**Authentication in Tests**: Enable authentication in tests rather than disabling it.
+
+**Test Libraries**:
+- `StreamData` for property-based testing (PRIMARY)
+- `phoenix_test` for LiveView testing (PRIMARY for UI testing)
+- `ExUnit` for standard unit tests
+
+**Test Coverage Requirements**:
+- All new functions must have tests
+- All Ash actions must have property-based tests
+- All LiveView components must have interaction tests
+- All business workflows (Reactors) must have comprehensive test suites
+- All permission checks must be tested with various scenarios
+
+### 3. UI Development
+
+**LiveView First**: Prefer LiveView over React components unless specific interactivity is needed.
+
+**Storybook**: Use `phoenix_storybook` for component documentation and development.
+
+**Styling**: Use Tailwind CSS exclusively - no custom CSS.
+
+**Tables**: Always use Flop library for table functionality.
+
+### 4. Database Patterns
+
+**Soft Delete**: Use AshArchival for all resources requiring deletion.
+
+**Audit Trails**: AshPaperTrail tracks all changes.
+
+**Grid Positioning**: Use row/column grid system instead of x,y coordinates for layouts.
+
+### 5. Business Logic Patterns
+
+**Reservation System**:
+- Full-day billing only
+- No weekend/weekday differentiation
+- Constant pricing with business exceptions
+- Row/column positioning for items
+
+**Permission Hierarchy**:
+- Admin: Full system access
+- Business Owner: Full business access
+- Employee: Permission-based access
+- Client: Limited self-service access
+
+## Common Patterns
+
+### 1. Creating New Resources
+
+1. Define in `lib/riva_ash/resources/`
+2. Include all standard extensions
+3. Add to domain
+4. Create migration
+5. Add policies with admin bypass
+6. **MANDATORY**: Write comprehensive test suite:
+   - Property-based tests for all actions (create, read, update, destroy)
+   - Policy tests with various user roles and permissions
+   - Validation tests with random invalid data
+   - Relationship tests with associated resources
+   - Archive/soft delete functionality tests
+
+### 2. Adding Complex Workflows
+
+1. Create Reactor in `lib/riva_ash/reactors/`
+2. Define clear inputs/outputs
+3. Include compensation logic
+4. Add to resource as custom action if needed
+5. **MANDATORY**: Comprehensive test suite:
+   - Property-based tests with random valid input combinations
+   - Error scenario tests with invalid inputs
+   - Compensation logic tests (rollback scenarios)
+   - Integration tests with all affected resources
+   - Performance tests for complex workflows
+   - Edge case tests with boundary conditions
+
+### 3. UI Component Creation
+
+1. Follow atomic design hierarchy
+2. Create in appropriate component directory
+3. Add to Storybook
+4. **MANDATORY**: Comprehensive test suite:
+   - Property-based tests for component props with random valid values
+   - Interaction tests using `phoenix_test`
+   - Accessibility tests for proper ARIA attributes
+   - Responsive design tests across different screen sizes
+   - Form validation tests with random invalid inputs
+   - LiveView event handling tests
+5. Document props and usage in Storybook
+
+## Git Workflow
+
+**Commit Author**: All commits should use `albinmema25@gmail.com`
+
+**App Name**: Use "Riva" in all user-facing text and documentation.
+
+**Repository**: Private GitHub at `https://github.com/albin-mema/Riva_elixir.git`
+
+## Development Environment
+
+**Shell**: Fish shell (not Bash)
+
+**Docker**: Docker Desktop available for database connections
+
+**Package Manager**: Use appropriate package managers (mix, npm/pnpm) - never edit package files directly
+
+## Key Resources
+
+- Business, Employee, Client, Item, Section, Plot, Layout
+- Reservation, Payment, Pricing, Permission
+- ItemPosition, ItemHold, ItemSchedule, AvailabilityException
+- RecurringReservation, RecurringReservationInstance
+
+## Property-Based Testing Patterns
+
+### 1. Resource Testing with StreamData
+
+**Example Pattern for Ash Resources**:
+```elixir
+defmodule RivaAsh.Resources.BusinessTest do
+  use RivaAsh.DataCase
+  use ExUnitProperties
+
+  property "creates business with valid random data" do
+    check all name <- string(:alphanumeric, min_length: 1, max_length: 100),
+              description <- string(:printable, max_length: 500),
+              max_runs: 100 do
+
+      user = create_user!(%{role: :admin})
+
+      assert {:ok, business} = Business
+        |> Ash.Changeset.for_create(:create, %{
+          name: name,
+          description: description,
+          owner_id: user.id
+        })
+        |> Ash.create(domain: RivaAsh.Domain)
+
+      assert business.name == name
+      assert business.description == description
+    end
+  end
+end
+```
+
+### 2. Validation Testing Patterns
+
+**Test validation with random invalid data**:
+```elixir
+property "rejects invalid business data" do
+  check all name <- one_of([nil, "", string(:alphanumeric, min_length: 101)]),
+            max_runs: 50 do
+
+    user = create_user!(%{role: :admin})
+
+    assert {:error, %Ash.Error.Invalid{}} = Business
+      |> Ash.Changeset.for_create(:create, %{
+        name: name,
+        owner_id: user.id
+      })
+      |> Ash.create(domain: RivaAsh.Domain)
+  end
+end
+```
+
+### 3. Permission Testing Patterns
+
+**Test permissions with random user/permission combinations**:
+```elixir
+property "permission checks work correctly" do
+  check all permission <- member_of(RivaAsh.Permissions.Constants.all_permissions()),
+            role <- member_of([:admin, :manager, :staff, :client]),
+            max_runs: 200 do
+
+    user = create_user!(%{role: role})
+    business = create_business!(user)
+
+    expected = case {role, permission} do
+      {:admin, _} -> true
+      {:manager, perm} when perm in @manager_permissions -> true
+      {:staff, perm} when perm in @staff_permissions -> true
+      _ -> false
+    end
+
+    assert RivaAsh.Permissions.has_permission?(user.id, permission) == expected
+  end
+end
+```
+
+### 4. LiveView Component Testing
+
+**Test component props with random values**:
+```elixir
+property "button component handles random props correctly" do
+  check all text <- string(:printable, min_length: 1, max_length: 50),
+            variant <- member_of([:primary, :secondary, :danger]),
+            disabled <- boolean(),
+            max_runs: 100 do
+
+    html = render_component(&Components.Button.button/1, %{
+      text: text,
+      variant: variant,
+      disabled: disabled
+    })
+
+    assert html =~ text
+    assert html =~ "btn-#{variant}"
+    if disabled, do: assert(html =~ "disabled")
+  end
+end
+```
+
+## Testing Commands
+
+```fish
+# Run all tests
+mix test
+
+# Run property tests specifically
+./run-property-tests.sh
+
+# Run tests with property test statistics
+mix test --include property
+
+# Run specific test file
+mix test test/path/to/test.exs
+
+# Run tests with coverage
+mix test --cover
+
+# Run tests in watch mode during development
+mix test.watch
+```
+
+## Important Notes
+
+- **MANDATORY TESTING**: Every piece of generated code MUST include comprehensive tests
+- **Property-based testing REQUIRED**: Use StreamData for all tests where applicable
+- **Test before considering code complete**: Code without tests is incomplete
+- **Never bypass authentication** in production code
+- **Always use Reactor** for complex multi-step business logic
+- **Centralize permissions** in Constants module
+- **Follow atomic design** for all UI components
+- **Prefer LiveView** over React unless specific needs require it
+
+## Testing Requirements Summary
+
+**For AI Agents**: When generating ANY code, you MUST also generate:
+
+1. **Property-based tests** using StreamData for:
+   - Resource CRUD operations with random valid data
+   - Validation logic with random invalid inputs
+   - Business logic with edge cases and boundary conditions
+   - Permission checks with various user/role combinations
+
+2. **Integration tests** for:
+   - Multi-resource workflows
+   - Reactor-based business logic
+   - API endpoints with varied payloads
+   - LiveView interactions and state changes
+
+3. **Unit tests** for:
+   - Individual functions and modules
+   - Helper functions and utilities
+   - Custom validations and calculations
+
+4. **Feature tests** for:
+   - Complete user workflows
+   - End-to-end business processes
+   - UI component interactions
+
+**Test Quality Standards**:
+- Use randomized data instead of hardcoded values
+- Test both happy path and error scenarios
+- Include edge cases and boundary conditions
+- Verify error messages and handling
+- Test with various user roles and permissions
+- Ensure tests are deterministic despite using random data
+
+## Code Quality Standards
+
+### 1. Error Handling
+- Use Ash's built-in error handling patterns
+- Implement proper error boundaries in LiveView
+- Return meaningful error messages to users
+- Log errors appropriately for debugging
+
+### 2. Performance Considerations
+- Use Ash's built-in query optimization
+- Implement proper pagination with Flop
+- Avoid N+1 queries through proper loading
+- Use database indexes for frequently queried fields
+
+### 3. Security Best Practices
+- Always validate user input
+- Use Ash policies for authorization
+- Sanitize data before display
+- Follow OWASP guidelines for web security
+
+## Debugging and Development Tools
+
+### 1. Available Tools
+- **AshAdmin**: Web-based admin interface at `/admin`
+- **GraphQL Playground**: Available for API exploration
+- **LiveView Debugger**: Use for LiveView debugging
+- **Ash Console**: `iex -S mix` for interactive development
+
+### 2. Common Debugging Commands
+```elixir
+# Inspect Ash queries
+Ash.Query.to_sql(query, RivaAsh.Repo)
+
+# Debug policies
+Ash.Policy.Info.policies(Resource)
+
+# Check resource info
+Ash.Resource.Info.actions(Resource)
+```
+
+## API Design Patterns
+
+### 1. JSON API
+- All resources exposed via AshJsonApi
+- Follow JSON:API specification
+- Use proper HTTP status codes
+- Include relationship links
+
+### 2. GraphQL
+- Available for complex queries
+- Use for frontend data fetching
+- Implement proper field selection
+- Handle errors gracefully
+
+## Deployment Considerations
+
+### 1. Environment Configuration
+- Use environment variables for secrets
+- Configure different environments properly
+- Set up proper logging levels
+- Configure database connections
+
+### 2. Database Management
+- Run migrations in order
+- Use seeds for initial data
+- Backup strategies for production
+- Monitor database performance
+
+## Troubleshooting Common Issues
+
+### 1. Ash Policy Errors
+- Check policy definitions in resources
+- Verify actor is properly set
+- Use policy breakdowns for debugging
+- Ensure permissions exist in Constants
+
+### 2. LiveView Issues
+- Check socket connections
+- Verify proper assigns usage
+- Debug with LiveView debugger
+- Test with different browsers
+
+### 3. Database Issues
+- Check migration status
+- Verify foreign key constraints
+- Monitor query performance
+- Check connection pool settings
+
+## Contributing Guidelines
+
+### 1. Code Review Checklist
+- [ ] Tests pass and cover new functionality
+- [ ] Documentation updated
+- [ ] Follows established patterns
+- [ ] Security considerations addressed
+- [ ] Performance impact assessed
+
+### 2. Pull Request Guidelines
+- Clear description of changes
+- Reference related issues
+- Include test coverage
+- Update documentation as needed
+- Follow commit message conventions
+
+## Resources and Documentation
+
+### 1. Key Documentation
+- Ash Framework: https://ash-hq.org/
+- Phoenix LiveView: https://hexdocs.pm/phoenix_live_view/
+- Elixir: https://elixir-lang.org/docs.html
+- PostgreSQL: https://www.postgresql.org/docs/
+
+### 2. Project-Specific Docs
+- See `documentation/` directory for detailed guides
+- Check `patterns.md` for implementation patterns
+- Review test files for usage examples
+- Consult Storybook for UI component documentation

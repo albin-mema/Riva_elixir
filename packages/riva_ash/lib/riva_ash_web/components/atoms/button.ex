@@ -5,7 +5,12 @@ defmodule RivaAshWeb.Components.Atoms.Button do
   Renders a button component.
   """
   attr :type, :string, default: "button"
+  attr :variant, :string, default: "primary"
+  attr :size, :string, default: "md"
+  attr :loading, :boolean, default: false
   attr :class, :string, default: ""
+  attr :icon_left, :string
+  attr :icon_right, :string
   attr :disabled, :boolean, default: false
   attr :rest, :global, include: ~w(phx-click phx-disable-with phx-value phx-value-id)
 

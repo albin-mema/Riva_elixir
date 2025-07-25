@@ -4,6 +4,8 @@ defmodule RivaAshWeb.Error.AccessDeniedLive do
   """
   use RivaAshWeb, :live_view
 
+  @layout {RivaAshWeb.Layouts, :app}
+
   @impl true
   def mount(_params, session, socket) do
     # Check if user is authenticated to show appropriate message
@@ -14,7 +16,6 @@ defmodule RivaAshWeb.Error.AccessDeniedLive do
           |> assign(:current_user, user)
           |> assign(:page_title, "Access Denied")
           |> assign(:authenticated, true)
-          |> put_layout(html: {RivaAshWeb.Layouts, :app})
 
         {:ok, socket}
 
@@ -24,7 +25,6 @@ defmodule RivaAshWeb.Error.AccessDeniedLive do
           |> assign(:current_user, nil)
           |> assign(:page_title, "Access Denied")
           |> assign(:authenticated, false)
-          |> put_layout(html: {RivaAshWeb.Layouts, :app})
 
         {:ok, socket}
     end

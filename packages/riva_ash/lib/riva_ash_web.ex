@@ -48,8 +48,11 @@ defmodule RivaAshWeb do
 
   def live_view do
     quote do
-      use Phoenix.LiveView,
-        layout: {RivaAshWeb.Layouts, :authenticated}
+      use Phoenix.LiveView
+
+      @before_compile RivaAshWeb.LayoutHook
+
+      import Phoenix.LiveView
 
       unquote(html_helpers())
     end

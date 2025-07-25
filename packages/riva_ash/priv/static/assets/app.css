@@ -1041,6 +1041,10 @@ video {
   margin-left: 1rem;
 }
 
+.riva-ash-web :is(.ml-8) {
+  margin-left: 2rem;
+}
+
 .riva-ash-web :is(.ml-auto) {
   margin-left: auto;
 }
@@ -1625,6 +1629,10 @@ video {
   align-items: flex-start;
 }
 
+.riva-ash-web :is(.items-end) {
+  align-items: flex-end;
+}
+
 .riva-ash-web :is(.items-center) {
   align-items: center;
 }
@@ -1681,6 +1689,12 @@ video {
   --tw-space-x-reverse: 0;
   margin-right: calc(0.75rem * var(--tw-space-x-reverse));
   margin-left: calc(0.75rem * calc(1 - var(--tw-space-x-reverse)));
+}
+
+.riva-ash-web :is(.space-x-4 > :not([hidden]) ~ :not([hidden])) {
+  --tw-space-x-reverse: 0;
+  margin-right: calc(1rem * var(--tw-space-x-reverse));
+  margin-left: calc(1rem * calc(1 - var(--tw-space-x-reverse)));
 }
 
 .riva-ash-web :is(.space-x-6 > :not([hidden]) ~ :not([hidden])) {
@@ -1933,10 +1947,6 @@ video {
   background-color: hsl(var(--background));
 }
 
-.riva-ash-web :is(.bg-background\/95) {
-  background-color: hsl(var(--background) / 0.95);
-}
-
 .riva-ash-web :is(.bg-black) {
   --tw-bg-opacity: 1;
   background-color: rgb(0 0 0 / var(--tw-bg-opacity));
@@ -2042,6 +2052,11 @@ video {
   background-color: rgb(20 83 45 / var(--tw-bg-opacity));
 }
 
+.riva-ash-web :is(.bg-indigo-500) {
+  --tw-bg-opacity: 1;
+  background-color: rgb(99 102 241 / var(--tw-bg-opacity));
+}
+
 .riva-ash-web :is(.bg-indigo-600) {
   --tw-bg-opacity: 1;
   background-color: rgb(79 70 229 / var(--tw-bg-opacity));
@@ -2112,10 +2127,6 @@ video {
 
 .riva-ash-web :is(.bg-secondary-foreground) {
   background-color: hsl(var(--secondary-foreground));
-}
-
-.riva-ash-web :is(.bg-secondary-foreground\/10) {
-  background-color: hsl(var(--secondary-foreground) / 0.1);
 }
 
 .riva-ash-web :is(.bg-sidebar) {
@@ -2415,6 +2426,11 @@ video {
   line-height: 1rem;
 }
 
+.riva-ash-web :is(.text-6xl) {
+  font-size: 3.75rem;
+  line-height: 1;
+}
+
 .riva-ash-web :is(.font-bold) {
   font-weight: 700;
 }
@@ -2681,6 +2697,11 @@ video {
 .riva-ash-web :is(.text-yellow-800) {
   --tw-text-opacity: 1;
   color: rgb(133 77 14 / var(--tw-text-opacity));
+}
+
+.riva-ash-web :is(.text-red-400) {
+  --tw-text-opacity: 1;
+  color: rgb(248 113 113 / var(--tw-text-opacity));
 }
 
 .riva-ash-web :is(.underline) {
@@ -3015,6 +3036,11 @@ video {
   background-color: hsl(var(--destructive) / 0.9);
 }
 
+.riva-ash-web :is(.hover\:bg-gray-100:hover) {
+  --tw-bg-opacity: 1;
+  background-color: rgb(243 244 246 / var(--tw-bg-opacity));
+}
+
 .riva-ash-web :is(.hover\:bg-gray-300:hover) {
   --tw-bg-opacity: 1;
   background-color: rgb(209 213 219 / var(--tw-bg-opacity));
@@ -3061,14 +3087,6 @@ video {
   background-color: rgb(185 28 28 / var(--tw-bg-opacity));
 }
 
-.riva-ash-web :is(.hover\:bg-secondary-foreground\/10:hover) {
-  background-color: hsl(var(--secondary-foreground) / 0.1);
-}
-
-.riva-ash-web :is(.hover\:bg-secondary\/20:hover) {
-  background-color: hsl(var(--secondary) / 0.2);
-}
-
 .riva-ash-web :is(.hover\:bg-secondary\/80:hover) {
   background-color: hsl(var(--secondary) / 0.8);
 }
@@ -3090,14 +3108,19 @@ video {
   color: hsl(var(--foreground));
 }
 
-.riva-ash-web :is(.hover\:text-gray-200:hover) {
+.riva-ash-web :is(.hover\:text-gray-500:hover) {
   --tw-text-opacity: 1;
-  color: rgb(229 231 235 / var(--tw-text-opacity));
+  color: rgb(107 114 128 / var(--tw-text-opacity));
 }
 
-.riva-ash-web :is(.hover\:text-gray-600:hover) {
+.riva-ash-web :is(.hover\:text-gray-700:hover) {
   --tw-text-opacity: 1;
-  color: rgb(75 85 99 / var(--tw-text-opacity));
+  color: rgb(55 65 81 / var(--tw-text-opacity));
+}
+
+.riva-ash-web :is(.hover\:text-gray-900:hover) {
+  --tw-text-opacity: 1;
+  color: rgb(17 24 39 / var(--tw-text-opacity));
 }
 
 .riva-ash-web :is(.hover\:text-indigo-500:hover) {
@@ -3117,10 +3140,6 @@ video {
 .riva-ash-web :is(.hover\:text-red-800:hover) {
   --tw-text-opacity: 1;
   color: rgb(153 27 27 / var(--tw-text-opacity));
-}
-
-.riva-ash-web :is(.hover\:text-secondary-foreground:hover) {
-  color: hsl(var(--secondary-foreground));
 }
 
 .riva-ash-web :is(.hover\:text-sidebar-accent-foreground:hover) {
@@ -3200,10 +3219,6 @@ video {
   --tw-ring-offset-shadow: var(--tw-ring-inset) 0 0 0 var(--tw-ring-offset-width) var(--tw-ring-offset-color);
   --tw-ring-shadow: var(--tw-ring-inset) 0 0 0 calc(2px + var(--tw-ring-offset-width)) var(--tw-ring-color);
   box-shadow: var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow, 0 0 #0000);
-}
-
-.riva-ash-web :is(.focus\:ring-inset:focus) {
-  --tw-ring-inset: inset;
 }
 
 .riva-ash-web :is(.focus\:ring-blue-500:focus) {

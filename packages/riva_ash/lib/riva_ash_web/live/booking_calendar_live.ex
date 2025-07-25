@@ -76,7 +76,7 @@ defmodule RivaAshWeb.BookingCalendarLive do
   end
 
   @impl true
-  def handle_event("date_clicked", %{"date" => date}, socket) do
+  def handle_event("date_clicked", %{"date" => _date}, socket) do
     # Implementation will go here
     {:noreply, socket}
   end

@@ -3,8 +3,6 @@ defmodule RivaAshWeb.Components.Molecules.FilterPanel do
   Advanced filtering interface for data tables.
   """
   use Phoenix.Component
-  import RivaAshWeb.Components.Atoms.Select
-  import RivaAshWeb.Components.Atoms.Input
   import RivaAshWeb.Components.Atoms.Button
   import RivaAshWeb.Components.Atoms.DatePicker
 

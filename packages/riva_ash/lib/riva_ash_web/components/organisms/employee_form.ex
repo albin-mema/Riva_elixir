@@ -27,6 +27,7 @@ defmodule RivaAshWeb.Components.Organisms.EmployeeForm do
   attr :editing, :boolean, default: false
   attr :loading, :boolean, default: false
   attr :businesses, :list, default: []
+  attr :permissions, :list, default: []
   attr :on_submit, :string, required: true
   attr :on_change, :string, required: true
   attr :on_cancel, :string, required: true
@@ -91,13 +92,21 @@ defmodule RivaAshWeb.Components.Organisms.EmployeeForm do
             />
 
             <.form_field
-              field={@form[:employee_number]}
-              label="Employee Number"
-              type="text"
-              placeholder="EMP001"
-              helper_text="Optional badge ID or employee number"
-            />
-          </div>
+             field={@form[:employee_number]}
+             label="Employee Number"
+             type="text"
+             placeholder="EMP001"
+             helper_text="Optional badge ID or employee number"
+           />
+         </div>
+
+         <.form_field
+           field={@form[:permission_ids]}
+           label="Permissions"
+           type="select"
+           multiple={true}
+           options={Enum.map(@permissions, &{&1.name, &1.id})}
+         />
 
           <div class="gap-4 grid grid-cols-1 md:grid-cols-2">
             <div>

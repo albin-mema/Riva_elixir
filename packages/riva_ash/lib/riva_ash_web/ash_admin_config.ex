@@ -11,13 +11,10 @@ defmodule RivaAshWeb.AshAdminConfig do
 
   def set_actor(conn) do
     case actor(conn) do
-      nil -> 
-        # If no user is found, this shouldn't happen since we require authentication
-        # but we'll handle it gracefully
-        Ash.set_actor(conn, nil)
-      user -> 
-        # Set the user as the actor for all Ash operations
-        Ash.set_actor(conn, user)
+      nil ->
+        Ash.set_actor!(conn, nil)
+      user ->
+        Ash.set_actor!(conn, user)
     end
   end
 end

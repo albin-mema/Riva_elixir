@@ -58,7 +58,7 @@ defmodule RivaAshWeb.Live.AuthHelpers do
         ErrorHelpers.success(socket_with_user)
       {:error, _} ->
         # Use Phoenix.LiveView.push_redirect instead
-        redirect_socket = socket |> Phoenix.LiveView.push_redirect(to: redirect_to)
+        redirect_socket = socket |> Phoenix.LiveView.push_navigate(to: redirect_to)
         ErrorHelpers.success(redirect_socket)
     end
   end

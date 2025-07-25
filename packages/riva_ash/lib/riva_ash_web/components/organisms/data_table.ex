@@ -10,6 +10,9 @@ defmodule RivaAshWeb.Components.Organisms.DataTable do
   @doc """
   Renders a data table with sorting, filtering, and pagination.
   """
+  attr :columns, :list, required: true, doc: "List of column definitions"
+  attr :columns, :list, required: true, doc: "List of column definitions"
+  attr :columns, :list, required: true, doc: "List of column definitions"
   attr :items, :list, required: true
   attr :meta, :map, required: true
   attr :columns, :list, required: true
