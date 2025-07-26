@@ -45,3 +45,12 @@ config :phoenix_test,
     trace_dir: "tmp"
   ],
   timeout_ms: 30_000
+
+# Configure property-based browser testing
+config :riva_ash, :property_testing,
+  max_flow_length: String.to_integer(System.get_env("PROPERTY_MAX_FLOW_LENGTH", "10")),
+  browser_timeout: String.to_integer(System.get_env("PROPERTY_BROWSER_TIMEOUT", "30000")),
+  cleanup_strategy: :after_each,
+  excluded_routes: ["/admin/dangerous-action"],
+  log_successful_flows: System.get_env("LOG_SUCCESSFUL_FLOWS", "true") == "true",
+  screenshot_failures: System.get_env("SCREENSHOT_FAILURES", "true") == "true"
