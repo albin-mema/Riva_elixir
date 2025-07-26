@@ -102,7 +102,10 @@ defmodule RivaAsh.MixProject do
       {:mox, "~> 1.1", only: :test},
       {:phoenix_test, "~> 0.7.0", only: :test, runtime: false},
       {:excoveralls, "~> 0.18", only: :test},
-      {:faker, "~> 0.18", only: [:test, :dev]}
+      {:faker, "~> 0.18", only: [:test, :dev]},
+
+      # Browser testing with Playwright
+      {:phoenix_test_playwright, "~> 0.7.0", only: :test, runtime: false}
     ]
   end
 
