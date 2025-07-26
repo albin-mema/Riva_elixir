@@ -59,3 +59,12 @@ packages/riva_ash/.elixir_ls/
 
 # Mix artifacts
 packages/riva_ash/mix.lock.backup
+
+# Browser testing artifacts
+packages/riva_ash/chromedriver*
+packages/riva_ash/LICENSE.chromedriver
+packages/riva_ash/*.sh
+packages/riva_ash/debug_*.exs
+packages/riva_ash/test_*.js
+packages/riva_ash/test_output.txt
+packages/riva_ash/test/simple_*.exs
