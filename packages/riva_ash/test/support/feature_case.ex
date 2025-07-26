@@ -1,18 +1,13 @@
 defmodule RivaAshWeb.FeatureCase do
   @moduledoc """
   This module defines the test case to be used by
-  feature tests that use PhoenixTest.
+  feature tests that use PhoenixTest (with or without Playwright).
 
-  Such tests rely on `PhoenixTest` and also
-  import other functionality to make it easier
-  to build common data structures and query the data layer.
+  Such tests rely on `PhoenixTest` for in-memory testing or with Playwright
+  driver for real browser testing.
 
-  Finally, if the test case interacts with the database,
-  we enable the SQL sandbox, so changes done to the database
-  are reverted at the end of every test. If you are using
-  PostgreSQL, you can even run database tests asynchronously
-  by setting `use RivaAshWeb.FeatureCase, async: true`, although
-  this option is not recommended for other databases.
+  For browser tests, the database sandbox is configured to allow concurrent
+  access since the browser runs in a separate process.
   """
 
   use ExUnit.CaseTemplate
@@ -25,16 +20,30 @@ defmodule RivaAshWeb.FeatureCase do
       import RivaAshWeb.FeatureCase
       import RivaAsh.TestHelpers
 
-      # Temporarily using standard Phoenix LiveView testing
+      # Standard Phoenix testing
       import Phoenix.ConnTest
       import Phoenix.LiveViewTest
+
+      # Phoenix Test imports
+      import PhoenixTest
+
+      # Endpoint for Phoenix testing
+      @endpoint RivaAshWeb.Endpoint
     end
   end
 
   setup tags do
+    # Configure database sandbox
     pid = Ecto.Adapters.SQL.Sandbox.start_owner!(RivaAsh.Repo, shared: not tags[:async])
     on_exit(fn -> Ecto.Adapters.SQL.Sandbox.stop_owner(pid) end)
 
+    # For Phoenix Test with Playwright browser tests, allow database access
+    if tags[:playwright] do
+      Ecto.Adapters.SQL.Sandbox.mode(RivaAsh.Repo, {:shared, self()})
+    end
+
+    # Return a conn for all tests (Phoenix Test handles browser automation internally)
     conn = Phoenix.ConnTest.build_conn()
+    %{conn: conn}
   end
 end

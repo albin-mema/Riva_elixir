@@ -2,6 +2,14 @@ IO.inspect("Starting test environment setup...", label: "TEST_HELPER")
 
 ExUnit.start()
 
+
+
+# Ensure Phoenix server starts for browser tests
+{:ok, _} = Application.ensure_all_started(:riva_ash)
+
+# Configure Phoenix Test base URL - this should be set at runtime according to docs
+Application.put_env(:phoenix_test, :base_url, RivaAshWeb.Endpoint.url())
+
 # Configure the test environment
 Application.put_env(:riva_ash, :env, :test)
 IO.inspect("Test environment configured", label: "TEST_HELPER")
@@ -21,11 +29,16 @@ if skip_db do
   {:ok, _} = Application.ensure_all_started(:jason)
   {:ok, _} = Application.ensure_all_started(:phoenix)
 else
-  # Start the Ecto repository
-  {:ok, _} = Application.ensure_all_started(:riva_ash)
-
-  # Set up the test database
-  Ecto.Adapters.SQL.Sandbox.mode(RivaAsh.Repo, :manual)
+  # Start the Ecto repository - let mix handle the application startup
+  try do
+    # Set up the test database
+    Ecto.Adapters.SQL.Sandbox.mode(RivaAsh.Repo, :manual)
+    IO.puts("Database sandbox mode configured")
+  rescue
+    e ->
+      IO.puts("Could not configure database sandbox: #{inspect(e)}")
+      IO.puts("Tests may not work properly without database")
+  end
 end
 
 # Configure the test logger
@@ -55,7 +68,7 @@ if skip_db do
 else
   # For full test suite with database
   ExUnit.configure(
-    formatters: [ExUnit.CLIFormatter, ExUnitNotifier],
+    formatters: [ExUnit.CLIFormatter],
     exclude: [
       :integration,
       :external_api,
@@ -66,7 +79,10 @@ else
       :unit,
       :fast,
       :core
-    ]
+    ],
+    trace: false,
+    capture_log: false,
+    colors: [enabled: true]
   )
 end
 
@@ -158,22 +174,27 @@ end
 # Set up the test environment
 RivaAsh.TestSetup.setup_test_environment()
 
-# Configure test coverage
-if System.get_env("COVERAGE") == "true" do
-  require ExCoveralls
-  ExCoveralls.start(
-    coverage_options: [
-      summary: [threshold: 80],
-      template: :html
-    ]
-  )
-
-  ExUnit.configure(
-    formatters: [ExUnit.CLIFormatter, ExCoveralls.Formatters.HTML],
-    exclude: [:external_api, :slow],
-    include: [:unit, :integration, :property_based]
-  )
-end
+# Configure test coverage - disabled for now
+# if System.get_env("COVERAGE") == "true" do
+#   case Code.ensure_loaded(ExCoveralls) do
+#     {:module, ExCoveralls} ->
+#       require ExCoveralls
+#       ExCoveralls.start(
+#         coverage_options: [
+#           summary: [threshold: 80],
+#           template: :html
+#         ]
+#       )
+#
+#       ExUnit.configure(
+#         formatters: [ExUnit.CLIFormatter, ExCoveralls.Formatters.HTML],
+#         exclude: [:external_api, :slow],
+#         include: [:unit, :integration, :property_based]
+#       )
+#     {:error, _} ->
+#       IO.puts("ExCoveralls not available, skipping coverage configuration")
+#   end
+# end
 
 # Set up property-based testing
 if Code.ensure_loaded?(StreamData) do

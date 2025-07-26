@@ -16,8 +16,7 @@ config :riva_ash, RivaAsh.Repo,
   timeout: 15000,
   ssl: false
 
-# We don't run a server during test. If one is required,
-# you can enable the server option below.
+# Enable server for browser tests
 config :riva_ash, RivaAshWeb.Endpoint,
   http: [ip: {127, 0, 0, 1}, port: 4002],
   secret_key_base: "test_secret_key_base_change_me_in_production_this_needs_to_be_at_least_64_bytes_long_for_security",
@@ -34,5 +33,15 @@ config :logger, level: :warning
 # Initialize plugs at runtime for faster test compilation
 config :phoenix, :plug_init_mode, :runtime
 
-# Configure PhoenixTest
+# Configure PhoenixTest with Playwright
 config :phoenix_test, :endpoint, RivaAshWeb.Endpoint
+
+config :phoenix_test,
+  otp_app: :riva_ash,
+  playwright: [
+    browser: :chromium,
+    headless: System.get_env("PLAYWRIGHT_HEADLESS", "true") != "false",
+    trace: System.get_env("PLAYWRIGHT_TRACE", "false") == "true",
+    trace_dir: "tmp"
+  ],
+  timeout_ms: 30_000
