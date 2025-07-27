@@ -56,6 +56,11 @@ defmodule RivaAsh.Resources.Item do
     policy action_type(:read) do
       authorize_if(actor_attribute_equals(:role, :user))
     end
+
+    # Public search action requires no authentication
+    policy action(:public_search) do
+      authorize_if(always())
+    end
   end
 
   json_api do
@@ -115,7 +120,7 @@ defmodule RivaAsh.Resources.Item do
     defaults([:read, :destroy])
 
     update :update do
-      accept([:name, :section_id, :item_type_id, :is_active, :is_always_available])
+      accept([:name, :section_id, :item_type_id, :is_active, :is_always_available, :is_public_searchable, :public_description])
       primary?(true)
       require_atomic? false
 
@@ -125,7 +130,7 @@ defmodule RivaAsh.Resources.Item do
     end
 
     create :create do
-      accept([:name, :section_id, :item_type_id, :business_id, :is_active, :is_always_available])
+      accept([:name, :section_id, :item_type_id, :business_id, :is_active, :is_always_available, :is_public_searchable, :public_description])
       primary?(true)
 
       # Validate business access
@@ -209,6 +214,41 @@ defmodule RivaAsh.Resources.Item do
       ))
     end
 
+    read :public_search do
+      # Public search action for unregistered users
+      # No authorization required, only returns publicly searchable items from publicly searchable businesses
+      filter(expr(
+        is_public_searchable == true and
+        is_active == true and
+        is_nil(archived_at) and
+        business.is_public_searchable == true and
+        is_nil(business.archived_at)
+      ))
+
+      # Allow searching by name, description, and business name
+      argument(:search_term, :string, allow_nil?: true)
+      argument(:business_id, :uuid, allow_nil?: true)
+
+      prepare(fn query, _context ->
+        query = case Ash.Query.get_argument(query, :business_id) do
+          nil -> query
+          business_id -> Ash.Query.filter(query, expr(business_id == ^business_id))
+        end
+
+        case Ash.Query.get_argument(query, :search_term) do
+          nil -> query
+          "" -> query
+          search_term ->
+            Ash.Query.filter(query, expr(
+              ilike(name, ^"%#{search_term}%") or
+              ilike(public_description, ^"%#{search_term}%") or
+              ilike(business.name, ^"%#{search_term}%") or
+              ilike(business.public_description, ^"%#{search_term}%")
+            ))
+        end
+      end)
+    end
+
     # Bulk operations
     action :bulk_update_status do
       argument(:ids, {:array, :uuid}, allow_nil?: false)
@@ -283,6 +323,20 @@ defmodule RivaAsh.Resources.Item do
       allow_nil?(false)
       public?(true)
       description("The business this item belongs to")
+    end
+
+    attribute :is_public_searchable, :boolean do
+      allow_nil?(false)
+      default(false)
+      public?(true)
+      description("Whether this item appears in global search for unregistered users")
+    end
+
+    attribute :public_description, :string do
+      allow_nil?(true)
+      public?(true)
+      description("Public-facing description shown in global search results")
+      constraints(max_length: 500, trim?: true)
     end
   end
 

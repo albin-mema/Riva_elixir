@@ -43,6 +43,11 @@ defmodule RivaAsh.Resources.Business do
       authorize_if actor_attribute_equals(:role, :admin)
       authorize_if expr(owner_id == ^actor(:id))
     end
+
+    # Public search action requires no authentication
+    policy action(:public_search) do
+      authorize_if(always())
+    end
   end
 
   json_api do
@@ -99,7 +104,7 @@ defmodule RivaAsh.Resources.Business do
     defaults([:read, :destroy])
 
     update :update do
-      accept([:name, :description])
+      accept([:name, :description, :is_public_searchable, :public_description, :city, :country, :address])
       primary?(true)
 
       validate(present([:name]), message: "Business name is required")
@@ -110,7 +115,7 @@ defmodule RivaAsh.Resources.Business do
     end
 
     create :create do
-      accept([:name, :description, :owner_id])
+      accept([:name, :description, :owner_id, :is_public_searchable, :public_description, :city, :country, :address])
       primary?(true)
 
       validate(present([:name]), message: "Business name is required")
@@ -139,6 +144,43 @@ defmodule RivaAsh.Resources.Business do
 
     read :with_sections do
       # Load sections relationship - this will be handled by GraphQL automatically
+    end
+
+    read :public_search do
+      # Public search action for unregistered users
+      # No authorization required, only returns publicly searchable businesses
+      filter(expr(is_public_searchable == true and is_nil(archived_at)))
+
+      # Allow searching by name, description, and location
+      argument(:search_term, :string, allow_nil?: true)
+      argument(:city, :string, allow_nil?: true)
+      argument(:country, :string, allow_nil?: true)
+
+      prepare(fn query, _context ->
+        query = case Ash.Query.get_argument(query, :search_term) do
+          nil -> query
+          "" -> query
+          search_term ->
+            Ash.Query.filter(query, expr(
+              ilike(name, ^"%#{search_term}%") or
+              ilike(public_description, ^"%#{search_term}%") or
+              ilike(city, ^"%#{search_term}%") or
+              ilike(address, ^"%#{search_term}%")
+            ))
+        end
+
+        query = case Ash.Query.get_argument(query, :city) do
+          nil -> query
+          "" -> query
+          city -> Ash.Query.filter(query, expr(ilike(city, ^"%#{city}%")))
+        end
+
+        case Ash.Query.get_argument(query, :country) do
+          nil -> query
+          "" -> query
+          country -> Ash.Query.filter(query, expr(ilike(country, ^"%#{country}%")))
+        end
+      end)
     end
 
     read :by_owner do
@@ -185,6 +227,41 @@ defmodule RivaAsh.Resources.Business do
       allow_nil?(false)
       public?(true)
       description("The ID of the user who owns this business")
+    end
+
+    attribute :is_public_searchable, :boolean do
+      allow_nil?(false)
+      default(false)
+      public?(true)
+      description("Whether this business appears in global search for unregistered users")
+    end
+
+    attribute :public_description, :string do
+      allow_nil?(true)
+      public?(true)
+      description("Public-facing description shown in global search results")
+      constraints(max_length: 500, trim?: true)
+    end
+
+    attribute :city, :string do
+      allow_nil?(true)
+      public?(true)
+      description("City where the business is located")
+      constraints(max_length: 100, trim?: true)
+    end
+
+    attribute :country, :string do
+      allow_nil?(true)
+      public?(true)
+      description("Country where the business is located")
+      constraints(max_length: 100, trim?: true)
+    end
+
+    attribute :address, :string do
+      allow_nil?(true)
+      public?(true)
+      description("Full address of the business")
+      constraints(max_length: 500, trim?: true)
     end
 
     create_timestamp(:inserted_at)
