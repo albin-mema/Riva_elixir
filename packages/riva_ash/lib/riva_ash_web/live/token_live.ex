@@ -208,12 +208,13 @@ defmodule RivaAshWeb.TokenLive do
                   </div>
                   <div class="hidden md:-mt-px md:flex" role="list">
                     <%= for page <- 1..@meta.total_pages do %>
-                      <.button phx-click="go_to_page" phx-value-page={page} variant={if page == @meta.current_page, do: "primary", else: "outline"} class={"inline-flex items-center border-t-2 px-4 pt-4 text-sm font-medium
-                        <%= if page == @meta.current_page do %>
-                          border-blue-500 text-blue-600
-                        <% else %>
-                          border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700
-                        <% end %>"} aria-label={"Go to page #{page}" <> if page == @meta.current_page, do: " (current page)", else: ""} aria-current={if page == @meta.current_page, do: "page", else: "false"}><%= page %></.button>
+                      <.button phx-click="go_to_page" phx-value-page={page} variant={if page == @meta.current_page, do: "primary", else: "outline"} class={"inline-flex items-center border-t-2 px-4 pt-4 text-sm font-medium #{
+                        if page == @meta.current_page do
+                          "border-blue-500 text-blue-600"
+                        else
+                          "border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700"
+                        end
+                      }"} aria-label={"Go to page #{page}" <> if page == @meta.current_page, do: " (current page)", else: ""} aria-current={if page == @meta.current_page, do: "page", else: "false"}><%= page %></.button>
                     <% end %>
                   </div>
                   <div class="-mt-px flex w-0 flex-1 justify-end">

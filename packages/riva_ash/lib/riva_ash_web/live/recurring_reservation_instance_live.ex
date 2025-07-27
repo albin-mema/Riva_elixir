@@ -165,15 +165,16 @@ defmodule RivaAshWeb.RecurringReservationInstanceLive do
                   <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900" data-label="Scheduled Date"><%= instance.scheduled_date %></td>
                   <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900" data-label="Sequence"><%= instance.sequence_number %></td>
                   <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900" data-label="Status">
-                    <span class={"inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
-                                  <%= case instance.status do
+                    <span class={"inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium #{
+                                  case instance.status do
                                     :pending -> "bg-yellow-100 text-yellow-800"
                                     :confirmed -> "bg-green-100 text-green-800"
                                     :failed -> "bg-red-100 text-red-800"
                                     :skipped -> "bg-gray-100 text-gray-800"
                                     :cancelled -> "bg-gray-100 text-gray-800"
                                     _ -> "bg-gray-100 text-gray-800"
-                                  end %>"}><%= instance.status %></span>
+                                  end
+                                }"}><%= instance.status %></span>
                   </td>
                   <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900" data-label="Recurring Reservation"><%= instance.recurring_reservation_id %></td>
                   <td class="px-6 py-4 whitespace-nowrap text-sm font-medium" data-label="Actions">
@@ -201,12 +202,13 @@ defmodule RivaAshWeb.RecurringReservationInstanceLive do
                   </div>
                   <div class="hidden md:-mt-px md:flex" role="list">
                     <%= for page <- 1..@meta.total_pages do %>
-                      <.button phx-click="go_to_page" phx-value-page={page} variant={if page == @meta.current_page, do: "primary", else: "outline"} class={"inline-flex items-center border-t-2 px-4 pt-4 text-sm font-medium
-                        <%= if page == @meta.current_page do %>
-                          border-blue-500 text-blue-600
-                        <% else %>
-                          border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700
-                        <% end %>"} aria-label={"Go to page #{page}" <> if page == @meta.current_page, do: " (current page)", else: ""} aria-current={if page == @meta.current_page, do: "page", else: "false"}><%= page %></.button>
+                      <.button phx-click="go_to_page" phx-value-page={page} variant={if page == @meta.current_page, do: "primary", else: "outline"} class={"inline-flex items-center border-t-2 px-4 pt-4 text-sm font-medium #{
+                        if page == @meta.current_page do
+                          "border-blue-500 text-blue-600"
+                        else
+                          "border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700"
+                        end
+                      }"} aria-label={"Go to page #{page}" <> if page == @meta.current_page, do: " (current page)", else: ""} aria-current={if page == @meta.current_page, do: "page", else: "false"}><%= page %></.button>
                     <% end %>
                   </div>
                   <div class="-mt-px flex w-0 flex-1 justify-end">
@@ -414,20 +416,6 @@ defmodule RivaAshWeb.RecurringReservationInstanceLive do
   end
 
   # Private helper functions
-  defp get_current_user_from_session(session) do
-    user_token = session["user_token"]
-
-    if user_token do
-      with {:ok, user_id} <- Phoenix.Token.verify(RivaAshWeb.Endpoint, "user_auth", user_token, max_age: 86_400) |> RivaAsh.ErrorHelpers.to_result(),
-           {:ok, user} <- Ash.get(RivaAsh.Accounts.User, user_id, domain: RivaAsh.Accounts) |> RivaAsh.ErrorHelpers.to_result() do
-        RivaAsh.ErrorHelpers.success(user)
-      else
-        _ -> RivaAsh.ErrorHelpers.failure(:not_authenticated)
-      end
-    else
-      RivaAsh.ErrorHelpers.failure(:not_authenticated)
-    end
-  end
 
   defp list_instances_with_flop(user, business_ids, params) do
     # Get instances as a list
