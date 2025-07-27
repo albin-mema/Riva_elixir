@@ -110,6 +110,9 @@ defmodule RivaAshWeb.Router do
 
     get("/", AuthController, :redirect_to_dashboard)
 
+    # Global search for unregistered users
+    live("/search", GlobalSearchLive, :index)
+
     # Authentication routes
     live("/sign-in", Auth.SignInLive, :index)
     get("/sign-in", AuthController, :sign_in)
