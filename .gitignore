@@ -1,16 +1,10 @@
 # Dependencies
 node_modules/
 .pnpm-debug.log*
+packages/riva_ash/assets/node_modules/
 
 # Session files
 cookies.txt
-
-# Frontend build outputs
-frontend/dist/
-frontend/build/
-frontend/.next/
-frontend/.nuxt/
-frontend/.vite/
 
 # Backend build outputs
 packages/riva_ash/_build/
@@ -29,6 +23,7 @@ packages/riva_ash/mix/
 
 # Database
 packages/riva_ash/priv/static/
+packages/riva_ash/priv/gettext/*/LC_MESSAGES/*.mo
 
 # Logs
 *.log
@@ -54,8 +49,10 @@ Thumbs.db
 *.temp
 
 # Elixir specific
+*.ez
 packages/riva_ash/erl_crash.dump
 packages/riva_ash/.elixir_ls/
+packages/riva_ash/.elixir-tools/
 
 # Mix artifacts
 packages/riva_ash/mix.lock.backup

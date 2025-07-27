@@ -32,6 +32,8 @@ defmodule RivaAsh.Application do
       {Finch, name: RivaAsh.Finch},
       # Start background jobs
       RivaAsh.Jobs.HoldCleanupJob,
+      # Start rate limiter for authentication
+      RivaAsh.Accounts.RateLimiter,
       # DNS cluster for distributed nodes
       {DNSCluster, query: Application.get_env(:riva_ash, :dns_cluster_query) || :ignore}
     ] ++

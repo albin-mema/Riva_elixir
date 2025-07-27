@@ -8,7 +8,11 @@
       ],
       "env": {
         "DEFAULT_MINIMUM_TOKENS": ""
-      }
+      },
+      "alwaysAllow": [
+        "get-library-docs",
+        "resolve-library-id"
+      ]
     },
     "sequentialthinking": {
       "command": "npx",

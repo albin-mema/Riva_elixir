@@ -19,6 +19,14 @@ defmodule RivaAsh.Resources.Plot do
       AshAdmin.Resource
     ]
 
+  @derive {
+    Flop.Schema,
+    filterable: [:name, :description, :business_id, :is_active],
+    sortable: [:name, :description, :inserted_at, :updated_at, :is_active],
+    default_limit: 10,
+    max_limit: 100
+  }
+
   import RivaAsh.ResourceHelpers
 
   standard_postgres("plots")

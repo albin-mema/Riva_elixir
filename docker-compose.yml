@@ -5,22 +5,28 @@ services:
     image: postgres:15-alpine
     container_name: riva_elixir-postgres-1
     environment:
-      POSTGRES_DB: riva_ash_dev
-      POSTGRES_USER: postgres
-      POSTGRES_HOST_AUTH_METHOD: trust
-      POSTGRES_INITDB_ARGS: "--auth-host=trust --auth-local=trust"
+      POSTGRES_DB: ${DB_NAME:-riva_ash_dev}
+      POSTGRES_USER: ${DB_USERNAME:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_INITDB_ARGS: "--auth-host=scram-sha-256 --auth-local=scram-sha-256"
     ports:
-      - "5432:5432"
+      - "${DOCKER_POSTGRES_PORT:-5432}:5432"
     volumes:
+      # Volume for persistent PostgreSQL data storage
       - postgres_data:/var/lib/postgresql/data
+      # Initialize database with custom SQL script
       - ./packages/riva_ash/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-postgres} -d ${DB_NAME:-riva_ash_dev}"]
       interval: 5s
       timeout: 5s
       retries: 5
     restart: unless-stopped
     command: postgres -c 'max_connections=200'
+    deploy:
+      resources:
+        limits:
+          memory: 512M
 
   app:
     build:
@@ -32,32 +38,40 @@ services:
       postgres:
         condition: service_healthy
     environment:
-      - MIX_ENV=prod
-      - DATABASE_URL=ecto://postgres:postgres@postgres:5432/riva_ash_dev
-      - DB_USERNAME=postgres
-      - DB_PASSWORD=postgres
-      - DB_NAME=riva_ash_dev
-      - DB_HOSTNAME=postgres
-      - DB_PORT=5432
-      - SECRET_KEY_BASE=your-secret-key-base-here-change-this-in-production
+      - MIX_ENV=${MIX_ENV:-prod}
+      - DATABASE_URL=ecto://${DB_USERNAME:-postgres}:${DB_PASSWORD:-postgres}@${DB_HOSTNAME:-postgres}:${DB_PORT:-5432}/${DB_NAME:-riva_ash_dev}
+      - DB_USERNAME=${DB_USERNAME:-postgres}
+      - DB_PASSWORD=${DB_PASSWORD:-postgres}
+      - DB_NAME=${DB_NAME:-riva_ash_dev}
+      - DB_HOSTNAME=${DB_HOSTNAME:-postgres}
+      - DB_PORT=${DB_PORT:-5432}
+      - SECRET_KEY_BASE=${SECRET_KEY_BASE:-your-secret-key-base-here-change-this-in-production}
       - PHX_SERVER=true
-      - PHX_HOST=localhost
-      - PORT=4000
+      - PHX_HOST=${PHX_HOST:-localhost}
+      - PORT=${PORT:-4000}
       - LANG=C.UTF-8
       - ERL_AFLAGS="-kernel shell_history enabled"
     ports:
-      - "4000:4000"
+      - "${PORT:-4000}:${PORT:-4000}"
     volumes:
+      # Static assets volume for Phoenix
       - ./packages/riva_ash/priv/static:/app/priv/static
     healthcheck:
-      test: ["CMD", "wget", "--spider", "http://localhost:4000/health"]
+      test: ["CMD", "wget", "--spider", "http://localhost:${PORT:-4000}/health"]
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 30s
     restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 512M
 
 volumes:
+  # PostgreSQL data volume for persistent database storage
   postgres_data:
+  # Mix dependencies volume for faster rebuilds
   mix_deps:
+  # Mix build volume for faster rebuilds
   mix_build:
