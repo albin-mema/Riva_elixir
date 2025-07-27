@@ -1,9 +1,10 @@
 defmodule RivaAshWeb.Components.Forms.SectionForm do
   @moduledoc """
-  Section creation and editing form component.
+  Section creation and editing form component using atomic design system.
   """
   use Phoenix.Component
   import RivaAshWeb.Components.Molecules.FormField
+  import RivaAshWeb.Components.Molecules.Card
   import RivaAshWeb.Components.Atoms.Button
   import RivaAshWeb.Components.Atoms.Select
 
@@ -22,25 +23,47 @@ defmodule RivaAshWeb.Components.Forms.SectionForm do
 
   def section_form(assigns) do
     ~H"""
-    <!-- Section form implementation will go here -->
-    <form phx-submit={@on_submit} phx-change={@on_change} {@rest}>
-      <.form_field field={@form[:name]} label="Section Name" required />
-      <.form_field field={@form[:description]} label="Description" type="textarea" />
-      <.form_field field={@form[:plot_id]} label="Plot" type="select" options={@plots} required />
-      
-      <div>
-        <h3>Section Properties</h3>
-        <.form_field field={@form[:capacity]} label="Maximum Capacity" type="number" />
-        <.form_field field={@form[:area]} label="Area (sq ft)" type="number" />
-      </div>
-      
-      <div>
-        <.button type="submit" loading={@loading}>
-          <%= if @editing, do: "Update Section", else: "Create Section" %>
-        </.button>
-        <.button type="button" variant="outline" phx-click={@on_cancel}>Cancel</.button>
-      </div>
-    </form>
+    <.card variant="elevated" {@rest}>
+      <:body>
+        <form phx-submit={@on_submit} phx-change={@on_change} class="space-y-6">
+          <.form_field
+            field={@form[:name]}
+            label="Section Name"
+            required
+            helper_text="Enter a name for the section"
+          />
+          <.form_field
+            field={@form[:description]}
+            label="Description"
+            type="textarea"
+            helper_text="Provide a description for the section"
+          />
+          <.form_field
+            field={@form[:plot_id]}
+            label="Plot"
+            type="select"
+            options={plot_options(@plots)}
+            required
+            helper_text="Select the plot this section belongs to"
+          />
+
+          <div class="flex justify-end space-x-3 pt-4 border-t">
+            <.button type="button" variant="outline" phx-click={@on_cancel} disabled={@loading}>
+              Cancel
+            </.button>
+            <.button type="submit" loading={@loading}>
+              <%= if @editing, do: "Update Section", else: "Create Section" %>
+            </.button>
+          </div>
+        </form>
+      </:body>
+    </.card>
     """
+  end
+
+  defp plot_options(plots) do
+    Enum.map(plots, fn plot ->
+      {plot.name, plot.id}
+    end)
   end
 end
