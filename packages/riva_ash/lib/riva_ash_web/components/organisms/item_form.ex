@@ -30,18 +30,34 @@ defmodule RivaAshWeb.Components.Organisms.ItemForm do
       <.form_field field={@form[:description]} label="Description" type="textarea" />
       <.form_field field={@form[:section_id]} label="Section" type="select" options={@sections} />
       <.form_field field={@form[:item_type_id]} label="Item Type" type="select" options={@item_types} />
-      
+
       <.toggle field={@form[:is_active]} label="Active" />
       <.toggle field={@form[:is_always_available]} label="Always Available" />
-      
+
       <.form_field field={@form[:capacity]} label="Capacity" type="number" />
-      
+
+      <!-- Public Search Settings -->
+      <div class="space-y-4 p-4 bg-green-50 rounded-lg border border-green-200">
+        <h3 class="text-lg font-medium text-green-900">Public Search Settings</h3>
+        <p class="text-sm text-green-700">Control how this item appears in global search for unregistered users.</p>
+
+        <.toggle field={@form[:is_public_searchable]} label="Make this item discoverable in global search" />
+
+        <.form_field
+          field={@form[:public_description]}
+          label="Public Description"
+          type="textarea"
+          placeholder="Enter a public-facing description for search results (optional)"
+          helper_text="This description will be shown to unregistered users in search results. Leave empty to use the main description."
+        />
+      </div>
+
       <div>
         <h3>Position</h3>
         <.form_field field={@form[:grid_row]} label="Row" type="number" />
         <.form_field field={@form[:grid_column]} label="Column" type="number" />
       </div>
-      
+
       <div>
         <.button type="submit" loading={@loading}>
           <%= if @editing, do: "Update Item", else: "Create Item" %>

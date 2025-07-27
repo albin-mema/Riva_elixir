@@ -69,6 +69,56 @@ defmodule RivaAshWeb.Components.Organisms.BusinessForm do
             rows={4}
           />
 
+          <!-- Public Search Settings -->
+          <div class="space-y-4 p-4 bg-blue-50 rounded-lg border border-blue-200">
+            <h3 class="text-lg font-medium text-blue-900">Public Search Settings</h3>
+            <p class="text-sm text-blue-700">Control how your business appears in global search for unregistered users.</p>
+
+            <.checkbox_field
+              field={@form[:is_public_searchable]}
+              label="Make this business discoverable in global search"
+              helper_text="When enabled, unregistered users can find your business through the global search"
+            />
+
+            <.textarea_field
+              field={@form[:public_description]}
+              label="Public Description"
+              placeholder="Enter a public-facing description for search results (optional)"
+              helper_text="This description will be shown to unregistered users in search results. Leave empty to use the main description."
+              rows={3}
+            />
+          </div>
+
+          <!-- Location Information -->
+          <div class="space-y-4 p-4 bg-green-50 rounded-lg border border-green-200">
+            <h3 class="text-lg font-medium text-green-900">Location Information</h3>
+            <p class="text-sm text-green-700">Help customers find you by providing location details.</p>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <.form_field
+                field={@form[:city]}
+                label="City"
+                placeholder="Enter city name"
+                helper_text="City where your business is located"
+              />
+
+              <.form_field
+                field={@form[:country]}
+                label="Country"
+                placeholder="Enter country name"
+                helper_text="Country where your business operates"
+              />
+            </div>
+
+            <.textarea_field
+              field={@form[:address]}
+              label="Full Address"
+              placeholder="Enter complete address (optional)"
+              helper_text="This helps with local search and customer directions"
+              rows={2}
+            />
+          </div>
+
           <div class="flex gap-3 pt-4">
             <.button
               type="submit"
