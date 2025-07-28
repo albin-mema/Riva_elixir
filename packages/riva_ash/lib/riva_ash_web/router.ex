@@ -123,11 +123,21 @@ defmodule RivaAshWeb.Router do
     post("/register", AuthController, :register_submit)
   end
 
-  # Authenticated routes
+  # Authenticated routes - User-Centric Workflow Design
   scope "/", RivaAshWeb do
     pipe_through([:browser, :require_authenticated_user, :authenticated_layout])
 
+    # Core Workflow Routes
     live("/dashboard", DashboardLive, :index)
+    live("/setup", BusinessSetupLive, :index)
+    live("/reservations", ReservationCenterLive, :index)
+    live("/inventory", InventoryManagementLive, :index)
+    live("/people", PeopleManagementLive, :index)
+    live("/finance", FinancialOperationsLive, :index)
+    live("/settings", SystemSettingsLive, :index)
+
+    # Legacy resource routes (kept for backward compatibility during transition)
+    # These will be gradually phased out as users adopt the new workflow-based interface
     live("/businesses", BusinessLive, :index)
     live("/businesses/new", BusinessLive, :new)
     live("/businesses/:id/edit", BusinessLive, :edit)
@@ -165,9 +175,12 @@ defmodule RivaAshWeb.Router do
     live("/recurring-reservation-instances", RecurringReservationInstanceLive, :index)
     live("/recurring-reservation-instances/new", RecurringReservationInstanceLive, :new)
     live("/recurring-reservation-instances/:id/edit", RecurringReservationInstanceLive, :edit)
-    live("/reservations", ReservationLive, :index)
-    live("/reservations/new", ReservationLive, :new)
-    live("/reservations/:id/edit", ReservationLive, :edit)
+    live("/recurring-reservations", RecurringReservationLive, :index)
+    live("/recurring-reservations/new", RecurringReservationLive, :new)
+    live("/recurring-reservations/:id/edit", RecurringReservationLive, :edit)
+    live("/availability-exceptions", AvailabilityExceptionLive, :index)
+    live("/availability-exceptions/new", AvailabilityExceptionLive, :new)
+    live("/availability-exceptions/:id/edit", AvailabilityExceptionLive, :edit)
     live("/sections", SectionLive, :index)
     live("/sections/new", SectionLive, :new)
     live("/sections/:id/edit", SectionLive, :edit)
@@ -177,12 +190,6 @@ defmodule RivaAshWeb.Router do
     live("/tokens", TokenLive, :index)
     live("/tokens/new", TokenLive, :new)
     live("/tokens/:id/edit", TokenLive, :edit)
-    live("/recurring-reservations", RecurringReservationLive, :index)
-    live("/recurring-reservations/new", RecurringReservationLive, :new)
-    live("/recurring-reservations/:id/edit", RecurringReservationLive, :edit)
-    live("/availability-exceptions", AvailabilityExceptionLive, :index)
-    live("/availability-exceptions/new", AvailabilityExceptionLive, :new)
-    live("/availability-exceptions/:id/edit", AvailabilityExceptionLive, :edit)
   end
 
   # Error pages
