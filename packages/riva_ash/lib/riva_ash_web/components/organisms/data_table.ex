@@ -10,23 +10,23 @@ defmodule RivaAshWeb.Components.Organisms.DataTable do
   @doc """
   Renders a data table with sorting, filtering, and pagination.
   """
-  attr :items, :list, required: true
-  attr :meta, :map, required: true
-  attr :path, :string, required: true
-  attr :id, :string, required: true
-  attr :show_search, :boolean, default: true
-  attr :show_filters, :boolean, default: true
-  attr :show_pagination, :boolean, default: true
-  attr :selectable, :boolean, default: false
-  attr :actions, :list, default: []
-  attr :class, :string, default: ""
-  attr :rest, :global
+  attr(:items, :list, required: true)
+  attr(:meta, :map, required: true)
+  attr(:path, :string, required: true)
+  attr(:id, :string, required: true)
+  attr(:show_search, :boolean, default: true)
+  attr(:show_filters, :boolean, default: true)
+  attr(:show_pagination, :boolean, default: true)
+  attr(:selectable, :boolean, default: false)
+  attr(:actions, :list, default: [])
+  attr(:class, :string, default: "")
+  attr(:rest, :global)
 
   slot :col, required: true do
-    attr :label, :string, required: true
-    attr :field, :atom
-    attr :sortable, :boolean
-    attr :filterable, :boolean
+    attr(:label, :string, required: true)
+    attr(:field, :atom)
+    attr(:sortable, :boolean)
+    attr(:filterable, :boolean)
   end
 
   def data_table(assigns) do

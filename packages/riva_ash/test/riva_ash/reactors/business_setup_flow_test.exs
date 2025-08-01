@@ -7,14 +7,15 @@ defmodule RivaAsh.Reactors.BusinessSetupFlowTest do
   describe "BusinessSetupFlow" do
     test "successfully sets up a complete business with plot and initial configuration" do
       # Create a user to be the business owner
-      user = RivaAsh.Accounts.User
-             |> Ash.Changeset.for_create(:register_with_password, %{
-               name: "Test User",
-               email: "owner@example.com",
-               password: "password123",
-               role: :admin
-             })
-             |> Ash.create!(domain: RivaAsh.Accounts)
+      user =
+        RivaAsh.Accounts.User
+        |> Ash.Changeset.for_create(:register_with_password, %{
+          name: "Test User",
+          email: "owner@example.com",
+          password: "password123",
+          role: :admin
+        })
+        |> Ash.create!(domain: RivaAsh.Accounts)
 
       # Define inputs for the reactor
       inputs = %{
@@ -89,11 +90,17 @@ defmodule RivaAsh.Reactors.BusinessSetupFlowTest do
 
       # Check specific pricing
       food_stall_type = Enum.find(result.item_types, &(&1.name == "Food Stall"))
-      food_stall_pricing = Enum.find(result.pricing_rules, &(&1.item_type_id == food_stall_type.id))
+
+      food_stall_pricing =
+        Enum.find(result.pricing_rules, &(&1.item_type_id == food_stall_type.id))
+
       assert food_stall_pricing.price_per_day == Decimal.new("100.00")
 
       game_booth_type = Enum.find(result.item_types, &(&1.name == "Game Booth"))
-      game_booth_pricing = Enum.find(result.pricing_rules, &(&1.item_type_id == game_booth_type.id))
+
+      game_booth_pricing =
+        Enum.find(result.pricing_rules, &(&1.item_type_id == game_booth_type.id))
+
       assert game_booth_pricing.price_per_day == Decimal.new("60.00")
 
       # Verify result structure
@@ -104,14 +111,15 @@ defmodule RivaAsh.Reactors.BusinessSetupFlowTest do
     @tag :skip
     test "handles failure and rolls back properly" do
       # Create a user to be the business owner
-      user = RivaAsh.Accounts.User
-             |> Ash.Changeset.for_create(:register_with_password, %{
-               name: "Test User 2",
-               email: "owner2@example.com",
-               password: "password123",
-               role: :admin
-             })
-             |> Ash.create!(domain: RivaAsh.Accounts)
+      user =
+        RivaAsh.Accounts.User
+        |> Ash.Changeset.for_create(:register_with_password, %{
+          name: "Test User 2",
+          email: "owner2@example.com",
+          password: "password123",
+          role: :admin
+        })
+        |> Ash.create!(domain: RivaAsh.Accounts)
 
       # Define inputs that will cause a failure (invalid grid size)
       inputs = %{
@@ -122,7 +130,8 @@ defmodule RivaAsh.Reactors.BusinessSetupFlowTest do
         plot_details: %{
           name: "Test Plot",
           description: "A test plot",
-          grid_rows: 0, # This should cause validation failure
+          # This should cause validation failure
+          grid_rows: 0,
           grid_columns: 10
         },
         owner_id: user.id
@@ -143,14 +152,15 @@ defmodule RivaAsh.Reactors.BusinessSetupFlowTest do
     @tag :skip
     test "creates default configuration when minimal inputs provided" do
       # Create a user to be the business owner
-      user = RivaAsh.Accounts.User
-             |> Ash.Changeset.for_create(:register_with_password, %{
-               name: "Test User 3",
-               email: "owner3@example.com",
-               password: "password123",
-               role: :admin
-             })
-             |> Ash.create!(domain: RivaAsh.Accounts)
+      user =
+        RivaAsh.Accounts.User
+        |> Ash.Changeset.for_create(:register_with_password, %{
+          name: "Test User 3",
+          email: "owner3@example.com",
+          password: "password123",
+          role: :admin
+        })
+        |> Ash.create!(domain: RivaAsh.Accounts)
 
       # Define minimal inputs
       inputs = %{
@@ -169,7 +179,8 @@ defmodule RivaAsh.Reactors.BusinessSetupFlowTest do
       assert {:ok, result} = Reactor.run(BusinessSetupFlow, inputs)
 
       # Verify defaults were applied
-      assert result.layout.grid_rows == 10  # Default grid size
+      # Default grid size
+      assert result.layout.grid_rows == 10
       assert result.layout.grid_columns == 10
 
       # Verify default section was created

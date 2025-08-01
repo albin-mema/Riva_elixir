@@ -9,19 +9,19 @@ defmodule RivaAshWeb.Components.Templates.FormViewTemplate do
   @doc """
   Renders a form view template.
   """
-  attr :title, :string, required: true
-  attr :description, :string, default: nil
-  attr :form_title, :string, default: nil
-  attr :show_progress, :boolean, default: false
-  attr :current_step, :integer, default: 1
-  attr :total_steps, :integer, default: 1
-  attr :breadcrumbs, :list, default: []
-  attr :class, :string, default: ""
-  attr :rest, :global
+  attr(:title, :string, required: true)
+  attr(:description, :string, default: nil)
+  attr(:form_title, :string, default: nil)
+  attr(:show_progress, :boolean, default: false)
+  attr(:current_step, :integer, default: 1)
+  attr(:total_steps, :integer, default: 1)
+  attr(:breadcrumbs, :list, default: [])
+  attr(:class, :string, default: "")
+  attr(:rest, :global)
 
-  slot :actions, required: false
-  slot :form_content, required: true
-  slot :sidebar_content, required: false
+  slot(:actions, required: false)
+  slot(:form_content, required: true)
+  slot(:sidebar_content, required: false)
 
   def form_view_template(assigns) do
     ~H"""

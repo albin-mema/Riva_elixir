@@ -132,9 +132,9 @@ defmodule RivaAsh.Resources.ItemHold do
       filter(
         expr(
           item_id == ^arg(:item_id) and
-          is_active == true and
-          reserved_from < ^arg(:end_time) and
-          reserved_until > ^arg(:start_time)
+            is_active == true and
+            reserved_from < ^arg(:end_time) and
+            reserved_until > ^arg(:start_time)
         )
       )
     end
@@ -142,7 +142,7 @@ defmodule RivaAsh.Resources.ItemHold do
     # Release a hold (mark as inactive)
     update :release do
       accept([])
-      require_atomic? false
+      require_atomic?(false)
       change(set_attribute(:is_active, false))
       change(set_attribute(:released_at, expr(fragment("NOW()"))))
       description("Release an active hold")
@@ -151,9 +151,15 @@ defmodule RivaAsh.Resources.ItemHold do
     # Extend hold duration
     update :extend do
       argument(:additional_minutes, :integer, allow_nil?: false)
-      require_atomic? false
-      change(set_attribute(:expires_at,
-        expr(fragment("? + INTERVAL '? minutes'", expires_at, ^arg(:additional_minutes)))))
+      require_atomic?(false)
+
+      change(
+        set_attribute(
+          :expires_at,
+          expr(fragment("? + INTERVAL '? minutes'", expires_at, ^arg(:additional_minutes)))
+        )
+      )
+
       description("Extend hold expiration time")
     end
   end
@@ -243,33 +249,39 @@ defmodule RivaAsh.Resources.ItemHold do
     )
 
     # Custom validation to check for overlapping active holds
-    validate fn changeset, _context ->
-      item_id = Ash.Changeset.get_attribute(changeset, :item_id)
-      reserved_from = Ash.Changeset.get_attribute(changeset, :reserved_from)
-      reserved_until = Ash.Changeset.get_attribute(changeset, :reserved_until)
-      is_active = Ash.Changeset.get_attribute(changeset, :is_active)
+    validate(
+      fn changeset, _context ->
+        item_id = Ash.Changeset.get_attribute(changeset, :item_id)
+        reserved_from = Ash.Changeset.get_attribute(changeset, :reserved_from)
+        reserved_until = Ash.Changeset.get_attribute(changeset, :reserved_until)
+        is_active = Ash.Changeset.get_attribute(changeset, :is_active)
 
-      # Only check for overlaps if this is an active hold
-      if is_active && item_id && reserved_from && reserved_until do
-        case check_for_overlapping_holds(item_id, reserved_from, reserved_until, changeset) do
-          :ok -> :ok
-          {:error, message} -> {:error, field: :reserved_from, message: message}
+        # Only check for overlaps if this is an active hold
+        if is_active && item_id && reserved_from && reserved_until do
+          case check_for_overlapping_holds(item_id, reserved_from, reserved_until, changeset) do
+            :ok -> :ok
+            {:error, message} -> {:error, field: :reserved_from, message: message}
+          end
+        else
+          :ok
         end
-      else
-        :ok
-      end
-    end, message: "Cannot create overlapping holds for the same item"
+      end,
+      message: "Cannot create overlapping holds for the same item"
+    )
 
     # Custom validation to ensure hold hasn't expired
-    validate fn changeset, _context ->
-      expires_at = Ash.Changeset.get_attribute(changeset, :expires_at)
+    validate(
+      fn changeset, _context ->
+        expires_at = Ash.Changeset.get_attribute(changeset, :expires_at)
 
-      if expires_at && Timex.compare(expires_at, Timex.now()) == :lt do
-        {:error, field: :expires_at, message: "Hold expiration time cannot be in the past"}
-      else
-        :ok
-      end
-    end, message: "Cannot create holds that have already expired"
+        if expires_at && Timex.compare(expires_at, Timex.now()) == :lt do
+          {:error, field: :expires_at, message: "Hold expiration time cannot be in the past"}
+        else
+          :ok
+        end
+      end,
+      message: "Cannot create holds that have already expired"
+    )
   end
 
   # Helper function to check for overlapping holds
@@ -277,25 +289,30 @@ defmodule RivaAsh.Resources.ItemHold do
     # Get the ID of the current record if it's an update
     current_id = Ash.Changeset.get_data(changeset, :id)
 
-    query = __MODULE__
-    |> Ash.Query.filter(expr(
-      item_id == ^item_id and
-      is_active == true and
-      reserved_from < ^reserved_until and
-      reserved_until > ^reserved_from
-    ))
+    query =
+      __MODULE__
+      |> Ash.Query.filter(
+        expr(
+          item_id == ^item_id and
+            is_active == true and
+            reserved_from < ^reserved_until and
+            reserved_until > ^reserved_from
+        )
+      )
 
     # Exclude current record if this is an update
-    query = if current_id do
-      Ash.Query.filter(query, expr(id != ^current_id))
-    else
-      query
-    end
+    query =
+      if current_id do
+        Ash.Query.filter(query, expr(id != ^current_id))
+      else
+        query
+      end
 
     case Ash.read(query, domain: RivaAsh.Domain) do
       {:ok, []} -> :ok
       {:ok, _overlapping_holds} -> {:error, "Overlapping active hold exists for this time period"}
-      {:error, _} -> :ok  # If we can't check, allow the operation
+      # If we can't check, allow the operation
+      {:error, _} -> :ok
     end
   end
 end

@@ -1,13 +1,14 @@
 defmodule RivaAshWeb.Auth.SignInLive do
   use RivaAshWeb, :live_view
-  import AshPhoenix.Form
+
   alias RivaAsh.Accounts
 
   # Helper function to get client IP address
   defp get_client_ip(socket) do
     case Phoenix.LiveView.get_connect_info(socket, :peer_data) do
       %{address: ip_address} -> ip_address
-      _ -> {127, 0, 0, 1}  # Default to localhost if not available
+      # Default to localhost if not available
+      _ -> {127, 0, 0, 1}
     end
   end
 
@@ -43,7 +44,7 @@ defmodule RivaAshWeb.Auth.SignInLive do
                 autocomplete="email"
                 required
                 aria-describedby="email-error"
-                class={"block focus:z-10 relative px-3 py-2 border border-gray-300 focus:border-indigo-500 rounded-none rounded-t-md focus:outline-none focus:ring-indigo-500 w-full text-gray-900 sm:text-sm appearance-none placeholder-gray-500 #{if @form[:email].errors != [], do: 'border-red-500', else: ''}"}
+                class={"block focus:z-10 relative px-3 py-2 border border-gray-300 focus:border-indigo-500 rounded-none rounded-t-md focus:outline-none focus:ring-indigo-500 w-full text-gray-900 sm:text-sm appearance-none placeholder-gray-500 #{if @form[:email].errors != [], do: "border-red-500", else: ""}"}
                 placeholder="Email address"
                 value={@form[:email].value}
               />
@@ -64,7 +65,7 @@ defmodule RivaAshWeb.Auth.SignInLive do
                 autocomplete="current-password"
                 required
                 aria-describedby="password-error"
-                class={"block focus:z-10 relative px-3 py-2 border border-gray-300 focus:border-indigo-500 rounded-none rounded-b-md focus:outline-none focus:ring-indigo-500 w-full text-gray-900 sm:text-sm appearance-none placeholder-gray-500 #{if @form[:password].errors != [], do: 'border-red-500', else: ''}"}
+                class={"block focus:z-10 relative px-3 py-2 border border-gray-300 focus:border-indigo-500 rounded-none rounded-b-md focus:outline-none focus:ring-indigo-500 w-full text-gray-900 sm:text-sm appearance-none placeholder-gray-500 #{if @form[:password].errors != [], do: "border-red-500", else: ""}"}
                 placeholder="Password"
               />
               <%= if @form[:password].errors != [] do %>

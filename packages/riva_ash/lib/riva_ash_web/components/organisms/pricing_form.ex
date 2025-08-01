@@ -5,20 +5,19 @@ defmodule RivaAshWeb.Components.Organisms.PricingForm do
   use Phoenix.Component
   import RivaAshWeb.Components.Molecules.FormField
   import RivaAshWeb.Components.Atoms.Button
-  import RivaAshWeb.Components.Atoms.Select
 
   @doc """
   Renders a pricing configuration form.
   """
-  attr :form, :map, required: true
-  attr :items, :list, default: []
-  attr :editing, :boolean, default: false
-  attr :on_submit, :string, required: true
-  attr :on_change, :string, required: true
-  attr :on_cancel, :string, required: true
-  attr :loading, :boolean, default: false
-  attr :class, :string, default: ""
-  attr :rest, :global
+  attr(:form, :map, required: true)
+  attr(:items, :list, default: [])
+  attr(:editing, :boolean, default: false)
+  attr(:on_submit, :string, required: true)
+  attr(:on_change, :string, required: true)
+  attr(:on_cancel, :string, required: true)
+  attr(:loading, :boolean, default: false)
+  attr(:class, :string, default: "")
+  attr(:rest, :global)
 
   def pricing_form(assigns) do
     ~H"""

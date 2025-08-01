@@ -5,18 +5,22 @@ defmodule RivaAsh.Resources.ReservationTest do
 
   describe "create/1 - property-based tests" do
     property "creates reservations with valid randomized attributes" do
-      check all client_attrs <- client_attrs(),
-                item_attrs <- item_attrs() do
-
+      check all(
+              client_attrs <- client_attrs(),
+              item_attrs <- item_attrs()
+            ) do
         # Create dependencies first
         {:ok, client} = Client.create(client_attrs)
         {:ok, item} = Item.create(item_attrs)
 
         # Generate reservation attributes with valid relationships
-        reservation_attrs = reservation_attrs(%{
-          client_id: client.id,
-          item_id: item.id
-        }) |> Enum.take(1) |> hd()
+        reservation_attrs =
+          reservation_attrs(%{
+            client_id: client.id,
+            item_id: item.id
+          })
+          |> Enum.take(1)
+          |> hd()
 
         case Reservation.create(reservation_attrs) do
           {:ok, reservation} ->
@@ -25,7 +29,15 @@ defmodule RivaAsh.Resources.ReservationTest do
             assert reservation.reserved_from != nil
             assert reservation.reserved_until != nil
             assert DateTime.compare(reservation.reserved_until, reservation.reserved_from) == :gt
-            assert reservation.status in [:pending, :provisional, :confirmed, :cancelled, :completed]
+
+            assert reservation.status in [
+                     :pending,
+                     :provisional,
+                     :confirmed,
+                     :cancelled,
+                     :completed
+                   ]
+
             assert reservation.id != nil
 
           {:error, _error} ->
@@ -36,7 +48,7 @@ defmodule RivaAsh.Resources.ReservationTest do
     end
 
     property "validates required fields" do
-      check all attrs <- reservation_attrs() do
+      check all(attrs <- reservation_attrs()) do
         # Test missing client_id
         invalid_attrs = Map.put(attrs, :client_id, nil)
         assert {:error, %{errors: errors}} = Reservation.create(invalid_attrs)
@@ -50,20 +62,24 @@ defmodule RivaAsh.Resources.ReservationTest do
     end
 
     property "validates datetime ordering" do
-      check all client_attrs <- client_attrs(),
-                item_attrs <- item_attrs() do
-
+      check all(
+              client_attrs <- client_attrs(),
+              item_attrs <- item_attrs()
+            ) do
         # Create dependencies
         {:ok, client} = Client.create(client_attrs)
         {:ok, item} = Item.create(item_attrs)
 
         # Create reservation with invalid time ordering
         now = Timex.now()
+
         invalid_attrs = %{
           client_id: client.id,
           item_id: item.id,
-          reserved_from: DateTime.add(now, 3600, :second),  # 1 hour from now
-          reserved_until: now  # Now (before reserved_from)
+          # 1 hour from now
+          reserved_from: DateTime.add(now, 3600, :second),
+          # Now (before reserved_from)
+          reserved_until: now
         }
 
         assert {:error, %{errors: _errors}} = Reservation.create(invalid_attrs)
@@ -73,44 +89,56 @@ defmodule RivaAsh.Resources.ReservationTest do
 
   describe "status updates - property-based tests" do
     property "status transitions work correctly" do
-      check all client_attrs <- client_attrs(),
-                item_attrs <- item_attrs() do
-
+      check all(
+              client_attrs <- client_attrs(),
+              item_attrs <- item_attrs()
+            ) do
         # Create dependencies
         {:ok, client} = Client.create(client_attrs)
         {:ok, item} = Item.create(item_attrs)
 
         # Create reservation
-        reservation_attrs = reservation_attrs(%{
-          client_id: client.id,
-          item_id: item.id,
-          status: :pending
-        }) |> Enum.take(1) |> hd()
+        reservation_attrs =
+          reservation_attrs(%{
+            client_id: client.id,
+            item_id: item.id,
+            status: :pending
+          })
+          |> Enum.take(1)
+          |> hd()
 
         {:ok, reservation} = Reservation.create(reservation_attrs)
 
         # Test confirm transition
-        confirmed = reservation
-                   |> Ash.Changeset.for_update(:confirm, %{})
-                   |> Ash.update!(domain: RivaAsh.Domain)
+        confirmed =
+          reservation
+          |> Ash.Changeset.for_update(:confirm, %{})
+          |> Ash.update!(domain: RivaAsh.Domain)
+
         assert confirmed.status == :confirmed
 
         # Test cancel transition (from confirmed)
-        cancelled = confirmed
-                   |> Ash.Changeset.for_update(:cancel, %{})
-                   |> Ash.update!(domain: RivaAsh.Domain)
+        cancelled =
+          confirmed
+          |> Ash.Changeset.for_update(:cancel, %{})
+          |> Ash.update!(domain: RivaAsh.Domain)
+
         assert cancelled.status == :cancelled
 
         # Create another reservation to test complete
         {:ok, reservation2} = Reservation.create(reservation_attrs)
-        confirmed2 = reservation2
-                    |> Ash.Changeset.for_update(:confirm, %{})
-                    |> Ash.update!(domain: RivaAsh.Domain)
+
+        confirmed2 =
+          reservation2
+          |> Ash.Changeset.for_update(:confirm, %{})
+          |> Ash.update!(domain: RivaAsh.Domain)
 
         # Test complete transition
-        completed = confirmed2
-                   |> Ash.Changeset.for_update(:complete, %{})
-                   |> Ash.update!(domain: RivaAsh.Domain)
+        completed =
+          confirmed2
+          |> Ash.Changeset.for_update(:complete, %{})
+          |> Ash.update!(domain: RivaAsh.Domain)
+
         assert completed.status == :completed
       end
     end
@@ -118,9 +146,10 @@ defmodule RivaAsh.Resources.ReservationTest do
 
   describe "queries - property-based tests" do
     property "time-based queries work correctly" do
-      check all client_attrs <- client_attrs(),
-                item_attrs <- item_attrs() do
-
+      check all(
+              client_attrs <- client_attrs(),
+              item_attrs <- item_attrs()
+            ) do
         # Create dependencies
         {:ok, client} = Client.create(client_attrs)
         {:ok, item} = Item.create(item_attrs)
@@ -131,30 +160,39 @@ defmodule RivaAsh.Resources.ReservationTest do
         past_attrs = %{
           client_id: client.id,
           item_id: item.id,
-          reserved_from: DateTime.add(now, -7200),  # 2 hours ago
-          reserved_until: DateTime.add(now, -3600), # 1 hour ago
+          # 2 hours ago
+          reserved_from: DateTime.add(now, -7200),
+          # 1 hour ago
+          reserved_until: DateTime.add(now, -3600),
           status: :completed
         }
+
         {:ok, past_reservation} = Reservation.create(past_attrs)
 
         # Create current reservation
         current_attrs = %{
           client_id: client.id,
           item_id: item.id,
-          reserved_from: DateTime.add(now, -1800),  # 30 minutes ago
-          reserved_until: DateTime.add(now, 1800),  # 30 minutes from now
+          # 30 minutes ago
+          reserved_from: DateTime.add(now, -1800),
+          # 30 minutes from now
+          reserved_until: DateTime.add(now, 1800),
           status: :confirmed
         }
+
         {:ok, current_reservation} = Reservation.create(current_attrs)
 
         # Create future reservation
         future_attrs = %{
           client_id: client.id,
           item_id: item.id,
-          reserved_from:  .add(now, 3600),   # 1 hour from now
-          reserved_until: DateTime.add(now, 7200),  # 2 hours from now
+          # 1 hour from now
+          reserved_from: DateTime.add(now, 3600),
+          # 2 hours from now
+          reserved_until: DateTime.add(now, 7200),
           status: :pending
         }
+
         {:ok, future_reservation} = Reservation.create(future_attrs)
 
         # Test active query

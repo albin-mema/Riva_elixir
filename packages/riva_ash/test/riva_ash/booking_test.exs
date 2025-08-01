@@ -23,7 +23,8 @@ defmodule RivaAsh.BookingTest do
         business_id: nil,
         user_id: "user-456",
         start_time: ~N[2024-01-15 09:00:00],
-        end_time: ~N[2024-01-15 08:00:00] # Invalid time range
+        # Invalid time range
+        end_time: ~N[2024-01-15 08:00:00]
       }
 
       assert {:error, _changeset} = Booking.create_booking(params)
@@ -64,6 +65,7 @@ defmodule RivaAsh.BookingTest do
   describe "reschedule_booking/2" do
     test "reschedules booking to new time" do
       booking_id = "booking-123"
+
       new_params = %{
         start_time: ~N[2024-01-15 14:00:00],
         end_time: ~N[2024-01-15 15:00:00]
@@ -109,6 +111,7 @@ defmodule RivaAsh.BookingTest do
   describe "list_business_bookings/2" do
     test "returns bookings for business" do
       business_id = "business-123"
+
       date_range = %{
         start_date: ~D[2024-01-01],
         end_date: ~D[2024-01-31]
@@ -133,6 +136,7 @@ defmodule RivaAsh.BookingTest do
   describe "validate_booking_time/2" do
     test "validates booking time against business hours" do
       business_id = "business-123"
+
       booking_time = %{
         start_time: ~N[2024-01-15 09:00:00],
         end_time: ~N[2024-01-15 10:00:00]
@@ -143,6 +147,7 @@ defmodule RivaAsh.BookingTest do
 
     test "returns error for booking outside business hours" do
       business_id = "business-123"
+
       booking_time = %{
         start_time: ~N[2024-01-15 05:00:00],
         end_time: ~N[2024-01-15 06:00:00]

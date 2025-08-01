@@ -12,18 +12,23 @@ defmodule RivaAshWeb.RouteAuthorizationTest do
   describe "authenticated routes" do
     setup do
       # Create a test user
-      {:ok, user} = User.create(%{
-        email: "test@example.com",
-        password: "password123",
-        role: :user
-      })
+      {:ok, user} =
+        User.create(%{
+          email: "test@example.com",
+          password: "password123",
+          role: :user
+        })
 
       # Create a test business owned by the user
-      {:ok, business} = Business.create(%{
-        name: "Test Business",
-        description: "A test business",
-        owner_id: user.id
-      }, actor: user)
+      {:ok, business} =
+        Business.create(
+          %{
+            name: "Test Business",
+            description: "A test business",
+            owner_id: user.id
+          },
+          actor: user
+        )
 
       # Create a session token
       token = Phoenix.Token.sign(RivaAshWeb.Endpoint, "user_auth", user.id)
@@ -32,8 +37,9 @@ defmodule RivaAshWeb.RouteAuthorizationTest do
     end
 
     test "dashboard loads without authorization errors", %{token: token} do
-      conn = build_conn()
-      |> init_test_session(%{"user_token" => token})
+      conn =
+        build_conn()
+        |> init_test_session(%{"user_token" => token})
 
       assert {:ok, _view, html} = live(conn, "/dashboard")
       refute html =~ "Forbidden"
@@ -41,8 +47,9 @@ defmodule RivaAshWeb.RouteAuthorizationTest do
     end
 
     test "businesses page loads without authorization errors", %{token: token} do
-      conn = build_conn()
-      |> init_test_session(%{"user_token" => token})
+      conn =
+        build_conn()
+        |> init_test_session(%{"user_token" => token})
 
       assert {:ok, _view, html} = live(conn, "/businesses")
       refute html =~ "Forbidden"
@@ -50,8 +57,9 @@ defmodule RivaAshWeb.RouteAuthorizationTest do
     end
 
     test "item-types page loads without authorization errors", %{token: token} do
-      conn = build_conn()
-      |> init_test_session(%{"user_token" => token})
+      conn =
+        build_conn()
+        |> init_test_session(%{"user_token" => token})
 
       assert {:ok, _view, html} = live(conn, "/item-types")
       refute html =~ "Forbidden"
@@ -59,8 +67,9 @@ defmodule RivaAshWeb.RouteAuthorizationTest do
     end
 
     test "items page loads without authorization errors", %{token: token} do
-      conn = build_conn()
-      |> init_test_session(%{"user_token" => token})
+      conn =
+        build_conn()
+        |> init_test_session(%{"user_token" => token})
 
       assert {:ok, _view, html} = live(conn, "/items")
       refute html =~ "Forbidden"
@@ -68,8 +77,9 @@ defmodule RivaAshWeb.RouteAuthorizationTest do
     end
 
     test "sections page loads without authorization errors", %{token: token} do
-      conn = build_conn()
-      |> init_test_session(%{"user_token" => token})
+      conn =
+        build_conn()
+        |> init_test_session(%{"user_token" => token})
 
       assert {:ok, _view, html} = live(conn, "/sections")
       refute html =~ "Forbidden"
@@ -77,8 +87,9 @@ defmodule RivaAshWeb.RouteAuthorizationTest do
     end
 
     test "plots page loads without authorization errors", %{token: token} do
-      conn = build_conn()
-      |> init_test_session(%{"user_token" => token})
+      conn =
+        build_conn()
+        |> init_test_session(%{"user_token" => token})
 
       assert {:ok, _view, html} = live(conn, "/plots")
       refute html =~ "Forbidden"
@@ -86,8 +97,9 @@ defmodule RivaAshWeb.RouteAuthorizationTest do
     end
 
     test "layouts page loads without authorization errors", %{token: token} do
-      conn = build_conn()
-      |> init_test_session(%{"user_token" => token})
+      conn =
+        build_conn()
+        |> init_test_session(%{"user_token" => token})
 
       assert {:ok, _view, html} = live(conn, "/layouts")
       refute html =~ "Forbidden"
@@ -95,8 +107,9 @@ defmodule RivaAshWeb.RouteAuthorizationTest do
     end
 
     test "reservations page loads without authorization errors", %{token: token} do
-      conn = build_conn()
-      |> init_test_session(%{"user_token" => token})
+      conn =
+        build_conn()
+        |> init_test_session(%{"user_token" => token})
 
       assert {:ok, _view, html} = live(conn, "/reservations")
       refute html =~ "Forbidden"
@@ -104,8 +117,9 @@ defmodule RivaAshWeb.RouteAuthorizationTest do
     end
 
     test "payments page loads without authorization errors", %{token: token} do
-      conn = build_conn()
-      |> init_test_session(%{"user_token" => token})
+      conn =
+        build_conn()
+        |> init_test_session(%{"user_token" => token})
 
       assert {:ok, _view, html} = live(conn, "/payments")
       refute html =~ "Forbidden"
@@ -113,8 +127,9 @@ defmodule RivaAshWeb.RouteAuthorizationTest do
     end
 
     test "employees page loads without authorization errors", %{token: token} do
-      conn = build_conn()
-      |> init_test_session(%{"user_token" => token})
+      conn =
+        build_conn()
+        |> init_test_session(%{"user_token" => token})
 
       assert {:ok, _view, html} = live(conn, "/employees")
       refute html =~ "Forbidden"
@@ -152,12 +167,14 @@ defmodule RivaAshWeb.RouteAuthorizationTest do
     end
 
     test "access denied page shows user info when authenticated", %{token: token} do
-      conn = build_conn()
-      |> init_test_session(%{"user_token" => token})
+      conn =
+        build_conn()
+        |> init_test_session(%{"user_token" => token})
 
       assert {:ok, _view, html} = live(conn, "/access-denied")
       assert html =~ "Access Denied"
-      assert html =~ "User"  # Should show the user's role
+      # Should show the user's role
+      assert html =~ "User"
     end
   end
 end

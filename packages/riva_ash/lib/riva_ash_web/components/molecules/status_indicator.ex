@@ -9,14 +9,14 @@ defmodule RivaAshWeb.Components.Molecules.StatusIndicator do
   @doc """
   Renders a status indicator with appropriate styling.
   """
-  attr :status, :string, required: true
-  attr :label, :string, default: nil
-  attr :show_icon, :boolean, default: true
-  attr :show_pulse, :boolean, default: false
-  attr :size, :string, default: "md", values: ~w(sm md lg)
-  attr :variant, :string, default: "auto", values: ~w(auto success warning error info)
-  attr :class, :string, default: ""
-  attr :rest, :global
+  attr(:status, :string, required: true)
+  attr(:label, :string, default: nil)
+  attr(:show_icon, :boolean, default: true)
+  attr(:show_pulse, :boolean, default: false)
+  attr(:size, :string, default: "md", values: ~w(sm md lg))
+  attr(:variant, :string, default: "auto", values: ~w(auto success warning error info))
+  attr(:class, :string, default: "")
+  attr(:rest, :global)
 
   def status_indicator(assigns) do
     ~H"""

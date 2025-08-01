@@ -7,12 +7,12 @@ defmodule RivaAshWeb.Components.Atoms.Spinner do
   @doc """
   Renders a loading spinner.
   """
-  attr :size, :string, default: "md", values: ~w(xs sm md lg xl)
-  attr :variant, :string, default: "default", values: ~w(default primary secondary)
-  attr :label, :string, default: "Loading..."
-  attr :show_label, :boolean, default: false
-  attr :class, :string, default: ""
-  attr :rest, :global
+  attr(:size, :string, default: "md", values: ~w(xs sm md lg xl))
+  attr(:variant, :string, default: "default", values: ~w(default primary secondary))
+  attr(:label, :string, default: "Loading...")
+  attr(:show_label, :boolean, default: false)
+  attr(:class, :string, default: "")
+  attr(:rest, :global)
 
   def spinner(assigns) do
     assigns = assign(assigns, :spinner_class, spinner_class(assigns))

@@ -13,17 +13,31 @@ defmodule RivaAshWeb.ReactIntegrationTest do
     end
 
     property "handles random props through data attributes" do
-      check all props <- StreamData.map_of(
-        StreamData.one_of([StreamData.atom(:alphanumeric), StreamData.integer(), StreamData.boolean()]),
-        StreamData.one_of([StreamData.atom(:alphanumeric), StreamData.integer(), StreamData.boolean()]),
-        max_size: 5
-      ) do
+      check all(
+              props <-
+                StreamData.map_of(
+                  StreamData.one_of([
+                    StreamData.atom(:alphanumeric),
+                    StreamData.integer(),
+                    StreamData.boolean()
+                  ]),
+                  StreamData.one_of([
+                    StreamData.atom(:alphanumeric),
+                    StreamData.integer(),
+                    StreamData.boolean()
+                  ]),
+                  max_size: 5
+                )
+            ) do
         component = "TestComponent"
-        html = Phoenix.View.render_to_string(
-          RivaAshWeb.Layouts, "react_component.html",
-          component: component,
-          props: props
-        )
+
+        html =
+          Phoenix.View.render_to_string(
+            RivaAshWeb.Layouts,
+            "react_component.html",
+            component: component,
+            props: props
+          )
 
         assert html =~ "data-react-root"
         assert html =~ "data-component=\"#{component}\""

@@ -19,7 +19,8 @@ defmodule RivaAsh.DateTimeHelpers do
   """
   def weekend?(date) when is_struct(date, Date) do
     day_of_week = Timex.weekday(date)
-    day_of_week in [6, 7]  # Saturday = 6, Sunday = 7
+    # Saturday = 6, Sunday = 7
+    day_of_week in [6, 7]
   end
 
   def weekend?(datetime) when is_struct(datetime, DateTime) do
@@ -173,6 +174,7 @@ defmodule RivaAsh.DateTimeHelpers do
   """
   def next_weekday(date) do
     next_date = Timex.add(date, Timex.Duration.from_days(1))
+
     if weekday?(next_date) do
       next_date
     else
@@ -186,6 +188,7 @@ defmodule RivaAsh.DateTimeHelpers do
   """
   def previous_weekday(date) do
     prev_date = Timex.add(date, Timex.Duration.from_days(-1))
+
     if weekday?(prev_date) do
       prev_date
     else
@@ -200,8 +203,9 @@ defmodule RivaAsh.DateTimeHelpers do
     start_date = DateTime.to_date(start_datetime)
     end_date = DateTime.to_date(end_datetime)
 
-    date_range = Timex.Interval.new(from: start_date, until: end_date)
-    |> Enum.to_list()
+    date_range =
+      Timex.Interval.new(from: start_date, until: end_date)
+      |> Enum.to_list()
 
     has_weekday = Enum.any?(date_range, &weekday?/1)
     has_weekend = Enum.any?(date_range, &weekend?/1)
@@ -225,7 +229,9 @@ defmodule RivaAsh.DateTimeHelpers do
     {weekday_ranges, weekend_ranges} =
       date_range
       |> Enum.reduce({[], []}, fn date, {weekday_acc, weekend_acc} ->
-        day_start_time = if Timex.compare(date, start_date) == 0, do: start_time, else: ~T[00:00:00]
+        day_start_time =
+          if Timex.compare(date, start_date) == 0, do: start_time, else: ~T[00:00:00]
+
         day_end_time = if Timex.compare(date, end_date) == 0, do: end_time, else: ~T[23:59:59]
 
         day_start_datetime = DateTime.new!(date, day_start_time, "Etc/UTC")

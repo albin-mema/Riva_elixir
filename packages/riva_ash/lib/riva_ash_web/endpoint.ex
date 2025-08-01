@@ -32,7 +32,8 @@ defmodule RivaAshWeb.Endpoint do
     plug(Phoenix.LiveReloader)
     plug(Phoenix.CodeReloader)
     # Conditionally check repo status only if not skipping database
-    unless Application.get_env(:riva_ash, :skip_database, false) or System.get_env("SKIP_DB") == "true" do
+    if !(Application.get_env(:riva_ash, :skip_database, false) or
+           System.get_env("SKIP_DB") == "true") do
       plug(Phoenix.Ecto.CheckRepoStatus, otp_app: :riva_ash)
     end
   end

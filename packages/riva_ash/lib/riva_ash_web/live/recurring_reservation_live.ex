@@ -13,7 +13,13 @@ defmodule RivaAshWeb.RecurringReservationLive do
 
   @impl true
   def mount(_params, session, socket) do
-    mount_business_scoped(socket, session, RecurringReservation, [:item, :section, :plot, :business_id], "Recurring Reservations")
+    mount_business_scoped(
+      socket,
+      session,
+      RecurringReservation,
+      [:item, :section, :plot, :business_id],
+      "Recurring Reservations"
+    )
   end
 
   @impl true

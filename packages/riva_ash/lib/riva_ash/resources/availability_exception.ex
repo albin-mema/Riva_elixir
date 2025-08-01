@@ -180,13 +180,15 @@ defmodule RivaAsh.Resources.AvailabilityException do
 
     # Required fields
     validate(present([:item_id, :date, :exception_type]),
-      message: "Item, date, and exception type are required")
+      message: "Item, date, and exception type are required"
+    )
 
     # Logical validation - if it's a closure, times are optional
     # If it's extended hours, times should be present
     validate(present([:start_time, :end_time]),
       where: [attribute_equals(:exception_type, :extended_hours)],
-      message: "Start and end times are required for extended hours exceptions")
+      message: "Start and end times are required for extended hours exceptions"
+    )
   end
 
   identities do

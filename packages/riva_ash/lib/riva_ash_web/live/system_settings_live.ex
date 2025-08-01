@@ -23,7 +23,7 @@ defmodule RivaAshWeb.SystemSettingsLive do
         try do
           # Load user's businesses
           businesses = Business.read!(actor: user)
-          
+
           # Load tokens (if user has permission)
           tokens = Token.read!(actor: user)
 
@@ -41,6 +41,7 @@ defmodule RivaAshWeb.SystemSettingsLive do
           error in [Ash.Error.Forbidden, Ash.Error.Invalid] ->
             {:ok, redirect(socket, to: "/access-denied")}
         end
+
       {:error, _} ->
         {:ok, redirect(socket, to: "/sign-in")}
     end
@@ -66,8 +67,8 @@ defmodule RivaAshWeb.SystemSettingsLive do
       <div class="bg-white shadow rounded-lg">
         <div class="px-6 py-4">
           <div class="flex space-x-1 bg-gray-100 rounded-lg p-1">
-            <button 
-              phx-click="change_view" 
+            <button
+              phx-click="change_view"
               phx-value-mode="general"
               class={[
                 "px-3 py-2 text-sm font-medium rounded-md transition-colors",
@@ -76,8 +77,8 @@ defmodule RivaAshWeb.SystemSettingsLive do
             >
               General
             </button>
-            <button 
-              phx-click="change_view" 
+            <button
+              phx-click="change_view"
               phx-value-mode="users"
               class={[
                 "px-3 py-2 text-sm font-medium rounded-md transition-colors",
@@ -86,8 +87,8 @@ defmodule RivaAshWeb.SystemSettingsLive do
             >
               Users & Access
             </button>
-            <button 
-              phx-click="change_view" 
+            <button
+              phx-click="change_view"
               phx-value-mode="api"
               class={[
                 "px-3 py-2 text-sm font-medium rounded-md transition-colors",
@@ -96,8 +97,8 @@ defmodule RivaAshWeb.SystemSettingsLive do
             >
               API & Tokens
             </button>
-            <button 
-              phx-click="change_view" 
+            <button
+              phx-click="change_view"
               phx-value-mode="integrations"
               class={[
                 "px-3 py-2 text-sm font-medium rounded-md transition-colors",
@@ -106,8 +107,8 @@ defmodule RivaAshWeb.SystemSettingsLive do
             >
               Integrations
             </button>
-            <button 
-              phx-click="change_view" 
+            <button
+              phx-click="change_view"
               phx-value-mode="system"
               class={[
                 "px-3 py-2 text-sm font-medium rounded-md transition-colors",
@@ -155,7 +156,7 @@ defmodule RivaAshWeb.SystemSettingsLive do
                 <% end %>
               </select>
             </div>
-            
+
             <div>
               <label class="block text-sm font-medium text-gray-700 mb-2">Time Zone</label>
               <select class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
@@ -250,7 +251,7 @@ defmodule RivaAshWeb.SystemSettingsLive do
             + Create Token
           </.button>
         </div>
-        
+
         <div class="space-y-4">
           <%= if length(@tokens) == 0 do %>
             <div class="text-center py-8 text-gray-500">
@@ -355,16 +356,5 @@ defmodule RivaAshWeb.SystemSettingsLive do
 
   def handle_event(_event, _params, socket) do
     {:noreply, socket}
-  end
-
-  defp get_current_user_from_session(session) do
-    case session["user_token"] do
-      nil -> {:error, :no_token}
-      token -> 
-        case RivaAsh.Accounts.get_user_by_session_token(token) do
-          nil -> {:error, :invalid_token}
-          user -> {:ok, user}
-        end
-    end
   end
 end

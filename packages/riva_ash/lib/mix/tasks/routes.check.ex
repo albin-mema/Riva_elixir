@@ -26,14 +26,15 @@ defmodule Mix.Tasks.Routes.Check do
   @shortdoc "Check all application routes for potential errors"
 
   def run(args) do
-    {opts, _, _} = OptionParser.parse(args,
-      switches: [
-        verbose: :boolean,
-        category: :string,
-        with_server: :boolean,
-        parallel: :boolean
-      ]
-    )
+    {opts, _, _} =
+      OptionParser.parse(args,
+        switches: [
+          verbose: :boolean,
+          category: :string,
+          with_server: :boolean,
+          parallel: :boolean
+        ]
+      )
 
     Mix.Task.run("app.start")
 
@@ -77,8 +78,8 @@ defmodule Mix.Tasks.Routes.Check do
   defp filter_public_routes(routes) do
     Enum.filter(routes, fn route ->
       not String.starts_with?(route.path, "/api") and
-      not String.starts_with?(route.path, "/admin") and
-      not has_auth_pipeline?(route)
+        not String.starts_with?(route.path, "/admin") and
+        not has_auth_pipeline?(route)
     end)
   end
 
@@ -91,7 +92,7 @@ defmodule Mix.Tasks.Routes.Check do
   defp filter_api_routes(routes) do
     Enum.filter(routes, fn route ->
       String.starts_with?(route.path, "/api") or
-      String.starts_with?(route.path, "/graphql")
+        String.starts_with?(route.path, "/graphql")
     end)
   end
 
@@ -107,7 +108,9 @@ defmodule Mix.Tasks.Routes.Check do
         plug when is_atom(plug) ->
           plug_name = to_string(plug)
           String.contains?(plug_name, "Live")
-        _ -> false
+
+        _ ->
+          false
       end
     end)
   end
@@ -116,10 +119,14 @@ defmodule Mix.Tasks.Routes.Check do
     # Check if route has authentication pipeline
     # Phoenix routes might not have pipe_through in the structure we get
     case Map.get(route, :pipe_through) do
-      nil -> false
+      nil ->
+        false
+
       pipelines when is_list(pipelines) ->
         Enum.member?(pipelines, :require_authenticated_user)
-      _ -> false
+
+      _ ->
+        false
     end
   end
 
@@ -141,6 +148,7 @@ defmodule Mix.Tasks.Routes.Check do
 
     Enum.each(categorized, fn {category, routes} ->
       IO.puts("\n#{String.upcase(to_string(category))} ROUTES:")
+
       Enum.each(routes, fn route ->
         IO.puts("  #{route.verb} #{route.path} -> #{route.plug}")
       end)
@@ -170,11 +178,12 @@ defmodule Mix.Tasks.Routes.Check do
   defp test_route_category(category, routes, opts) do
     IO.puts("\n🧪 Testing #{String.upcase(to_string(category))} routes (#{length(routes)})...")
 
-    results = if opts[:parallel] do
-      test_routes_parallel(routes, opts)
-    else
-      test_routes_sequential(routes, opts)
-    end
+    results =
+      if opts[:parallel] do
+        test_routes_parallel(routes, opts)
+      else
+        test_routes_sequential(routes, opts)
+      end
 
     print_results(results)
   end
@@ -192,7 +201,8 @@ defmodule Mix.Tasks.Routes.Check do
   defp test_routes_parallel(routes, opts) do
     routes
     |> Task.async_stream(fn route -> test_single_route(route, opts) end,
-                         max_concurrency: System.schedulers_online())
+      max_concurrency: System.schedulers_online()
+    )
     |> Enum.reduce(%{success: 0, errors: 0, skipped: 0}, fn {:ok, result}, acc ->
       case result do
         :success -> %{acc | success: acc.success + 1}
@@ -216,6 +226,7 @@ defmodule Mix.Tasks.Routes.Check do
           if opts[:verbose] do
             IO.puts("  ❌ #{route.verb} #{route.path} - #{inspect(error)}")
           end
+
           :error
       end
     end
@@ -230,41 +241,39 @@ defmodule Mix.Tasks.Routes.Check do
   end
 
   defp validate_path(path) do
-    unless is_binary(path) and String.starts_with?(path, "/") do
+    if !(is_binary(path) and String.starts_with?(path, "/")) do
       raise "Invalid path: #{inspect(path)}"
     end
   end
 
   defp validate_verb(verb) do
     valid_verbs = [:get, :post, :put, :patch, :delete, :head, :options, :*]
-    unless verb in valid_verbs do
+
+    if verb not in valid_verbs do
       raise "Invalid HTTP verb: #{inspect(verb)}"
     end
   end
 
   defp validate_plug(plug) do
-    unless is_atom(plug) do
+    if not is_atom(plug) do
       raise "Invalid plug: #{inspect(plug)}"
     end
 
-    unless Code.ensure_loaded?(plug) do
+    if !Code.ensure_loaded?(plug) do
       raise "Plug module not found: #{inspect(plug)}"
     end
   end
 
-  defp validate_pipelines(pipelines) when is_list(pipelines) do
-    # Basic validation that pipelines are atoms
-    Enum.each(pipelines, fn pipeline ->
-      unless is_atom(pipeline) do
-        raise "Invalid pipeline: #{inspect(pipeline)}"
-      end
-    end)
-  end
+
+
   defp validate_pipelines(_), do: :ok
 
   defp print_results(results) do
     total = results.success + results.errors + results.skipped
-    IO.puts("  Results: ✅ #{results.success}/#{total} | ❌ #{results.errors} | ⏭️  #{results.skipped}")
+
+    IO.puts(
+      "  Results: ✅ #{results.success}/#{total} | ❌ #{results.errors} | ⏭️  #{results.skipped}"
+    )
 
     if results.errors > 0 do
       IO.puts("  ⚠️  Found #{results.errors} route errors that need attention!")

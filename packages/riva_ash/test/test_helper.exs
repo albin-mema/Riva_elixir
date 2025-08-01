@@ -2,8 +2,6 @@ IO.inspect("Starting test environment setup...", label: "TEST_HELPER")
 
 ExUnit.start()
 
-
-
 # Ensure Phoenix server starts for browser tests
 {:ok, _} = Application.ensure_all_started(:riva_ash)
 
@@ -97,7 +95,7 @@ defmodule RivaAsh.TestSetup do
     Application.put_env(:riva_ash, :test_mode, true)
 
     # Set up test data factories (only if not skipping database)
-    unless Application.get_env(:riva_ash, :skip_database, false) do
+    if !Application.get_env(:riva_ash, :skip_database, false) do
       Application.put_env(:riva_ash, :factories, %{
         business: RivaAsh.TestHelpers,
         user: RivaAsh.TestHelpers,
@@ -135,7 +133,7 @@ defmodule RivaAsh.TestSetup do
 
   def cleanup_test_environment do
     # Only clean up if database is available
-    unless Application.get_env(:riva_ash, :skip_database, false) do
+    if !Application.get_env(:riva_ash, :skip_database, false) do
       # Clean up test data
       RivaAsh.Repo.delete_all(RivaAsh.Booking)
       RivaAsh.Repo.delete_all(RivaAsh.Service)
@@ -202,7 +200,7 @@ if Code.ensure_loaded?(StreamData) do
 end
 
 # Configure test database (only if not skipping database)
-unless skip_db do
+if !skip_db do
   Application.put_env(:riva_ash, RivaAsh.Repo,
     database: "riva_ash_test",
     hostname: "localhost",
@@ -217,11 +215,12 @@ Application.put_env(:riva_ash, :test_fixtures_path, "test/fixtures")
 Logger.configure(level: :debug)
 
 # Print test configuration
-database_info = if skip_db do
-  "SKIPPED (unit tests only)"
-else
-  Application.get_env(:riva_ash, RivaAsh.Repo)[:database] || "not configured"
-end
+database_info =
+  if skip_db do
+    "SKIPPED (unit tests only)"
+  else
+    Application.get_env(:riva_ash, RivaAsh.Repo)[:database] || "not configured"
+  end
 
 IO.puts("""
 Starting RivaAsh test suite...

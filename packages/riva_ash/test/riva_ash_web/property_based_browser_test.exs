@@ -9,8 +9,10 @@ defmodule RivaAshWeb.PropertyBasedBrowserTest do
 
   use PhoenixTest.Playwright.Case,
     async: false,
-    headless: false,  # Set to true for CI/CD
-    slow_mo: 1000     # Slow down for visibility
+    # Set to true for CI/CD
+    headless: false,
+    # Slow down for visibility
+    slow_mo: 1000
 
   use ExUnitProperties
 
@@ -18,7 +20,8 @@ defmodule RivaAshWeb.PropertyBasedBrowserTest do
   alias RivaAsh.PropertyTesting.{BrowserExecutor, DataManager, StateMachine, RouteEnumerator}
 
   @moduletag :property_based_browser
-  @moduletag timeout: 120_000  # 2 minutes per property test
+  # 2 minutes per property test
+  @moduletag timeout: 120_000
 
   setup_all do
     # Initialize test data once for all tests
@@ -40,10 +43,11 @@ defmodule RivaAshWeb.PropertyBasedBrowserTest do
   describe "Property-Based User Flow Testing" do
     @tag :slow
     property "random user flows complete successfully", %{conn: conn} do
-      check all flow <- user_flow_generator(max_steps: 8, min_steps: 3),
-                max_runs: 20 do
-
-        IO.puts("\n" <> "=" |> String.duplicate(60))
+      check all(
+              flow <- user_flow_generator(max_steps: 8, min_steps: 3),
+              max_runs: 20
+            ) do
+        IO.puts(("\n" <> "=") |> String.duplicate(60))
         IO.puts("🎯 PROPERTY TEST: Random User Flow")
         IO.puts("   Flow length: #{length(flow)} steps")
         IO.puts("   Actions: #{inspect(Enum.map(flow, fn {action, _} -> action end))}")
@@ -71,8 +75,10 @@ defmodule RivaAshWeb.PropertyBasedBrowserTest do
             log_failed_flow(flow, reason, step, state)
 
             # Only fail if it's an unexpected error
-            unless expected_error?(reason, step, state) do
-              flunk("Unexpected flow failure: #{inspect(reason)} at step #{inspect(step)} in state #{state}")
+            if !expected_error?(reason, step, state) do
+              flunk(
+                "Unexpected flow failure: #{inspect(reason)} at step #{inspect(step)} in state #{state}"
+              )
             else
               IO.puts("   ✅ Error was expected and handled gracefully")
             end
@@ -105,7 +111,7 @@ defmodule RivaAshWeb.PropertyBasedBrowserTest do
           IO.puts("   State: #{state}")
 
           # Don't fail for expected errors
-          unless reason in [:login_failed, :register_failed, :visit_failed] do
+          if reason not in [:login_failed, :register_failed, :visit_failed] do
             flunk("Authentication flow failed unexpectedly: #{inspect(reason)}")
           else
             IO.puts("   ✅ Error was expected and handled")
@@ -117,9 +123,10 @@ defmodule RivaAshWeb.PropertyBasedBrowserTest do
 
     @tag :navigation
     property "navigation flows don't break the application", %{conn: conn} do
-      check all flow <- navigation_flow_generator(:authenticated),
-                max_runs: 15 do
-
+      check all(
+              flow <- navigation_flow_generator(:authenticated),
+              max_runs: 15
+            ) do
         # Start with authenticated user
         auth_flow = [
           {:visit, %{path: "/sign-in"}},
@@ -147,10 +154,11 @@ defmodule RivaAshWeb.PropertyBasedBrowserTest do
 
     @tag :crud
     property "CRUD operations maintain data consistency", %{conn: conn} do
-      check all resource_type <- member_of([:business, :client, :item]),
-                flow <- crud_flow_generator(resource_type),
-                max_runs: 8 do
-
+      check all(
+              resource_type <- member_of([:business, :client, :item]),
+              flow <- crud_flow_generator(resource_type),
+              max_runs: 8
+            ) do
         # Start with authenticated user
         auth_flow = [
           {:visit, %{path: "/sign-in"}},
@@ -176,7 +184,11 @@ defmodule RivaAshWeb.PropertyBasedBrowserTest do
             log_crud_error(resource_type, flow, reason, step, state)
 
             # CRUD errors might be expected (validation failures, etc.)
-            unless reason in [:create_resource_failed, :update_resource_failed, :delete_resource_failed] do
+            if reason not in [
+                 :create_resource_failed,
+                 :update_resource_failed,
+                 :delete_resource_failed
+               ] do
               flunk("CRUD operation failed unexpectedly: #{inspect(reason)}")
             end
         end
@@ -185,9 +197,10 @@ defmodule RivaAshWeb.PropertyBasedBrowserTest do
 
     @tag :error_recovery
     property "error recovery flows work correctly", %{conn: conn} do
-      check all flow <- error_recovery_flow_generator(),
-                max_runs: 5 do
-
+      check all(
+              flow <- error_recovery_flow_generator(),
+              max_runs: 5
+            ) do
         case BrowserExecutor.execute_flow(flow, conn: conn) do
           {:ok, result} ->
             # Error recovery should lead to a stable state
@@ -195,7 +208,7 @@ defmodule RivaAshWeb.PropertyBasedBrowserTest do
 
           {:error, {reason, _step, _state}} ->
             # Some recovery failures are expected
-            unless reason in [:recovery_failed, :session_expired] do
+            if reason not in [:recovery_failed, :session_expired] do
               flunk("Error recovery failed unexpectedly: #{inspect(reason)}")
             end
         end
@@ -208,12 +221,13 @@ defmodule RivaAshWeb.PropertyBasedBrowserTest do
       flow = [
         {:visit, %{path: "/"}},
         {:visit, %{path: "/register"}},
-        {:register, %{
-          name: "Happy Path User",
-          email: "happy#{:rand.uniform(1000)}@example.com",
-          password: "password123",
-          password_confirmation: "password123"
-        }},
+        {:register,
+         %{
+           name: "Happy Path User",
+           email: "happy#{:rand.uniform(1000)}@example.com",
+           password: "password123",
+           password_confirmation: "password123"
+         }},
         {:visit, %{path: "/sign-in"}},
         {:login, %{email: "happy#{:rand.uniform(1000)}@example.com", password: "password123"}},
         {:visit, %{path: "/dashboard"}},
@@ -296,7 +310,10 @@ defmodule RivaAshWeb.PropertyBasedBrowserTest do
   end
 
   defp log_crud_error(resource_type, flow, reason, step, state) do
-    IO.puts("📝 CRUD error for #{resource_type}: #{inspect(reason)} at #{inspect(step)} in state #{state}")
+    IO.puts(
+      "📝 CRUD error for #{resource_type}: #{inspect(reason)} at #{inspect(step)} in state #{state}"
+    )
+
     IO.puts("   Flow: #{inspect(Enum.map(flow, fn {action, _} -> action end))}")
   end
 
@@ -305,17 +322,13 @@ defmodule RivaAshWeb.PropertyBasedBrowserTest do
       # Expected authentication errors
       {:login_failed, {:login, _}, :anonymous} -> true
       {:register_failed, {:register, _}, :anonymous} -> true
-
       # Expected permission errors
       {:visit_failed, {:visit, %{path: "/admin" <> _}}, :authenticated} -> true
-
       # Expected validation errors
       {:create_resource_failed, {:create_resource, _}, _} -> true
       {:update_resource_failed, {:update_resource, _}, _} -> true
-
       # Expected not found errors
       {:visit_failed, {:visit, %{path: "/nonexistent" <> _}}, _} -> true
-
       _ -> false
     end
   end

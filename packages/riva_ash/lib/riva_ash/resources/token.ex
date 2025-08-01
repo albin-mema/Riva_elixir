@@ -5,12 +5,12 @@ defmodule RivaAsh.Accounts.Token do
     extensions: [AshAuthentication.TokenResource]
 
   postgres do
-    table "user_tokens"
-    repo RivaAsh.Repo
+    table("user_tokens")
+    repo(RivaAsh.Repo)
   end
 
   token do
-    domain RivaAsh.Accounts
+    domain(RivaAsh.Accounts)
   end
 
   # If using policies, add authorization for the token resource

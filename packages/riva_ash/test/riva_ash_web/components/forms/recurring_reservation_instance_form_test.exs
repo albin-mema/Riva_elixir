@@ -37,18 +37,19 @@ defmodule RivaAshWeb.Components.Forms.RecurringReservationInstanceFormTest do
         __phoenix_refs: []
       }
 
-      html = rendered_to_string(~H"""
-      <.recurring_reservation_instance_form
-        form={form}
-        editing={false}
-        loading={false}
-        recurring_reservations={[]}
-        reservations={[]}
-        on_submit="save_instance"
-        on_change="validate_instance"
-        on_cancel="cancel_form"
-      />
-      """)
+      html =
+        rendered_to_string(~H"""
+        <.recurring_reservation_instance_form
+          form={form}
+          editing={false}
+          loading={false}
+          recurring_reservations={[]}
+          reservations={[]}
+          on_submit="save_instance"
+          on_change="validate_instance"
+          on_cancel="cancel_form"
+        />
+        """)
 
       assert html =~ "Add New Instance"
       assert html =~ "Fill in the details to add a new recurring reservation instance"
@@ -80,18 +81,19 @@ defmodule RivaAshWeb.Components.Forms.RecurringReservationInstanceFormTest do
         __phoenix_refs: []
       }
 
-      html = rendered_to_string(~H"""
-      <.recurring_reservation_instance_form
-        form={form}
-        editing={true}
-        loading={false}
-        recurring_reservations={[]}
-        reservations={[]}
-        on_submit="save_instance"
-        on_change="validate_instance"
-        on_cancel="cancel_form"
-      />
-      """)
+      html =
+        rendered_to_string(~H"""
+        <.recurring_reservation_instance_form
+          form={form}
+          editing={true}
+          loading={false}
+          recurring_reservations={[]}
+          reservations={[]}
+          on_submit="save_instance"
+          on_change="validate_instance"
+          on_cancel="cancel_form"
+        />
+        """)
 
       assert html =~ "Edit Instance"
       assert html =~ "Update the recurring reservation instance information below"
@@ -125,18 +127,19 @@ defmodule RivaAshWeb.Components.Forms.RecurringReservationInstanceFormTest do
         __phoenix_refs: []
       }
 
-      html = rendered_to_string(~H"""
-      <.recurring_reservation_instance_form
-        form={form}
-        editing={false}
-        loading={true}
-        recurring_reservations={[]}
-        reservations={[]}
-        on_submit="save_instance"
-        on_change="validate_instance"
-        on_cancel="cancel_form"
-      />
-      """)
+      html =
+        rendered_to_string(~H"""
+        <.recurring_reservation_instance_form
+          form={form}
+          editing={false}
+          loading={true}
+          recurring_reservations={[]}
+          reservations={[]}
+          on_submit="save_instance"
+          on_change="validate_instance"
+          on_cancel="cancel_form"
+        />
+        """)
 
       assert html =~ "Add Instance"
       # Check that the submit button has loading state
@@ -168,18 +171,19 @@ defmodule RivaAshWeb.Components.Forms.RecurringReservationInstanceFormTest do
         %{id: "rr-2", name: "Recurring Reservation 2"}
       ]
 
-      html = rendered_to_string(~H"""
-      <.recurring_reservation_instance_form
-        form={form}
-        editing={false}
-        loading={false}
-        recurring_reservations={recurring_reservations}
-        reservations={[]}
-        on_submit="save_instance"
-        on_change="validate_instance"
-        on_cancel="cancel_form"
-      />
-      """)
+      html =
+        rendered_to_string(~H"""
+        <.recurring_reservation_instance_form
+          form={form}
+          editing={false}
+          loading={false}
+          recurring_reservations={recurring_reservations}
+          reservations={[]}
+          on_submit="save_instance"
+          on_change="validate_instance"
+          on_cancel="cancel_form"
+        />
+        """)
 
       assert html =~ "Select a recurring reservation"
       assert html =~ "rr-1"
@@ -211,18 +215,19 @@ defmodule RivaAshWeb.Components.Forms.RecurringReservationInstanceFormTest do
         %{id: "res-2", name: "Reservation 2"}
       ]
 
-      html = rendered_to_string(~H"""
-      <.recurring_reservation_instance_form
-        form={form}
-        editing={true}
-        loading={false}
-        recurring_reservations={[]}
-        reservations={reservations}
-        on_submit="save_instance"
-        on_change="validate_instance"
-        on_cancel="cancel_form"
-      />
-      """)
+      html =
+        rendered_to_string(~H"""
+        <.recurring_reservation_instance_form
+          form={form}
+          editing={true}
+          loading={false}
+          recurring_reservations={[]}
+          reservations={reservations}
+          on_submit="save_instance"
+          on_change="validate_instance"
+          on_cancel="cancel_form"
+        />
+        """)
 
       assert html =~ "Select a reservation"
       assert html =~ "res-1"
@@ -268,18 +273,19 @@ defmodule RivaAshWeb.Components.Forms.RecurringReservationInstanceFormTest do
         }
       }
 
-      html = rendered_to_string(~H"""
-      <.recurring_reservation_instance_form
-        form={form}
-        editing={false}
-        loading={false}
-        recurring_reservations={[]}
-        reservations={[]}
-        on_submit="save_instance"
-        on_change="validate_instance"
-        on_cancel="cancel_form"
-      />
-      """)
+      html =
+        rendered_to_string(~H"""
+        <.recurring_reservation_instance_form
+          form={form}
+          editing={false}
+          loading={false}
+          recurring_reservations={[]}
+          reservations={[]}
+          on_submit="save_instance"
+          on_change="validate_instance"
+          on_cancel="cancel_form"
+        />
+        """)
 
       assert html =~ "can't be blank"
       # Check that error fields have proper aria attributes
@@ -290,10 +296,11 @@ defmodule RivaAshWeb.Components.Forms.RecurringReservationInstanceFormTest do
 
   describe "Property-based tests for RecurringReservationInstanceForm component" do
     property "form renders with random boolean values for editing and loading" do
-      check all editing <- boolean(),
-                loading <- boolean(),
-                max_runs: 100 do
-
+      check all(
+              editing <- boolean(),
+              loading <- boolean(),
+              max_runs: 100
+            ) do
         # Create a mock form for testing
         form = %{
           source: %{
@@ -311,18 +318,19 @@ defmodule RivaAshWeb.Components.Forms.RecurringReservationInstanceFormTest do
           __phoenix_refs: []
         }
 
-        html = rendered_to_string(~H"""
-        <.recurring_reservation_instance_form
-          form={form}
-          editing={editing}
-          loading={loading}
-          recurring_reservations={[]}
-          reservations={[]}
-          on_submit="save_instance"
-          on_change="validate_instance"
-          on_cancel="cancel_form"
-        />
-        """)
+        html =
+          rendered_to_string(~H"""
+          <.recurring_reservation_instance_form
+            form={form}
+            editing={editing}
+            loading={loading}
+            recurring_reservations={[]}
+            reservations={[]}
+            on_submit="save_instance"
+            on_change="validate_instance"
+            on_cancel="cancel_form"
+          />
+          """)
 
         # Basic assertions that should always pass
         assert html =~ "Instance"
@@ -343,9 +351,10 @@ defmodule RivaAshWeb.Components.Forms.RecurringReservationInstanceFormTest do
     end
 
     property "form renders with random lists of recurring reservations" do
-      check all recurring_reservations <- list_of(map(:string, :string)),
-                max_runs: 50 do
-
+      check all(
+              recurring_reservations <- list_of(map(:string, :string)),
+              max_runs: 50
+            ) do
         # Create a mock form for testing
         form = %{
           source: %{
@@ -363,18 +372,19 @@ defmodule RivaAshWeb.Components.Forms.RecurringReservationInstanceFormTest do
           __phoenix_refs: []
         }
 
-        html = rendered_to_string(~H"""
-        <.recurring_reservation_instance_form
-          form={form}
-          editing={false}
-          loading={false}
-          recurring_reservations={recurring_reservations}
-          reservations={[]}
-          on_submit="save_instance"
-          on_change="validate_instance"
-          on_cancel="cancel_form"
-        />
-        """)
+        html =
+          rendered_to_string(~H"""
+          <.recurring_reservation_instance_form
+            form={form}
+            editing={false}
+            loading={false}
+            recurring_reservations={recurring_reservations}
+            reservations={[]}
+            on_submit="save_instance"
+            on_change="validate_instance"
+            on_cancel="cancel_form"
+          />
+          """)
 
         # Basic assertions
         assert html =~ "Add New Instance"
@@ -385,9 +395,10 @@ defmodule RivaAshWeb.Components.Forms.RecurringReservationInstanceFormTest do
     end
 
     property "form renders with random lists of reservations when editing" do
-      check all reservations <- list_of(map(:string, :string)),
-                max_runs: 50 do
-
+      check all(
+              reservations <- list_of(map(:string, :string)),
+              max_runs: 50
+            ) do
         # Create a mock form for testing
         form = %{
           source: %{
@@ -405,18 +416,19 @@ defmodule RivaAshWeb.Components.Forms.RecurringReservationInstanceFormTest do
           __phoenix_refs: []
         }
 
-        html = rendered_to_string(~H"""
-        <.recurring_reservation_instance_form
-          form={form}
-          editing={true}
-          loading={false}
-          recurring_reservations={[]}
-          reservations={reservations}
-          on_submit="save_instance"
-          on_change="validate_instance"
-          on_cancel="cancel_form"
-        />
-        """)
+        html =
+          rendered_to_string(~H"""
+          <.recurring_reservation_instance_form
+            form={form}
+            editing={true}
+            loading={false}
+            recurring_reservations={[]}
+            reservations={reservations}
+            on_submit="save_instance"
+            on_change="validate_instance"
+            on_cancel="cancel_form"
+          />
+          """)
 
         # Basic assertions
         assert html =~ "Edit Instance"
@@ -469,18 +481,19 @@ defmodule RivaAshWeb.Components.Forms.RecurringReservationInstanceFormTest do
         }
       }
 
-      html = rendered_to_string(~H"""
-      <.recurring_reservation_instance_form
-        form={form}
-        editing={false}
-        loading={false}
-        recurring_reservations={[]}
-        reservations={[]}
-        on_submit="save_instance"
-        on_change="validate_instance"
-        on_cancel="cancel_form"
-      />
-      """)
+      html =
+        rendered_to_string(~H"""
+        <.recurring_reservation_instance_form
+          form={form}
+          editing={false}
+          loading={false}
+          recurring_reservations={[]}
+          reservations={[]}
+          on_submit="save_instance"
+          on_change="validate_instance"
+          on_cancel="cancel_form"
+        />
+        """)
 
       # Check for basic accessibility attributes
       assert html =~ "role=\"form\""
@@ -528,18 +541,19 @@ defmodule RivaAshWeb.Components.Forms.RecurringReservationInstanceFormTest do
         }
       }
 
-      html = rendered_to_string(~H"""
-      <.recurring_reservation_instance_form
-        form={form}
-        editing={false}
-        loading={false}
-        recurring_reservations={[]}
-        reservations={[]}
-        on_submit="save_instance"
-        on_change="validate_instance"
-        on_cancel="cancel_form"
-      />
-      """)
+      html =
+        rendered_to_string(~H"""
+        <.recurring_reservation_instance_form
+          form={form}
+          editing={false}
+          loading={false}
+          recurring_reservations={[]}
+          reservations={[]}
+          on_submit="save_instance"
+          on_change="validate_instance"
+          on_cancel="cancel_form"
+        />
+        """)
 
       # Check that error fields have proper aria attributes
       assert html =~ "aria-invalid=\"true\""
@@ -555,18 +569,19 @@ defmodule RivaAshWeb.Components.Forms.RecurringReservationInstanceFormTest do
     test "form handles nil form gracefully" do
       assigns = %{}
 
-      html = rendered_to_string(~H"""
-      <.recurring_reservation_instance_form
-        form={nil}
-        editing={false}
-        loading={false}
-        recurring_reservations={[]}
-        reservations={[]}
-        on_submit="save_instance"
-        on_change="validate_instance"
-        on_cancel="cancel_form"
-      />
-      """)
+      html =
+        rendered_to_string(~H"""
+        <.recurring_reservation_instance_form
+          form={nil}
+          editing={false}
+          loading={false}
+          recurring_reservations={[]}
+          reservations={[]}
+          on_submit="save_instance"
+          on_change="validate_instance"
+          on_cancel="cancel_form"
+        />
+        """)
 
       # Should not crash and should render something
       assert is_binary(html)
@@ -592,18 +607,19 @@ defmodule RivaAshWeb.Components.Forms.RecurringReservationInstanceFormTest do
         __phoenix_refs: []
       }
 
-      html = rendered_to_string(~H"""
-      <.recurring_reservation_instance_form
-        form={form}
-        editing={false}
-        loading={false}
-        recurring_reservations={[]}
-        reservations={[]}
-        on_submit="save_instance"
-        on_change="validate_instance"
-        on_cancel="cancel_form"
-      />
-      """)
+      html =
+        rendered_to_string(~H"""
+        <.recurring_reservation_instance_form
+          form={form}
+          editing={false}
+          loading={false}
+          recurring_reservations={[]}
+          reservations={[]}
+          on_submit="save_instance"
+          on_change="validate_instance"
+          on_cancel="cancel_form"
+        />
+        """)
 
       # Should render without crashing
       assert html =~ "Add New Instance"
@@ -630,18 +646,19 @@ defmodule RivaAshWeb.Components.Forms.RecurringReservationInstanceFormTest do
         __phoenix_refs: []
       }
 
-      html = rendered_to_string(~H"""
-      <.recurring_reservation_instance_form
-        form={form}
-        editing={false}
-        loading={false}
-        recurring_reservations={nil}
-        reservations={[]}
-        on_submit="save_instance"
-        on_change="validate_instance"
-        on_cancel="cancel_form"
-      />
-      """)
+      html =
+        rendered_to_string(~H"""
+        <.recurring_reservation_instance_form
+          form={form}
+          editing={false}
+          loading={false}
+          recurring_reservations={nil}
+          reservations={[]}
+          on_submit="save_instance"
+          on_change="validate_instance"
+          on_cancel="cancel_form"
+        />
+        """)
 
       # Should render without crashing
       assert html =~ "Add New Instance"

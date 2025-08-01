@@ -13,16 +13,16 @@ defmodule RivaAshWeb.Components.Forms.ScheduleForm do
   @doc """
   Renders an item schedule configuration form.
   """
-  attr :form, :map, required: true
-  attr :item, :map, required: true
-  attr :availability, :map, default: %{}
-  attr :on_submit, :string, required: true
-  attr :on_change, :string, required: true
-  attr :on_availability_change, :string, required: true
-  attr :on_cancel, :string, required: true
-  attr :loading, :boolean, default: false
-  attr :class, :string, default: ""
-  attr :rest, :global
+  attr(:form, :map, required: true)
+  attr(:item, :map, required: true)
+  attr(:availability, :map, default: %{})
+  attr(:on_submit, :string, required: true)
+  attr(:on_change, :string, required: true)
+  attr(:on_availability_change, :string, required: true)
+  attr(:on_cancel, :string, required: true)
+  attr(:loading, :boolean, default: false)
+  attr(:class, :string, default: "")
+  attr(:rest, :global)
 
   def schedule_form(assigns) do
     ~H"""

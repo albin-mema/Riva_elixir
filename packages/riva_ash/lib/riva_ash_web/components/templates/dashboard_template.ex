@@ -9,16 +9,16 @@ defmodule RivaAshWeb.Components.Templates.DashboardTemplate do
   @doc """
   Renders a dashboard template.
   """
-  attr :title, :string, default: "Dashboard"
-  attr :description, :string, default: nil
-  attr :stats, :list, default: []
-  attr :quick_actions, :list, default: []
-  attr :class, :string, default: ""
-  attr :rest, :global
+  attr(:title, :string, default: "Dashboard")
+  attr(:description, :string, default: nil)
+  attr(:stats, :list, default: [])
+  attr(:quick_actions, :list, default: [])
+  attr(:class, :string, default: "")
+  attr(:rest, :global)
 
-  slot :stats_section, required: false
-  slot :main_content, required: true
-  slot :sidebar_content, required: false
+  slot(:stats_section, required: false)
+  slot(:main_content, required: true)
+  slot(:sidebar_content, required: false)
 
   def dashboard_template(assigns) do
     ~H"""

@@ -10,15 +10,15 @@ defmodule RivaAshWeb.Components.Organisms.ClientForm do
   @doc """
   Renders a client form for registration or editing.
   """
-  attr :form, :map, required: true
-  attr :editing, :boolean, default: false
-  attr :show_registration_fields, :boolean, default: true
-  attr :on_submit, :string, required: true
-  attr :on_change, :string, required: true
-  attr :on_cancel, :string, required: true
-  attr :loading, :boolean, default: false
-  attr :class, :string, default: ""
-  attr :rest, :global
+  attr(:form, :map, required: true)
+  attr(:editing, :boolean, default: false)
+  attr(:show_registration_fields, :boolean, default: true)
+  attr(:on_submit, :string, required: true)
+  attr(:on_change, :string, required: true)
+  attr(:on_cancel, :string, required: true)
+  attr(:loading, :boolean, default: false)
+  attr(:class, :string, default: "")
+  attr(:rest, :global)
 
   def client_form(assigns) do
     ~H"""

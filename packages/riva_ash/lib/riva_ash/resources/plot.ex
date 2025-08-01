@@ -125,7 +125,17 @@ defmodule RivaAsh.Resources.Plot do
     defaults([:read, :update, :destroy])
 
     create :create do
-      accept([:name, :description, :business_id, :address, :total_area, :area_unit, :coordinates, :is_active])
+      accept([
+        :name,
+        :description,
+        :business_id,
+        :address,
+        :total_area,
+        :area_unit,
+        :coordinates,
+        :is_active
+      ])
+
       primary?(true)
     end
 

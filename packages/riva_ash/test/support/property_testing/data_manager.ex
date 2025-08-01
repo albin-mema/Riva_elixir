@@ -151,7 +151,9 @@ defmodule RivaAsh.PropertyTesting.DataManager do
       case User
            |> Ash.Changeset.for_create(:register_with_password, user_attrs)
            |> Ash.create(domain: RivaAsh.Accounts) do
-        {:ok, user} -> user
+        {:ok, user} ->
+          user
+
         {:error, _} ->
           # User might already exist, try to find it
           case User

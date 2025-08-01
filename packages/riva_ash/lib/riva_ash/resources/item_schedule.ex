@@ -170,13 +170,17 @@ defmodule RivaAsh.Resources.ItemSchedule do
 
     # Day of week validation (0=Sunday, 1=Monday, ..., 6=Saturday)
     validate(compare(:day_of_week, greater_than_or_equal_to: 0),
-      message: "Day of week must be between 0 and 6 (0=Sunday, 6=Saturday)")
+      message: "Day of week must be between 0 and 6 (0=Sunday, 6=Saturday)"
+    )
+
     validate(compare(:day_of_week, less_than_or_equal_to: 6),
-      message: "Day of week must be between 0 and 6 (0=Sunday, 6=Saturday)")
+      message: "Day of week must be between 0 and 6 (0=Sunday, 6=Saturday)"
+    )
 
     # Required fields
     validate(present([:item_id, :day_of_week, :start_time, :end_time]),
-      message: "All schedule fields are required")
+      message: "All schedule fields are required"
+    )
   end
 
   calculations do
@@ -190,32 +194,34 @@ defmodule RivaAsh.Resources.ItemSchedule do
       description("Whether this schedule is for a weekend (Saturday-Sunday)")
     end
 
-    calculate :day_type, :string, expr(
-      if(day_of_week >= 1 and day_of_week <= 5, "weekday", "weekend")
-    ) do
+    calculate :day_type,
+              :string,
+              expr(if(day_of_week >= 1 and day_of_week <= 5, "weekday", "weekend")) do
       public?(true)
       description("Day type as string: 'weekday' or 'weekend'")
     end
 
-    calculate :day_name, :string, expr(
-      cond do
-        day_of_week == 0 -> "Sunday"
-        day_of_week == 1 -> "Monday"
-        day_of_week == 2 -> "Tuesday"
-        day_of_week == 3 -> "Wednesday"
-        day_of_week == 4 -> "Thursday"
-        day_of_week == 5 -> "Friday"
-        day_of_week == 6 -> "Saturday"
-        true -> "Unknown"
-      end
-    ) do
+    calculate :day_name,
+              :string,
+              expr(
+                cond do
+                  day_of_week == 0 -> "Sunday"
+                  day_of_week == 1 -> "Monday"
+                  day_of_week == 2 -> "Tuesday"
+                  day_of_week == 3 -> "Wednesday"
+                  day_of_week == 4 -> "Thursday"
+                  day_of_week == 5 -> "Friday"
+                  day_of_week == 6 -> "Saturday"
+                  true -> "Unknown"
+                end
+              ) do
       public?(true)
       description("Human-readable day name")
     end
 
-    calculate :duration_minutes, :integer, expr(
-      fragment("EXTRACT(EPOCH FROM (? - ?)) / 60", end_time, start_time)
-    ) do
+    calculate :duration_minutes,
+              :integer,
+              expr(fragment("EXTRACT(EPOCH FROM (? - ?)) / 60", end_time, start_time)) do
       public?(true)
       description("Duration of this schedule window in minutes")
     end

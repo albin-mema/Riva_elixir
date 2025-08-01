@@ -42,8 +42,9 @@ defmodule RivaAsh.Policies.PermissionCheck do
     permission = opts[:permission]
 
     # Validate permission exists
-    unless Constants.valid_permission?(permission) do
-      raise ArgumentError, "Unknown permission: #{permission}. Valid permissions: #{inspect(Constants.all_permissions())}"
+    if !Constants.valid_permission?(permission) do
+      raise ArgumentError,
+            "Unknown permission: #{permission}. Valid permissions: #{inspect(Constants.all_permissions())}"
     end
 
     case actor do
@@ -75,8 +76,9 @@ defmodule RivaAsh.Policies.PermissionCheck do
 
   def has_permission(permission) when is_binary(permission) do
     # Validate permission exists
-    unless Constants.valid_permission?(permission) do
-      raise ArgumentError, "Unknown permission: #{permission}. Valid permissions: #{inspect(Constants.all_permissions())}"
+    if !Constants.valid_permission?(permission) do
+      raise ArgumentError,
+            "Unknown permission: #{permission}. Valid permissions: #{inspect(Constants.all_permissions())}"
     end
 
     {__MODULE__, permission: permission}

@@ -136,6 +136,7 @@ defmodule RivaAsh.Resources.Payment do
         :due_date,
         :notes
       ])
+
       primary?(true)
 
       # Set initial status to pending
@@ -184,25 +185,33 @@ defmodule RivaAsh.Resources.Payment do
     # Action to mark payment as paid
     update :mark_as_paid do
       accept([:amount_paid, :payment_method, :payment_date, :transaction_reference, :notes])
-      require_atomic? false
+      require_atomic?(false)
 
       change(set_attribute(:status, :paid))
 
       validate(present(:amount_paid), message: "Amount paid is required")
-      validate(compare(:amount_paid, greater_than: 0), message: "Amount paid must be greater than 0")
+
+      validate(compare(:amount_paid, greater_than: 0),
+        message: "Amount paid must be greater than 0"
+      )
     end
 
     # Action to process refund
     update :process_refund do
       accept([:refund_amount, :refund_reason, :refund_date])
-      require_atomic? false
+      require_atomic?(false)
 
       change(set_attribute(:status, :refunded))
 
       validate(present(:refund_amount), message: "Refund amount is required")
-      validate(compare(:refund_amount, greater_than: 0), message: "Refund amount must be greater than 0")
+
+      validate(compare(:refund_amount, greater_than: 0),
+        message: "Refund amount must be greater than 0"
+      )
+
       validate(compare(:refund_amount, less_than_or_equal_to: :amount_paid),
-        message: "Refund amount cannot exceed amount paid")
+        message: "Refund amount cannot exceed amount paid"
+      )
     end
   end
 
@@ -339,66 +348,79 @@ defmodule RivaAsh.Resources.Payment do
     )
 
     # Conditional validation for payment_date
-    validate fn changeset, _context ->
-      status = Ash.Changeset.get_attribute(changeset, :status)
-      payment_date = Ash.Changeset.get_attribute(changeset, :payment_date)
+    validate(
+      fn changeset, _context ->
+        status = Ash.Changeset.get_attribute(changeset, :status)
+        payment_date = Ash.Changeset.get_attribute(changeset, :payment_date)
 
-      if status in [:paid, :partially_paid] && is_nil(payment_date) do
-        {:error, field: :payment_date, message: "Payment date is required when payment is marked as paid"}
-      else
-        :ok
-      end
-    end, message: "Payment date is required when status is paid or partially_paid"
+        if status in [:paid, :partially_paid] && is_nil(payment_date) do
+          {:error,
+           field: :payment_date,
+           message: "Payment date is required when payment is marked as paid"}
+        else
+          :ok
+        end
+      end,
+      message: "Payment date is required when status is paid or partially_paid"
+    )
 
     # Conditional validation for refund_reason
-    validate fn changeset, _context ->
-      refund_amount = Ash.Changeset.get_attribute(changeset, :refund_amount)
-      refund_reason = Ash.Changeset.get_attribute(changeset, :refund_reason)
+    validate(
+      fn changeset, _context ->
+        refund_amount = Ash.Changeset.get_attribute(changeset, :refund_amount)
+        refund_reason = Ash.Changeset.get_attribute(changeset, :refund_reason)
 
-      if refund_amount && Decimal.gt?(refund_amount, 0) && (is_nil(refund_reason) || refund_reason == "") do
-        {:error, field: :refund_reason, message: "Refund reason is required when refund amount is specified"}
-      else
-        :ok
-      end
-    end, message: "Refund reason is required when refund amount is greater than 0"
+        if refund_amount && Decimal.gt?(refund_amount, 0) &&
+             (is_nil(refund_reason) || refund_reason == "") do
+          {:error,
+           field: :refund_reason,
+           message: "Refund reason is required when refund amount is specified"}
+        else
+          :ok
+        end
+      end,
+      message: "Refund reason is required when refund amount is greater than 0"
+    )
 
     # Validation to ensure payment_date is not in the future
-    validate fn changeset, _context ->
-      payment_date = Ash.Changeset.get_attribute(changeset, :payment_date)
+    validate(
+      fn changeset, _context ->
+        payment_date = Ash.Changeset.get_attribute(changeset, :payment_date)
 
-      if payment_date && Timex.compare(payment_date, Timex.today()) == :gt do
-        {:error, field: :payment_date, message: "Payment date cannot be in the future"}
-      else
-        :ok
-      end
-    end, message: "Payment date cannot be in the future"
+        if payment_date && Timex.compare(payment_date, Timex.today()) == :gt do
+          {:error, field: :payment_date, message: "Payment date cannot be in the future"}
+        else
+          :ok
+        end
+      end,
+      message: "Payment date cannot be in the future"
+    )
 
     # Validation to ensure refund amount doesn't exceed paid amount
-    validate fn changeset, _context ->
-      amount_paid = Ash.Changeset.get_attribute(changeset, :amount_paid)
-      refund_amount = Ash.Changeset.get_attribute(changeset, :refund_amount)
+    validate(
+      fn changeset, _context ->
+        amount_paid = Ash.Changeset.get_attribute(changeset, :amount_paid)
+        refund_amount = Ash.Changeset.get_attribute(changeset, :refund_amount)
 
-      if amount_paid && refund_amount && Decimal.gt?(refund_amount, amount_paid) do
-        {:error, field: :refund_amount, message: "Refund amount cannot exceed amount paid"}
-      else
-        :ok
-      end
-    end, message: "Refund amount cannot exceed the amount paid"
+        if amount_paid && refund_amount && Decimal.gt?(refund_amount, amount_paid) do
+          {:error, field: :refund_amount, message: "Refund amount cannot exceed amount paid"}
+        else
+          :ok
+        end
+      end,
+      message: "Refund amount cannot exceed the amount paid"
+    )
   end
 
   calculations do
     # Calculate remaining balance
-    calculate :balance_remaining, :decimal, expr(
-      amount_due - coalesce(amount_paid, 0)
-    ) do
+    calculate :balance_remaining, :decimal, expr(amount_due - coalesce(amount_paid, 0)) do
       public?(true)
       description("Remaining balance to be paid")
     end
 
     # Check if fully paid
-    calculate :is_fully_paid, :boolean, expr(
-      status == :paid and amount_paid >= amount_due
-    ) do
+    calculate :is_fully_paid, :boolean, expr(status == :paid and amount_paid >= amount_due) do
       public?(true)
       description("Whether the payment is fully paid")
     end

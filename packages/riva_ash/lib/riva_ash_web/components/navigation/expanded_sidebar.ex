@@ -9,12 +9,12 @@ defmodule RivaAshWeb.Components.Navigation.ExpandedSidebar do
   @doc """
   Renders an expanded sidebar navigation.
   """
-  attr :current_user, :map, required: true
-  attr :current_path, :string, required: true
-  attr :collapsed, :boolean, default: false
-  attr :on_toggle, :string, default: nil
-  attr :class, :string, default: ""
-  attr :rest, :global
+  attr(:current_user, :map, required: true)
+  attr(:current_path, :string, required: true)
+  attr(:collapsed, :boolean, default: false)
+  attr(:on_toggle, :string, default: nil)
+  attr(:class, :string, default: "")
+  attr(:rest, :global)
 
   def expanded_sidebar(assigns) do
     ~H"""

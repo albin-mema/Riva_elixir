@@ -7,17 +7,17 @@ defmodule RivaAshWeb.Components.Atoms.Select do
   @doc """
   Renders a select dropdown.
   """
-  attr :field, Phoenix.HTML.FormField, default: nil
-  attr :options, :list, default: []
-  attr :prompt, :string, default: nil
-  attr :multiple, :boolean, default: false
-  attr :searchable, :boolean, default: false
-  attr :disabled, :boolean, default: false
-  attr :required, :boolean, default: false
-  attr :size, :string, default: "md", values: ~w(sm md lg)
-  attr :variant, :string, default: "default", values: ~w(default error success)
-  attr :class, :string, default: ""
-  attr :rest, :global
+  attr(:field, Phoenix.HTML.FormField, default: nil)
+  attr(:options, :list, default: [])
+  attr(:prompt, :string, default: nil)
+  attr(:multiple, :boolean, default: false)
+  attr(:searchable, :boolean, default: false)
+  attr(:disabled, :boolean, default: false)
+  attr(:required, :boolean, default: false)
+  attr(:size, :string, default: "md", values: ~w(sm md lg))
+  attr(:variant, :string, default: "default", values: ~w(default error success))
+  attr(:class, :string, default: "")
+  attr(:rest, :global)
 
   def select(assigns) do
     assigns = assign(assigns, :select_class, select_class(assigns))
@@ -36,7 +36,9 @@ defmodule RivaAshWeb.Components.Atoms.Select do
   end
 
   defp select_class(assigns) do
-    base = "flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+    base =
+      "flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+
     size = size_classes(assigns.size)
     variant = variant_classes(assigns.variant)
 

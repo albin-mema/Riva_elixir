@@ -41,6 +41,7 @@ defmodule RivaAshWeb.TokenLive do
         else
           {:ok, redirect(socket, to: "/access-denied")}
         end
+
       {:error, _} ->
         {:ok, redirect(socket, to: "/sign-in")}
     end
@@ -309,6 +310,7 @@ defmodule RivaAshWeb.TokenLive do
 
           {:error, error} ->
             error_message = format_error_message(error)
+
             socket =
               socket
               |> assign(:loading, false)
@@ -319,6 +321,7 @@ defmodule RivaAshWeb.TokenLive do
 
       {:error, error} ->
         error_message = format_error_message(error)
+
         socket =
           socket
           |> assign(:loading, false)
@@ -345,7 +348,9 @@ defmodule RivaAshWeb.TokenLive do
   def handle_event("validate_token", %{"form" => params}, socket) do
     form =
       if socket.assigns.editing_token do
-        AshPhoenix.Form.for_update(socket.assigns.editing_token, :update, actor: socket.assigns.current_user)
+        AshPhoenix.Form.for_update(socket.assigns.editing_token, :update,
+          actor: socket.assigns.current_user
+        )
       else
         AshPhoenix.Form.for_create(Token, :create, actor: socket.assigns.current_user)
       end
@@ -449,12 +454,14 @@ defmodule RivaAshWeb.TokenLive do
 
   defp apply_sorting(tokens, %Flop{order_by: nil}), do: tokens
   defp apply_sorting(tokens, %Flop{order_by: []}), do: tokens
+
   defp apply_sorting(tokens, %Flop{order_by: order_by, order_directions: order_directions}) do
     # Default to :asc if no directions provided
     directions = order_directions || Enum.map(order_by, fn _ -> :asc end)
 
     # Zip order_by and directions, pad directions with :asc if needed
-    order_specs = Enum.zip_with([order_by, directions], fn [field, direction] -> {field, direction} end)
+    order_specs =
+      Enum.zip_with([order_by, directions], fn [field, direction] -> {field, direction} end)
 
     Enum.sort(tokens, fn token1, token2 ->
       compare_tokens(token1, token2, order_specs)
@@ -462,6 +469,7 @@ defmodule RivaAshWeb.TokenLive do
   end
 
   defp compare_tokens(_token1, _token2, []), do: true
+
   defp compare_tokens(token1, token2, [{field, direction} | rest]) do
     val1 = get_token_field_value(token1, field)
     val2 = get_token_field_value(token2, field)
@@ -497,6 +505,7 @@ defmodule RivaAshWeb.TokenLive do
         offset = (page - 1) * page_size
 
         paginated = tokens |> Enum.drop(offset) |> Enum.take(page_size)
+
         pagination_info = %{
           type: :page,
           page: page,
@@ -504,6 +513,7 @@ defmodule RivaAshWeb.TokenLive do
           offset: offset,
           total_count: total_count
         }
+
         {paginated, pagination_info}
 
       # Offset-based pagination
@@ -512,23 +522,27 @@ defmodule RivaAshWeb.TokenLive do
         limit = flop.limit
 
         paginated = tokens |> Enum.drop(offset) |> Enum.take(limit)
+
         pagination_info = %{
           type: :offset,
           offset: offset,
           limit: limit,
           total_count: total_count
         }
+
         {paginated, pagination_info}
 
       # Limit only
       flop.limit ->
         limit = flop.limit
         paginated = Enum.take(tokens, limit)
+
         pagination_info = %{
           type: :limit,
           limit: limit,
           total_count: total_count
         }
+
         {paginated, pagination_info}
 
       # No pagination
@@ -537,6 +551,7 @@ defmodule RivaAshWeb.TokenLive do
           type: :none,
           total_count: total_count
         }
+
         {tokens, pagination_info}
     end
   end

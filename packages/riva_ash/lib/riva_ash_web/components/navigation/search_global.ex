@@ -10,17 +10,17 @@ defmodule RivaAshWeb.Components.Navigation.SearchGlobal do
   @doc """
   Renders a global search interface.
   """
-  attr :query, :string, default: ""
-  attr :results, :list, default: []
-  attr :loading, :boolean, default: false
-  attr :show_results, :boolean, default: false
-  attr :placeholder, :string, default: "Search clients, items, reservations..."
-  attr :on_search, :string, required: true
-  attr :on_select, :string, required: true
-  attr :on_clear, :string, default: nil
-  attr :max_results, :integer, default: 10
-  attr :class, :string, default: ""
-  attr :rest, :global
+  attr(:query, :string, default: "")
+  attr(:results, :list, default: [])
+  attr(:loading, :boolean, default: false)
+  attr(:show_results, :boolean, default: false)
+  attr(:placeholder, :string, default: "Search clients, items, reservations...")
+  attr(:on_search, :string, required: true)
+  attr(:on_select, :string, required: true)
+  attr(:on_clear, :string, default: nil)
+  attr(:max_results, :integer, default: 10)
+  attr(:class, :string, default: "")
+  attr(:rest, :global)
 
   def search_global(assigns) do
     ~H"""

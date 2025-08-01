@@ -22,10 +22,13 @@ defmodule RivaAsh.Authorization do
     case actor do
       %{role: :admin} ->
         true
+
       %{role: :user} ->
         check_user_permission(actor, permission_name)
+
       %{id: employee_id} when is_binary(employee_id) ->
         check_employee_permission(employee_id, permission_name)
+
       _ ->
         false
     end
@@ -36,14 +39,21 @@ defmodule RivaAsh.Authorization do
   """
   def can_access_business?(actor, business_id) do
     case actor do
-      %{role: :admin} -> true
-      %{current_business_id: ^business_id} -> true
+      %{role: :admin} ->
+        true
+
+      %{current_business_id: ^business_id} ->
+        true
+
       %{businesses: businesses} when is_list(businesses) ->
         Enum.any?(businesses, &(&1.id == business_id))
+
       %{id: user_id} when is_binary(user_id) ->
         # Check if user owns this business
         check_business_ownership(user_id, business_id)
-      _ -> false
+
+      _ ->
+        false
     end
   end
 
@@ -52,10 +62,14 @@ defmodule RivaAsh.Authorization do
   """
   def owns_business?(actor, business_id) do
     case actor do
-      %{role: :admin} -> true
+      %{role: :admin} ->
+        true
+
       %{id: user_id} when is_binary(user_id) ->
         check_business_ownership(user_id, business_id)
-      _ -> false
+
+      _ ->
+        false
     end
   end
 
@@ -138,7 +152,9 @@ defmodule RivaAsh.Authorization do
           # Non-business owners need explicit employee permissions
           check_employee_permission(user_id, permission_name)
         end
-      _ -> false
+
+      _ ->
+        false
     end
   end
 
@@ -146,27 +162,52 @@ defmodule RivaAsh.Authorization do
     # Business owners have certain inherent permissions but not all
     case permission_name do
       # Core business management permissions - always allowed for business owners
-      :manage_business_settings -> true
-      :manage_plots_and_layouts -> true
-      :manage_all_items -> true
-      :set_pricing -> true
-      :view_all_reports -> true
-      :manage_employees -> true
-      :can_manage_business_settings -> true
-      :can_manage_plots_and_layouts -> true
-      :can_manage_all_items -> true
-      :can_set_pricing -> true
-      :can_view_all_reports -> true
-      :can_manage_employees -> true
+      :manage_business_settings ->
+        true
+
+      :manage_plots_and_layouts ->
+        true
+
+      :manage_all_items ->
+        true
+
+      :set_pricing ->
+        true
+
+      :view_all_reports ->
+        true
+
+      :manage_employees ->
+        true
+
+      :can_manage_business_settings ->
+        true
+
+      :can_manage_plots_and_layouts ->
+        true
+
+      :can_manage_all_items ->
+        true
+
+      :can_set_pricing ->
+        true
+
+      :can_view_all_reports ->
+        true
+
+      :can_manage_employees ->
+        true
 
       # Operational permissions - check if explicitly granted
       permission when is_atom(permission) ->
         check_explicit_business_owner_permission(actor, permission)
+
       permission when is_binary(permission) ->
         check_explicit_business_owner_permission(actor, String.to_atom(permission))
 
       # Default deny for unknown permissions
-      _ -> false
+      _ ->
+        false
     end
   end
 
@@ -177,14 +218,17 @@ defmodule RivaAsh.Authorization do
     case actor do
       %{id: actor_id} when is_binary(actor_id) ->
         check_employee_permission(actor_id, permission_name)
-      _ -> false
+
+      _ ->
+        false
     end
   end
 
   defp user_owns_any_business?(user_id) do
-    query = RivaAsh.Resources.Business
-    |> Ash.Query.filter(expr(owner_id == ^user_id))
-    |> Ash.Query.limit(1)
+    query =
+      RivaAsh.Resources.Business
+      |> Ash.Query.filter(expr(owner_id == ^user_id))
+      |> Ash.Query.limit(1)
 
     query
     |> Ash.read(domain: RivaAsh.Domain)
@@ -207,16 +251,21 @@ defmodule RivaAsh.Authorization do
   defp check_employee_permission(employee_id, permission_name) do
     employee_id
     |> (&Ash.get(RivaAsh.Resources.Employee, &1,
-                 domain: RivaAsh.Domain,
-                 load: [employee_permissions: :permission])).()
+          domain: RivaAsh.Domain,
+          load: [employee_permissions: :permission]
+        )).()
     |> case do
-      {:ok, nil} -> false
+      {:ok, nil} ->
+        false
+
       {:ok, employee} ->
         # Check if the employee has the specific permission
         Enum.any?(employee.employee_permissions, fn ep ->
           ep.permission.name == permission_name and ep.is_active
         end)
-      {:error, _} -> false
+
+      {:error, _} ->
+        false
     end
   end
 end

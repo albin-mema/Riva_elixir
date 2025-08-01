@@ -82,9 +82,11 @@ defmodule RivaAshWeb.API.V1.ItemsControllerTest do
           assert response["jsonapi"]["version"] == "1.0"
           assert response["links"]["self"] =~ "/api/items"
           assert response["meta"] == %{}
+
         [%{"attributes" => %{"name" => "Special"}}] ->
           # Filtering works as expected
           assert true
+
         _ ->
           # Some other response, fail the test
           flunk("Unexpected response: #{inspect(response)}")
@@ -186,7 +188,10 @@ defmodule RivaAshWeb.API.V1.ItemsControllerTest do
 
       # Verify item was deleted (or archived)
       case Item.by_id(item.id) do
-        {:error, _} -> :ok  # Hard deleted
+        # Hard deleted
+        {:error, _} ->
+          :ok
+
         {:ok, deleted_item} ->
           # Soft deleted (archived)
           assert deleted_item.archived_at != nil

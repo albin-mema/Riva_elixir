@@ -9,16 +9,16 @@ defmodule RivaAshWeb.Components.Organisms.CalendarView do
   @doc """
   Renders a calendar view with different display modes.
   """
-  attr :events, :list, default: []
-  attr :current_date, :string, required: true
-  attr :view_mode, :string, default: "month", values: ~w(day week month)
-  attr :on_date_click, :string, required: true
-  attr :on_event_click, :string, default: nil
-  attr :on_view_change, :string, required: true
-  attr :on_navigate, :string, required: true
-  attr :editable, :boolean, default: false
-  attr :class, :string, default: ""
-  attr :rest, :global
+  attr(:events, :list, default: [])
+  attr(:current_date, :string, required: true)
+  attr(:view_mode, :string, default: "month", values: ~w(day week month))
+  attr(:on_date_click, :string, required: true)
+  attr(:on_event_click, :string, default: nil)
+  attr(:on_view_change, :string, required: true)
+  attr(:on_navigate, :string, required: true)
+  attr(:editable, :boolean, default: false)
+  attr(:class, :string, default: "")
+  attr(:rest, :global)
 
   def calendar_view(assigns) do
     ~H"""

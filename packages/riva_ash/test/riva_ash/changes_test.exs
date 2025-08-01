@@ -139,6 +139,7 @@ defmodule RivaAsh.ChangesTest do
   describe "bulk_track_changes/2" do
     test "tracks multiple changes" do
       resource_id = "resource-123"
+
       changes_list = [
         %{type: :create, changes: %{name: "Item 1"}},
         %{type: :update, changes: %{name: "Item 2"}}

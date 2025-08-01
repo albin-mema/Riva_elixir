@@ -11,16 +11,16 @@ defmodule RivaAshWeb.Components.Organisms.ItemForm do
   @doc """
   Renders an item form with positioning options.
   """
-  attr :form, :map, required: true
-  attr :sections, :list, default: []
-  attr :item_types, :list, default: []
-  attr :editing, :boolean, default: false
-  attr :on_submit, :string, required: true
-  attr :on_change, :string, required: true
-  attr :on_cancel, :string, required: true
-  attr :loading, :boolean, default: false
-  attr :class, :string, default: ""
-  attr :rest, :global
+  attr(:form, :map, required: true)
+  attr(:sections, :list, default: [])
+  attr(:item_types, :list, default: [])
+  attr(:editing, :boolean, default: false)
+  attr(:on_submit, :string, required: true)
+  attr(:on_change, :string, required: true)
+  attr(:on_cancel, :string, required: true)
+  attr(:loading, :boolean, default: false)
+  attr(:class, :string, default: "")
+  attr(:rest, :global)
 
   def item_form(assigns) do
     ~H"""

@@ -26,15 +26,17 @@ defmodule RivaAshWeb.PeopleManagementLive do
           business_ids = Enum.map(businesses, & &1.id)
 
           # Load people data
-          clients = Client.read!(
-            actor: user,
-            filter: [business_id: [in: business_ids]]
-          )
+          clients =
+            Client.read!(
+              actor: user,
+              filter: [business_id: [in: business_ids]]
+            )
 
-          employees = Employee.read!(
-            actor: user,
-            filter: [business_id: [in: business_ids]]
-          )
+          employees =
+            Employee.read!(
+              actor: user,
+              filter: [business_id: [in: business_ids]]
+            )
 
           socket =
             socket
@@ -54,6 +56,7 @@ defmodule RivaAshWeb.PeopleManagementLive do
           error in [Ash.Error.Forbidden, Ash.Error.Invalid] ->
             {:ok, redirect(socket, to: "/access-denied")}
         end
+
       {:error, _} ->
         {:ok, redirect(socket, to: "/sign-in")}
     end
@@ -400,11 +403,13 @@ defmodule RivaAshWeb.PeopleManagementLive do
   end
 
   def handle_event("select_person", %{"id" => id, "type" => type}, socket) do
-    person = case type do
-      "client" -> Enum.find(socket.assigns.clients, &(&1.id == id))
-      "employee" -> Enum.find(socket.assigns.employees, &(&1.id == id))
-      _ -> nil
-    end
+    person =
+      case type do
+        "client" -> Enum.find(socket.assigns.clients, &(&1.id == id))
+        "employee" -> Enum.find(socket.assigns.employees, &(&1.id == id))
+        _ -> nil
+      end
+
     {:noreply, assign(socket, :selected_person, person)}
   end
 
@@ -424,16 +429,5 @@ defmodule RivaAshWeb.PeopleManagementLive do
   defp count_active_clients(clients) do
     # Placeholder - would check recent activity
     length(clients)
-  end
-
-  defp get_current_user_from_session(session) do
-    case session["user_token"] do
-      nil -> {:error, :no_token}
-      token ->
-        case RivaAsh.Accounts.get_user_by_session_token(token) do
-          nil -> {:error, :invalid_token}
-          user -> {:ok, user}
-        end
-    end
   end
 end

@@ -33,7 +33,8 @@ defmodule RivaAsh.PermissionsTest do
       resource_id = "resource-456"
       permission = :delete
 
-      assert {:error, :unauthorized} = Permissions.check_permission(user_id, resource_id, permission)
+      assert {:error, :unauthorized} =
+               Permissions.check_permission(user_id, resource_id, permission)
     end
   end
 

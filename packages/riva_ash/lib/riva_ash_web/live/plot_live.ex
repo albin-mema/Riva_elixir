@@ -5,15 +5,16 @@ defmodule RivaAshWeb.PlotLive do
   use RivaAshWeb, :live_view
 
   # Explicitly set the authenticated layout
-  @layout {RivaAshWeb.Layouts, :authenticated}
+
 
   import RivaAshWeb.Components.Organisms.PageHeader
-  import RivaAshWeb.Components.Organisms.DataTable
+
   import RivaAshWeb.Components.Atoms.Button
+  import RivaAshWeb.Components.Atoms.Spinner
   import RivaAshWeb.Components.Molecules.ConfirmDialog
   import RivaAshWeb.Components.Molecules.NotificationToast
-  import RivaAshWeb.Components.Atoms.Spinner
-  import Flop.Phoenix, except: [table: 1]
+
+
 
   alias RivaAsh.Resources.Plot
   alias RivaAsh.Resources.Business
@@ -39,10 +40,12 @@ defmodule RivaAshWeb.PlotLive do
 
           {:ok, socket}
         rescue
-          error in [Ash.Error.Forbidden, Ash.Error.Invalid] ->
+          _error in [Ash.Error.Forbidden, Ash.Error.Invalid] ->
             {:ok, redirect(socket, to: "/access-denied")}
+
           error ->
-            {:ok, socket |> assign(:error_message, "Failed to load plots: #{Exception.message(error)}")}
+            {:ok,
+             socket |> assign(:error_message, "Failed to load plots: #{Exception.message(error)}")}
         end
 
       {:error, :not_authenticated} ->
@@ -62,12 +65,14 @@ defmodule RivaAshWeb.PlotLive do
         |> assign(:plots, plots)
         |> assign(:meta, meta)
         |> then(&{:noreply, &1})
+
       _ ->
         socket =
           socket
           |> assign(:plots, [])
           |> assign(:meta, %{})
           |> assign(:error_message, "Failed to load plots")
+
         {:noreply, socket}
     end
   end
@@ -228,6 +233,7 @@ defmodule RivaAshWeb.PlotLive do
 
       {:error, error} ->
         error_message = format_error_message(error)
+
         socket =
           socket
           |> assign(:loading, false)
@@ -258,8 +264,12 @@ defmodule RivaAshWeb.PlotLive do
     user_token = session["user_token"]
 
     if user_token do
-      with {:ok, user_id} <- Phoenix.Token.verify(RivaAshWeb.Endpoint, "user_auth", user_token, max_age: 86_400) |> RivaAsh.ErrorHelpers.to_result(),
-           {:ok, user} <- Ash.get(RivaAsh.Accounts.User, user_id, domain: RivaAsh.Accounts) |> RivaAsh.ErrorHelpers.to_result() do
+      with {:ok, user_id} <-
+             Phoenix.Token.verify(RivaAshWeb.Endpoint, "user_auth", user_token, max_age: 86_400)
+             |> RivaAsh.ErrorHelpers.to_result(),
+           {:ok, user} <-
+             Ash.get(RivaAsh.Accounts.User, user_id, domain: RivaAsh.Accounts)
+             |> RivaAsh.ErrorHelpers.to_result() do
         RivaAsh.ErrorHelpers.success(user)
       else
         _ -> RivaAsh.ErrorHelpers.failure(:not_authenticated)
@@ -271,7 +281,9 @@ defmodule RivaAshWeb.PlotLive do
 
   defp delete_plot(plot_id, user) do
     try do
-      with {:ok, plot} <- Ash.get(RivaAsh.Resources.Plot, plot_id, actor: user) |> RivaAsh.ErrorHelpers.to_result(),
+      with {:ok, plot} <-
+             Ash.get(RivaAsh.Resources.Plot, plot_id, actor: user)
+             |> RivaAsh.ErrorHelpers.to_result(),
            {:ok, _} <- Ash.destroy(plot, actor: user) |> RivaAsh.ErrorHelpers.to_result() do
         RivaAsh.ErrorHelpers.success(:ok)
       end
@@ -321,12 +333,14 @@ defmodule RivaAshWeb.PlotLive do
 
   defp apply_sorting(plots, %Flop{order_by: nil}), do: plots
   defp apply_sorting(plots, %Flop{order_by: []}), do: plots
+
   defp apply_sorting(plots, %Flop{order_by: order_by, order_directions: order_directions}) do
     # Default to :asc if no directions provided
     directions = order_directions || Enum.map(order_by, fn _ -> :asc end)
 
     # Zip order_by and directions, pad directions with :asc if needed
-    order_specs = Enum.zip_with([order_by, directions], fn [field, direction] -> {field, direction} end)
+    order_specs =
+      Enum.zip_with([order_by, directions], fn [field, direction] -> {field, direction} end)
 
     Enum.sort(plots, fn plot1, plot2 ->
       compare_plots(plot1, plot2, order_specs)
@@ -334,6 +348,7 @@ defmodule RivaAshWeb.PlotLive do
   end
 
   defp compare_plots(_plot1, _plot2, []), do: true
+
   defp compare_plots(plot1, plot2, [{field, direction} | rest]) do
     val1 = get_field_value(plot1, field)
     val2 = get_field_value(plot2, field)
@@ -370,6 +385,7 @@ defmodule RivaAshWeb.PlotLive do
         offset = (page - 1) * page_size
 
         paginated = plots |> Enum.drop(offset) |> Enum.take(page_size)
+
         pagination_info = %{
           type: :page,
           page: page,
@@ -377,6 +393,7 @@ defmodule RivaAshWeb.PlotLive do
           offset: offset,
           total_count: total_count
         }
+
         {paginated, pagination_info}
 
       # Offset-based pagination
@@ -385,23 +402,27 @@ defmodule RivaAshWeb.PlotLive do
         limit = flop.limit
 
         paginated = plots |> Enum.drop(offset) |> Enum.take(limit)
+
         pagination_info = %{
           type: :offset,
           offset: offset,
           limit: limit,
           total_count: total_count
         }
+
         {paginated, pagination_info}
 
       # Limit only
       flop.limit ->
         limit = flop.limit
         paginated = Enum.take(plots, limit)
+
         pagination_info = %{
           type: :limit,
           limit: limit,
           total_count: total_count
         }
+
         {paginated, pagination_info}
 
       # No pagination
@@ -410,6 +431,7 @@ defmodule RivaAshWeb.PlotLive do
           type: :none,
           total_count: total_count
         }
+
         {plots, pagination_info}
     end
   end

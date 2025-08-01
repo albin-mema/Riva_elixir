@@ -34,8 +34,9 @@ defmodule RivaAsh.Permissions do
   """
   def has_permission?(employee, permission_name) when is_binary(permission_name) do
     # Validate permission exists
-    unless Constants.valid_permission?(permission_name) do
-      raise ArgumentError, "Unknown permission: #{permission_name}. Valid permissions: #{inspect(Constants.all_permissions())}"
+    if !Constants.valid_permission?(permission_name) do
+      raise ArgumentError,
+            "Unknown permission: #{permission_name}. Valid permissions: #{inspect(Constants.all_permissions())}"
     end
 
     # Admins have all permissions

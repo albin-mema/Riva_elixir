@@ -64,7 +64,8 @@ defmodule RivaAsh.Domain do
 
   graphql do
     # Generate queries and mutations for all resources
-    authorize?(false)  # Disable authorization for now, can be enabled later
+    # Disable authorization for now, can be enabled later
+    authorize?(false)
   end
 
   admin do

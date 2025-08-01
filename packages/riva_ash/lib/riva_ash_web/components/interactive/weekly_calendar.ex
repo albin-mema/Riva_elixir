@@ -8,17 +8,17 @@ defmodule RivaAshWeb.Components.Interactive.WeeklyCalendar do
   @doc """
   Renders a weekly calendar view with time slots.
   """
-  attr :current_week, :string, required: true
-  attr :events, :list, default: []
-  attr :time_slots, :list, default: []
-  attr :on_slot_click, :string, required: true
-  attr :on_event_click, :string, default: nil
-  attr :on_navigate, :string, required: true
-  attr :start_hour, :integer, default: 8
-  attr :end_hour, :integer, default: 18
-  attr :slot_duration, :integer, default: 60
-  attr :class, :string, default: ""
-  attr :rest, :global
+  attr(:current_week, :string, required: true)
+  attr(:events, :list, default: [])
+  attr(:time_slots, :list, default: [])
+  attr(:on_slot_click, :string, required: true)
+  attr(:on_event_click, :string, default: nil)
+  attr(:on_navigate, :string, required: true)
+  attr(:start_hour, :integer, default: 8)
+  attr(:end_hour, :integer, default: 18)
+  attr(:slot_duration, :integer, default: 60)
+  attr(:class, :string, default: "")
+  attr(:rest, :global)
 
   def weekly_calendar(assigns) do
     ~H"""

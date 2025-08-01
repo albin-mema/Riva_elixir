@@ -86,6 +86,7 @@ defmodule RivaAsh.Resources.RecurringReservation do
         :instances_generated,
         :generated_at
       ])
+
       primary?(true)
       require_atomic?(false)
 

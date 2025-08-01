@@ -13,7 +13,13 @@ defmodule RivaAshWeb.AvailabilityExceptionLive do
 
   @impl true
   def mount(_params, session, socket) do
-    mount_business_scoped(socket, session, AvailabilityException, [:item, :business_id], "Availability Exceptions")
+    mount_business_scoped(
+      socket,
+      session,
+      AvailabilityException,
+      [:item, :business_id],
+      "Availability Exceptions"
+    )
   end
 
   @impl true

@@ -41,17 +41,17 @@ defmodule RivaAshWeb.Components.Organisms.PageHeader do
         ]}
       />
   """
-  attr :title, :string, required: true
-  attr :description, :string, default: nil
-  attr :icon, :atom, default: nil
-  attr :breadcrumbs, :list, default: []
-  attr :variant, :string, default: "default", values: ~w(default compact card)
-  attr :class, :string, default: ""
-  attr :rest, :global
+  attr(:title, :string, required: true)
+  attr(:description, :string, default: nil)
+  attr(:icon, :atom, default: nil)
+  attr(:breadcrumbs, :list, default: [])
+  attr(:variant, :string, default: "default", values: ~w(default compact card))
+  attr(:class, :string, default: "")
+  attr(:rest, :global)
 
-  slot :badge
-  slot :action
-  slot :extra
+  slot(:badge)
+  slot(:action)
+  slot(:extra)
 
   def page_header(assigns) do
     assigns = assign(assigns, :header_class, header_class(assigns))
@@ -108,9 +108,9 @@ defmodule RivaAshWeb.Components.Organisms.PageHeader do
   @doc """
   Renders breadcrumb navigation.
   """
-  attr :items, :list, required: true
-  attr :separator, :string, default: "/"
-  attr :class, :string, default: ""
+  attr(:items, :list, required: true)
+  attr(:separator, :string, default: "/")
+  attr(:class, :string, default: "")
 
   def breadcrumbs(assigns) do
     ~H"""
@@ -143,10 +143,10 @@ defmodule RivaAshWeb.Components.Organisms.PageHeader do
   @doc """
   Renders page tabs for navigation within a page.
   """
-  attr :tabs, :list, required: true
-  attr :active_tab, :string, required: true
-  attr :class, :string, default: ""
-  attr :rest, :global
+  attr(:tabs, :list, required: true)
+  attr(:active_tab, :string, required: true)
+  attr(:class, :string, default: "")
+  attr(:rest, :global)
 
   def page_tabs(assigns) do
     ~H"""
@@ -176,11 +176,12 @@ defmodule RivaAshWeb.Components.Organisms.PageHeader do
   end
 
   defp header_class(assigns) do
-    base = case assigns.variant do
-      "compact" -> "mb-6"
-      "card" -> "mb-8"
-      _ -> "mb-8"
-    end
+    base =
+      case assigns.variant do
+        "compact" -> "mb-6"
+        "card" -> "mb-8"
+        _ -> "mb-8"
+      end
 
     Enum.join([base, assigns.class], " ")
   end
@@ -189,13 +190,15 @@ defmodule RivaAshWeb.Components.Organisms.PageHeader do
     case variant do
       "card" ->
         "bg-card rounded-lg p-6 shadow-sm flex flex-col md:flex-row md:items-center md:justify-between"
+
       _ ->
         "flex flex-col md:flex-row md:items-center md:justify-between"
     end
   end
 
   defp tab_class(active) do
-    base = "inline-flex items-center gap-2 py-3 px-1 border-b-2 text-sm font-medium transition-colors"
+    base =
+      "inline-flex items-center gap-2 py-3 px-1 border-b-2 text-sm font-medium transition-colors"
 
     if active do
       "#{base} border-primary text-foreground"

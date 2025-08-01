@@ -9,10 +9,10 @@ defmodule RivaAshWeb.Components.Organisms.DashboardStats do
   @doc """
   Renders dashboard statistics cards.
   """
-  attr :stats, :list, required: true
-  attr :loading, :boolean, default: false
-  attr :class, :string, default: ""
-  attr :rest, :global
+  attr(:stats, :list, required: true)
+  attr(:loading, :boolean, default: false)
+  attr(:class, :string, default: "")
+  attr(:rest, :global)
 
   def dashboard_stats(assigns) do
     ~H"""

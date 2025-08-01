@@ -145,7 +145,7 @@ defmodule RivaAshWeb.PermissionLive do
     {:noreply, socket}
   end
 
-  def handle_event("delete_permission", %{"id" => id}, socket) do
+  def handle_event("delete_permission", %{"id" => _id}, socket) do
     # Implementation will go here
     {:noreply, socket}
   end

@@ -70,7 +70,8 @@ defmodule RivaAsh.Reactors.ExampleReactorTest do
       }
 
       # Run the reactor via the resource action
-      assert {:ok, item} = Ash.run_action(Business, :create_complete_setup, inputs, domain: RivaAsh.Domain)
+      assert {:ok, item} =
+               Ash.run_action(Business, :create_complete_setup, inputs, domain: RivaAsh.Domain)
 
       # Verify the item was created
       assert item.name == "Action Item"

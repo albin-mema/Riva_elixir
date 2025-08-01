@@ -15,7 +15,7 @@ defmodule RivaAshWeb.BookingController do
   alias RivaAsh.Resources.{Item, Client}
   alias RivaAsh.ErrorHelpers
 
-  action_fallback RivaAshWeb.FallbackController
+  action_fallback(RivaAshWeb.FallbackController)
 
   @doc """
   GET /api/booking/availability/:item_id
@@ -81,10 +81,11 @@ defmodule RivaAshWeb.BookingController do
           client: format_client(result.client),
           reservation: format_reservation(result.reservation),
           status: "pending",
-          message: if(result.client.is_registered,
-            do: "Booking created successfully! You are now registered.",
-            else: "Booking created successfully! You can register when confirming your booking."
-          )
+          message:
+            if(result.client.is_registered,
+              do: "Booking created successfully! You are now registered.",
+              else: "Booking created successfully! You can register when confirming your booking."
+            )
         }
       })
     else
@@ -119,13 +120,16 @@ defmodule RivaAshWeb.BookingController do
             client: format_client(result.client),
             reservation: format_reservation(result.reservation),
             status: "confirmed",
-            message: if(result.client.is_registered and register_client,
-              do: "Booking confirmed and you are now registered! Welcome!",
-              else: "Booking confirmed successfully!"
-            )
+            message:
+              if(result.client.is_registered and register_client,
+                do: "Booking confirmed and you are now registered! Welcome!",
+                else: "Booking confirmed successfully!"
+              )
           }
         })
-      {:error, reason} -> ErrorHelpers.failure(reason)
+
+      {:error, reason} ->
+        ErrorHelpers.failure(reason)
     end
   end
 
@@ -143,7 +147,8 @@ defmodule RivaAshWeb.BookingController do
           data: Enum.map(items, &format_item/1)
         })
 
-      {:error, reason} -> {:error, reason}
+      {:error, reason} ->
+        {:error, reason}
     end
   end
 
@@ -163,17 +168,21 @@ defmodule RivaAshWeb.BookingController do
             bookings: Enum.map(client.reservations, &format_reservation/1)
           }
         })
+
       {:error, %Ash.Error.Query.NotFound{}} ->
         conn
         |> put_status(:not_found)
         |> json(%{error: "No bookings found for this email address"})
-      {:error, reason} -> ErrorHelpers.failure(reason)
+
+      {:error, reason} ->
+        ErrorHelpers.failure(reason)
     end
   end
 
   # Private helper functions
 
   defp parse_date(nil), do: ErrorHelpers.failure("Date parameter is required")
+
   defp parse_date(date_string) do
     date_string
     |> Date.from_iso8601()
@@ -184,12 +193,14 @@ defmodule RivaAshWeb.BookingController do
   end
 
   defp parse_duration(nil), do: 60
+
   defp parse_duration(duration_string) when is_binary(duration_string) do
     case Integer.parse(duration_string) do
       {duration, ""} when duration > 0 -> duration
       _ -> 60
     end
   end
+
   defp parse_duration(duration) when is_integer(duration) and duration > 0, do: duration
   defp parse_duration(_), do: 60
 
@@ -200,12 +211,14 @@ defmodule RivaAshWeb.BookingController do
   end
 
   defp parse_hour(nil, default), do: default
+
   defp parse_hour(hour_string, default) when is_binary(hour_string) do
     case Integer.parse(hour_string) do
       {hour, ""} when hour >= 0 and hour <= 23 -> hour
       _ -> default
     end
   end
+
   defp parse_hour(hour, _default) when is_integer(hour) and hour >= 0 and hour <= 23, do: hour
   defp parse_hour(_, default), do: default
 
@@ -235,9 +248,11 @@ defmodule RivaAshWeb.BookingController do
           phone: client_params["phone"]
         })
 
-      _ -> ErrorHelpers.failure("Client name is required")
+      _ ->
+        ErrorHelpers.failure("Client name is required")
     end
   end
+
   defp extract_client_info(_), do: ErrorHelpers.failure("Client information is required")
 
   defp extract_booking_info(%{"booking" => booking_params}) do
@@ -253,9 +268,11 @@ defmodule RivaAshWeb.BookingController do
       {:error, reason} -> ErrorHelpers.failure(reason)
     end
   end
+
   defp extract_booking_info(_), do: ErrorHelpers.failure("Booking information is required")
 
   defp parse_datetime(nil), do: ErrorHelpers.failure("DateTime is required")
+
   defp parse_datetime(datetime_string) when is_binary(datetime_string) do
     datetime_string
     |> DateTime.from_iso8601()

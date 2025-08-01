@@ -81,8 +81,8 @@ defmodule RivaAsh.PropertyTesting.StateMachine do
   """
   def next_state(current_state, action) do
     case Enum.find(transitions(), fn {from, act, _to} ->
-      from == current_state && act == action
-    end) do
+           from == current_state && act == action
+         end) do
       {_from, _action, to_state} -> {:ok, to_state}
       nil -> {:error, :invalid_transition}
     end
@@ -107,8 +107,14 @@ defmodule RivaAsh.PropertyTesting.StateMachine do
         [:register, :login, :visit_public_page, :visit_protected_page]
 
       :authenticated ->
-        actions = [:logout, :visit_public_page, :visit_protected_page,
-                  :create_resource, :update_resource, :delete_resource]
+        actions = [
+          :logout,
+          :visit_public_page,
+          :visit_protected_page,
+          :create_resource,
+          :update_resource,
+          :delete_resource
+        ]
 
         # Add admin elevation if user has admin permissions
         if Map.get(user_context, :can_be_admin, false) do
@@ -118,8 +124,16 @@ defmodule RivaAsh.PropertyTesting.StateMachine do
         end
 
       :admin ->
-        [:logout, :visit_public_page, :visit_protected_page, :visit_admin_page,
-         :create_resource, :update_resource, :delete_resource, :demote_from_admin]
+        [
+          :logout,
+          :visit_public_page,
+          :visit_protected_page,
+          :visit_admin_page,
+          :create_resource,
+          :update_resource,
+          :delete_resource,
+          :demote_from_admin
+        ]
 
       :error ->
         [:login, :admin_login, :visit_public_page, :refresh_session, :clear_error]
@@ -139,7 +153,8 @@ defmodule RivaAsh.PropertyTesting.StateMachine do
           {:visit_public_page, 40},
           {:register, 25},
           {:login, 30},
-          {:visit_protected_page, 5}  # Users sometimes try protected pages
+          # Users sometimes try protected pages
+          {:visit_protected_page, 5}
         ]
 
       :authenticated ->
@@ -181,9 +196,10 @@ defmodule RivaAsh.PropertyTesting.StateMachine do
     weights = action_weights(state)
 
     # Filter weights to only include available actions
-    filtered_weights = Enum.filter(weights, fn {action, _weight} ->
-      action in available
-    end)
+    filtered_weights =
+      Enum.filter(weights, fn {action, _weight} ->
+        action in available
+      end)
 
     # Select random action based on weights
     total_weight = Enum.sum(Enum.map(filtered_weights, fn {_action, weight} -> weight end))
@@ -249,6 +265,7 @@ defmodule RivaAsh.PropertyTesting.StateMachine do
     case next_state(current_state, action) do
       {:ok, next_state} ->
         validate_flow_recursive(rest, next_state, [{current_state, action, next_state} | acc])
+
       {:error, reason} ->
         {:error, {reason, current_state, action}}
     end

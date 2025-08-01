@@ -110,6 +110,7 @@ defmodule RivaAsh.Resources.Layout do
         :background_image_url,
         :is_active
       ])
+
       primary?(true)
 
       # Note: Layout doesn't have direct business_id, so we validate plot exists

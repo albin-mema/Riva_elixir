@@ -5,8 +5,10 @@ defmodule RivaAshWeb.AuthenticationPlaywrightTest do
 
   use PhoenixTest.Playwright.Case,
     async: false,
-    headless: false,  # Force visible browser
-    slow_mo: 2000     # Slow down actions so you can see them
+    # Force visible browser
+    headless: false,
+    # Slow down actions so you can see them
+    slow_mo: 2000
 
   import PhoenixTest
   alias RivaAsh.Accounts.User
@@ -14,14 +16,15 @@ defmodule RivaAshWeb.AuthenticationPlaywrightTest do
 
   setup do
     # Create a test user for login tests using Ash
-    {:ok, user} = User
-    |> Ash.Changeset.for_create(:register_with_password, %{
-      name: "Playwright Test User",
-      email: "playwright_test@example.com",
-      password: "password123",
-      password_confirmation: "password123"
-    })
-    |> Ash.create(domain: RivaAsh.Accounts)
+    {:ok, user} =
+      User
+      |> Ash.Changeset.for_create(:register_with_password, %{
+        name: "Playwright Test User",
+        email: "playwright_test@example.com",
+        password: "password123",
+        password_confirmation: "password123"
+      })
+      |> Ash.create(domain: RivaAsh.Accounts)
 
     %{user: user}
   end
@@ -55,7 +58,11 @@ defmodule RivaAshWeb.AuthenticationPlaywrightTest do
     |> screenshot("registration_success")
 
     # Verify user was created in database
-    query = User |> Ash.Query.for_read(:read) |> Ash.Query.filter(email == "playwright_user@example.com")
+    query =
+      User
+      |> Ash.Query.for_read(:read)
+      |> Ash.Query.filter(email == "playwright_user@example.com")
+
     assert {:ok, [user]} = Ash.read(query, domain: RivaAsh.Accounts)
     assert user.name == "Real Playwright User"
   end
@@ -120,10 +127,14 @@ defmodule RivaAshWeb.AuthenticationPlaywrightTest do
     # Test form validation by actually interacting with the browser
     conn
     |> visit("/register")
-    |> fill_in("Name", with: "")  # Empty name
-    |> fill_in("Email", with: "invalid-email")  # Invalid email
-    |> fill_in("Password", with: "123")  # Too short
-    |> fill_in("Confirm Password", with: "456")  # Mismatch
+    # Empty name
+    |> fill_in("Name", with: "")
+    # Invalid email
+    |> fill_in("Email", with: "invalid-email")
+    # Too short
+    |> fill_in("Password", with: "123")
+    # Mismatch
+    |> fill_in("Confirm Password", with: "456")
     |> screenshot("form_validation_invalid.png")
     |> click_button("Create Account")
 
@@ -201,9 +212,11 @@ defmodule RivaAshWeb.AuthenticationPlaywrightTest do
     # Test keyboard navigation
     conn
     |> visit("/sign-in")
-    |> press("input[name='email']", "Tab")  # Tab to next field
+    # Tab to next field
+    |> press("input[name='email']", "Tab")
     |> type("input[name='password']", "password123")
-    |> press("input[name='password']", "Enter")  # Submit with Enter
+    # Submit with Enter
+    |> press("input[name='password']", "Enter")
     |> screenshot("keyboard_navigation_test.png")
   end
 

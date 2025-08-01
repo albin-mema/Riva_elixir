@@ -8,22 +8,23 @@ defmodule RivaAsh.PropertyTesting.RouteEnumerator do
 
   @type route_category :: :public | :authenticated | :admin | :api | :error
   @type route_info :: %{
-    path: String.t(),
-    verb: atom(),
-    controller: atom(),
-    action: atom(),
-    category: route_category(),
-    requires_params: boolean(),
-    param_types: map()
-  }
+          path: String.t(),
+          verb: atom(),
+          controller: atom(),
+          action: atom(),
+          category: route_category(),
+          requires_params: boolean(),
+          param_types: map()
+        }
 
   @doc """
   Get all routes from the Phoenix router and categorize them.
   """
   def enumerate_routes do
-    routes = RivaAshWeb.Router.__routes__()
-    |> Enum.map(&parse_route/1)
-    |> Enum.group_by(& &1.category)
+    routes =
+      RivaAshWeb.Router.__routes__()
+      |> Enum.map(&parse_route/1)
+      |> Enum.group_by(& &1.category)
 
     # Log route discovery
     total_routes = routes |> Map.values() |> List.flatten() |> length()
@@ -69,11 +70,12 @@ defmodule RivaAsh.PropertyTesting.RouteEnumerator do
   Get routes that don't require parameters.
   """
   def parameterless_routes(category \\ :all) do
-    routes = if category == :all do
-      enumerate_routes() |> Map.values() |> List.flatten()
-    else
-      routes_for_category(category)
-    end
+    routes =
+      if category == :all do
+        enumerate_routes() |> Map.values() |> List.flatten()
+      else
+        routes_for_category(category)
+      end
 
     Enum.filter(routes, fn route -> not route.requires_params end)
   end
@@ -82,11 +84,12 @@ defmodule RivaAsh.PropertyTesting.RouteEnumerator do
   Get routes that require parameters and their parameter types.
   """
   def parameterized_routes(category \\ :all) do
-    routes = if category == :all do
-      enumerate_routes() |> Map.values() |> List.flatten()
-    else
-      routes_for_category(category)
-    end
+    routes =
+      if category == :all do
+        enumerate_routes() |> Map.values() |> List.flatten()
+      else
+        routes_for_category(category)
+      end
 
     Enum.filter(routes, fn route -> route.requires_params end)
   end
@@ -135,12 +138,12 @@ defmodule RivaAsh.PropertyTesting.RouteEnumerator do
 
   defp is_api_route?(route) do
     String.starts_with?(route.path, "/api") or
-    String.starts_with?(route.path, "/graphql")
+      String.starts_with?(route.path, "/graphql")
   end
 
   defp is_admin_route?(route) do
     String.starts_with?(route.path, "/admin") or
-    has_auth_pipeline?(route, :require_authenticated_user)
+      has_auth_pipeline?(route, :require_authenticated_user)
   end
 
   defp is_error_route?(route) do
@@ -149,7 +152,7 @@ defmodule RivaAsh.PropertyTesting.RouteEnumerator do
 
   defp is_authenticated_route?(route) do
     has_auth_pipeline?(route, :require_authenticated_user) and
-    not is_admin_route?(route)
+      not is_admin_route?(route)
   end
 
   defp has_auth_pipeline?(route, pipeline) do
@@ -202,9 +205,12 @@ defmodule RivaAsh.PropertyTesting.RouteEnumerator do
     case Regex.run(~r/\/([^\/]+)/, route.path) do
       [_full, resource] ->
         resource
-        |> String.trim_trailing("s")  # Remove plural 's'
+        # Remove plural 's'
+        |> String.trim_trailing("s")
         |> String.to_atom()
-      _ -> :unknown
+
+      _ ->
+        :unknown
     end
   end
 
@@ -280,19 +286,21 @@ defmodule RivaAsh.PropertyTesting.RouteEnumerator do
   Select a random route based on weights and user state.
   """
   def random_route(category, exclude_params \\ true) do
-    routes = if exclude_params do
-      parameterless_routes(category)
-    else
-      routes_for_category(category)
-    end
+    routes =
+      if exclude_params do
+        parameterless_routes(category)
+      else
+        routes_for_category(category)
+      end
 
     weights = route_weights(category)
 
     # Filter routes to only those with defined weights, or assign default weight
-    weighted_routes = Enum.map(routes, fn route ->
-      weight = Map.get(weights, route.path, 1)
-      {route, weight}
-    end)
+    weighted_routes =
+      Enum.map(routes, fn route ->
+        weight = Map.get(weights, route.path, 1)
+        {route, weight}
+      end)
 
     select_weighted_route(weighted_routes)
   end

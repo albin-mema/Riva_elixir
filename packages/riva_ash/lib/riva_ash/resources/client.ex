@@ -48,7 +48,8 @@ defmodule RivaAsh.Resources.Client do
 
     # Secure client creation - only allow legitimate use cases
     policy action_type(:create) do
-      authorize_if(always()) # Public registration
+      # Public registration
+      authorize_if(always())
     end
 
     # Business-scoped read access
@@ -133,7 +134,7 @@ defmodule RivaAsh.Resources.Client do
       # validate(&RivaAsh.Validations.validate_business_access/2)
 
       # Ensure email is provided for registered clients
-      validate fn changeset, _ ->
+      validate(fn changeset, _ ->
         if Ash.Changeset.get_attribute(changeset, :is_registered) do
           case Ash.Changeset.get_attribute(changeset, :email) do
             nil -> {:error, field: :email, message: "is required for registered clients"}
@@ -143,22 +144,23 @@ defmodule RivaAsh.Resources.Client do
         else
           :ok
         end
-      end
+      end)
 
       # Generate verification token for registered clients
-      change fn changeset, _ ->
+      change(fn changeset, _ ->
         if Ash.Changeset.get_attribute(changeset, :is_registered) do
           token = generate_verification_token()
+
           changeset
           |> Ash.Changeset.force_change_attribute(:verification_token, token)
           |> Ash.Changeset.force_change_attribute(:email_verified, false)
         else
           changeset
         end
-      end
+      end)
 
       # Send verification email for registered clients
-      after_action fn _changeset, client ->
+      after_action(fn _changeset, client ->
         if client.is_registered && client.email do
           # In a real app, you would send a verification email here
           # EmailVerification.send_verification_email(client.email, client.verification_token)
@@ -166,7 +168,7 @@ defmodule RivaAsh.Resources.Client do
         else
           :ok
         end
-      end
+      end)
     end
 
     # Create unregistered client for booking flow
@@ -176,26 +178,28 @@ defmodule RivaAsh.Resources.Client do
       # Validate business access
       # validate(&RivaAsh.Validations.validate_business_access/2)
 
-      change fn changeset, _ ->
+      change(fn changeset, _ ->
         changeset
         |> Ash.Changeset.force_change_attribute(:is_registered, false)
         |> Ash.Changeset.force_change_attribute(:email_verified, false)
-      end
+      end)
 
-      validate present([:name])
-      validate fn changeset, _ ->
+      validate(present([:name]))
+
+      validate(fn changeset, _ ->
         email = Ash.Changeset.get_attribute(changeset, :email)
         phone = Ash.Changeset.get_attribute(changeset, :phone)
 
         if (is_nil(email) or email == "") and (is_nil(phone) or phone == "") do
-          {:error, [
-            %{field: :email, message: "must provide at least one of email or phone"},
-            %{field: :phone, message: "must provide at least one of email or phone"}
-          ]}
+          {:error,
+           [
+             %{field: :email, message: "must provide at least one of email or phone"},
+             %{field: :phone, message: "must provide at least one of email or phone"}
+           ]}
         else
           :ok
         end
-      end
+      end)
 
       description("Create unregistered client during booking process")
     end
@@ -206,32 +210,33 @@ defmodule RivaAsh.Resources.Client do
       require_atomic?(false)
 
       # Only allow updating unregistered clients
-      validate fn changeset, _ ->
+      validate(fn changeset, _ ->
         if Ash.Changeset.get_data(changeset, :is_registered) == true do
           {:error, field: :is_registered, message: "already registered"}
         else
           :ok
         end
-      end
+      end)
 
       # Require email for registration
-      validate present([:email])
+      validate(present([:email]))
 
       # Generate verification token
-      change fn changeset, _ ->
+      change(fn changeset, _ ->
         token = generate_verification_token()
+
         changeset
         |> Ash.Changeset.force_change_attribute(:is_registered, true)
         |> Ash.Changeset.force_change_attribute(:verification_token, token)
         |> Ash.Changeset.force_change_attribute(:email_verified, false)
-      end
+      end)
 
       # Send verification email
-      after_action fn _changeset, client ->
+      after_action(fn _changeset, client ->
         # In a real app, you would send a verification email here
         # EmailVerification.send_verification_email(client.email, client.verification_token)
         :ok
-      end
+      end)
 
       description("Convert unregistered client to registered client")
     end
@@ -241,15 +246,15 @@ defmodule RivaAsh.Resources.Client do
       accept([:verification_token])
       require_atomic?(false)
 
-      validate fn changeset, _ ->
+      validate(fn changeset, _ ->
         if Ash.Changeset.get_data(changeset, :email_verified) == true do
           {:error, field: :email_verified, message: "already verified"}
         else
           :ok
         end
-      end
+      end)
 
-      change fn changeset, _ ->
+      change(fn changeset, _ ->
         token = Ash.Changeset.get_attribute(changeset, :verification_token)
 
         if token == changeset.data.verification_token do
@@ -259,7 +264,7 @@ defmodule RivaAsh.Resources.Client do
         else
           Ash.Changeset.add_error(changeset, "Invalid verification token")
         end
-      end
+      end)
 
       description("Verify client's email address using verification token")
     end
@@ -268,31 +273,32 @@ defmodule RivaAsh.Resources.Client do
     create :find_or_create_for_booking do
       accept([:name, :email, :phone])
 
-      validate fn changeset, _ ->
+      validate(fn changeset, _ ->
         email = Ash.Changeset.get_attribute(changeset, :email)
         phone = Ash.Changeset.get_attribute(changeset, :phone)
 
         if (is_nil(email) or email == "") and (is_nil(phone) or phone == "") do
-          {:error, [
-            %{field: :email, message: "must provide at least one of email or phone"},
-            %{field: :phone, message: "must provide at least one of email or phone"}
-          ]}
+          {:error,
+           [
+             %{field: :email, message: "must provide at least one of email or phone"},
+             %{field: :phone, message: "must provide at least one of email or phone"}
+           ]}
         else
           :ok
         end
-      end
+      end)
 
       # Use business_id + email as upsert key if available
-      upsert? true
-      upsert_identity :unique_email_per_business
+      upsert?(true)
+      upsert_identity(:unique_email_per_business)
 
-      change fn changeset, _ ->
+      change(fn changeset, _ ->
         changeset
         |> Ash.Changeset.force_change_attribute(:is_registered, false)
         |> Ash.Changeset.force_change_attribute(:email_verified, false)
-      end
+      end)
 
-      change fn changeset, _ ->
+      change(fn changeset, _ ->
         # If we're updating an existing client, preserve their registration status
         if Ash.Changeset.get_attribute(changeset, :id) do
           changeset
@@ -302,7 +308,7 @@ defmodule RivaAsh.Resources.Client do
             email_verified: false
           })
         end
-      end
+      end)
 
       description("Find existing client by email or create new unregistered client")
     end
@@ -351,34 +357,37 @@ defmodule RivaAsh.Resources.Client do
       allow_nil?(false)
       public?(true)
       description("The name of the client")
-      constraints [
+
+      constraints(
         min_length: 2,
         max_length: 100,
         trim?: true,
         allow_empty?: false
-      ]
+      )
     end
 
     attribute :email, :ci_string do
       allow_nil?(true)
       public?(true)
       description("Email address (required for registered clients)")
-      constraints [
+
+      constraints(
         max_length: 255,
         trim?: true,
         match: ~r/^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/
-      ]
+      )
     end
 
     attribute :phone, :string do
       allow_nil?(true)
       public?(true)
       description("Contact phone number")
-      constraints [
+
+      constraints(
         max_length: 20,
         trim?: true,
         match: ~r/^[\d\s\-\(\)\+]+$/
-      ]
+      )
     end
 
     attribute :is_registered, :boolean do
@@ -412,7 +421,7 @@ defmodule RivaAsh.Resources.Client do
 
   validations do
     # Email is required for registered clients
-    validate fn changeset, _ ->
+    validate(fn changeset, _ ->
       if Ash.Changeset.get_attribute(changeset, :is_registered) == true do
         case Ash.Changeset.get_attribute(changeset, :email) do
           nil -> {:error, field: :email, message: "is required for registered clients"}
@@ -422,7 +431,7 @@ defmodule RivaAsh.Resources.Client do
       else
         :ok
       end
-    end
+    end)
 
     # Email format validation for registered clients
     # Enhanced email validation
@@ -435,7 +444,7 @@ defmodule RivaAsh.Resources.Client do
     # validate(&RivaAsh.Validations.sanitize_text_input/2)
 
     # Business logic validation for registered clients
-    validate fn changeset, _ ->
+    validate(fn changeset, _ ->
       if Ash.Changeset.get_attribute(changeset, :is_registered) == true do
         case Ash.Changeset.get_attribute(changeset, :email) do
           email when is_binary(email) and email != "" -> :ok
@@ -444,7 +453,7 @@ defmodule RivaAsh.Resources.Client do
       else
         :ok
       end
-    end
+    end)
 
     # Required fields
     validate(present([:name]), message: "Name is required")

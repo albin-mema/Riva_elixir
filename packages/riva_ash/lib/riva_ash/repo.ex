@@ -13,6 +13,4 @@ defmodule RivaAsh.Repo do
   def min_pg_version do
     %Version{major: 13, minor: 0, patch: 0}
   end
-
-
 end

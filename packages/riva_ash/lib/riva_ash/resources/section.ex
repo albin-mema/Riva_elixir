@@ -180,8 +180,6 @@ defmodule RivaAsh.Resources.Section do
       public?(true)
       description("Items contained in this section")
     end
-
-
   end
 
   identities do
@@ -193,11 +191,13 @@ defmodule RivaAsh.Resources.Section do
     RivaAsh.Resources.Section
     |> Ash.read!()
     |> Enum.map(fn section ->
-      business_name = if section.business do
-        section.business.name
-      else
-        "Unknown Business"
-      end
+      business_name =
+        if section.business do
+          section.business.name
+        else
+          "Unknown Business"
+        end
+
       {section.id, "#{section.name} (#{business_name})"}
     end)
   end

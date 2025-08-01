@@ -11,23 +11,23 @@ defmodule RivaAshWeb.Components.Templates.CalendarTemplate do
   @doc """
   Renders a calendar template.
   """
-  attr :title, :string, default: "Calendar"
-  attr :description, :string, default: nil
-  attr :current_date, :string, required: true
-  attr :view_mode, :string, default: "month"
-  attr :events, :list, default: []
-  attr :filters, :list, default: []
-  attr :filter_values, :map, default: %{}
-  attr :on_date_click, :string, required: true
-  attr :on_event_click, :string, default: nil
-  attr :on_view_change, :string, required: true
-  attr :on_navigate, :string, required: true
-  attr :show_filters, :boolean, default: true
-  attr :class, :string, default: ""
-  attr :rest, :global
+  attr(:title, :string, default: "Calendar")
+  attr(:description, :string, default: nil)
+  attr(:current_date, :string, required: true)
+  attr(:view_mode, :string, default: "month")
+  attr(:events, :list, default: [])
+  attr(:filters, :list, default: [])
+  attr(:filter_values, :map, default: %{})
+  attr(:on_date_click, :string, required: true)
+  attr(:on_event_click, :string, default: nil)
+  attr(:on_view_change, :string, required: true)
+  attr(:on_navigate, :string, required: true)
+  attr(:show_filters, :boolean, default: true)
+  attr(:class, :string, default: "")
+  attr(:rest, :global)
 
-  slot :actions, required: false
-  slot :sidebar_content, required: false
+  slot(:actions, required: false)
+  slot(:sidebar_content, required: false)
 
   def calendar_template(assigns) do
     ~H"""

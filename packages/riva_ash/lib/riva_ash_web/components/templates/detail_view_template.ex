@@ -10,21 +10,22 @@ defmodule RivaAshWeb.Components.Templates.DetailViewTemplate do
   @doc """
   Renders a detail view template.
   """
-  attr :title, :string, required: true
-  attr :subtitle, :string, default: nil
-  attr :description, :string, default: nil
-  attr :item, :map, required: true
-  attr :tabs, :list, default: []
-  attr :active_tab, :string, default: "details"
-  attr :on_tab_change, :string, default: "change_tab"
-  attr :breadcrumbs, :list, default: []
-  attr :class, :string, default: ""
-  attr :rest, :global
+  attr(:title, :string, required: true)
+  attr(:subtitle, :string, default: nil)
+  attr(:description, :string, default: nil)
+  attr(:item, :map, required: true)
+  attr(:tabs, :list, default: [])
+  attr(:active_tab, :string, default: "details")
+  attr(:on_tab_change, :string, default: "change_tab")
+  attr(:breadcrumbs, :list, default: [])
+  attr(:class, :string, default: "")
+  attr(:rest, :global)
 
-  slot :actions, required: false
-  slot :header_content, required: false
+  slot(:actions, required: false)
+  slot(:header_content, required: false)
+
   slot :tab_content, required: true do
-    attr :tab_id, :string, required: true
+    attr(:tab_id, :string, required: true)
   end
 
   def detail_view_template(assigns) do

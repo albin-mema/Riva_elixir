@@ -31,12 +31,15 @@ defmodule RivaAshWeb.EmployeeLive do
         |> assign(:show_confirm_delete_modal, false)
         |> assign(:employee_to_delete, nil)
         |> ErrorHelpers.success()
+
       {:error, :user_not_authenticated} ->
         socket
         |> put_flash(:error, "You must be logged in to access this page.")
         |> redirect(to: "/sign-in")
         |> ErrorHelpers.success()
-      {:error, reason} -> ErrorHelpers.failure(reason)
+
+      {:error, reason} ->
+        ErrorHelpers.failure(reason)
     end
   end
 
@@ -51,12 +54,15 @@ defmodule RivaAshWeb.EmployeeLive do
         |> assign(:employees, employees)
         |> assign(:meta, meta)
         |> then(&{:noreply, &1})
-      _ -> # This case should ideally not be hit if list_employees_with_flop always returns {employees, meta}
+
+      # This case should ideally not be hit if list_employees_with_flop always returns {employees, meta}
+      _ ->
         socket =
           socket
           |> assign(:employees, [])
           |> assign(:meta, %{})
           |> put_flash(:error, "Failed to load employees")
+
         {:noreply, socket}
     end
   end
@@ -221,7 +227,11 @@ defmodule RivaAshWeb.EmployeeLive do
       socket
       |> assign(:show_form, !socket.assigns.show_form)
       |> assign(:editing_employee, nil)
-      |> assign(:form, AshPhoenix.Form.for_create(Employee, :create, actor: socket.assigns.current_user) |> to_form())
+      |> assign(
+        :form,
+        AshPhoenix.Form.for_create(Employee, :create, actor: socket.assigns.current_user)
+        |> to_form()
+      )
 
     {:noreply, socket}
   end
@@ -232,7 +242,11 @@ defmodule RivaAshWeb.EmployeeLive do
       socket
       |> assign(:show_form, false)
       |> assign(:editing_employee, nil)
-      |> assign(:form, AshPhoenix.Form.for_create(Employee, :create, actor: socket.assigns.current_user) |> to_form())
+      |> assign(
+        :form,
+        AshPhoenix.Form.for_create(Employee, :create, actor: socket.assigns.current_user)
+        |> to_form()
+      )
 
     {:noreply, socket}
   end
@@ -241,7 +255,9 @@ defmodule RivaAshWeb.EmployeeLive do
   def handle_event("validate_employee", %{"form" => params}, socket) do
     form =
       if socket.assigns.editing_employee do
-        AshPhoenix.Form.for_update(socket.assigns.editing_employee, :update, actor: socket.assigns.current_user)
+        AshPhoenix.Form.for_update(socket.assigns.editing_employee, :update,
+          actor: socket.assigns.current_user
+        )
       else
         AshPhoenix.Form.for_create(Employee, :create, actor: socket.assigns.current_user)
       end
@@ -271,7 +287,10 @@ defmodule RivaAshWeb.EmployeeLive do
           |> assign(:loading, false)
           |> assign(:show_form, false)
           |> assign(:editing_employee, nil)
-          |> assign(:form, AshPhoenix.Form.for_create(Employee, :create, actor: user) |> to_form())
+          |> assign(
+            :form,
+            AshPhoenix.Form.for_create(Employee, :create, actor: user) |> to_form()
+          )
           |> put_flash(:info, "Employee #{action_text} successfully!")
           |> push_patch(to: ~p"/employees")
 
@@ -279,6 +298,7 @@ defmodule RivaAshWeb.EmployeeLive do
 
       {:error, form} ->
         IO.puts("DEBUG: Form submission failed: #{inspect(form.errors)}")
+
         socket =
           socket
           |> assign(:loading, false)
@@ -336,7 +356,8 @@ defmodule RivaAshWeb.EmployeeLive do
   def handle_event("confirm_delete_employee", %{"id" => id}, socket) do
     user = socket.assigns.current_user
 
-    socket = assign(socket, :show_confirm_delete_modal, false) # Hide modal immediately
+    # Hide modal immediately
+    socket = assign(socket, :show_confirm_delete_modal, false)
 
     case Employee.by_id(id, actor: user) do
       {:ok, employee} ->
@@ -344,7 +365,10 @@ defmodule RivaAshWeb.EmployeeLive do
           :ok ->
             socket =
               socket
-              |> put_flash(:info, "Employee \"#{employee.first_name} #{employee.last_name}\" deleted successfully!")
+              |> put_flash(
+                :info,
+                "Employee \"#{employee.first_name} #{employee.last_name}\" deleted successfully!"
+              )
               |> push_patch(to: ~p"/employees")
 
             {:noreply, socket}
@@ -395,12 +419,14 @@ defmodule RivaAshWeb.EmployeeLive do
 
   defp apply_sorting(employees, %Flop{order_by: nil}), do: employees
   defp apply_sorting(employees, %Flop{order_by: []}), do: employees
+
   defp apply_sorting(employees, %Flop{order_by: order_by, order_directions: order_directions}) do
     # Default to :asc if no directions provided
     directions = order_directions || Enum.map(order_by, fn _ -> :asc end)
 
     # Zip order_by and directions, pad directions with :asc if needed
-    order_specs = Enum.zip_with([order_by, directions], fn [field, direction] -> {field, direction} end)
+    order_specs =
+      Enum.zip_with([order_by, directions], fn [field, direction] -> {field, direction} end)
 
     Enum.sort(employees, fn emp1, emp2 ->
       compare_employees(emp1, emp2, order_specs)
@@ -408,6 +434,7 @@ defmodule RivaAshWeb.EmployeeLive do
   end
 
   defp compare_employees(_emp1, _emp2, []), do: true
+
   defp compare_employees(emp1, emp2, [{field, direction} | rest]) do
     val1 = get_field_value(emp1, field)
     val2 = get_field_value(emp2, field)
@@ -446,6 +473,7 @@ defmodule RivaAshWeb.EmployeeLive do
         offset = (page - 1) * page_size
 
         paginated = employees |> Enum.drop(offset) |> Enum.take(page_size)
+
         pagination_info = %{
           type: :page,
           page: page,
@@ -453,6 +481,7 @@ defmodule RivaAshWeb.EmployeeLive do
           offset: offset,
           total_count: total_count
         }
+
         {paginated, pagination_info}
 
       # Offset-based pagination
@@ -461,23 +490,27 @@ defmodule RivaAshWeb.EmployeeLive do
         limit = flop.limit
 
         paginated = employees |> Enum.drop(offset) |> Enum.take(limit)
+
         pagination_info = %{
           type: :offset,
           offset: offset,
           limit: limit,
           total_count: total_count
         }
+
         {paginated, pagination_info}
 
       # Limit only
       flop.limit ->
         limit = flop.limit
         paginated = Enum.take(employees, limit)
+
         pagination_info = %{
           type: :limit,
           limit: limit,
           total_count: total_count
         }
+
         {paginated, pagination_info}
 
       # No pagination
@@ -486,6 +519,7 @@ defmodule RivaAshWeb.EmployeeLive do
           type: :none,
           total_count: total_count
         }
+
         {employees, pagination_info}
     end
   end
@@ -553,10 +587,12 @@ defmodule RivaAshWeb.EmployeeLive do
       if user.role == :admin do
         # Admins can see all employees - use authorize?: false to bypass permission issues
         IO.puts("DEBUG: User is admin, loading all employees")
+
         case Employee.read(authorize?: false) do
           {:ok, employees} ->
             IO.puts("DEBUG: Successfully loaded #{length(employees)} employees")
             employees
+
           error ->
             IO.puts("DEBUG: Error loading employees: #{inspect(error)}")
             []
@@ -570,9 +606,16 @@ defmodule RivaAshWeb.EmployeeLive do
         case Employee.read(authorize?: false) do
           {:ok, all_employees} ->
             IO.puts("DEBUG: Loaded #{length(all_employees)} total employees")
-            filtered_employees = Enum.filter(all_employees, fn emp -> emp.business_id in user_business_ids end)
-            IO.puts("DEBUG: Filtered to #{length(filtered_employees)} employees for user's businesses")
+
+            filtered_employees =
+              Enum.filter(all_employees, fn emp -> emp.business_id in user_business_ids end)
+
+            IO.puts(
+              "DEBUG: Filtered to #{length(filtered_employees)} employees for user's businesses"
+            )
+
             filtered_employees
+
           error ->
             IO.puts("DEBUG: Error loading employees: #{inspect(error)}")
             []
@@ -592,10 +635,12 @@ defmodule RivaAshWeb.EmployeeLive do
       if user.role == :admin do
         # Admins can see all businesses
         IO.puts("DEBUG: User is admin, loading all businesses")
+
         case Business.read(authorize?: false) do
           {:ok, businesses} ->
             IO.puts("DEBUG: Successfully loaded #{length(businesses)} businesses")
             businesses
+
           error ->
             IO.puts("DEBUG: Error loading businesses: #{inspect(error)}")
             []
@@ -603,11 +648,15 @@ defmodule RivaAshWeb.EmployeeLive do
       else
         # Regular users can only see their own businesses
         IO.puts("DEBUG: User is not admin, loading only owned businesses")
+
         case Business.read(authorize?: false) do
           {:ok, all_businesses} ->
-            filtered_businesses = Enum.filter(all_businesses, fn business -> business.owner_id == user.id end)
+            filtered_businesses =
+              Enum.filter(all_businesses, fn business -> business.owner_id == user.id end)
+
             IO.puts("DEBUG: Successfully loaded #{length(filtered_businesses)} owned businesses")
             filtered_businesses
+
           error ->
             IO.puts("DEBUG: Error loading businesses for filtering: #{inspect(error)}")
             []
@@ -620,8 +669,6 @@ defmodule RivaAshWeb.EmployeeLive do
     end
   end
 
-
-
   defp list_user_businesses(user) do
     list_user_businesses_simple(user)
   end
@@ -630,7 +677,9 @@ defmodule RivaAshWeb.EmployeeLive do
     user_token = session["user_token"]
 
     if user_token do
-      with {:ok, user_id} <- Phoenix.Token.verify(RivaAshWeb.Endpoint, "user_auth", user_token, max_age: 86_400) |> ErrorHelpers.to_result(),
+      with {:ok, user_id} <-
+             Phoenix.Token.verify(RivaAshWeb.Endpoint, "user_auth", user_token, max_age: 86_400)
+             |> ErrorHelpers.to_result(),
            {:ok, user} <- Ash.get(RivaAsh.Accounts.User, user_id) |> ErrorHelpers.to_result() do
         ErrorHelpers.success(user)
       else

@@ -12,12 +12,12 @@ defmodule RivaAsh.PropertyTesting.BrowserExecutor do
   @type execution_result :: {:ok, map()} | {:error, term()}
   @type flow_step :: {atom(), map()}
   @type execution_context :: %{
-    conn: term(),
-    current_state: atom(),
-    user_data: map(),
-    created_resources: list(),
-    screenshots: list()
-  }
+          conn: term(),
+          current_state: atom(),
+          user_data: map(),
+          created_resources: list(),
+          screenshots: list()
+        }
 
   @doc """
   Execute a complete user flow in the browser.
@@ -94,11 +94,13 @@ defmodule RivaAsh.PropertyTesting.BrowserExecutor do
 
   defp execute_flow_steps([], context) do
     IO.puts("🏁 All flow steps completed")
-    {:ok, %{
-      final_state: context.current_state,
-      created_resources: context.created_resources,
-      screenshots: context.screenshots
-    }}
+
+    {:ok,
+     %{
+       final_state: context.current_state,
+       created_resources: context.created_resources,
+       screenshots: context.screenshots
+     }}
   end
 
   defp execute_flow_steps([step | remaining_steps], context) do
@@ -114,6 +116,7 @@ defmodule RivaAsh.PropertyTesting.BrowserExecutor do
         IO.puts("   ✅ Step completed successfully")
         IO.puts("   New state: #{updated_context.current_state}")
         execute_flow_steps(remaining_steps, updated_context)
+
       {:error, reason} ->
         IO.puts("   ❌ Step failed: #{inspect(reason)}")
         {:error, {reason, step, context.current_state}}
@@ -133,6 +136,7 @@ defmodule RivaAsh.PropertyTesting.BrowserExecutor do
       new_state = determine_state_after_visit(path, context.current_state)
 
       IO.puts("   📍 Successfully navigated to: #{path}")
+
       if new_state != context.current_state do
         IO.puts("   🔄 State changed: #{context.current_state} → #{new_state}")
       end
@@ -152,13 +156,14 @@ defmodule RivaAsh.PropertyTesting.BrowserExecutor do
     IO.puts("      Password: [HIDDEN]")
 
     try do
-      updated_conn = context.conn
-      |> visit("/register")
-      |> fill_in("Name", with: user_data.name)
-      |> fill_in("Email", with: user_data.email)
-      |> fill_in("Password", with: user_data.password)
-      |> fill_in("Confirm Password", with: user_data.password_confirmation)
-      |> click_button("Create Account")
+      updated_conn =
+        context.conn
+        |> visit("/register")
+        |> fill_in("Name", with: user_data.name)
+        |> fill_in("Email", with: user_data.email)
+        |> fill_in("Password", with: user_data.password)
+        |> fill_in("Confirm Password", with: user_data.password_confirmation)
+        |> click_button("Create Account")
 
       # Verify registration succeeded
       updated_conn = updated_conn |> assert_path("/sign-in")
@@ -167,11 +172,13 @@ defmodule RivaAsh.PropertyTesting.BrowserExecutor do
 
       IO.puts("   ✅ Registration successful, redirected to sign-in")
 
-      {:ok, %{context |
-        conn: updated_conn,
-        current_state: :anonymous,
-        user_data: Map.merge(context.user_data, user_data)
-      }}
+      {:ok,
+       %{
+         context
+         | conn: updated_conn,
+           current_state: :anonymous,
+           user_data: Map.merge(context.user_data, user_data)
+       }}
     rescue
       error ->
         IO.puts("   ❌ Registration failed: #{inspect(error)}")
@@ -186,20 +193,22 @@ defmodule RivaAsh.PropertyTesting.BrowserExecutor do
     IO.puts("      Password: [HIDDEN]")
 
     try do
-      updated_conn = context.conn
-      |> visit("/sign-in")
-      |> fill_in("Email", with: login_data.email)
-      |> fill_in("Password", with: login_data.password)
-      |> click_button("Sign In")
+      updated_conn =
+        context.conn
+        |> visit("/sign-in")
+        |> fill_in("Email", with: login_data.email)
+        |> fill_in("Password", with: login_data.password)
+        |> click_button("Sign In")
 
       # Check if login succeeded (should redirect to dashboard or businesses)
       current_path = get_current_path(updated_conn)
 
-      new_state = if current_path in ["/dashboard", "/businesses"] do
-        :authenticated
-      else
-        :error
-      end
+      new_state =
+        if current_path in ["/dashboard", "/businesses"] do
+          :authenticated
+        else
+          :error
+        end
 
       context = maybe_take_screenshot(context, "login_#{new_state}")
 
@@ -209,11 +218,13 @@ defmodule RivaAsh.PropertyTesting.BrowserExecutor do
         IO.puts("   ⚠️  Login result unclear, current path: #{current_path}")
       end
 
-      {:ok, %{context |
-        conn: updated_conn,
-        current_state: new_state,
-        user_data: Map.merge(context.user_data, login_data)
-      }}
+      {:ok,
+       %{
+         context
+         | conn: updated_conn,
+           current_state: new_state,
+           user_data: Map.merge(context.user_data, login_data)
+       }}
     rescue
       error ->
         IO.puts("   ❌ Login failed: #{inspect(error)}")
@@ -224,18 +235,16 @@ defmodule RivaAsh.PropertyTesting.BrowserExecutor do
 
   defp execute_logout(_data, context) do
     try do
-      updated_conn = context.conn
-      |> visit("/dashboard")  # Ensure we're on an authenticated page
-      |> click_button("Sign Out")
-      |> assert_path("/sign-in")
+      updated_conn =
+        context.conn
+        # Ensure we're on an authenticated page
+        |> visit("/dashboard")
+        |> click_button("Sign Out")
+        |> assert_path("/sign-in")
 
       context = maybe_take_screenshot(context, "logout_success")
 
-      {:ok, %{context |
-        conn: updated_conn,
-        current_state: :anonymous,
-        user_data: %{}
-      }}
+      {:ok, %{context | conn: updated_conn, current_state: :anonymous, user_data: %{}}}
     rescue
       error ->
         context = maybe_take_screenshot(context, "logout_error")
@@ -251,10 +260,11 @@ defmodule RivaAsh.PropertyTesting.BrowserExecutor do
     try do
       path = "/#{resource_type}s/new"
 
-      updated_conn = context.conn
-      |> visit(path)
-      |> fill_resource_form(resource_type, data)
-      |> click_button("Create")
+      updated_conn =
+        context.conn
+        |> visit(path)
+        |> fill_resource_form(resource_type, data)
+        |> click_button("Create")
 
       # Verify creation succeeded
       updated_conn = updated_conn |> assert_path("/#{resource_type}s")
@@ -265,12 +275,16 @@ defmodule RivaAsh.PropertyTesting.BrowserExecutor do
 
       context = maybe_take_screenshot(context, "create_#{resource_type}_success")
 
-      IO.puts("   ✅ #{String.capitalize(to_string(resource_type))} created successfully (ID: #{resource_id})")
+      IO.puts(
+        "   ✅ #{String.capitalize(to_string(resource_type))} created successfully (ID: #{resource_id})"
+      )
 
-      {:ok, %{context |
-        conn: updated_conn,
-        created_resources: [created_resource | context.created_resources]
-      }}
+      {:ok,
+       %{
+         context
+         | conn: updated_conn,
+           created_resources: [created_resource | context.created_resources]
+       }}
     rescue
       error ->
         IO.puts("   ❌ Failed to create #{resource_type}: #{inspect(error)}")
@@ -283,10 +297,11 @@ defmodule RivaAsh.PropertyTesting.BrowserExecutor do
     try do
       path = "/#{resource_type}s/#{id}/edit"
 
-      updated_conn = context.conn
-      |> visit(path)
-      |> fill_resource_form(resource_type, data)
-      |> click_button("Update")
+      updated_conn =
+        context.conn
+        |> visit(path)
+        |> fill_resource_form(resource_type, data)
+        |> click_button("Update")
 
       context = maybe_take_screenshot(context, "update_#{resource_type}_success")
 
@@ -300,10 +315,11 @@ defmodule RivaAsh.PropertyTesting.BrowserExecutor do
 
   defp execute_delete_resource(%{resource_type: resource_type, id: id}, context) do
     try do
-      updated_conn = context.conn
-      |> visit("/#{resource_type}s")
-      |> click_link("Delete", href: "/#{resource_type}s/#{id}")
-      |> assert_path("/#{resource_type}s")
+      updated_conn =
+        context.conn
+        |> visit("/#{resource_type}s")
+        |> click_link("Delete", href: "/#{resource_type}s/#{id}")
+        |> assert_path("/#{resource_type}s")
 
       context = maybe_take_screenshot(context, "delete_#{resource_type}_success")
 
@@ -319,20 +335,13 @@ defmodule RivaAsh.PropertyTesting.BrowserExecutor do
     # Simulate session expiration by clearing session
     updated_conn = Phoenix.ConnTest.build_conn()
 
-    {:ok, %{context |
-      conn: updated_conn,
-      current_state: :error,
-      user_data: %{}
-    }}
+    {:ok, %{context | conn: updated_conn, current_state: :error, user_data: %{}}}
   end
 
   defp execute_clear_error(_data, context) do
     updated_conn = context.conn |> visit("/")
 
-    {:ok, %{context |
-      conn: updated_conn,
-      current_state: :anonymous
-    }}
+    {:ok, %{context | conn: updated_conn, current_state: :anonymous}}
   end
 
   defp execute_generic_action(action, _data, context) do
@@ -395,7 +404,8 @@ defmodule RivaAsh.PropertyTesting.BrowserExecutor do
         context.conn |> screenshot(screenshot_path)
         %{context | screenshots: [screenshot_path | context.screenshots]}
       rescue
-        _ -> context  # Continue if screenshot fails
+        # Continue if screenshot fails
+        _ -> context
       end
     else
       context

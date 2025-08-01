@@ -9,16 +9,16 @@ defmodule RivaAshWeb.Components.Navigation.QuickActions do
   @doc """
   Renders quick action shortcuts.
   """
-  attr :actions, :list, default: []
-  attr :layout, :string, default: "horizontal", values: ~w(horizontal vertical grid)
-  attr :show_labels, :boolean, default: true
-  attr :size, :string, default: "md", values: ~w(sm md lg)
-  attr :class, :string, default: ""
-  attr :rest, :global
+  attr(:actions, :list, default: [])
+  attr(:layout, :string, default: "horizontal", values: ~w(horizontal vertical grid))
+  attr(:show_labels, :boolean, default: true)
+  attr(:size, :string, default: "md", values: ~w(sm md lg))
+  attr(:class, :string, default: "")
+  attr(:rest, :global)
 
   def quick_actions(assigns) do
     assigns = assign(assigns, :default_actions, get_default_actions())
-    
+
     ~H"""
     <!-- Quick actions implementation will go here -->
     <div {@rest} class={["quick-actions", "layout-#{@layout}", @class]}>

@@ -14,10 +14,12 @@ defmodule RivaAsh.Changes do
     case Ash.Changeset.get_argument_or_attribute(changeset, :item_id) do
       nil ->
         changeset
+
       item_id ->
         case Ash.get(RivaAsh.Resources.Item, item_id, domain: RivaAsh.Domain) do
           {:ok, item} ->
             Ash.Changeset.force_change_attribute(changeset, :business_id, item.business_id)
+
           {:error, _} ->
             # Item not found - let validation handle this error
             changeset
@@ -32,10 +34,12 @@ defmodule RivaAsh.Changes do
     case Ash.Changeset.get_argument_or_attribute(changeset, :client_id) do
       nil ->
         changeset
+
       client_id ->
         case Ash.get(RivaAsh.Resources.Client, client_id, domain: RivaAsh.Domain) do
           {:ok, client} ->
             Ash.Changeset.force_change_attribute(changeset, :business_id, client.business_id)
+
           {:error, _} ->
             # Client not found - let validation handle this error
             changeset
@@ -50,10 +54,12 @@ defmodule RivaAsh.Changes do
     case Ash.Changeset.get_argument_or_attribute(changeset, :employee_id) do
       nil ->
         changeset
+
       employee_id ->
         case Ash.get(RivaAsh.Resources.Employee, employee_id, domain: RivaAsh.Domain) do
           {:ok, employee} ->
             Ash.Changeset.force_change_attribute(changeset, :business_id, employee.business_id)
+
           {:error, _} ->
             # Employee not found - let validation handle this error
             changeset
@@ -68,10 +74,12 @@ defmodule RivaAsh.Changes do
     case Ash.Changeset.get_argument_or_attribute(changeset, :reservation_id) do
       nil ->
         changeset
+
       reservation_id ->
         case Ash.get(RivaAsh.Resources.Reservation, reservation_id, domain: RivaAsh.Domain) do
           {:ok, reservation} ->
             Ash.Changeset.force_change_attribute(changeset, :business_id, reservation.business_id)
+
           {:error, _} ->
             # Reservation not found - let validation handle this error
             changeset

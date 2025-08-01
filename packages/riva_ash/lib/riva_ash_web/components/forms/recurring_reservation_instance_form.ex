@@ -23,15 +23,15 @@ defmodule RivaAshWeb.Components.Forms.RecurringReservationInstanceForm do
         on_cancel="cancel_form"
       />
   """
-  attr :form, :map, required: true
-  attr :editing, :boolean, default: false
-  attr :loading, :boolean, default: false
-  attr :recurring_reservations, :list, default: []
-  attr :reservations, :list, default: []
-  attr :on_submit, :string, required: true
-  attr :on_change, :string, required: true
-  attr :on_cancel, :string, required: true
-  attr :class, :string, default: ""
+  attr(:form, :map, required: true)
+  attr(:editing, :boolean, default: false)
+  attr(:loading, :boolean, default: false)
+  attr(:recurring_reservations, :list, default: [])
+  attr(:reservations, :list, default: [])
+  attr(:on_submit, :string, required: true)
+  attr(:on_change, :string, required: true)
+  attr(:on_cancel, :string, required: true)
+  attr(:class, :string, default: "")
 
   def recurring_reservation_instance_form(assigns) do
     ~H"""

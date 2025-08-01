@@ -40,8 +40,8 @@ defmodule RivaAsh.Resources.Business do
 
     # Users can see their own businesses
     policy action_type(:read) do
-      authorize_if actor_attribute_equals(:role, :admin)
-      authorize_if expr(owner_id == ^actor(:id))
+      authorize_if(actor_attribute_equals(:role, :admin))
+      authorize_if(expr(owner_id == ^actor(:id)))
     end
 
     # Public search action requires no authentication
@@ -104,7 +104,16 @@ defmodule RivaAsh.Resources.Business do
     defaults([:read, :destroy])
 
     update :update do
-      accept([:name, :description, :is_public_searchable, :public_description, :city, :country, :address])
+      accept([
+        :name,
+        :description,
+        :is_public_searchable,
+        :public_description,
+        :city,
+        :country,
+        :address
+      ])
+
       primary?(true)
 
       validate(present([:name]), message: "Business name is required")
@@ -115,7 +124,17 @@ defmodule RivaAsh.Resources.Business do
     end
 
     create :create do
-      accept([:name, :description, :owner_id, :is_public_searchable, :public_description, :city, :country, :address])
+      accept([
+        :name,
+        :description,
+        :owner_id,
+        :is_public_searchable,
+        :public_description,
+        :city,
+        :country,
+        :address
+      ])
+
       primary?(true)
 
       validate(present([:name]), message: "Business name is required")
@@ -157,23 +176,32 @@ defmodule RivaAsh.Resources.Business do
       argument(:country, :string, allow_nil?: true)
 
       prepare(fn query, _context ->
-        query = case Ash.Query.get_argument(query, :search_term) do
-          nil -> query
-          "" -> query
-          search_term ->
-            Ash.Query.filter(query, expr(
-              ilike(name, ^"%#{search_term}%") or
-              ilike(public_description, ^"%#{search_term}%") or
-              ilike(city, ^"%#{search_term}%") or
-              ilike(address, ^"%#{search_term}%")
-            ))
-        end
+        query =
+          case Ash.Query.get_argument(query, :search_term) do
+            nil ->
+              query
 
-        query = case Ash.Query.get_argument(query, :city) do
-          nil -> query
-          "" -> query
-          city -> Ash.Query.filter(query, expr(ilike(city, ^"%#{city}%")))
-        end
+            "" ->
+              query
+
+            search_term ->
+              Ash.Query.filter(
+                query,
+                expr(
+                  ilike(name, ^"%#{search_term}%") or
+                    ilike(public_description, ^"%#{search_term}%") or
+                    ilike(city, ^"%#{search_term}%") or
+                    ilike(address, ^"%#{search_term}%")
+                )
+              )
+          end
+
+        query =
+          case Ash.Query.get_argument(query, :city) do
+            nil -> query
+            "" -> query
+            city -> Ash.Query.filter(query, expr(ilike(city, ^"%#{city}%")))
+          end
 
         case Ash.Query.get_argument(query, :country) do
           nil -> query
@@ -194,15 +222,15 @@ defmodule RivaAsh.Resources.Business do
     end
 
     action :create_complete_setup, :struct do
-      constraints instance_of: RivaAsh.Resources.Item
-      argument :business_name, :string, allow_nil?: false
-      argument :business_description, :string, allow_nil?: true
-      argument :section_name, :string, allow_nil?: false
-      argument :section_description, :string, allow_nil?: true
-      argument :item_name, :string, allow_nil?: false
-      argument :item_description, :string, allow_nil?: true
-      argument :item_capacity, :integer, allow_nil?: false, default: 1
-      run RivaAsh.Reactors.ExampleReactor
+      constraints(instance_of: RivaAsh.Resources.Item)
+      argument(:business_name, :string, allow_nil?: false)
+      argument(:business_description, :string, allow_nil?: true)
+      argument(:section_name, :string, allow_nil?: false)
+      argument(:section_description, :string, allow_nil?: true)
+      argument(:item_name, :string, allow_nil?: false)
+      argument(:item_description, :string, allow_nil?: true)
+      argument(:item_capacity, :integer, allow_nil?: false, default: 1)
+      run(RivaAsh.Reactors.ExampleReactor)
     end
   end
 
@@ -300,6 +328,7 @@ defmodule RivaAsh.Resources.Business do
   def get_owner(%{owner_id: owner_id}) when not is_nil(owner_id) do
     Ash.get(RivaAsh.Accounts.User, owner_id, domain: RivaAsh.Accounts)
   end
+
   def get_owner(_), do: {:ok, nil}
 
   @doc """

@@ -47,8 +47,10 @@ defmodule RivaAshWeb.ReservationLive do
         rescue
           error in [Ash.Error.Forbidden, Ash.Error.Invalid] ->
             {:ok, redirect(socket, to: "/access-denied")}
+
           error ->
-            {:ok, socket |> assign(:error_message, "Failed to load data: #{Exception.message(error)}")}
+            {:ok,
+             socket |> assign(:error_message, "Failed to load data: #{Exception.message(error)}")}
         end
 
       {:error, :not_authenticated} ->
@@ -68,12 +70,14 @@ defmodule RivaAshWeb.ReservationLive do
         |> assign(:reservations, reservations)
         |> assign(:meta, meta)
         |> then(&{:noreply, &1})
+
       _ ->
         socket =
           socket
           |> assign(:reservations, [])
           |> assign(:meta, %{})
           |> assign(:error_message, "Failed to load reservations")
+
         {:noreply, socket}
     end
   end
@@ -292,6 +296,7 @@ defmodule RivaAshWeb.ReservationLive do
           socket
           |> assign(:error_message, "Reservation not found.")
           |> assign(:show_form, false)
+
         {:noreply, socket}
     end
   end
@@ -323,6 +328,7 @@ defmodule RivaAshWeb.ReservationLive do
 
           {:error, error} ->
             error_message = format_error_message(error)
+
             socket =
               socket
               |> assign(:loading, false)
@@ -333,6 +339,7 @@ defmodule RivaAshWeb.ReservationLive do
 
       {:error, error} ->
         error_message = format_error_message(error)
+
         socket =
           socket
           |> assign(:loading, false)
@@ -359,7 +366,9 @@ defmodule RivaAshWeb.ReservationLive do
   def handle_event("validate_reservation", %{"form" => params}, socket) do
     form =
       if socket.assigns.editing_reservation do
-        AshPhoenix.Form.for_update(socket.assigns.editing_reservation, :update, actor: socket.assigns.current_user)
+        AshPhoenix.Form.for_update(socket.assigns.editing_reservation, :update,
+          actor: socket.assigns.current_user
+        )
       else
         AshPhoenix.Form.for_create(Reservation, :create, actor: socket.assigns.current_user)
       end
@@ -459,12 +468,14 @@ defmodule RivaAshWeb.ReservationLive do
 
   defp apply_sorting(reservations, %Flop{order_by: nil}), do: reservations
   defp apply_sorting(reservations, %Flop{order_by: []}), do: reservations
+
   defp apply_sorting(reservations, %Flop{order_by: order_by, order_directions: order_directions}) do
     # Default to :asc if no directions provided
     directions = order_directions || Enum.map(order_by, fn _ -> :asc end)
 
     # Zip order_by and directions, pad directions with :asc if needed
-    order_specs = Enum.zip_with([order_by, directions], fn [field, direction] -> {field, direction} end)
+    order_specs =
+      Enum.zip_with([order_by, directions], fn [field, direction] -> {field, direction} end)
 
     Enum.sort(reservations, fn res1, res2 ->
       compare_reservations(res1, res2, order_specs)
@@ -472,6 +483,7 @@ defmodule RivaAshWeb.ReservationLive do
   end
 
   defp compare_reservations(_res1, _res2, []), do: true
+
   defp compare_reservations(res1, res2, [{field, direction} | rest]) do
     val1 = get_field_value(res1, field)
     val2 = get_field_value(res2, field)
@@ -509,6 +521,7 @@ defmodule RivaAshWeb.ReservationLive do
         offset = (page - 1) * page_size
 
         paginated = reservations |> Enum.drop(offset) |> Enum.take(page_size)
+
         pagination_info = %{
           type: :page,
           page: page,
@@ -516,6 +529,7 @@ defmodule RivaAshWeb.ReservationLive do
           offset: offset,
           total_count: total_count
         }
+
         {paginated, pagination_info}
 
       # Offset-based pagination
@@ -524,23 +538,27 @@ defmodule RivaAshWeb.ReservationLive do
         limit = flop.limit
 
         paginated = reservations |> Enum.drop(offset) |> Enum.take(limit)
+
         pagination_info = %{
           type: :offset,
           offset: offset,
           limit: limit,
           total_count: total_count
         }
+
         {paginated, pagination_info}
 
       # Limit only
       flop.limit ->
         limit = flop.limit
         paginated = Enum.take(reservations, limit)
+
         pagination_info = %{
           type: :limit,
           limit: limit,
           total_count: total_count
         }
+
         {paginated, pagination_info}
 
       # No pagination
@@ -549,6 +567,7 @@ defmodule RivaAshWeb.ReservationLive do
           type: :none,
           total_count: total_count
         }
+
         {reservations, pagination_info}
     end
   end
@@ -612,7 +631,10 @@ defmodule RivaAshWeb.ReservationLive do
   defp load_reservations_simple(user, business_ids) do
     try do
       # Get reservations for user's businesses
-      case Reservation.read(actor: user, filter: [item: [section: [plot: [business_id: [in: business_ids]]]]]) do
+      case Reservation.read(
+             actor: user,
+             filter: [item: [section: [plot: [business_id: [in: business_ids]]]]]
+           ) do
         {:ok, reservations} -> reservations
         _ -> []
       end

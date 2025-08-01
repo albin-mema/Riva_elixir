@@ -102,14 +102,15 @@ defmodule RivaAshWeb.AuthController do
       |> redirect(to: "/register")
     else
       case Accounts.register(%{
-        "name" => name,
-        "email" => email,
-        "password" => password
-      }) do
+             "name" => name,
+             "email" => email,
+             "password" => password
+           }) do
         {:ok, _user} ->
           conn
           |> put_flash(:info, "Registration successful! Please sign in.")
           |> redirect(to: "/sign-in")
+
         {:error, changeset} ->
           error_messages = format_changeset_errors(changeset)
 

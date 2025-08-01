@@ -9,15 +9,15 @@ defmodule RivaAshWeb.Components.Organisms.PermissionMatrix do
   @doc """
   Renders a permission matrix for employee role management.
   """
-  attr :employee, :map, required: true
-  attr :permissions, :list, required: true
-  attr :current_permissions, :list, default: []
-  attr :on_permission_change, :string, required: true
-  attr :on_save, :string, required: true
-  attr :on_cancel, :string, required: true
-  attr :loading, :boolean, default: false
-  attr :class, :string, default: ""
-  attr :rest, :global
+  attr(:employee, :map, required: true)
+  attr(:permissions, :list, required: true)
+  attr(:current_permissions, :list, default: [])
+  attr(:on_permission_change, :string, required: true)
+  attr(:on_save, :string, required: true)
+  attr(:on_cancel, :string, required: true)
+  attr(:loading, :boolean, default: false)
+  attr(:class, :string, default: "")
+  attr(:rest, :global)
 
   def permission_matrix(assigns) do
     ~H"""

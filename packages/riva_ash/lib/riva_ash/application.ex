@@ -16,36 +16,38 @@ defmodule RivaAsh.Application do
     Logger.info("Configured SAT solver: #{inspect(sat_solver)}")
 
     # Check if we should skip database setup
-    skip_db = Application.get_env(:riva_ash, :skip_database, false) or System.get_env("SKIP_DB") == "true"
+    skip_db =
+      Application.get_env(:riva_ash, :skip_database, false) or System.get_env("SKIP_DB") == "true"
 
     # Define the children to be supervised
-    children = [
-      # Start the Telemetry supervisor
-      RivaAshWeb.Telemetry,
-      # Start the PubSub system
-      {Phoenix.PubSub, name: RivaAsh.PubSub},
-      # Start the Endpoint (http/https)
-      RivaAshWeb.Endpoint,
-      # Start TwMerge.Cache
-      TwMerge.Cache,
-      # Start Finch for HTTP clients
-      {Finch, name: RivaAsh.Finch},
-      # Start background jobs
-      RivaAsh.Jobs.HoldCleanupJob,
-      # Start rate limiter for authentication
-      RivaAsh.Accounts.RateLimiter,
-      # DNS cluster for distributed nodes
-      {DNSCluster, query: Application.get_env(:riva_ash, :dns_cluster_query) || :ignore}
-    ] ++
     # Conditionally add database-related children
-    if skip_db do
-      []
-    else
+    children =
       [
-        # Start the Ecto repository
-        RivaAsh.Repo
-      ]
-    end
+        # Start the Telemetry supervisor
+        RivaAshWeb.Telemetry,
+        # Start the PubSub system
+        {Phoenix.PubSub, name: RivaAsh.PubSub},
+        # Start the Endpoint (http/https)
+        RivaAshWeb.Endpoint,
+        # Start TwMerge.Cache
+        TwMerge.Cache,
+        # Start Finch for HTTP clients
+        {Finch, name: RivaAsh.Finch},
+        # Start background jobs
+        RivaAsh.Jobs.HoldCleanupJob,
+        # Start rate limiter for authentication
+        RivaAsh.Accounts.RateLimiter,
+        # DNS cluster for distributed nodes
+        {DNSCluster, query: Application.get_env(:riva_ash, :dns_cluster_query) || :ignore}
+      ] ++
+        if skip_db do
+          []
+        else
+          [
+            # Start the Ecto repository
+            RivaAsh.Repo
+          ]
+        end
 
     # Log the final children list for debugging
     require Logger

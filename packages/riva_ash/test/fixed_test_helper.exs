@@ -6,7 +6,7 @@ Application.put_env(:ash, :disable_async?, true)
 Application.put_env(:ash, :validate_doc_references?, false)
 
 # Make sure we configure the SQL Sandbox BEFORE starting the application
-Application.put_env(:riva_ash, RivaAsh.Repo, [
+Application.put_env(:riva_ash, RivaAsh.Repo,
   username: "postgres",
   password: "postgres",
   hostname: "localhost",
@@ -14,7 +14,7 @@ Application.put_env(:riva_ash, RivaAsh.Repo, [
   pool: Ecto.Adapters.SQL.Sandbox,
   pool_size: 10,
   timeout: 5000
-])
+)
 
 # Set the application environment to test
 Application.put_env(:riva_ash, :environment, :test)
@@ -29,21 +29,31 @@ Application.load(:riva_ash)
 
 # Start the Repo separately with sandbox pool
 repo_sup_opts = Application.get_env(:riva_ash, RivaAsh.Repo)
-{:ok, _pid} = Supervisor.start_link([
-  {RivaAsh.Repo, repo_sup_opts}
-], strategy: :one_for_one)
+
+{:ok, _pid} =
+  Supervisor.start_link(
+    [
+      {RivaAsh.Repo, repo_sup_opts}
+    ],
+    strategy: :one_for_one
+  )
 
 # Verify the repo is using the sandbox pool
 IO.puts("Verifying SQL Sandbox setup...")
+
 case RivaAsh.Repo.__adapter__() do
   Ecto.Adapters.Postgres -> IO.puts("✓ Using Postgres adapter")
   adapter -> IO.puts("⚠ Using unexpected adapter: #{inspect(adapter)}")
 end
 
 repo_config = RivaAsh.Repo.config()
+
 case repo_config[:pool] do
-  Ecto.Adapters.SQL.Sandbox -> IO.puts("✓ SQL Sandbox pool configured correctly")
-  other_pool -> raise "⚠ Wrong pool configured: #{inspect(other_pool)}, expected Ecto.Adapters.SQL.Sandbox"
+  Ecto.Adapters.SQL.Sandbox ->
+    IO.puts("✓ SQL Sandbox pool configured correctly")
+
+  other_pool ->
+    raise "⚠ Wrong pool configured: #{inspect(other_pool)}, expected Ecto.Adapters.SQL.Sandbox"
 end
 
 # Configure SQL Sandbox for testing

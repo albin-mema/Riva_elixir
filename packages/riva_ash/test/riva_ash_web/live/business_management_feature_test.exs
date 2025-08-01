@@ -1,7 +1,7 @@
 defmodule RivaAshWeb.BusinessManagementFeatureTest do
   @moduledoc """
   Comprehensive UI tests for business management using standard Phoenix LiveView testing.
-  
+
   This test suite demonstrates basic LiveView testing capabilities for business management
   with authentication and basic UI flows.
   """
@@ -27,7 +27,11 @@ defmodule RivaAshWeb.BusinessManagementFeatureTest do
     end
 
     test "displays existing business", %{conn: conn, user: user} do
-      _business = create_business!(%{name: "Test Restaurant", description: "A cozy family restaurant"}, user)
+      _business =
+        create_business!(
+          %{name: "Test Restaurant", description: "A cozy family restaurant"},
+          user
+        )
 
       {:ok, _view, html} = live(conn, "/businesses")
       assert html =~ "Test Restaurant"
@@ -37,13 +41,18 @@ defmodule RivaAshWeb.BusinessManagementFeatureTest do
     end
 
     test "multiple businesses display correctly", %{conn: conn, user: user} do
-      _business1 = create_business!(%{name: "First Business", description: "First description"}, user)
-      _business2 = create_business!(%{name: "Second Business", description: "Second description"}, user)
-      _business3 = create_business!(%{name: "Third Business", description: "Third description"}, user)
+      _business1 =
+        create_business!(%{name: "First Business", description: "First description"}, user)
+
+      _business2 =
+        create_business!(%{name: "Second Business", description: "Second description"}, user)
+
+      _business3 =
+        create_business!(%{name: "Third Business", description: "Third description"}, user)
 
       {:ok, _view, html} = live(conn, "/businesses")
       refute html =~ "No businesses found"
-      
+
       # Should display all businesses
       assert html =~ "First Business"
       assert html =~ "First description"
@@ -54,7 +63,8 @@ defmodule RivaAshWeb.BusinessManagementFeatureTest do
     end
 
     test "business timestamps display", %{conn: conn, user: user} do
-      _business = create_business!(%{name: "Timestamped Business", description: "Has timestamps"}, user)
+      _business =
+        create_business!(%{name: "Timestamped Business", description: "Has timestamps"}, user)
 
       {:ok, _view, html} = live(conn, "/businesses")
       assert html =~ "Timestamped Business"

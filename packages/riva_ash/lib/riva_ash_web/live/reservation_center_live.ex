@@ -6,9 +6,17 @@ defmodule RivaAshWeb.ReservationCenterLive do
   use RivaAshWeb, :live_view
 
   # Explicitly set the authenticated layout
-  @layout {RivaAshWeb.Layouts, :authenticated}
 
-  alias RivaAsh.Resources.{Business, Reservation, Client, Item, RecurringReservation, AvailabilityException}
+
+  alias RivaAsh.Resources.{
+    Business,
+    Reservation,
+    Client,
+    Item,
+    RecurringReservation,
+    AvailabilityException
+  }
+
   alias RivaAsh.ErrorHelpers
 
   import RivaAshWeb.Components.Organisms.PageHeader
@@ -31,20 +39,26 @@ defmodule RivaAshWeb.ReservationCenterLive do
           # Load reservations for current month
           {start_date, end_date} = get_month_range(Date.utc_today())
 
-          reservations = Reservation.read!(
-            actor: user,
-            filter: [
-              business_id: [in: business_ids],
-              reserved_from: [greater_than_or_equal_to: DateTime.new!(start_date, ~T[00:00:00], "Etc/UTC")],
-              reserved_from: [less_than_or_equal_to: DateTime.new!(end_date, ~T[23:59:59], "Etc/UTC")]
-            ]
-          )
+          reservations =
+            Reservation.read!(
+              actor: user,
+              filter: [
+                business_id: [in: business_ids],
+                reserved_from: [
+                  greater_than_or_equal_to: DateTime.new!(start_date, ~T[00:00:00], "Etc/UTC")
+                ],
+                reserved_from: [
+                  less_than_or_equal_to: DateTime.new!(end_date, ~T[23:59:59], "Etc/UTC")
+                ]
+              ]
+            )
 
           # Load items for filtering
-          items = Item.read!(
-            actor: user,
-            filter: [section: [plot: [business_id: [in: business_ids]]]]
-          )
+          items =
+            Item.read!(
+              actor: user,
+              filter: [section: [plot: [business_id: [in: business_ids]]]]
+            )
 
           socket =
             socket
@@ -63,9 +77,10 @@ defmodule RivaAshWeb.ReservationCenterLive do
 
           {:ok, socket}
         rescue
-          error in [Ash.Error.Forbidden, Ash.Error.Invalid] ->
+          _error in [Ash.Error.Forbidden, Ash.Error.Invalid] ->
             {:ok, redirect(socket, to: "/access-denied")}
         end
+
       {:error, _} ->
         {:ok, redirect(socket, to: "/sign-in")}
     end
@@ -419,16 +434,17 @@ defmodule RivaAshWeb.ReservationCenterLive do
   def handle_event("navigate_date", %{"direction" => direction}, socket) do
     current_date = socket.assigns.current_date
 
-    new_date = case {direction, socket.assigns.view_mode} do
-      {"prev", "day"} -> Date.add(current_date, -1)
-      {"next", "day"} -> Date.add(current_date, 1)
-      {"prev", "week"} -> Date.add(current_date, -7)
-      {"next", "week"} -> Date.add(current_date, 7)
-      {"prev", "month"} -> Date.add(current_date, -30)
-      {"next", "month"} -> Date.add(current_date, 30)
-      {"today", _} -> Date.utc_today()
-      _ -> current_date
-    end
+    new_date =
+      case {direction, socket.assigns.view_mode} do
+        {"prev", "day"} -> Date.add(current_date, -1)
+        {"next", "day"} -> Date.add(current_date, 1)
+        {"prev", "week"} -> Date.add(current_date, -7)
+        {"next", "week"} -> Date.add(current_date, 7)
+        {"prev", "month"} -> Date.add(current_date, -30)
+        {"next", "month"} -> Date.add(current_date, 30)
+        {"today", _} -> Date.utc_today()
+        _ -> current_date
+      end
 
     {:noreply, assign(socket, :current_date, new_date)}
   end
@@ -449,6 +465,7 @@ defmodule RivaAshWeb.ReservationCenterLive do
   def handle_event("date_clicked", %{"date" => date}, socket) do
     # Switch to day view for selected date
     {:ok, parsed_date} = Date.from_iso8601(date)
+
     socket =
       socket
       |> assign(:current_date, parsed_date)
@@ -511,6 +528,7 @@ defmodule RivaAshWeb.ReservationCenterLive do
 
   defp count_today_reservations(reservations) do
     today = Date.utc_today()
+
     reservations
     |> Enum.filter(&(Date.compare(DateTime.to_date(&1.reserved_from), today) == :eq))
     |> length()
@@ -518,6 +536,7 @@ defmodule RivaAshWeb.ReservationCenterLive do
 
   defp count_confirmed_today(reservations) do
     today = Date.utc_today()
+
     reservations
     |> Enum.filter(fn r ->
       Date.compare(DateTime.to_date(r.reserved_from), today) == :eq and r.status == :confirmed
@@ -527,21 +546,11 @@ defmodule RivaAshWeb.ReservationCenterLive do
 
   defp count_pending_today(reservations) do
     today = Date.utc_today()
+
     reservations
     |> Enum.filter(fn r ->
       Date.compare(DateTime.to_date(r.reserved_from), today) == :eq and r.status == :pending
     end)
     |> length()
-  end
-
-  defp get_current_user_from_session(session) do
-    case session["user_token"] do
-      nil -> {:error, :no_token}
-      token ->
-        case RivaAsh.Accounts.get_user_by_session_token(token) do
-          nil -> {:error, :invalid_token}
-          user -> {:ok, user}
-        end
-    end
   end
 end

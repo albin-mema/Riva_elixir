@@ -24,9 +24,11 @@ defmodule RivaAshWeb.BusinessLive do
           |> assign(:current_user, user)
           |> assign(:page_title, "Businesses")
           |> assign(:businesses, businesses)
-          |> assign(:meta, %{}) # Placeholder for pagination/metadata
+          # Placeholder for pagination/metadata
+          |> assign(:meta, %{})
 
         {:ok, socket}
+
       {:error, _} ->
         {:ok, redirect(socket, to: "/sign-in")}
     end
@@ -95,8 +97,12 @@ defmodule RivaAshWeb.BusinessLive do
     user_token = session["user_token"]
 
     if user_token do
-      with {:ok, user_id} <- Phoenix.Token.verify(RivaAshWeb.Endpoint, "user_auth", user_token, max_age: 86_400) |> RivaAsh.ErrorHelpers.to_result(),
-           {:ok, user} <- Ash.get(RivaAsh.Accounts.User, user_id, domain: RivaAsh.Accounts) |> RivaAsh.ErrorHelpers.to_result() do
+      with {:ok, user_id} <-
+             Phoenix.Token.verify(RivaAshWeb.Endpoint, "user_auth", user_token, max_age: 86_400)
+             |> RivaAsh.ErrorHelpers.to_result(),
+           {:ok, user} <-
+             Ash.get(RivaAsh.Accounts.User, user_id, domain: RivaAsh.Accounts)
+             |> RivaAsh.ErrorHelpers.to_result() do
         RivaAsh.ErrorHelpers.success(user)
       else
         _ -> RivaAsh.ErrorHelpers.failure(:not_authenticated)

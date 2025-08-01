@@ -16,7 +16,8 @@ defmodule RivaAshWeb.AshAdminConfig do
       nil ->
         # Ash.set_actor!(conn, nil)
         conn
-      user ->
+
+      _user ->
         # Ash.set_actor!(conn, user)
         conn
     end

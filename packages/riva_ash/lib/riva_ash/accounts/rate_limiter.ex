@@ -7,7 +7,8 @@ defmodule RivaAsh.Accounts.RateLimiter do
 
   @table_name :sign_in_attempts
   @max_attempts 5
-  @window_seconds 300  # 5 minutes
+  # 5 minutes
+  @window_seconds 300
 
   # Client API
 
@@ -51,6 +52,7 @@ defmodule RivaAsh.Accounts.RateLimiter do
     case get_attempts(ip_address) do
       attempts when attempts >= @max_attempts ->
         {:reply, {:error, :rate_limited}, state}
+
       _ ->
         {:reply, {:ok, :allowed}, state}
     end
@@ -95,10 +97,11 @@ defmodule RivaAsh.Accounts.RateLimiter do
 
   defp cleanup_old_entries(current_time) do
     current_window = div(current_time, @window_seconds)
-    oldest_window = current_window - 2  # Keep data for at least 2 windows
+    # Keep data for at least 2 windows
+    oldest_window = current_window - 2
 
     :ets.match_delete(@table_name, {{:"$1", :"$2"}, :_})
-    |> Enum.filter(fn [{ip, window}] -> window < oldest_window end)
+    |> Enum.filter(fn [{_ip, window}] -> window < oldest_window end)
     |> Enum.each(fn [{ip, window}] ->
       :ets.delete(@table_name, {ip, window})
     end)

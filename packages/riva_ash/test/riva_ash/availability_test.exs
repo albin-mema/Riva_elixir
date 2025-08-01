@@ -41,7 +41,8 @@ defmodule RivaAsh.AvailabilityTest do
       # Weekday schedule (Monday-Friday)
       weekday_schedule = %ItemSchedule{
         item_id: "item-1",
-        day_of_week: 1,  # Monday
+        # Monday
+        day_of_week: 1,
         is_available: true,
         start_time: ~T[09:00:00],
         end_time: ~T[17:00:00]
@@ -50,7 +51,8 @@ defmodule RivaAsh.AvailabilityTest do
       # Weekend schedule (Saturday)
       weekend_schedule = %ItemSchedule{
         item_id: "item-1",
-        day_of_week: 6,  # Saturday
+        # Saturday
+        day_of_week: 6,
         is_available: true,
         start_time: ~T[10:00:00],
         end_time: ~T[14:00:00]
@@ -59,78 +61,127 @@ defmodule RivaAsh.AvailabilityTest do
       {:ok, item: item, weekday_schedule: weekday_schedule, weekend_schedule: weekend_schedule}
     end
 
-    test "item is available during weekday business hours", %{item: item, weekday_schedule: weekday_schedule} do
+    test "item is available during weekday business hours", %{
+      item: item,
+      weekday_schedule: weekday_schedule
+    } do
       # Monday at 10:00-11:00 (within weekday schedule)
-      start_datetime = ~U[2024-01-08 10:00:00Z]  # Monday
+      # Monday
+      start_datetime = ~U[2024-01-08 10:00:00Z]
       end_datetime = ~U[2024-01-08 11:00:00Z]
 
       # Mock the dependencies
       expect(RivaAsh.Resources.Item, :by_id, fn "item-1" -> {:ok, item} end)
-      expect(RivaAsh.Resources.ItemSchedule, :by_item, fn "item-1" -> {:ok, [weekday_schedule]} end)
+
+      expect(RivaAsh.Resources.ItemSchedule, :by_item, fn "item-1" ->
+        {:ok, [weekday_schedule]}
+      end)
+
       expect(RivaAsh.Resources.AvailabilityException, :by_item, fn _ -> {:ok, []} end)
       expect(RivaAsh.Resources.Reservation, :by_item, fn _ -> {:ok, []} end)
 
-      assert {:ok, :available} = Availability.check_availability("item-1", start_datetime, end_datetime)
+      assert {:ok, :available} =
+               Availability.check_availability("item-1", start_datetime, end_datetime)
     end
 
-    test "item is not available during weekday outside business hours", %{item: item, weekday_schedule: weekday_schedule} do
+    test "item is not available during weekday outside business hours", %{
+      item: item,
+      weekday_schedule: weekday_schedule
+    } do
       # Monday at 08:00-09:00 (before weekday schedule)
-      start_datetime = ~U[2024-01-08 08:00:00Z]  # Monday
+      # Monday
+      start_datetime = ~U[2024-01-08 08:00:00Z]
       end_datetime = ~U[2024-01-08 09:00:00Z]
 
       # Mock the dependencies
       expect(RivaAsh.Resources.Item, :by_id, fn "item-1" -> {:ok, item} end)
-      expect(RivaAsh.Resources.ItemSchedule, :by_item, fn "item-1" -> {:ok, [weekday_schedule]} end)
+
+      expect(RivaAsh.Resources.ItemSchedule, :by_item, fn "item-1" ->
+        {:ok, [weekday_schedule]}
+      end)
+
       expect(RivaAsh.Resources.AvailabilityException, :by_item, fn _ -> {:ok, []} end)
       expect(RivaAsh.Resources.Reservation, :by_item, fn _ -> {:ok, []} end)
 
-      assert {:error, :outside_schedule} = Availability.check_availability("item-1", start_datetime, end_datetime)
+      assert {:error, :outside_schedule} =
+               Availability.check_availability("item-1", start_datetime, end_datetime)
     end
 
-    test "item is available during weekend business hours", %{item: item, weekend_schedule: weekend_schedule} do
+    test "item is available during weekend business hours", %{
+      item: item,
+      weekend_schedule: weekend_schedule
+    } do
       # Saturday at 11:00-12:00 (within weekend schedule)
-      start_datetime = ~U[2024-01-13 11:00:00Z]  # Saturday
+      # Saturday
+      start_datetime = ~U[2024-01-13 11:00:00Z]
       end_datetime = ~U[2024-01-13 12:00:00Z]
 
       # Mock the dependencies
       expect(RivaAsh.Resources.Item, :by_id, fn "item-1" -> {:ok, item} end)
-      expect(RivaAsh.Resources.ItemSchedule, :by_item, fn "item-1" -> {:ok, [weekend_schedule]} end)
+
+      expect(RivaAsh.Resources.ItemSchedule, :by_item, fn "item-1" ->
+        {:ok, [weekend_schedule]}
+      end)
+
       expect(RivaAsh.Resources.AvailabilityException, :by_item, fn _ -> {:ok, []} end)
       expect(RivaAsh.Resources.Reservation, :by_item, fn _ -> {:ok, []} end)
 
-      assert {:ok, :available} = Availability.check_availability("item-1", start_datetime, end_datetime)
+      assert {:ok, :available} =
+               Availability.check_availability("item-1", start_datetime, end_datetime)
     end
 
-    test "item is not available during weekend outside business hours", %{item: item, weekend_schedule: weekend_schedule} do
+    test "item is not available during weekend outside business hours", %{
+      item: item,
+      weekend_schedule: weekend_schedule
+    } do
       # Saturday at 09:00-10:00 (before weekend schedule)
-      start_datetime = ~U[2024-01-13 09:00:00Z]  # Saturday
+      # Saturday
+      start_datetime = ~U[2024-01-13 09:00:00Z]
       end_datetime = ~U[2024-01-13 10:00:00Z]
 
       # Mock the dependencies
       expect(RivaAsh.Resources.Item, :by_id, fn "item-1" -> {:ok, item} end)
-      expect(RivaAsh.Resources.ItemSchedule, :by_item, fn "item-1" -> {:ok, [weekend_schedule]} end)
+
+      expect(RivaAsh.Resources.ItemSchedule, :by_item, fn "item-1" ->
+        {:ok, [weekend_schedule]}
+      end)
+
       expect(RivaAsh.Resources.AvailabilityException, :by_item, fn _ -> {:ok, []} end)
       expect(RivaAsh.Resources.Reservation, :by_item, fn _ -> {:ok, []} end)
 
-      assert {:error, :outside_schedule} = Availability.check_availability("item-1", start_datetime, end_datetime)
+      assert {:error, :outside_schedule} =
+               Availability.check_availability("item-1", start_datetime, end_datetime)
     end
 
-    test "weekday and weekend have different business hours", %{item: item, weekday_schedule: weekday_schedule, weekend_schedule: weekend_schedule} do
+    test "weekday and weekend have different business hours", %{
+      item: item,
+      weekday_schedule: weekday_schedule,
+      weekend_schedule: weekend_schedule
+    } do
       # Test that weekday and weekend schedules are handled differently
-      weekday_start = ~U[2024-01-08 10:00:00Z]  # Tuesday
+      # Tuesday
+      weekday_start = ~U[2024-01-08 10:00:00Z]
       weekday_end = ~U[2024-01-08 11:00:00Z]
-      weekend_start = ~U[2024-01-13 11:00:00Z]  # Saturday
+      # Saturday
+      weekend_start = ~U[2024-01-13 11:00:00Z]
       weekend_end = ~U[2024-01-13 12:00:00Z]
 
       # Mock with both schedules available
       expect(RivaAsh.Resources.Item, :by_id, fn "item-1" -> {:ok, item} end)
-      expect(RivaAsh.Resources.ItemSchedule, :by_item, fn "item-1" -> {:ok, [weekday_schedule, weekend_schedule]} end)
+
+      expect(RivaAsh.Resources.ItemSchedule, :by_item, fn "item-1" ->
+        {:ok, [weekday_schedule, weekend_schedule]}
+      end)
+
       expect(RivaAsh.Resources.AvailabilityException, :by_item, fn _ -> {:ok, []} end)
       expect(RivaAsh.Resources.Reservation, :by_item, fn _ -> {:ok, []} end)
 
       # Both should be available during their respective hours
-      assert {:ok, :available} = Availability.check_availability("item-1", weekday_start, weekday_end)
-      assert {:ok, :available} = Availability.check_availability("item-1", weekend_start, weekend_end)
+      assert {:ok, :available} =
+               Availability.check_availability("item-1", weekday_start, weekday_end)
+
+      assert {:ok, :available} =
+               Availability.check_availability("item-1", weekend_start, weekend_end)
     end
 
     describe "date range calculations across week boundaries" do
@@ -149,7 +200,8 @@ defmodule RivaAsh.AvailabilityTest do
         # Weekday schedule (Monday-Friday)
         weekday_schedule = %ItemSchedule{
           item_id: "item-1",
-          day_of_week: 1,  # Monday
+          # Monday
+          day_of_week: 1,
           is_available: true,
           start_time: ~T[09:00:00],
           end_time: ~T[17:00:00]
@@ -158,7 +210,8 @@ defmodule RivaAsh.AvailabilityTest do
         # Weekend schedule (Saturday)
         weekend_schedule = %ItemSchedule{
           item_id: "item-1",
-          day_of_week: 6,  # Saturday
+          # Saturday
+          day_of_week: 6,
           is_available: true,
           start_time: ~T[10:00:00],
           end_time: ~T[14:00:00]
@@ -167,20 +220,31 @@ defmodule RivaAsh.AvailabilityTest do
         {:ok, item: item, weekday_schedule: weekday_schedule, weekend_schedule: weekend_schedule}
       end
 
-      test "multi-day reservation spanning weekday to weekend", %{item: item, weekday_schedule: weekday_schedule, weekend_schedule: weekend_schedule} do
+      test "multi-day reservation spanning weekday to weekend", %{
+        item: item,
+        weekday_schedule: weekday_schedule,
+        weekend_schedule: weekend_schedule
+      } do
         # Friday at 16:00 to Saturday at 11:00 (spans Friday to Saturday)
-        start_datetime = ~U[2024-01-12 16:00:00Z]  # Friday
-        end_datetime = ~U[2024-01-13 11:00:00Z]  # Saturday
+        # Friday
+        start_datetime = ~U[2024-01-12 16:00:00Z]
+        # Saturday
+        end_datetime = ~U[2024-01-13 11:00:00Z]
 
         # Mock the dependencies
         expect(RivaAsh.Resources.Item, :by_id, fn "item-1" -> {:ok, item} end)
-        expect(RivaAsh.Resources.ItemSchedule, :by_item, fn "item-1" -> {:ok, [weekday_schedule, weekend_schedule]} end)
+
+        expect(RivaAsh.Resources.ItemSchedule, :by_item, fn "item-1" ->
+          {:ok, [weekday_schedule, weekend_schedule]}
+        end)
+
         expect(RivaAsh.Resources.AvailabilityException, :by_item, fn _ -> {:ok, []} end)
         expect(RivaAsh.Resources.Reservation, :by_item, fn _ -> {:ok, []} end)
 
         # The reservation should be available as it's within Friday's hours (until 17:00)
         # and within Saturday's hours (from 10:00)
-        assert {:ok, :available} = Availability.check_availability("item-1", start_datetime, end_datetime)
+        assert {:ok, :available} =
+                 Availability.check_availability("item-1", start_datetime, end_datetime)
       end
 
       describe "time slot availability during business hours vs non-business hours" do
@@ -199,7 +263,8 @@ defmodule RivaAsh.AvailabilityTest do
           # Business hours (9am-5pm)
           business_schedule = %ItemSchedule{
             item_id: "item-1",
-            day_of_week: 1,  # Monday
+            # Monday
+            day_of_week: 1,
             is_available: true,
             start_time: ~T[09:00:00],
             end_time: ~T[17:00:00]
@@ -208,27 +273,40 @@ defmodule RivaAsh.AvailabilityTest do
           # Non-business hours (outside 9am-5pm)
           non_business_schedule = %ItemSchedule{
             item_id: "item-1",
-            day_of_week: 1,  # Monday
+            # Monday
+            day_of_week: 1,
             is_available: false,
             start_time: ~T[00:00:00],
             end_time: ~T[09:00:00]
           }
 
-          {:ok, item: item, business_schedule: business_schedule, non_business_schedule: non_business_schedule}
+          {:ok,
+           item: item,
+           business_schedule: business_schedule,
+           non_business_schedule: non_business_schedule}
         end
 
-        test "item is available during business hours", %{item: item, business_schedule: business_schedule} do
+        test "item is available during business hours", %{
+          item: item,
+          business_schedule: business_schedule
+        } do
           # Monday at 10:00-11:00 (within business hours)
-          start_datetime = ~U[2024-01-08 10:00:00Z]  # Monday
+          # Monday
+          start_datetime = ~U[2024-01-08 10:00:00Z]
           end_datetime = ~U[2024-01-08 11:00:00Z]
 
           # Mock the dependencies
           expect(RivaAsh.Resources.Item, :by_id, fn "item-1" -> {:ok, item} end)
-          expect(RivaAsh.Resources.ItemSchedule, :by_item, fn "item-1" -> {:ok, [business_schedule]} end)
+
+          expect(RivaAsh.Resources.ItemSchedule, :by_item, fn "item-1" ->
+            {:ok, [business_schedule]}
+          end)
+
           expect(RivaAsh.Resources.AvailabilityException, :by_item, fn _ -> {:ok, []} end)
           expect(RivaAsh.Resources.Reservation, :by_item, fn _ -> {:ok, []} end)
 
-          assert {:ok, :available} = Availability.check_availability("item-1", start_datetime, end_datetime)
+          assert {:ok, :available} =
+                   Availability.check_availability("item-1", start_datetime, end_datetime)
         end
 
         describe "edge cases for date/time logic" do
@@ -247,7 +325,8 @@ defmodule RivaAsh.AvailabilityTest do
             # Business hours (9am-5pm)
             business_schedule = %ItemSchedule{
               item_id: "item-1",
-              day_of_week: 1,  # Monday
+              # Monday
+              day_of_week: 1,
               is_available: true,
               start_time: ~T[09:00:00],
               end_time: ~T[17:00:00]
@@ -256,27 +335,38 @@ defmodule RivaAsh.AvailabilityTest do
             {:ok, item: item, business_schedule: business_schedule}
           end
 
-          test "midnight transition within same day", %{item: item, business_schedule: business_schedule} do
+          test "midnight transition within same day", %{
+            item: item,
+            business_schedule: business_schedule
+          } do
             # Test a reservation that starts before midnight and ends after midnight (same day technically)
             # This is not possible in a single day, so we test a reservation that crosses midnight
-            start_datetime = ~U[2024-01-08 23:30:00Z]  # Monday
-            end_datetime = ~U[2024-01-09 00:30:00Z]  # Tuesday
+            # Monday
+            start_datetime = ~U[2024-01-08 23:30:00Z]
+            # Tuesday
+            end_datetime = ~U[2024-01-09 00:30:00Z]
 
             # Mock the dependencies
             expect(RivaAsh.Resources.Item, :by_id, fn "item-1" -> {:ok, item} end)
-            expect(RivaAsh.Resources.ItemSchedule, :by_item, fn "item-1" -> {:ok, [business_schedule]} end)
+
+            expect(RivaAsh.Resources.ItemSchedule, :by_item, fn "item-1" ->
+              {:ok, [business_schedule]}
+            end)
+
             expect(RivaAsh.Resources.AvailabilityException, :by_item, fn _ -> {:ok, []} end)
             expect(RivaAsh.Resources.Reservation, :by_item, fn _ -> {:ok, []} end)
 
             # The reservation should be blocked as Tuesday has no schedule
-            assert {:error, :outside_schedule} = Availability.check_availability("item-1", start_datetime, end_datetime)
+            assert {:error, :outside_schedule} =
+                     Availability.check_availability("item-1", start_datetime, end_datetime)
           end
 
           test "midnight transition with available schedule", %{item: item} do
             # Create schedules for both days
             monday_schedule = %ItemSchedule{
               item_id: "item-1",
-              day_of_week: 1,  # Monday
+              # Monday
+              day_of_week: 1,
               is_available: true,
               start_time: ~T[20:00:00],
               end_time: ~T[23:59:59]
@@ -284,67 +374,95 @@ defmodule RivaAsh.AvailabilityTest do
 
             tuesday_schedule = %ItemSchedule{
               item_id: "item-1",
-              day_of_week: 2,  # Tuesday
+              # Tuesday
+              day_of_week: 2,
               is_available: true,
               start_time: ~T[00:00:00],
               end_time: ~T[02:00:00]
             }
 
             # Monday at 23:30 to Tuesday at 01:30 (crosses midnight)
-            start_datetime = ~U[2024-01-08 23:30:00Z]  # Monday
-            end_datetime = ~U[2024-01-09 01:30:00Z]  # Tuesday
+            # Monday
+            start_datetime = ~U[2024-01-08 23:30:00Z]
+            # Tuesday
+            end_datetime = ~U[2024-01-09 01:30:00Z]
 
             # Mock the dependencies
             expect(RivaAsh.Resources.Item, :by_id, fn "item-1" -> {:ok, item} end)
-            expect(RivaAsh.Resources.ItemSchedule, :by_item, fn "item-1" -> {:ok, [monday_schedule, tuesday_schedule]} end)
+
+            expect(RivaAsh.Resources.ItemSchedule, :by_item, fn "item-1" ->
+              {:ok, [monday_schedule, tuesday_schedule]}
+            end)
+
             expect(RivaAsh.Resources.AvailabilityException, :by_item, fn _ -> {:ok, []} end)
             expect(RivaAsh.Resources.Reservation, :by_item, fn _ -> {:ok, []} end)
 
-            assert {:ok, :available} = Availability.check_availability("item-1", start_datetime, end_datetime)
+            assert {:ok, :available} =
+                     Availability.check_availability("item-1", start_datetime, end_datetime)
           end
 
           test "month boundary transition", %{item: item, business_schedule: business_schedule} do
             # Test a reservation that spans the end of one month to the beginning of the next
-            start_datetime = ~U[2024-01-31 16:00:00Z]  # January 31st
-            end_datetime = ~U[2024-02-01 10:00:00Z]  # February 1st
+            # January 31st
+            start_datetime = ~U[2024-01-31 16:00:00Z]
+            # February 1st
+            end_datetime = ~U[2024-02-01 10:00:00Z]
 
             # Mock the dependencies
             expect(RivaAsh.Resources.Item, :by_id, fn "item-1" -> {:ok, item} end)
-            expect(RivaAsh.Resources.ItemSchedule, :by_item, fn "item-1" -> {:ok, [business_schedule]} end)
+
+            expect(RivaAsh.Resources.ItemSchedule, :by_item, fn "item-1" ->
+              {:ok, [business_schedule]}
+            end)
+
             expect(RivaAsh.Resources.AvailabilityException, :by_item, fn _ -> {:ok, []} end)
             expect(RivaAsh.Resources.Reservation, :by_item, fn _ -> {:ok, []} end)
 
             # The reservation should be available if both days have schedules
-            assert {:ok, :available} = Availability.check_availability("item-1", start_datetime, end_datetime)
+            assert {:ok, :available} =
+                     Availability.check_availability("item-1", start_datetime, end_datetime)
           end
 
           test "year boundary transition", %{item: item, business_schedule: business_schedule} do
             # Test a reservation that spans the end of one year to the beginning of the next
-            start_datetime = ~U[2024-12-31 16:00:00Z]  # December 31st, 2024
-            end_datetime = ~U[2025-01-01 10:00:00Z]  # January 1st, 2025
+            # December 31st, 2024
+            start_datetime = ~U[2024-12-31 16:00:00Z]
+            # January 1st, 2025
+            end_datetime = ~U[2025-01-01 10:00:00Z]
 
             # Mock the dependencies
             expect(RivaAsh.Resources.Item, :by_id, fn "item-1" -> {:ok, item} end)
-            expect(RivaAsh.Resources.ItemSchedule, :by_item, fn "item-1" -> {:ok, [business_schedule]} end)
+
+            expect(RivaAsh.Resources.ItemSchedule, :by_item, fn "item-1" ->
+              {:ok, [business_schedule]}
+            end)
+
             expect(RivaAsh.Resources.AvailabilityException, :by_item, fn _ -> {:ok, []} end)
             expect(RivaAsh.Resources.Reservation, :by_item, fn _ -> {:ok, []} end)
 
             # The reservation should be available if both days have schedules
-            assert {:ok, :available} = Availability.check_availability("item-1", start_datetime, end_datetime)
+            assert {:ok, :available} =
+                     Availability.check_availability("item-1", start_datetime, end_datetime)
           end
 
           test "leap year date handling", %{item: item, business_schedule: business_schedule} do
             # Test availability on February 29th of a leap year
-            start_datetime = ~U[2024-02-29 10:00:00Z]  # February 29th, 2024 (leap year)
+            # February 29th, 2024 (leap year)
+            start_datetime = ~U[2024-02-29 10:00:00Z]
             end_datetime = ~U[2024-02-29 11:00:00Z]
 
             # Mock the dependencies
             expect(RivaAsh.Resources.Item, :by_id, fn "item-1" -> {:ok, item} end)
-            expect(RivaAsh.Resources.ItemSchedule, :by_item, fn "item-1" -> {:ok, [business_schedule]} end)
+
+            expect(RivaAsh.Resources.ItemSchedule, :by_item, fn "item-1" ->
+              {:ok, [business_schedule]}
+            end)
+
             expect(RivaAsh.Resources.AvailabilityException, :by_item, fn _ -> {:ok, []} end)
             expect(RivaAsh.Resources.Reservation, :by_item, fn _ -> {:ok, []} end)
 
-            assert {:ok, :available} = Availability.check_availability("item-1", start_datetime, end_datetime)
+            assert {:ok, :available} =
+                     Availability.check_availability("item-1", start_datetime, end_datetime)
           end
 
           test "get_available_slots at midnight boundary", %{item: item} do
@@ -361,22 +479,32 @@ defmodule RivaAsh.AvailabilityTest do
 
             midnight_schedule = %ItemSchedule{
               item_id: "item-2",
-              day_of_week: 1,  # Monday
+              # Monday
+              day_of_week: 1,
               is_available: true,
               start_time: ~T[22:00:00],
-              end_time: ~T[02:00:00]  # Crosses midnight
+              # Crosses midnight
+              end_time: ~T[02:00:00]
             }
 
-            date = ~D[2024-01-08]  # Monday
+            # Monday
+            date = ~D[2024-01-08]
             slot_duration = 60
 
             # Mock the dependencies
-            expect(RivaAsh.Resources.Item, :by_id, fn "item-2" -> {:ok, item_with_midnight_schedule} end)
-            expect(RivaAsh.Resources.ItemSchedule, :by_item, fn "item-2" -> {:ok, [midnight_schedule]} end)
+            expect(RivaAsh.Resources.Item, :by_id, fn "item-2" ->
+              {:ok, item_with_midnight_schedule}
+            end)
+
+            expect(RivaAsh.Resources.ItemSchedule, :by_item, fn "item-2" ->
+              {:ok, [midnight_schedule]}
+            end)
+
             expect(RivaAsh.Resources.AvailabilityException, :by_item, fn _ -> {:ok, []} end)
             expect(RivaAsh.Resources.Reservation, :by_item, fn _ -> {:ok, []} end)
 
             assert {:ok, slots} = Availability.get_available_slots("item-2", date, slot_duration)
+
             # Should return slots from 22:00-23:00 and 00:00-01:00 (but not 23:00-00:00 as it crosses the day boundary)
             assert length(slots) == 2
             assert Enum.member?(slots, {~T[22:00:00], ~T[23:00:00]})
@@ -384,42 +512,68 @@ defmodule RivaAsh.AvailabilityTest do
           end
         end
 
-        test "item is not available during non-business hours", %{item: item, business_schedule: business_schedule} do
+        test "item is not available during non-business hours", %{
+          item: item,
+          business_schedule: business_schedule
+        } do
           # Monday at 08:00-09:00 (before business hours)
-          start_datetime = ~U[2024-01-08 08:00:00Z]  # Monday
+          # Monday
+          start_datetime = ~U[2024-01-08 08:00:00Z]
           end_datetime = ~U[2024-01-08 09:00:00Z]
 
           # Mock the dependencies
           expect(RivaAsh.Resources.Item, :by_id, fn "item-1" -> {:ok, item} end)
-          expect(RivaAsh.Resources.ItemSchedule, :by_item, fn "item-1" -> {:ok, [business_schedule]} end)
+
+          expect(RivaAsh.Resources.ItemSchedule, :by_item, fn "item-1" ->
+            {:ok, [business_schedule]}
+          end)
+
           expect(RivaAsh.Resources.AvailabilityException, :by_item, fn _ -> {:ok, []} end)
           expect(RivaAsh.Resources.Reservation, :by_item, fn _ -> {:ok, []} end)
 
-          assert {:error, :outside_schedule} = Availability.check_availability("item-1", start_datetime, end_datetime)
+          assert {:error, :outside_schedule} =
+                   Availability.check_availability("item-1", start_datetime, end_datetime)
         end
 
-        test "item is not available after business hours", %{item: item, business_schedule: business_schedule} do
+        test "item is not available after business hours", %{
+          item: item,
+          business_schedule: business_schedule
+        } do
           # Monday at 17:00-18:00 (after business hours)
-          start_datetime = ~U[2024-01-08 17:00:00Z]  # Monday
+          # Monday
+          start_datetime = ~U[2024-01-08 17:00:00Z]
           end_datetime = ~U[2024-01-08 18:00:00Z]
 
           # Mock the dependencies
           expect(RivaAsh.Resources.Item, :by_id, fn "item-1" -> {:ok, item} end)
-          expect(RivaAsh.Resources.ItemSchedule, :by_item, fn "item-1" -> {:ok, [business_schedule]} end)
+
+          expect(RivaAsh.Resources.ItemSchedule, :by_item, fn "item-1" ->
+            {:ok, [business_schedule]}
+          end)
+
           expect(RivaAsh.Resources.AvailabilityException, :by_item, fn _ -> {:ok, []} end)
           expect(RivaAsh.Resources.Reservation, :by_item, fn _ -> {:ok, []} end)
 
-          assert {:error, :outside_schedule} = Availability.check_availability("item-1", start_datetime, end_datetime)
+          assert {:error, :outside_schedule} =
+                   Availability.check_availability("item-1", start_datetime, end_datetime)
         end
 
-        test "get_available_slots returns slots only during business hours", %{item: item, business_schedule: business_schedule} do
+        test "get_available_slots returns slots only during business hours", %{
+          item: item,
+          business_schedule: business_schedule
+        } do
           # Test getting available slots for a date
-          date = ~D[2024-01-08]  # Monday
+          # Monday
+          date = ~D[2024-01-08]
           slot_duration = 60
 
           # Mock the dependencies
           expect(RivaAsh.Resources.Item, :by_id, fn "item-1" -> {:ok, item} end)
-          expect(RivaAsh.Resources.ItemSchedule, :by_item, fn "item-1" -> {:ok, [business_schedule]} end)
+
+          expect(RivaAsh.Resources.ItemSchedule, :by_item, fn "item-1" ->
+            {:ok, [business_schedule]}
+          end)
+
           expect(RivaAsh.Resources.AvailabilityException, :by_item, fn _ -> {:ok, []} end)
           expect(RivaAsh.Resources.Reservation, :by_item, fn _ -> {:ok, []} end)
 
@@ -434,65 +588,102 @@ defmodule RivaAsh.AvailabilityTest do
           # Create a schedule with partial business hours
           partial_schedule = %ItemSchedule{
             item_id: "item-1",
-            day_of_week: 1,  # Monday
+            # Monday
+            day_of_week: 1,
             is_available: true,
             start_time: ~T[13:00:00],
             end_time: ~T[15:00:00]
           }
 
           # Monday at 14:00-15:00 (within partial business hours)
-          start_datetime = ~U[2024-01-08 14:00:00Z]  # Monday
+          # Monday
+          start_datetime = ~U[2024-01-08 14:00:00Z]
           end_datetime = ~U[2024-01-08 15:00:00Z]
 
           # Mock the dependencies
           expect(RivaAsh.Resources.Item, :by_id, fn "item-1" -> {:ok, item} end)
-          expect(RivaAsh.Resources.ItemSchedule, :by_item, fn "item-1" -> {:ok, [partial_schedule]} end)
+
+          expect(RivaAsh.Resources.ItemSchedule, :by_item, fn "item-1" ->
+            {:ok, [partial_schedule]}
+          end)
+
           expect(RivaAsh.Resources.AvailabilityException, :by_item, fn _ -> {:ok, []} end)
           expect(RivaAsh.Resources.Reservation, :by_item, fn _ -> {:ok, []} end)
 
-          assert {:ok, :available} = Availability.check_availability("item-1", start_datetime, end_datetime)
+          assert {:ok, :available} =
+                   Availability.check_availability("item-1", start_datetime, end_datetime)
         end
       end
 
-      test "multi-day reservation spanning weekend to weekday", %{item: item, weekday_schedule: weekday_schedule, weekend_schedule: weekend_schedule} do
+      test "multi-day reservation spanning weekend to weekday", %{
+        item: item,
+        weekday_schedule: weekday_schedule,
+        weekend_schedule: weekend_schedule
+      } do
         # Saturday at 13:00 to Monday at 10:00 (spans Saturday to Monday)
-        start_datetime = ~U[2024-01-13 13:00:00Z]  # Saturday
-        end_datetime = ~U[2024-01-15 10:00:00Z]  # Monday
+        # Saturday
+        start_datetime = ~U[2024-01-13 13:00:00Z]
+        # Monday
+        end_datetime = ~U[2024-01-15 10:00:00Z]
 
         # Mock the dependencies
         expect(RivaAsh.Resources.Item, :by_id, fn "item-1" -> {:ok, item} end)
-        expect(RivaAsh.Resources.ItemSchedule, :by_item, fn "item-1" -> {:ok, [weekday_schedule, weekend_schedule]} end)
+
+        expect(RivaAsh.Resources.ItemSchedule, :by_item, fn "item-1" ->
+          {:ok, [weekday_schedule, weekend_schedule]}
+        end)
+
         expect(RivaAsh.Resources.AvailabilityException, :by_item, fn _ -> {:ok, []} end)
         expect(RivaAsh.Resources.Reservation, :by_item, fn _ -> {:ok, []} end)
 
         # The reservation should be available as it's within Saturday's hours (until 14:00)
         # and within Monday's hours (from 09:00)
-        assert {:ok, :available} = Availability.check_availability("item-1", start_datetime, end_datetime)
+        assert {:ok, :available} =
+                 Availability.check_availability("item-1", start_datetime, end_datetime)
       end
 
-      test "multi-day reservation blocked by schedule gap", %{item: item, weekday_schedule: weekday_schedule} do
+      test "multi-day reservation blocked by schedule gap", %{
+        item: item,
+        weekday_schedule: weekday_schedule
+      } do
         # Friday at 16:00 to Monday at 08:00 (spans Friday to Monday, but Sunday has no schedule)
-        start_datetime = ~U[2024-01-12 16:00:00Z]  # Friday
-        end_datetime = ~U[2024-01-15 08:00:00Z]  # Monday
+        # Friday
+        start_datetime = ~U[2024-01-12 16:00:00Z]
+        # Monday
+        end_datetime = ~U[2024-01-15 08:00:00Z]
 
         # Mock the dependencies - only weekday schedule available (no weekend schedule)
         expect(RivaAsh.Resources.Item, :by_id, fn "item-1" -> {:ok, item} end)
-        expect(RivaAsh.Resources.ItemSchedule, :by_item, fn "item-1" -> {:ok, [weekday_schedule]} end)
+
+        expect(RivaAsh.Resources.ItemSchedule, :by_item, fn "item-1" ->
+          {:ok, [weekday_schedule]}
+        end)
+
         expect(RivaAsh.Resources.AvailabilityException, :by_item, fn _ -> {:ok, []} end)
         expect(RivaAsh.Resources.Reservation, :by_item, fn _ -> {:ok, []} end)
 
         # The reservation should be blocked because Sunday has no schedule
-        assert {:error, :outside_schedule} = Availability.check_availability("item-1", start_datetime, end_datetime)
+        assert {:error, :outside_schedule} =
+                 Availability.check_availability("item-1", start_datetime, end_datetime)
       end
 
-      test "date range calculation with week boundary in get_available_slots", %{item: item, weekday_schedule: weekday_schedule, weekend_schedule: weekend_schedule} do
+      test "date range calculation with week boundary in get_available_slots", %{
+        item: item,
+        weekday_schedule: weekday_schedule,
+        weekend_schedule: weekend_schedule
+      } do
         # Test getting available slots for a date that crosses week boundaries
-        date = ~D[2024-01-13]  # Saturday
+        # Saturday
+        date = ~D[2024-01-13]
         slot_duration = 60
 
         # Mock the dependencies
         expect(RivaAsh.Resources.Item, :by_id, fn "item-1" -> {:ok, item} end)
-        expect(RivaAsh.Resources.ItemSchedule, :by_item, fn "item-1" -> {:ok, [weekday_schedule, weekend_schedule]} end)
+
+        expect(RivaAsh.Resources.ItemSchedule, :by_item, fn "item-1" ->
+          {:ok, [weekday_schedule, weekend_schedule]}
+        end)
+
         expect(RivaAsh.Resources.AvailabilityException, :by_item, fn _ -> {:ok, []} end)
         expect(RivaAsh.Resources.Reservation, :by_item, fn _ -> {:ok, []} end)
 
@@ -566,6 +757,7 @@ defmodule RivaAsh.AvailabilityTest do
   describe "set_business_hours/2" do
     test "sets business hours successfully" do
       business_id = "business-123"
+
       hours = %{
         monday: %{open: ~T[09:00:00], close: ~T[17:00:00]},
         tuesday: %{open: ~T[09:00:00], close: ~T[17:00:00]},
@@ -581,6 +773,7 @@ defmodule RivaAsh.AvailabilityTest do
 
     test "returns error for invalid hours format" do
       business_id = "business-123"
+
       hours = %{
         monday: %{open: "invalid", close: "invalid"}
       }
@@ -596,7 +789,9 @@ defmodule RivaAsh.AvailabilityTest do
       duration = 60
       interval = 30
 
-      assert {:ok, slots} = Availability.calculate_available_slots(business_id, date, duration, interval)
+      assert {:ok, slots} =
+               Availability.calculate_available_slots(business_id, date, duration, interval)
+
       assert is_list(slots)
     end
   end

@@ -6,7 +6,7 @@ defmodule RivaAshWeb.Components.Molecules.EmptyState do
   use Phoenix.Component
   import RivaAshWeb.Components.Atoms.Text
   import RivaAshWeb.Components.Atoms.Icon
-  import RivaAshWeb.Components.Atoms.Button
+
 
   @doc """
   Renders an empty state with icon, title, description, and optional action.
@@ -31,15 +31,15 @@ defmodule RivaAshWeb.Components.Molecules.EmptyState do
         description="Try adjusting your search or filters"
       />
   """
-  attr :icon, :atom, required: true
-  attr :title, :string, required: true
-  attr :description, :string, default: nil
-  attr :size, :string, default: "md", values: ~w(sm md lg)
-  attr :variant, :string, default: "default", values: ~w(default bordered card)
-  attr :class, :string, default: ""
-  attr :rest, :global
+  attr(:icon, :atom, required: true)
+  attr(:title, :string, required: true)
+  attr(:description, :string, default: nil)
+  attr(:size, :string, default: "md", values: ~w(sm md lg))
+  attr(:variant, :string, default: "default", values: ~w(default bordered card))
+  attr(:class, :string, default: "")
+  attr(:rest, :global)
 
-  slot :action
+  slot(:action)
 
   def empty_state(assigns) do
     assigns = assign(assigns, :container_class, container_class(assigns))
@@ -76,9 +76,9 @@ defmodule RivaAshWeb.Components.Molecules.EmptyState do
   @doc """
   A simplified empty state for inline use (e.g., in dropdowns or small containers).
   """
-  attr :text, :string, required: true
-  attr :icon, :atom, default: nil
-  attr :class, :string, default: ""
+  attr(:text, :string, required: true)
+  attr(:icon, :atom, default: nil)
+  attr(:class, :string, default: "")
 
   def inline_empty_state(assigns) do
     ~H"""
@@ -96,12 +96,13 @@ defmodule RivaAshWeb.Components.Molecules.EmptyState do
   defp container_class(assigns) do
     base = "flex items-center justify-center"
 
-    variant_classes = case assigns.variant do
-      "default" -> "py-12"
-      "bordered" -> "py-12 border-2 border-dashed border-border rounded-lg"
-      "card" -> "py-12 bg-card/50 rounded-lg shadow-sm"
-      _ -> "py-12"
-    end
+    variant_classes =
+      case assigns.variant do
+        "default" -> "py-12"
+        "bordered" -> "py-12 border-2 border-dashed border-border rounded-lg"
+        "card" -> "py-12 bg-card/50 rounded-lg shadow-sm"
+        _ -> "py-12"
+      end
 
     Enum.join([base, variant_classes, assigns.class], " ")
   end
@@ -118,12 +119,13 @@ defmodule RivaAshWeb.Components.Molecules.EmptyState do
   defp icon_wrapper_class(size) do
     base = "mx-auto mb-4 flex items-center justify-center rounded-full bg-muted/30"
 
-    size_classes = case size do
-      "sm" -> "h-12 w-12"
-      "md" -> "h-16 w-16"
-      "lg" -> "h-20 w-20"
-      _ -> "h-16 w-16"
-    end
+    size_classes =
+      case size do
+        "sm" -> "h-12 w-12"
+        "md" -> "h-16 w-16"
+        "lg" -> "h-20 w-20"
+        _ -> "h-16 w-16"
+      end
 
     "#{base} #{size_classes}"
   end

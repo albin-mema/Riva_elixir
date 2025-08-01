@@ -9,12 +9,12 @@ defmodule RivaAshWeb.Components.Molecules.Pagination do
   @doc """
   Renders pagination controls.
   """
-  attr :meta, :map, required: true
-  attr :path, :string, required: true
-  attr :show_page_size, :boolean, default: true
-  attr :page_sizes, :list, default: [10, 20, 50, 100]
-  attr :class, :string, default: ""
-  attr :rest, :global
+  attr(:meta, :map, required: true)
+  attr(:path, :string, required: true)
+  attr(:show_page_size, :boolean, default: true)
+  attr(:page_sizes, :list, default: [10, 20, 50, 100])
+  attr(:class, :string, default: "")
+  attr(:rest, :global)
 
   def pagination(assigns) do
     ~H"""

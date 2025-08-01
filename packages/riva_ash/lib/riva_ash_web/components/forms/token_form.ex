@@ -7,18 +7,18 @@ defmodule RivaAshWeb.Components.Forms.TokenForm do
   import RivaAshWeb.Components.Molecules.Card
   import RivaAshWeb.Components.Molecules.NotificationToast
   import RivaAshWeb.Components.Atoms.Button
-  import RivaAshWeb.Components.Atoms.Text
+
 
   @doc """
   Renders a form for creating or editing tokens.
   """
-  attr :form, :any, required: true
-  attr :editing, :boolean, default: false
-  attr :loading, :boolean, default: false
-  attr :on_submit, :string, required: true
-  attr :on_change, :string, required: true
-  attr :on_cancel, :string, required: true
-  attr :users, :list, default: []
+  attr(:form, :any, required: true)
+  attr(:editing, :boolean, default: false)
+  attr(:loading, :boolean, default: false)
+  attr(:on_submit, :string, required: true)
+  attr(:on_change, :string, required: true)
+  attr(:on_cancel, :string, required: true)
+  attr(:users, :list, default: [])
 
   def token_form(assigns) do
     ~H"""
@@ -38,10 +38,9 @@ defmodule RivaAshWeb.Components.Forms.TokenForm do
             aria-atomic="true"
           />
 
-          <.form_field
+          <.select_field
             field={@form[:user_id]}
             label="User"
-            type="select"
             options={Enum.map(@users, &{&1.email, &1.id})}
             prompt="Select a user"
             helper_text="Select the user this token belongs to."

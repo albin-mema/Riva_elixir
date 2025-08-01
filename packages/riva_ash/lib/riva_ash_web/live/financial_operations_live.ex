@@ -24,17 +24,19 @@ defmodule RivaAshWeb.FinancialOperationsLive do
           # Load user's businesses
           businesses = Business.read!(actor: user)
           business_ids = Enum.map(businesses, & &1.id)
-          
-          # Load financial data
-          payments = Payment.read!(
-            actor: user,
-            filter: [business_id: [in: business_ids]]
-          )
 
-          pricings = Pricing.read!(
-            actor: user,
-            filter: [business_id: [in: business_ids]]
-          )
+          # Load financial data
+          payments =
+            Payment.read!(
+              actor: user,
+              filter: [business_id: [in: business_ids]]
+            )
+
+          pricings =
+            Pricing.read!(
+              actor: user,
+              filter: [business_id: [in: business_ids]]
+            )
 
           socket =
             socket
@@ -52,6 +54,7 @@ defmodule RivaAshWeb.FinancialOperationsLive do
           error in [Ash.Error.Forbidden, Ash.Error.Invalid] ->
             {:ok, redirect(socket, to: "/access-denied")}
         end
+
       {:error, _} ->
         {:ok, redirect(socket, to: "/sign-in")}
     end
@@ -167,8 +170,8 @@ defmodule RivaAshWeb.FinancialOperationsLive do
       <div class="bg-white shadow rounded-lg">
         <div class="px-6 py-4">
           <div class="flex space-x-1 bg-gray-100 rounded-lg p-1">
-            <button 
-              phx-click="change_view" 
+            <button
+              phx-click="change_view"
               phx-value-mode="dashboard"
               class={[
                 "px-3 py-2 text-sm font-medium rounded-md transition-colors",
@@ -177,8 +180,8 @@ defmodule RivaAshWeb.FinancialOperationsLive do
             >
               Dashboard
             </button>
-            <button 
-              phx-click="change_view" 
+            <button
+              phx-click="change_view"
               phx-value-mode="payments"
               class={[
                 "px-3 py-2 text-sm font-medium rounded-md transition-colors",
@@ -187,8 +190,8 @@ defmodule RivaAshWeb.FinancialOperationsLive do
             >
               Payments
             </button>
-            <button 
-              phx-click="change_view" 
+            <button
+              phx-click="change_view"
               phx-value-mode="pricing"
               class={[
                 "px-3 py-2 text-sm font-medium rounded-md transition-colors",
@@ -197,8 +200,8 @@ defmodule RivaAshWeb.FinancialOperationsLive do
             >
               Pricing
             </button>
-            <button 
-              phx-click="change_view" 
+            <button
+              phx-click="change_view"
               phx-value-mode="reports"
               class={[
                 "px-3 py-2 text-sm font-medium rounded-md transition-colors",
@@ -334,20 +337,20 @@ defmodule RivaAshWeb.FinancialOperationsLive do
   # Helper functions
   defp calculate_total_revenue(payments) do
     payments
-    |> Enum.map(& &1.amount || 0)
+    |> Enum.map(&(&1.amount || 0))
     |> Enum.sum()
     |> format_amount()
   end
 
   defp calculate_monthly_revenue(payments) do
     current_month = Date.utc_today() |> Date.beginning_of_month()
-    
+
     payments
     |> Enum.filter(fn payment ->
       payment_date = DateTime.to_date(payment.inserted_at)
       Date.compare(payment_date, current_month) != :lt
     end)
-    |> Enum.map(& &1.amount || 0)
+    |> Enum.map(&(&1.amount || 0))
     |> Enum.sum()
     |> format_amount()
   end
@@ -357,18 +360,9 @@ defmodule RivaAshWeb.FinancialOperationsLive do
     "0.00"
   end
 
-  defp format_amount(amount) when is_number(amount), do: :erlang.float_to_binary(amount / 1.0, decimals: 2)
+  defp format_amount(amount) when is_number(amount),
+    do: :erlang.float_to_binary(amount / 1.0, decimals: 2)
+
   defp format_amount(%Decimal{} = amount), do: Decimal.to_string(amount)
   defp format_amount(_), do: "0.00"
-
-  defp get_current_user_from_session(session) do
-    case session["user_token"] do
-      nil -> {:error, :no_token}
-      token -> 
-        case RivaAsh.Accounts.get_user_by_session_token(token) do
-          nil -> {:error, :invalid_token}
-          user -> {:ok, user}
-        end
-    end
-  end
 end

@@ -13,7 +13,13 @@ defmodule RivaAshWeb.ItemPositionLive do
 
   @impl true
   def mount(_params, session, socket) do
-    mount_business_scoped(socket, session, ItemPosition, [:layout, :plot, :business_id], "Item Positions")
+    mount_business_scoped(
+      socket,
+      session,
+      ItemPosition,
+      [:layout, :plot, :business_id],
+      "Item Positions"
+    )
   end
 
   @impl true

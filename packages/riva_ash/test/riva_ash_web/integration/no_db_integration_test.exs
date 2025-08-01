@@ -42,28 +42,39 @@ defmodule RivaAshWeb.NoDatabaseIntegrationTest do
   describe "DateTimeHelpers" do
     test "weekend?/1 correctly identifies weekends" do
       # Saturday and Sunday are weekends
-      assert DateTimeHelpers.weekend?(~D[2024-01-06]) == true  # Saturday
-      assert DateTimeHelpers.weekend?(~D[2024-01-07]) == true  # Sunday
+      # Saturday
+      assert DateTimeHelpers.weekend?(~D[2024-01-06]) == true
+      # Sunday
+      assert DateTimeHelpers.weekend?(~D[2024-01-07]) == true
 
       # Monday through Friday are not weekends
-      assert DateTimeHelpers.weekend?(~D[2024-01-08]) == false # Monday
-      assert DateTimeHelpers.weekend?(~D[2024-01-09]) == false # Tuesday
-      assert DateTimeHelpers.weekend?(~D[2024-01-12]) == false # Friday
+      # Monday
+      assert DateTimeHelpers.weekend?(~D[2024-01-08]) == false
+      # Tuesday
+      assert DateTimeHelpers.weekend?(~D[2024-01-09]) == false
+      # Friday
+      assert DateTimeHelpers.weekend?(~D[2024-01-12]) == false
     end
 
     test "weekday?/1 correctly identifies weekdays" do
       # Monday through Friday are weekdays
-      assert DateTimeHelpers.weekday?(~D[2024-01-08]) == true  # Monday
-      assert DateTimeHelpers.weekday?(~D[2024-01-12]) == true  # Friday
+      # Monday
+      assert DateTimeHelpers.weekday?(~D[2024-01-08]) == true
+      # Friday
+      assert DateTimeHelpers.weekday?(~D[2024-01-12]) == true
 
       # Saturday and Sunday are not weekdays
-      assert DateTimeHelpers.weekday?(~D[2024-01-06]) == false # Saturday
-      assert DateTimeHelpers.weekday?(~D[2024-01-07]) == false # Sunday
+      # Saturday
+      assert DateTimeHelpers.weekday?(~D[2024-01-06]) == false
+      # Sunday
+      assert DateTimeHelpers.weekday?(~D[2024-01-07]) == false
     end
 
     test "day_type/1 returns correct day type" do
-      assert DateTimeHelpers.day_type(~D[2024-01-08]) == :weekday  # Monday
-      assert DateTimeHelpers.day_type(~D[2024-01-06]) == :weekend  # Saturday
+      # Monday
+      assert DateTimeHelpers.day_type(~D[2024-01-08]) == :weekday
+      # Saturday
+      assert DateTimeHelpers.day_type(~D[2024-01-06]) == :weekend
     end
 
     test "day_name/1 returns correct day names" do
@@ -217,7 +228,10 @@ defmodule RivaAshWeb.NoDatabaseIntegrationTest do
     end
   end
 
-  defp validate_minimum_duration(%{start_time: start_time, end_time: end_time} = reservation, min_minutes) do
+  defp validate_minimum_duration(
+         %{start_time: start_time, end_time: end_time} = reservation,
+         min_minutes
+       ) do
     # Calculate duration in minutes manually since the helper might not exist
     duration_seconds = NaiveDateTime.diff(end_time, start_time, :second)
     duration_minutes = div(duration_seconds, 60)

@@ -20,18 +20,18 @@ defmodule RivaAsh.Reactors.ReservationReactor do
   alias RivaAsh.Availability
 
   # Define the reactor inputs
-  input :client_id
-  input :employee_id
-  input :item_id
-  input :start_datetime
-  input :end_datetime
-  input :notes
+  input(:client_id)
+  input(:employee_id)
+  input(:item_id)
+  input(:start_datetime)
+  input(:end_datetime)
+  input(:notes)
 
   # Step 1: Validate client exists and is active
   step :validate_client do
-    argument :client_id, input(:client_id)
+    argument(:client_id, input(:client_id))
 
-    run fn %{client_id: client_id}, _context ->
+    run(fn %{client_id: client_id}, _context ->
       case Client.by_id(client_id) do
         {:ok, client} ->
           if client.archived_at do
@@ -39,17 +39,18 @@ defmodule RivaAsh.Reactors.ReservationReactor do
           else
             {:ok, client}
           end
+
         {:error, _} ->
           {:error, "Client not found"}
       end
-    end
+    end)
   end
 
   # Step 2: Validate employee exists and is active
   step :validate_employee do
-    argument :employee_id, input(:employee_id)
+    argument(:employee_id, input(:employee_id))
 
-    run fn %{employee_id: employee_id}, _context ->
+    run(fn %{employee_id: employee_id}, _context ->
       case Employee.by_id(employee_id) do
         {:ok, employee} ->
           if employee.archived_at do
@@ -57,17 +58,18 @@ defmodule RivaAsh.Reactors.ReservationReactor do
           else
             {:ok, employee}
           end
+
         {:error, _} ->
           {:error, "Employee not found"}
       end
-    end
+    end)
   end
 
   # Step 3: Validate item exists and is available
   step :validate_item do
-    argument :item_id, input(:item_id)
+    argument(:item_id, input(:item_id))
 
-    run fn %{item_id: item_id}, _context ->
+    run(fn %{item_id: item_id}, _context ->
       case Item.by_id(item_id) do
         {:ok, item} ->
           if item.archived_at do
@@ -75,18 +77,19 @@ defmodule RivaAsh.Reactors.ReservationReactor do
           else
             {:ok, item}
           end
+
         {:error, _} ->
           {:error, "Item not found"}
       end
-    end
+    end)
   end
 
   # Step 4: Validate datetime range
   step :validate_datetime_range do
-    argument :start_datetime, input(:start_datetime)
-    argument :end_datetime, input(:end_datetime)
+    argument(:start_datetime, input(:start_datetime))
+    argument(:end_datetime, input(:end_datetime))
 
-    run fn %{start_datetime: start_dt, end_datetime: end_dt}, _context ->
+    run(fn %{start_datetime: start_dt, end_datetime: end_dt}, _context ->
       cond do
         Timex.compare(start_dt, end_dt) != -1 ->
           {:error, "Start datetime must be before end datetime"}
@@ -100,34 +103,36 @@ defmodule RivaAsh.Reactors.ReservationReactor do
         true ->
           {:ok, %{start_datetime: start_dt, end_datetime: end_dt}}
       end
-    end
+    end)
   end
 
   # Step 5: Check availability
   step :check_availability do
-    argument :item_id, input(:item_id)
-    argument :start_datetime, input(:start_datetime)
-    argument :end_datetime, input(:end_datetime)
+    argument(:item_id, input(:item_id))
+    argument(:start_datetime, input(:start_datetime))
+    argument(:end_datetime, input(:end_datetime))
 
-    run fn %{item_id: item_id, start_datetime: start_dt, end_datetime: end_dt}, _context ->
+    run(fn %{item_id: item_id, start_datetime: start_dt, end_datetime: end_dt}, _context ->
       case Availability.check_availability(item_id, start_dt, end_dt) do
         {:ok, true} ->
           {:ok, :available}
+
         {:ok, false} ->
           {:error, "Time slot is not available"}
+
         {:error, reason} ->
           {:error, "Failed to check availability: #{inspect(reason)}"}
       end
-    end
+    end)
   end
 
   # Step 6: Calculate pricing
   step :calculate_pricing do
-    argument :item, result(:validate_item)
-    argument :start_datetime, input(:start_datetime)
-    argument :end_datetime, input(:end_datetime)
+    argument(:item, result(:validate_item))
+    argument(:start_datetime, input(:start_datetime))
+    argument(:end_datetime, input(:end_datetime))
 
-    run fn %{item: item, start_datetime: start_dt, end_datetime: end_dt}, _context ->
+    run(fn %{item: item, start_datetime: start_dt, end_datetime: end_dt}, _context ->
       # Calculate number of days (minimum 1 day)
       hours = Timex.diff(end_dt, start_dt, :hours)
       days = max(1, ceil(hours / 24))
@@ -136,30 +141,34 @@ defmodule RivaAsh.Reactors.ReservationReactor do
       case RivaAsh.Resources.Pricing.by_item_type(item.item_type_id) do
         {:ok, [pricing | _]} ->
           total_amount = Decimal.mult(pricing.price_per_day, Decimal.new(days))
-          {:ok, %{
-            total_amount: total_amount,
-            daily_rate: pricing.price_per_day,
-            number_of_days: days
-          }}
+
+          {:ok,
+           %{
+             total_amount: total_amount,
+             daily_rate: pricing.price_per_day,
+             number_of_days: days
+           }}
+
         {:ok, []} ->
           {:error, "No pricing found for item type"}
+
         {:error, reason} ->
           {:error, "Failed to calculate pricing: #{inspect(reason)}"}
       end
-    end
+    end)
   end
 
   # Step 7: Create the reservation
   step :create_reservation do
-    argument :client_id, input(:client_id)
-    argument :employee_id, input(:employee_id)
-    argument :item_id, input(:item_id)
-    argument :start_datetime, input(:start_datetime)
-    argument :end_datetime, input(:end_datetime)
-    argument :notes, input(:notes)
-    argument :pricing, result(:calculate_pricing)
+    argument(:client_id, input(:client_id))
+    argument(:employee_id, input(:employee_id))
+    argument(:item_id, input(:item_id))
+    argument(:start_datetime, input(:start_datetime))
+    argument(:end_datetime, input(:end_datetime))
+    argument(:notes, input(:notes))
+    argument(:pricing, result(:calculate_pricing))
 
-    run fn args, _context ->
+    run(fn args, _context ->
       reservation_attrs = %{
         client_id: args.client_id,
         employee_id: args.employee_id,
@@ -176,14 +185,14 @@ defmodule RivaAsh.Reactors.ReservationReactor do
       Reservation
       |> Ash.Changeset.for_create(:create, reservation_attrs)
       |> Ash.create(domain: RivaAsh.Domain)
-    end
+    end)
 
-    compensate fn reservation, _context ->
+    compensate(fn reservation, _context ->
       Reservation.destroy!(reservation, domain: RivaAsh.Domain)
       :ok
-    end
+    end)
   end
 
   # Return the created reservation
-  return :create_reservation
+  return(:create_reservation)
 end

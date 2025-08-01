@@ -11,26 +11,27 @@ defmodule RivaAshWeb.Components.Templates.ListViewTemplate do
   @doc """
   Renders a list view template.
   """
-  attr :title, :string, required: true
-  attr :description, :string, default: nil
-  attr :items, :list, required: true
-  attr :meta, :map, required: true
-  attr :columns, :list, required: true
-  attr :path, :string, required: true
-  attr :table_id, :string, required: true
-  attr :filters, :list, default: []
-  attr :filter_values, :map, default: %{}
-  attr :empty_state, :map, default: %{}
-  attr :show_filters, :boolean, default: true
-  attr :show_search, :boolean, default: true
-  attr :class, :string, default: ""
-  attr :rest, :global
+  attr(:title, :string, required: true)
+  attr(:description, :string, default: nil)
+  attr(:items, :list, required: true)
+  attr(:meta, :map, required: true)
+  attr(:columns, :list, required: true)
+  attr(:path, :string, required: true)
+  attr(:table_id, :string, required: true)
+  attr(:filters, :list, default: [])
+  attr(:filter_values, :map, default: %{})
+  attr(:empty_state, :map, default: %{})
+  attr(:show_filters, :boolean, default: true)
+  attr(:show_search, :boolean, default: true)
+  attr(:class, :string, default: "")
+  attr(:rest, :global)
 
-  slot :actions, required: false
+  slot(:actions, required: false)
+
   slot :col, required: true do
-    attr :label, :string, required: true
-    attr :field, :atom
-    attr :sortable, :boolean
+    attr(:label, :string, required: true)
+    attr(:field, :atom)
+    attr(:sortable, :boolean)
   end
 
   def list_view_template(assigns) do

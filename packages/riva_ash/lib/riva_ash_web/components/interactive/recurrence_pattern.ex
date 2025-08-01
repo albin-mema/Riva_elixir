@@ -11,13 +11,13 @@ defmodule RivaAshWeb.Components.Interactive.RecurrencePattern do
   @doc """
   Renders a recurrence pattern configuration interface.
   """
-  attr :pattern, :map, default: %{}
-  attr :on_pattern_change, :string, required: true
-  attr :on_preview, :string, default: nil
-  attr :preview_dates, :list, default: []
-  attr :max_occurrences, :integer, default: 365
-  attr :class, :string, default: ""
-  attr :rest, :global
+  attr(:pattern, :map, default: %{})
+  attr(:on_pattern_change, :string, required: true)
+  attr(:on_preview, :string, default: nil)
+  attr(:preview_dates, :list, default: [])
+  attr(:max_occurrences, :integer, default: 365)
+  attr(:class, :string, default: "")
+  attr(:rest, :global)
 
   def recurrence_pattern(assigns) do
     ~H"""

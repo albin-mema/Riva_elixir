@@ -23,12 +23,12 @@ defmodule RivaAshWeb.Components.Organisms.BusinessCard do
         on_delete="delete_business"
       />
   """
-  attr :business, :map, required: true
-  attr :current_user, :map, required: true
-  attr :is_admin, :boolean, default: false
-  attr :on_edit, :string, required: true
-  attr :on_delete, :string, required: true
-  attr :class, :string, default: ""
+  attr(:business, :map, required: true)
+  attr(:current_user, :map, required: true)
+  attr(:is_admin, :boolean, default: false)
+  attr(:on_edit, :string, required: true)
+  attr(:on_delete, :string, required: true)
+  attr(:class, :string, default: "")
 
   def business_card(assigns) do
     ~H"""

@@ -61,11 +61,11 @@ defmodule RivaAsh.GDPR.ConsentRecord do
       accept([:user_id, :business_id, :purpose, :consent_version, :ip_address, :user_agent])
       primary?(true)
 
-      change fn changeset, _context ->
+      change(fn changeset, _context ->
         changeset
         |> Ash.Changeset.force_change_attribute(:consent_given, true)
         |> Ash.Changeset.force_change_attribute(:consent_date, DateTime.utc_now())
-      end
+      end)
 
       description("Record user consent for a specific processing purpose")
     end
@@ -73,12 +73,12 @@ defmodule RivaAsh.GDPR.ConsentRecord do
     create :withdraw_consent do
       accept([:user_id, :business_id, :purpose, :ip_address, :user_agent])
 
-      change fn changeset, _context ->
+      change(fn changeset, _context ->
         changeset
         |> Ash.Changeset.force_change_attribute(:consent_given, false)
         |> Ash.Changeset.force_change_attribute(:consent_date, DateTime.utc_now())
         |> Ash.Changeset.force_change_attribute(:withdrawal_date, DateTime.utc_now())
-      end
+      end)
 
       description("Record user consent withdrawal")
     end
@@ -119,7 +119,8 @@ defmodule RivaAsh.GDPR.ConsentRecord do
     attribute :purpose, :atom do
       allow_nil?(false)
       public?(true)
-      constraints([
+
+      constraints(
         one_of: [
           :marketing_emails,
           :analytics_tracking,
@@ -130,7 +131,8 @@ defmodule RivaAsh.GDPR.ConsentRecord do
           :profiling,
           :cross_border_transfer
         ]
-      ])
+      )
+
       description("The specific purpose for which consent was given")
     end
 
@@ -174,9 +176,7 @@ defmodule RivaAsh.GDPR.ConsentRecord do
       allow_nil?(false)
       default(:web_form)
       public?(true)
-      constraints([
-        one_of: [:web_form, :api, :email, :phone, :in_person, :import]
-      ])
+      constraints(one_of: [:web_form, :api, :email, :phone, :in_person, :import])
       description("How the consent was collected")
     end
 
@@ -209,8 +209,9 @@ defmodule RivaAsh.GDPR.ConsentRecord do
       description("Whether this consent record represents active consent")
     end
 
-    calculate :days_since_consent, :integer,
-      expr(fragment("EXTRACT(DAY FROM (NOW() - ?))", consent_date)) do
+    calculate :days_since_consent,
+              :integer,
+              expr(fragment("EXTRACT(DAY FROM (NOW() - ?))", consent_date)) do
       public?(true)
       description("Number of days since consent was given")
     end

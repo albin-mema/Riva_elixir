@@ -8,17 +8,17 @@ defmodule RivaAshWeb.Components.Interactive.DailySchedule do
   @doc """
   Renders a daily schedule view.
   """
-  attr :current_date, :string, required: true
-  attr :events, :list, default: []
-  attr :on_slot_click, :string, required: true
-  attr :on_event_click, :string, default: nil
-  attr :on_navigate, :string, required: true
-  attr :start_hour, :integer, default: 8
-  attr :end_hour, :integer, default: 18
-  attr :slot_duration, :integer, default: 30
-  attr :show_all_day, :boolean, default: true
-  attr :class, :string, default: ""
-  attr :rest, :global
+  attr(:current_date, :string, required: true)
+  attr(:events, :list, default: [])
+  attr(:on_slot_click, :string, required: true)
+  attr(:on_event_click, :string, default: nil)
+  attr(:on_navigate, :string, required: true)
+  attr(:start_hour, :integer, default: 8)
+  attr(:end_hour, :integer, default: 18)
+  attr(:slot_duration, :integer, default: 30)
+  attr(:show_all_day, :boolean, default: true)
+  attr(:class, :string, default: "")
+  attr(:rest, :global)
 
   def daily_schedule(assigns) do
     ~H"""

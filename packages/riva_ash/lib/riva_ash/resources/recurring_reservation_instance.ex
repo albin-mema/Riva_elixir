@@ -84,6 +84,7 @@ defmodule RivaAsh.Resources.RecurringReservationInstance do
         :failed_at,
         :created_at
       ])
+
       primary?(true)
       require_atomic?(false)
     end

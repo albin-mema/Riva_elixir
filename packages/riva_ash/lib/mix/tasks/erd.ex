@@ -35,6 +35,7 @@ defmodule Mix.Tasks.Erd do
       case generate_diagram(type, format) do
         :ok ->
           output_file = "lib/riva_ash/domain-mermaid-#{type}-diagram.#{format}"
+
           if File.exists?(output_file) do
             if opts[:open] do
               open_diagram(output_file, format)
@@ -45,6 +46,7 @@ defmodule Mix.Tasks.Erd do
           else
             IO.puts("Failed to generate ERD: output file not found")
           end
+
         {:error, error} ->
           IO.puts("Failed to generate ERD: #{inspect(error)}")
       end
@@ -62,6 +64,7 @@ defmodule Mix.Tasks.Erd do
         "--format",
         format
       ])
+
       :ok
     rescue
       error -> {:error, error}
@@ -72,6 +75,7 @@ defmodule Mix.Tasks.Erd do
     case System.find_executable("xdg-open") do
       nil ->
         IO.puts("Could not find xdg-open. Please open manually: #{file}")
+
       _path ->
         System.cmd("xdg-open", [file])
         :ok
@@ -83,12 +87,15 @@ defmodule Mix.Tasks.Erd do
       {:ok, content} ->
         html = create_html_content(content)
         html_file = "erd_viewer.html"
+
         case File.write(html_file, html) do
           :ok ->
             open_html_file(html_file)
+
           {:error, error} ->
             IO.puts("Failed to write HTML file: #{inspect(error)}")
         end
+
       {:error, error} ->
         IO.puts("Failed to read diagram file: #{inspect(error)}")
     end
@@ -127,13 +134,14 @@ defmodule Mix.Tasks.Erd do
       nil ->
         IO.puts("Could not find xdg-open. Please open manually: #{html_file}")
         :manual_open_required
+
       _path ->
         System.cmd("xdg-open", [html_file])
         :opened
     end
   end
 
-  defp open_diagram(file, _format) do
+  defp open_diagram(file, format) when format not in ["svg", "mmd"] do
     IO.puts("Generated file: #{file}")
     IO.puts("To open automatically, use --format svg or --format mmd")
   end

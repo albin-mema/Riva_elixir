@@ -54,7 +54,9 @@ defmodule RivaAsh.ErrorHelpersTest do
 
   describe "error_to_string/1" do
     test "converts error tuples to strings" do
-      assert ErrorHelpers.error_to_string({:error, "Something went wrong"}) == "Something went wrong"
+      assert ErrorHelpers.error_to_string({:error, "Something went wrong"}) ==
+               "Something went wrong"
+
       assert ErrorHelpers.error_to_string({:error, :not_found}) == "not found"
       assert ErrorHelpers.error_to_string({:error, :invalid_input}) == "invalid input"
     end

@@ -22,13 +22,13 @@ defmodule RivaAshWeb.Components.Organisms.BusinessForm do
         on_cancel="cancel_form"
       />
   """
-  attr :form, :map, required: true
-  attr :editing, :boolean, default: false
-  attr :loading, :boolean, default: false
-  attr :on_submit, :string, required: true
-  attr :on_change, :string, required: true
-  attr :on_cancel, :string, required: true
-  attr :class, :string, default: ""
+  attr(:form, :map, required: true)
+  attr(:editing, :boolean, default: false)
+  attr(:loading, :boolean, default: false)
+  attr(:on_submit, :string, required: true)
+  attr(:on_change, :string, required: true)
+  attr(:on_cancel, :string, required: true)
+  attr(:class, :string, default: "")
 
   def business_form(assigns) do
     ~H"""

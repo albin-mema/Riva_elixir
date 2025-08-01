@@ -38,7 +38,8 @@ defmodule RivaAsh.Availability do
          :ok <- validate_duration(item, start_datetime, end_datetime),
          :ok <- check_schedule_availability(item, start_datetime, end_datetime),
          :ok <- check_exceptions(item_id, start_datetime, end_datetime),
-         {:ok, available_capacity} <- check_reservation_conflicts(item_id, start_datetime, end_datetime, item.capacity) do
+         {:ok, available_capacity} <-
+           check_reservation_conflicts(item_id, start_datetime, end_datetime, item.capacity) do
       if available_capacity == item.capacity do
         {:ok, :available}
       else
@@ -59,20 +60,22 @@ defmodule RivaAsh.Availability do
          :ok <- validate_item_active(item) do
       day_of_week = if RivaAsh.DateTimeHelpers.weekend?(date), do: 0, else: Timex.weekday(date)
 
-      base_slots = if item.is_always_available do
-                     # 24/7 availability - create hourly slots
-                     create_24_hour_slots(date, slot_duration_minutes)
-                   else
-                     case get_scheduled_slots(item_id, day_of_week, date, slot_duration_minutes) do
-                       {:ok, slots} -> slots
-                       {:error, _} -> []
-                     end
-                   end
+      base_slots =
+        if item.is_always_available do
+          # 24/7 availability - create hourly slots
+          create_24_hour_slots(date, slot_duration_minutes)
+        else
+          case get_scheduled_slots(item_id, day_of_week, date, slot_duration_minutes) do
+            {:ok, slots} -> slots
+            {:error, _} -> []
+          end
+        end
 
       # Filter out exceptions and existing reservations
-      available_slots = base_slots
-                       |> filter_exceptions(item_id, date)
-                       |> filter_reservations(item_id, date, item.capacity)
+      available_slots =
+        base_slots
+        |> filter_exceptions(item_id, date)
+        |> filter_reservations(item_id, date, item.capacity)
 
       {:ok, available_slots}
     else
@@ -133,7 +136,8 @@ defmodule RivaAsh.Availability do
   defp check_day_schedule(item_id, day_of_week, start_datetime, end_datetime, date) do
     case RivaAsh.Resources.ItemSchedule.by_item(item_id) do
       {:ok, schedules} ->
-        day_schedules = Enum.filter(schedules, &(&1.day_of_week == day_of_week && &1.is_available))
+        day_schedules =
+          Enum.filter(schedules, &(&1.day_of_week == day_of_week && &1.is_available))
 
         if Enum.empty?(day_schedules) do
           # No schedule = not available
@@ -144,7 +148,9 @@ defmodule RivaAsh.Availability do
             time_in_schedule?(start_datetime, end_datetime, schedule, date)
           end)
         end
-      {:error, _} -> false
+
+      {:error, _} ->
+        false
     end
   end
 
@@ -155,8 +161,11 @@ defmodule RivaAsh.Availability do
     # Handle same-day reservations
     # Determine the time range to check for the current date based on the overall reservation duration.
     # For dates within the multi-day reservation, but not the start or end dates, it must be available all day.
-    check_start_time = if Timex.to_date(start_datetime) == date, do: start_time, else: Time.new!(0, 0, 0)
-    check_end_time = if Timex.to_date(end_datetime) == date, do: end_time, else: Time.new!(23, 59, 59)
+    check_start_time =
+      if Timex.to_date(start_datetime) == date, do: start_time, else: Time.new!(0, 0, 0)
+
+    check_end_time =
+      if Timex.to_date(end_datetime) == date, do: end_time, else: Time.new!(23, 59, 59)
 
     # Convert schedule times to current date's DateTime for comparison
     schedule_start_dt = DateTime.new!(date, schedule.start_time)
@@ -166,7 +175,8 @@ defmodule RivaAsh.Availability do
 
     # Check if the requested segment overlaps with or is fully contained within the schedule
     # A segment is available if its start is before the schedule's end AND its end is after the schedule's start.
-    Timex.compare(check_start_dt, schedule_end_dt) == -1 && Timex.compare(check_end_dt, schedule_start_dt) == 1
+    Timex.compare(check_start_dt, schedule_end_dt) == -1 &&
+      Timex.compare(check_end_dt, schedule_start_dt) == 1
   end
 
   defp check_exceptions(item_id, start_datetime, end_datetime) do
@@ -175,24 +185,27 @@ defmodule RivaAsh.Availability do
 
     case RivaAsh.Resources.AvailabilityException.by_item(item_id) do
       {:ok, exceptions} ->
-        blocking_exceptions = Enum.filter(exceptions, fn exception ->
-          # Check if exception date is within reservation date range
-          date_after_start = Timex.compare(exception.date, start_date) in [1, 0]
-          date_before_end = Timex.compare(exception.date, end_date) in [-1, 0]
+        blocking_exceptions =
+          Enum.filter(exceptions, fn exception ->
+            # Check if exception date is within reservation date range
+            date_after_start = Timex.compare(exception.date, start_date) in [1, 0]
+            date_before_end = Timex.compare(exception.date, end_date) in [-1, 0]
 
-          # Exception must be in date range, marked as unavailable, and overlap the time
-          date_after_start and date_before_end and
-            not exception.is_available and
-            exception_overlaps?(exception, start_datetime, end_datetime)
-        end)
+            # Exception must be in date range, marked as unavailable, and overlap the time
+            date_after_start and date_before_end and
+              not exception.is_available and
+              exception_overlaps?(exception, start_datetime, end_datetime)
+          end)
 
         if Enum.empty?(blocking_exceptions) do
           :ok
         else
           {:error, :blocked_by_exception}
         end
+
       # No exceptions = no blocking
-      {:error, _} -> :ok
+      {:error, _} ->
+        :ok
     end
   end
 
@@ -214,10 +227,11 @@ defmodule RivaAsh.Availability do
   defp check_reservation_conflicts(item_id, start_datetime, end_datetime, capacity) do
     case RivaAsh.Resources.Reservation.by_item(item_id) do
       {:ok, reservations} ->
-        conflicting_reservations = Enum.filter(reservations, fn reservation ->
-          reservation.status in [:confirmed, :pending] &&
-            reservations_overlap?(reservation, start_datetime, end_datetime)
-        end)
+        conflicting_reservations =
+          Enum.filter(reservations, fn reservation ->
+            reservation.status in [:confirmed, :pending] &&
+              reservations_overlap?(reservation, start_datetime, end_datetime)
+          end)
 
         used_capacity = length(conflicting_reservations)
         available_capacity = capacity - used_capacity
@@ -227,8 +241,10 @@ defmodule RivaAsh.Availability do
         else
           {:error, :fully_booked}
         end
+
       # No reservations = full capacity available
-      {:error, _} -> {:ok, capacity}
+      {:error, _} ->
+        {:ok, capacity}
     end
   end
 
@@ -261,13 +277,17 @@ defmodule RivaAsh.Availability do
   defp get_scheduled_slots(item_id, day_of_week, _date, slot_duration_minutes) do
     case RivaAsh.Resources.ItemSchedule.by_item(item_id) do
       {:ok, schedules} ->
-        slots = schedules
-        |> Enum.filter(&(&1.day_of_week == day_of_week && &1.is_available))
-        |> Enum.flat_map(fn schedule ->
-          generate_slots_for_schedule(schedule, slot_duration_minutes)
-        end)
+        slots =
+          schedules
+          |> Enum.filter(&(&1.day_of_week == day_of_week && &1.is_available))
+          |> Enum.flat_map(fn schedule ->
+            generate_slots_for_schedule(schedule, slot_duration_minutes)
+          end)
+
         {:ok, slots}
-      {:error, _} -> {:ok, []}
+
+      {:error, _} ->
+        {:ok, []}
     end
   end
 
@@ -300,6 +320,7 @@ defmodule RivaAsh.Availability do
   # Helper function to recursively generate slots
   defp do_generate_slots(current, ending, duration, acc) do
     next = current + duration
+
     if next <= ending do
       do_generate_slots(next, ending, duration, [{current, next} | acc])
     else
@@ -318,7 +339,9 @@ defmodule RivaAsh.Availability do
             slot_blocked_by_exception?({start_time, end_time}, exception)
           end)
         end)
-      {:error, _} -> slots
+
+      {:error, _} ->
+        slots
     end
   end
 
@@ -336,23 +359,27 @@ defmodule RivaAsh.Availability do
   defp filter_reservations(slots, item_id, date, capacity) do
     case RivaAsh.Resources.Reservation.by_item(item_id) do
       {:ok, reservations} ->
-        day_reservations = Enum.filter(reservations, fn reservation ->
-          reservation.status in [:confirmed, :pending] &&
-            (Timex.to_date(reservation.reserved_from) == date ||
-               Timex.to_date(reservation.reserved_until) == date)
-        end)
+        day_reservations =
+          Enum.filter(reservations, fn reservation ->
+            reservation.status in [:confirmed, :pending] &&
+              (Timex.to_date(reservation.reserved_from) == date ||
+                 Timex.to_date(reservation.reserved_until) == date)
+          end)
 
         Enum.filter(slots, fn {start_time, end_time} ->
           slot_datetime_start = DateTime.new!(date, start_time)
           slot_datetime_end = DateTime.new!(date, end_time)
 
-          conflicting_count = Enum.count(day_reservations, fn reservation ->
-            reservations_overlap?(reservation, slot_datetime_start, slot_datetime_end)
-          end)
+          conflicting_count =
+            Enum.count(day_reservations, fn reservation ->
+              reservations_overlap?(reservation, slot_datetime_start, slot_datetime_end)
+            end)
 
           conflicting_count < capacity
         end)
-      {:error, _} -> slots
+
+      {:error, _} ->
+        slots
     end
   end
 end

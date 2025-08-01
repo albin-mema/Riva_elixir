@@ -9,16 +9,16 @@ defmodule RivaAshWeb.Components.Molecules.ConfirmDialog do
   @doc """
   Renders a confirmation dialog.
   """
-  attr :title, :string, required: true
-  attr :message, :string, required: true
-  attr :confirm_label, :string, default: "Confirm"
-  attr :cancel_label, :string, default: "Cancel"
-  attr :variant, :string, default: "destructive", values: ~w(destructive warning info)
-  attr :on_confirm, :string, required: true
-  attr :on_cancel, :string, required: true
-  attr :show, :boolean, default: false
-  attr :class, :string, default: ""
-  attr :rest, :global
+  attr(:title, :string, required: true)
+  attr(:message, :string, required: true)
+  attr(:confirm_label, :string, default: "Confirm")
+  attr(:cancel_label, :string, default: "Cancel")
+  attr(:variant, :string, default: "destructive", values: ~w(destructive warning info))
+  attr(:on_confirm, :string, required: true)
+  attr(:on_cancel, :string, required: true)
+  attr(:show, :boolean, default: false)
+  attr(:class, :string, default: "")
+  attr(:rest, :global)
 
   def confirm_dialog(assigns) do
     ~H"""

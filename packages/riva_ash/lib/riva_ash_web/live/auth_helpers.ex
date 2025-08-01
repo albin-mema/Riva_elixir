@@ -14,8 +14,12 @@ defmodule RivaAshWeb.Live.AuthHelpers do
     user_token = session["user_token"]
 
     if user_token do
-      with {:ok, user_id} <- Phoenix.Token.verify(RivaAshWeb.Endpoint, "user_auth", user_token, max_age: 86_400) |> ErrorHelpers.to_result(),
-           {:ok, user} <- Ash.get(RivaAsh.Accounts.User, user_id, domain: RivaAsh.Accounts) |> ErrorHelpers.to_result() do
+      with {:ok, user_id} <-
+             Phoenix.Token.verify(RivaAshWeb.Endpoint, "user_auth", user_token, max_age: 86_400)
+             |> ErrorHelpers.to_result(),
+           {:ok, user} <-
+             Ash.get(RivaAsh.Accounts.User, user_id, domain: RivaAsh.Accounts)
+             |> ErrorHelpers.to_result() do
         ErrorHelpers.success(user)
       else
         _ -> ErrorHelpers.failure(:not_authenticated)
@@ -57,6 +61,7 @@ defmodule RivaAshWeb.Live.AuthHelpers do
         # Use the socket's assign function (available in LiveView context)
         socket_with_user = socket |> Phoenix.Component.assign(:current_user, user)
         ErrorHelpers.success(socket_with_user)
+
       {:error, _} ->
         # Use Phoenix.LiveView.push_redirect instead
         redirect_socket = socket |> Phoenix.LiveView.push_navigate(to: redirect_to)
@@ -155,13 +160,15 @@ defmodule RivaAshWeb.Live.AuthHelpers do
             |> Phoenix.Component.assign(:current_user, user)
             |> Phoenix.Component.assign(:page_title, page_title)
             |> Phoenix.Component.assign(resource_key(resource_module), resources)
-            |> Phoenix.Component.assign(:meta, %{}) # Placeholder for pagination/metadata
+            # Placeholder for pagination/metadata
+            |> Phoenix.Component.assign(:meta, %{})
 
           {:ok, socket}
         rescue
-          error in [Ash.Error.Forbidden, Ash.Error.Invalid] ->
+          _error in [Ash.Error.Forbidden, Ash.Error.Invalid] ->
             {:ok, Phoenix.LiveView.redirect(socket, to: "/access-denied")}
         end
+
       {:error, _} ->
         {:ok, Phoenix.LiveView.redirect(socket, to: "/sign-in")}
     end
@@ -188,6 +195,7 @@ defmodule RivaAshWeb.Live.AuthHelpers do
     |> List.last()
     |> Macro.underscore()
     |> String.to_atom()
-    |> then(fn name -> :"#{name}s" end) # Pluralize
+    # Pluralize
+    |> then(fn name -> :"#{name}s" end)
   end
 end

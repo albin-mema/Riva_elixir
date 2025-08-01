@@ -20,12 +20,12 @@ defmodule RivaAshWeb.Components.Business.BusinessCard do
         on_delete="delete_business"
       />
   """
-  attr :business, :map, required: true
-  attr :current_user, :map, required: true
-  attr :is_admin, :boolean, default: false
-  attr :on_edit, :string, required: true
-  attr :on_delete, :string, required: true
-  attr :class, :string, default: ""
+  attr(:business, :map, required: true)
+  attr(:current_user, :map, required: true)
+  attr(:is_admin, :boolean, default: false)
+  attr(:on_edit, :string, required: true)
+  attr(:on_delete, :string, required: true)
+  attr(:class, :string, default: "")
 
   def business_card(assigns) do
     ~H"""
@@ -58,10 +58,7 @@ defmodule RivaAshWeb.Components.Business.BusinessCard do
     """
   end
 
-  @doc """
-  Renders the business ID badge.
-  """
-  attr :id, :string, required: true
+  attr(:id, :string, required: true)
 
   defp business_id_badge(assigns) do
     ~H"""
@@ -71,12 +68,9 @@ defmodule RivaAshWeb.Components.Business.BusinessCard do
     """
   end
 
-  @doc """
-  Renders the owner badge.
-  """
-  attr :business, :map, required: true
-  attr :current_user, :map, required: true
-  attr :is_admin, :boolean, required: true
+  attr(:business, :map, required: true)
+  attr(:current_user, :map, required: true)
+  attr(:is_admin, :boolean, required: true)
 
   defp owner_badge(assigns) do
     ~H"""
@@ -107,10 +101,7 @@ defmodule RivaAshWeb.Components.Business.BusinessCard do
     """
   end
 
-  @doc """
-  Renders the business description.
-  """
-  attr :description, :string
+  attr(:description, :string)
 
   defp business_description(assigns) do
     ~H"""
@@ -123,10 +114,7 @@ defmodule RivaAshWeb.Components.Business.BusinessCard do
     """
   end
 
-  @doc """
-  Renders business metadata (dates).
-  """
-  attr :business, :map, required: true
+  attr(:business, :map, required: true)
 
   defp business_metadata(assigns) do
     ~H"""
@@ -147,12 +135,9 @@ defmodule RivaAshWeb.Components.Business.BusinessCard do
     """
   end
 
-  @doc """
-  Renders business action buttons.
-  """
-  attr :business_id, :string, required: true
-  attr :on_edit, :string, required: true
-  attr :on_delete, :string, required: true
+  attr(:business_id, :string, required: true)
+  attr(:on_edit, :string, required: true)
+  attr(:on_delete, :string, required: true)
 
   defp business_actions(assigns) do
     ~H"""

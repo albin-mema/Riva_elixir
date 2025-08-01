@@ -30,7 +30,12 @@ defmodule RivaAshWeb.RouteEnumerationTest do
       }
     end
 
-    test "enumerate and test all routes", %{user: user, business: business, client: client, item: item} do
+    test "enumerate and test all routes", %{
+      user: user,
+      business: business,
+      client: client,
+      item: item
+    } do
       # Get all routes from the router
       routes = get_all_routes()
 
@@ -55,7 +60,12 @@ defmodule RivaAshWeb.RouteEnumerationTest do
       IO.puts("=== ROUTE ENUMERATION COMPLETE ===\n")
     end
 
-    test "test specific route patterns with parameters", %{user: user, business: business, client: client, item: item} do
+    test "test specific route patterns with parameters", %{
+      user: user,
+      business: business,
+      client: client,
+      item: item
+    } do
       # Test routes that require specific parameters
       test_routes_with_params([
         {"/businesses/:id/edit", [id: business.id], user},
@@ -96,9 +106,9 @@ defmodule RivaAshWeb.RouteEnumerationTest do
 
   defp is_public_route?(%{path: path, pipe_through: pipes}) do
     String.starts_with?(path, "/") and
-    not String.starts_with?(path, "/api") and
-    not String.starts_with?(path, "/admin") and
-    not Enum.member?(pipes, :require_authenticated_user)
+      not String.starts_with?(path, "/api") and
+      not String.starts_with?(path, "/admin") and
+      not Enum.member?(pipes, :require_authenticated_user)
   end
 
   defp is_authenticated_route?(%{pipe_through: pipes}) do
@@ -162,40 +172,59 @@ defmodule RivaAshWeb.RouteEnumerationTest do
       conn = if user, do: log_in_user(conn, user), else: conn
 
       # Set appropriate headers based on route type
-      conn = case type do
-        :api -> put_req_header(conn, "accept", "application/json")
-        _ -> put_req_header(conn, "accept", "text/html")
-      end
+      conn =
+        case type do
+          :api -> put_req_header(conn, "accept", "application/json")
+          _ -> put_req_header(conn, "accept", "text/html")
+        end
 
       # Make the request
-      response = case verb do
-        :get -> get(conn, path)
-        :post -> post(conn, path, %{})
-        :put -> put(conn, path, %{})
-        :patch -> patch(conn, path, %{})
-        :delete -> delete(conn, path)
-        _ -> get(conn, path)  # Default to GET
-      end
+      response =
+        case verb do
+          :get -> get(conn, path)
+          :post -> post(conn, path, %{})
+          :put -> put(conn, path, %{})
+          :patch -> patch(conn, path, %{})
+          :delete -> delete(conn, path)
+          # Default to GET
+          _ -> get(conn, path)
+        end
 
       status = response.status
 
       case status do
-        200 -> IO.puts("  ✓ #{verb} #{path} -> #{status}")
-        201 -> IO.puts("  ✓ #{verb} #{path} -> #{status}")
-        302 -> IO.puts("  ↗ #{verb} #{path} -> #{status} (redirect)")
-        401 -> IO.puts("  🔒 #{verb} #{path} -> #{status} (unauthorized)")
-        403 -> IO.puts("  🚫 #{verb} #{path} -> #{status} (forbidden)")
-        404 -> IO.puts("  ❓ #{verb} #{path} -> #{status} (not found)")
-        422 -> IO.puts("  ⚠ #{verb} #{path} -> #{status} (unprocessable)")
+        200 ->
+          IO.puts("  ✓ #{verb} #{path} -> #{status}")
+
+        201 ->
+          IO.puts("  ✓ #{verb} #{path} -> #{status}")
+
+        302 ->
+          IO.puts("  ↗ #{verb} #{path} -> #{status} (redirect)")
+
+        401 ->
+          IO.puts("  🔒 #{verb} #{path} -> #{status} (unauthorized)")
+
+        403 ->
+          IO.puts("  🚫 #{verb} #{path} -> #{status} (forbidden)")
+
+        404 ->
+          IO.puts("  ❓ #{verb} #{path} -> #{status} (not found)")
+
+        422 ->
+          IO.puts("  ⚠ #{verb} #{path} -> #{status} (unprocessable)")
+
         500 ->
           IO.puts("  ❌ #{verb} #{path} -> #{status} (SERVER ERROR)")
           IO.inspect(response.resp_body, label: "Error body")
-        _ -> IO.puts("  ? #{verb} #{path} -> #{status}")
+
+        _ ->
+          IO.puts("  ? #{verb} #{path} -> #{status}")
       end
 
       # Assert no 500 errors (server crashes)
-      assert status != 500, "Route #{verb} #{path} returned 500 error: #{inspect(response.resp_body)}"
-
+      assert status != 500,
+             "Route #{verb} #{path} returned 500 error: #{inspect(response.resp_body)}"
     rescue
       error ->
         IO.puts("  💥 #{verb} #{path} -> EXCEPTION: #{inspect(error)}")
@@ -208,38 +237,52 @@ defmodule RivaAshWeb.RouteEnumerationTest do
 
     Enum.each(route_params_list, fn {path_template, params, user} ->
       # Replace parameters in path
-      actual_path = Enum.reduce(params, path_template, fn {key, value}, acc ->
-        String.replace(acc, ":#{key}", to_string(value))
-      end)
+      actual_path =
+        Enum.reduce(params, path_template, fn {key, value}, acc ->
+          String.replace(acc, ":#{key}", to_string(value))
+        end)
 
       try do
         conn = build_conn()
         conn = if user, do: log_in_user(conn, user), else: conn
 
         # Determine if it's an API route
-        conn = if String.starts_with?(actual_path, "/api") do
-          put_req_header(conn, "accept", "application/json")
-        else
-          put_req_header(conn, "accept", "text/html")
-        end
+        conn =
+          if String.starts_with?(actual_path, "/api") do
+            put_req_header(conn, "accept", "application/json")
+          else
+            put_req_header(conn, "accept", "text/html")
+          end
 
         response = get(conn, actual_path)
         status = response.status
 
         case status do
-          200 -> IO.puts("  ✓ GET #{actual_path} -> #{status}")
-          302 -> IO.puts("  ↗ GET #{actual_path} -> #{status} (redirect)")
-          401 -> IO.puts("  🔒 GET #{actual_path} -> #{status} (unauthorized)")
-          403 -> IO.puts("  🚫 GET #{actual_path} -> #{status} (forbidden)")
-          404 -> IO.puts("  ❓ GET #{actual_path} -> #{status} (not found)")
+          200 ->
+            IO.puts("  ✓ GET #{actual_path} -> #{status}")
+
+          302 ->
+            IO.puts("  ↗ GET #{actual_path} -> #{status} (redirect)")
+
+          401 ->
+            IO.puts("  🔒 GET #{actual_path} -> #{status} (unauthorized)")
+
+          403 ->
+            IO.puts("  🚫 GET #{actual_path} -> #{status} (forbidden)")
+
+          404 ->
+            IO.puts("  ❓ GET #{actual_path} -> #{status} (not found)")
+
           500 ->
             IO.puts("  ❌ GET #{actual_path} -> #{status} (SERVER ERROR)")
             IO.inspect(response.resp_body, label: "Error body")
-          _ -> IO.puts("  ? GET #{actual_path} -> #{status}")
+
+          _ ->
+            IO.puts("  ? GET #{actual_path} -> #{status}")
         end
 
-        assert status != 500, "Route GET #{actual_path} returned 500 error: #{inspect(response.resp_body)}"
-
+        assert status != 500,
+               "Route GET #{actual_path} returned 500 error: #{inspect(response.resp_body)}"
       rescue
         error ->
           IO.puts("  💥 GET #{actual_path} -> EXCEPTION: #{inspect(error)}")
@@ -258,18 +301,26 @@ defmodule RivaAshWeb.RouteEnumerationTest do
         status = response.status
 
         case status do
-          404 -> IO.puts("  ✓ GET #{path} -> #{status} (expected)")
-          200 -> IO.puts("  ? GET #{path} -> #{status} (unexpected success)")
-          302 -> IO.puts("  ↗ GET #{path} -> #{status} (redirect)")
+          404 ->
+            IO.puts("  ✓ GET #{path} -> #{status} (expected)")
+
+          200 ->
+            IO.puts("  ? GET #{path} -> #{status} (unexpected success)")
+
+          302 ->
+            IO.puts("  ↗ GET #{path} -> #{status} (redirect)")
+
           500 ->
             IO.puts("  ❌ GET #{path} -> #{status} (SERVER ERROR)")
             IO.inspect(response.resp_body, label: "Error body")
-          _ -> IO.puts("  ? GET #{path} -> #{status}")
+
+          _ ->
+            IO.puts("  ? GET #{path} -> #{status}")
         end
 
         # For error routes, we mainly care about not getting 500s
-        assert status != 500, "Error route GET #{path} returned 500 error: #{inspect(response.resp_body)}"
-
+        assert status != 500,
+               "Error route GET #{path} returned 500 error: #{inspect(response.resp_body)}"
       rescue
         error ->
           IO.puts("  💥 GET #{path} -> EXCEPTION: #{inspect(error)}")

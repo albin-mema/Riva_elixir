@@ -9,7 +9,7 @@ defmodule RivaAsh.Validations.FullDayReservation do
   """
   use Ash.Resource.Validation
   require Ash.Expr
-  import Ash.Expr
+
   alias Ash.Error.Changes.InvalidChanges
 
   @impl true
@@ -25,7 +25,8 @@ defmodule RivaAsh.Validations.FullDayReservation do
         {:error,
          InvalidChanges.exception(
            field: :reserved_from,
-           message: "Reservations must be for full calendar days only. Start time must be 00:00:00 and end time must be 23:59:59 or 00:00:00 of the next day."
+           message:
+             "Reservations must be for full calendar days only. Start time must be 00:00:00 and end time must be 23:59:59 or 00:00:00 of the next day."
          )}
 
       true ->
@@ -47,7 +48,8 @@ defmodule RivaAsh.Validations.FullDayReservation do
     # Check if end time is at end of day (23:59:59) or beginning of next day (00:00:00)
     end_is_end_of_day =
       Timex.compare(until_time, ~T[23:59:59]) == 0 or
-      (Timex.compare(until_time, ~T[00:00:00]) == 0 and Timex.diff(until_date, from_date, :days) >= 1)
+        (Timex.compare(until_time, ~T[00:00:00]) == 0 and
+           Timex.diff(until_date, from_date, :days) >= 1)
 
     start_is_beginning_of_day and end_is_end_of_day
   end

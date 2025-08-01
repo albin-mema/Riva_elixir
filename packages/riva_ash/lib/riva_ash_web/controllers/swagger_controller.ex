@@ -4,10 +4,11 @@ defmodule RivaAshWeb.SwaggerController do
 
   def index(conn, _params) do
     with {:ok, html} <- generate_swagger_html(),
-         {:ok, response_conn} <- conn
-                                 |> put_resp_content_type("text/html")
-                                 |> send_resp(200, html)
-                                 |> ErrorHelpers.to_result() do
+         {:ok, response_conn} <-
+           conn
+           |> put_resp_content_type("text/html")
+           |> send_resp(200, html)
+           |> ErrorHelpers.to_result() do
       response_conn
     else
       {:error, error} ->

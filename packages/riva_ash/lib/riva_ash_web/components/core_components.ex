@@ -8,7 +8,7 @@ defmodule RivaAshWeb.CoreComponents do
   """
   use RivaAshWeb, :html
 
-  import RivaAshWeb.Gettext
+
   alias Phoenix.LiveView.JS
 
   @doc """
@@ -19,13 +19,13 @@ defmodule RivaAshWeb.CoreComponents do
       <.flash kind={:info} flash={@flash} />
       <.flash kind={:info} phx-mounted={show("#flash")}>Welcome Back!</.flash>
   """
-  attr :id, :string, doc: "the optional id of flash container"
-  attr :flash, :map, default: %{}, doc: "the map of flash messages to display"
-  attr :title, :string, default: nil
-  attr :kind, :atom, values: [:info, :error], doc: "used for styling and flash lookup"
-  attr :rest, :global, doc: "the arbitrary HTML attributes to add to the flash container"
+  attr(:id, :string, doc: "the optional id of flash container")
+  attr(:flash, :map, default: %{}, doc: "the map of flash messages to display")
+  attr(:title, :string, default: nil)
+  attr(:kind, :atom, values: [:info, :error], doc: "used for styling and flash lookup")
+  attr(:rest, :global, doc: "the arbitrary HTML attributes to add to the flash container")
 
-  slot :inner_block, doc: "the optional inner block that renders the flash message"
+  slot(:inner_block, doc: "the optional inner block that renders the flash message")
 
   def flash(assigns) do
     ~H"""
@@ -61,8 +61,8 @@ defmodule RivaAshWeb.CoreComponents do
 
       <.flash_group flash={@flash} />
   """
-  attr :flash, :map, required: true, doc: "the map of flash messages"
-  attr :id, :string, default: "flash-group", doc: "the optional id of flash container"
+  attr(:flash, :map, required: true, doc: "the map of flash messages")
+  attr(:id, :string, default: "flash-group", doc: "the optional id of flash container")
 
   def flash_group(assigns) do
     ~H"""
@@ -76,8 +76,8 @@ defmodule RivaAshWeb.CoreComponents do
   @doc """
   Renders a simple icon.
   """
-  attr :name, :string, required: true
-  attr :class, :string, default: nil
+  attr(:name, :string, required: true)
+  attr(:class, :string, default: nil)
 
   def icon(%{name: "hero-" <> _} = assigns) do
     ~H"""
@@ -85,7 +85,7 @@ defmodule RivaAshWeb.CoreComponents do
     """
   end
 
-  defp hide(js \\ %JS{}, selector) do
+  defp hide(js, selector) do
     JS.hide(js,
       to: selector,
       time: 200,
@@ -95,22 +95,14 @@ defmodule RivaAshWeb.CoreComponents do
     )
   end
 
-  defp show(js \\ %JS{}, selector) do
-    JS.show(js,
-      to: selector,
-      time: 200,
-      transition:
-        {"transition-all transform ease-out duration-200",
-         "opacity-0 translate-y-2 sm:translate-x-2", "opacity-100 translate-y-0 sm:translate-x-0"}
-    )
-  end
+
 
   @doc """
   Renders a React component using live_react.
   """
-  attr :module, :string, required: true
-  attr :props, :map, default: %{}
-  attr :id, :string, required: true
+  attr(:module, :string, required: true)
+  attr(:props, :map, default: %{})
+  attr(:id, :string, required: true)
 
   def live_react_component(assigns) do
     ~H"""
@@ -123,5 +115,4 @@ defmodule RivaAshWeb.CoreComponents do
     </div>
     """
   end
-
 end

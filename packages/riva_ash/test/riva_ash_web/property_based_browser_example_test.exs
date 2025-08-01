@@ -29,10 +29,11 @@ defmodule RivaAshWeb.PropertyBasedBrowserExampleTest do
     @tag :basic
     property "simple navigation flows work", %{conn: conn} do
       # Generate simple navigation flows
-      check all steps <- integer(2..4),
-                routes <- list_of(member_of(["/", "/sign-in", "/register"]), length: steps),
-                max_runs: 5 do
-
+      check all(
+              steps <- integer(2..4),
+              routes <- list_of(member_of(["/", "/sign-in", "/register"]), length: steps),
+              max_runs: 5
+            ) do
         # Convert routes to flow steps
         flow = Enum.map(routes, fn route -> {:visit, %{path: route}} end)
 
@@ -52,22 +53,24 @@ defmodule RivaAshWeb.PropertyBasedBrowserExampleTest do
 
     @tag :auth_simple
     property "registration and login flows", %{conn: conn} do
-      check all name <- string(:alphanumeric, min_length: 3, max_length: 20),
-                email_prefix <- string(:alphanumeric, min_length: 3, max_length: 10),
-                max_runs: 3 do
-
+      check all(
+              name <- string(:alphanumeric, min_length: 3, max_length: 20),
+              email_prefix <- string(:alphanumeric, min_length: 3, max_length: 10),
+              max_runs: 3
+            ) do
         email = "#{email_prefix}@example.com"
         password = "password123"
 
         # Simple registration flow
         flow = [
           {:visit, %{path: "/register"}},
-          {:register, %{
-            name: name,
-            email: email,
-            password: password,
-            password_confirmation: password
-          }},
+          {:register,
+           %{
+             name: name,
+             email: email,
+             password: password,
+             password_confirmation: password
+           }},
           {:visit, %{path: "/sign-in"}},
           {:login, %{email: email, password: password}}
         ]
@@ -79,10 +82,12 @@ defmodule RivaAshWeb.PropertyBasedBrowserExampleTest do
             IO.puts("✅ Auth flow completed for user: #{name}")
 
           {:error, {reason, step, state}} ->
-            IO.puts("❌ Auth flow failed: #{inspect(reason)} at #{inspect(step)} in state #{state}")
+            IO.puts(
+              "❌ Auth flow failed: #{inspect(reason)} at #{inspect(step)} in state #{state}"
+            )
 
             # Only fail on unexpected errors
-            unless reason in [:register_failed, :login_failed] do
+            if reason not in [:register_failed, :login_failed] do
               flunk("Unexpected auth error: #{inspect(reason)}")
             end
         end
@@ -95,12 +100,13 @@ defmodule RivaAshWeb.PropertyBasedBrowserExampleTest do
       flow = [
         {:visit, %{path: "/"}},
         {:visit, %{path: "/register"}},
-        {:register, %{
-          name: "Test User",
-          email: "test#{:rand.uniform(1000)}@example.com",
-          password: "password123",
-          password_confirmation: "password123"
-        }},
+        {:register,
+         %{
+           name: "Test User",
+           email: "test#{:rand.uniform(1000)}@example.com",
+           password: "password123",
+           password_confirmation: "password123"
+         }},
         {:visit, %{path: "/sign-in"}},
         {:login, %{email: "test@example.com", password: "password123"}}
       ]
@@ -190,7 +196,9 @@ defmodule RivaAshWeb.PropertyBasedBrowserExampleTest do
           assert is_map(data)
         end)
 
-        IO.puts("✅ Generated valid flow: #{inspect(Enum.map(flow, fn {action, _} -> action end))}")
+        IO.puts(
+          "✅ Generated valid flow: #{inspect(Enum.map(flow, fn {action, _} -> action end))}"
+        )
       end
     end
   end

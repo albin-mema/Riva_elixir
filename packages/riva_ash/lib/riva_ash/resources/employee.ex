@@ -41,12 +41,14 @@ defmodule RivaAsh.Resources.Employee do
 
     # Permission-based authorization for viewing employees (within same business)
     policy action_type(:read) do
-      authorize_if(always()) # Publicly readable
+      # Publicly readable
+      authorize_if(always())
     end
 
     # Permission-based authorization for creating employees (within accessible business)
     policy action_type(:create) do
-      authorize_if(always()) # Public registration
+      # Public registration
+      authorize_if(always())
     end
 
     # Permission-based authorization for updating employees (within same business)
@@ -147,19 +149,19 @@ defmodule RivaAsh.Resources.Employee do
 
     update :update_last_login do
       accept([])
-      require_atomic? false
+      require_atomic?(false)
       change(set_attribute(:last_login_at, &Timex.now/0))
     end
 
     update :deactivate do
       accept([])
-      require_atomic? false
+      require_atomic?(false)
       change(set_attribute(:is_active, false))
     end
 
     update :activate do
       accept([])
-      require_atomic? false
+      require_atomic?(false)
       change(set_attribute(:is_active, true))
     end
   end
@@ -277,10 +279,13 @@ defmodule RivaAsh.Resources.Employee do
   validations do
     validate(fn changeset, _context ->
       case Ash.Changeset.get_attribute(changeset, :email) do
-        nil -> :ok
+        nil ->
+          :ok
+
         email ->
           # Convert CiString to string for regex validation
           email_string = to_string(email)
+
           if Regex.match?(~r/^[^\s]+@[^\s]+$/, email_string) do
             :ok
           else
@@ -288,6 +293,7 @@ defmodule RivaAsh.Resources.Employee do
           end
       end
     end)
+
     validate(present([:first_name, :last_name]), message: "first and last name are required")
   end
 

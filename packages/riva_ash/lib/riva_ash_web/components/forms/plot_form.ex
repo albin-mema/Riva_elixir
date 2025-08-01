@@ -10,15 +10,15 @@ defmodule RivaAshWeb.Components.Forms.PlotForm do
   @doc """
   Renders a plot form.
   """
-  attr :form, :map, required: true
-  attr :businesses, :list, default: []
-  attr :editing, :boolean, default: false
-  attr :on_submit, :string, required: true
-  attr :on_change, :string, required: true
-  attr :on_cancel, :string, required: true
-  attr :loading, :boolean, default: false
-  attr :class, :string, default: ""
-  attr :rest, :global
+  attr(:form, :map, required: true)
+  attr(:businesses, :list, default: [])
+  attr(:editing, :boolean, default: false)
+  attr(:on_submit, :string, required: true)
+  attr(:on_change, :string, required: true)
+  attr(:on_cancel, :string, required: true)
+  attr(:loading, :boolean, default: false)
+  attr(:class, :string, default: "")
+  attr(:rest, :global)
 
   def plot_form(assigns) do
     ~H"""

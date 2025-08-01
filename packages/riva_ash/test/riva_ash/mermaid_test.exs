@@ -37,6 +37,7 @@ defmodule RivaAsh.MermaidTest do
   describe "generate_sequence_diagram/2" do
     test "generates valid mermaid sequence diagram" do
       participants = ["User", "API", "Database"]
+
       messages = [
         %{from: "User", to: "API", message: "Request"},
         %{from: "API", to: "Database", message: "Query"},
@@ -83,6 +84,7 @@ defmodule RivaAsh.MermaidTest do
   describe "generate_state_diagram/1" do
     test "generates valid mermaid state diagram" do
       states = ["Pending", "Processing", "Completed", "Failed"]
+
       transitions = [
         %{from: "Pending", to: "Processing", label: "start"},
         %{from: "Processing", to: "Completed", label: "success"},

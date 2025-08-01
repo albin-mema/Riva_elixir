@@ -8,13 +8,13 @@ defmodule RivaAshWeb.Components.Molecules.TabNavigation do
   @doc """
   Renders tab navigation.
   """
-  attr :tabs, :list, required: true
-  attr :active_tab, :string, required: true
-  attr :on_tab_change, :string, required: true
-  attr :variant, :string, default: "default", values: ~w(default pills underline)
-  attr :size, :string, default: "md", values: ~w(sm md lg)
-  attr :class, :string, default: ""
-  attr :rest, :global
+  attr(:tabs, :list, required: true)
+  attr(:active_tab, :string, required: true)
+  attr(:on_tab_change, :string, required: true)
+  attr(:variant, :string, default: "default", values: ~w(default pills underline))
+  attr(:size, :string, default: "md", values: ~w(sm md lg))
+  attr(:class, :string, default: "")
+  attr(:rest, :global)
 
   def tab_navigation(assigns) do
     ~H"""

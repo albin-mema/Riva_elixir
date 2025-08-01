@@ -1,41 +1,40 @@
 defmodule RivaAsh.GDPR.DataSubjectRights do
   @moduledoc """
   Implementation of GDPR Data Subject Rights (Articles 15-22).
-  
+
   This module provides functions to handle:
   - Right of access (Article 15)
-  - Right to rectification (Article 16) 
+  - Right to rectification (Article 16)
   - Right to erasure (Article 17)
   - Right to restrict processing (Article 18)
   - Right to data portability (Article 20)
   - Right to object (Article 21)
-  
+
   All operations are logged for compliance audit purposes.
   """
 
   alias RivaAsh.Accounts.User
-  alias RivaAsh.Resources.{Business, Employee, Client, Reservation}
+  alias RivaAsh.Resources.Business
   alias RivaAsh.GDPR.ConsentRecord
 
   require Logger
 
   @doc """
   Export all personal data for a data subject in a portable format.
-  
+
   GDPR Article 15: Right of access
   GDPR Article 20: Right to data portability
-  
+
   Returns data in JSON format that can be easily imported by other systems.
   """
   def export_personal_data(user_id, format \\ :json) when is_binary(user_id) do
     Logger.info("GDPR: Starting data export for user #{user_id}")
-    
+
     with {:ok, user} <- get_user(user_id),
          {:ok, data} <- collect_personal_data(user) do
-      
       formatted_data = format_export_data(data, format)
       log_data_subject_request(user_id, "data_export", "completed")
-      
+
       {:ok, formatted_data}
     else
       {:error, reason} ->
@@ -46,22 +45,23 @@ defmodule RivaAsh.GDPR.DataSubjectRights do
 
   @doc """
   Initiate the data deletion process for a user.
-  
+
   GDPR Article 17: Right to erasure ("right to be forgotten")
-  
+
   This performs a soft delete initially, then schedules hard deletion
   after the legal retention period.
   """
-  def request_data_deletion(user_id, reason \\ "user_request") when is_binary(user_id) do
+  def request_data_deletion(user_id, _reason \\ "user_request") when is_binary(user_id) do
     Logger.info("GDPR: Starting deletion request for user #{user_id}")
-    
+
     with {:ok, user} <- get_user(user_id),
          :ok <- validate_deletion_request(user),
          {:ok, _} <- soft_delete_user_data(user),
          :ok <- schedule_hard_deletion(user_id) do
-      
       log_data_subject_request(user_id, "data_deletion", "initiated")
-      {:ok, "Deletion request initiated. Data will be permanently deleted after retention period."}
+
+      {:ok,
+       "Deletion request initiated. Data will be permanently deleted after retention period."}
     else
       {:error, reason} ->
         log_data_subject_request(user_id, "data_deletion", "failed", reason)
@@ -71,17 +71,16 @@ defmodule RivaAsh.GDPR.DataSubjectRights do
 
   @doc """
   Restrict processing of personal data.
-  
+
   GDPR Article 18: Right to restriction of processing
-  
+
   Marks data as restricted - it can be stored but not processed.
   """
   def restrict_data_processing(user_id, restriction_reason) when is_binary(user_id) do
     Logger.info("GDPR: Restricting data processing for user #{user_id}")
-    
+
     with {:ok, user} <- get_user(user_id),
          {:ok, _} <- mark_data_as_restricted(user, restriction_reason) do
-      
       log_data_subject_request(user_id, "restrict_processing", "completed")
       {:ok, "Data processing has been restricted"}
     else
@@ -93,18 +92,18 @@ defmodule RivaAsh.GDPR.DataSubjectRights do
 
   @doc """
   Object to data processing.
-  
+
   GDPR Article 21: Right to object
-  
+
   Allows users to object to processing based on legitimate interests.
   """
-  def object_to_processing(user_id, processing_purposes) when is_binary(user_id) and is_list(processing_purposes) do
+  def object_to_processing(user_id, processing_purposes)
+      when is_binary(user_id) and is_list(processing_purposes) do
     Logger.info("GDPR: Processing objection for user #{user_id}")
-    
+
     with {:ok, user} <- get_user(user_id),
          :ok <- validate_objection_grounds(processing_purposes),
          {:ok, _} <- record_processing_objection(user, processing_purposes) do
-      
       log_data_subject_request(user_id, "object_processing", "completed")
       {:ok, "Objection to processing has been recorded"}
     else
@@ -116,16 +115,16 @@ defmodule RivaAsh.GDPR.DataSubjectRights do
 
   @doc """
   Rectify (correct) personal data.
-  
+
   GDPR Article 16: Right to rectification
   """
-  def rectify_personal_data(user_id, corrections) when is_binary(user_id) and is_map(corrections) do
+  def rectify_personal_data(user_id, corrections)
+      when is_binary(user_id) and is_map(corrections) do
     Logger.info("GDPR: Data rectification request for user #{user_id}")
-    
+
     with {:ok, user} <- get_user(user_id),
          :ok <- validate_corrections(corrections),
          {:ok, updated_user} <- apply_corrections(user, corrections) do
-      
       log_data_subject_request(user_id, "data_rectification", "completed")
       {:ok, updated_user}
     else
@@ -154,7 +153,7 @@ defmodule RivaAsh.GDPR.DataSubjectRights do
       consent_records: extract_consent_data(user.id),
       audit_trail: extract_audit_data(user.id)
     }
-    
+
     {:ok, data}
   end
 
@@ -183,18 +182,18 @@ defmodule RivaAsh.GDPR.DataSubjectRights do
     _ -> []
   end
 
-  defp extract_employee_data(user_id) do
+  defp extract_employee_data(_user_id) do
     # Get employee records where user is the business owner
     # This is more complex and would need proper querying
     []
   end
 
-  defp extract_client_data(user_id) do
+  defp extract_client_data(_user_id) do
     # Get client records for businesses owned by user
     []
   end
 
-  defp extract_reservation_data(user_id) do
+  defp extract_reservation_data(_user_id) do
     # Get reservation data related to user's businesses
     []
   end
@@ -213,7 +212,7 @@ defmodule RivaAsh.GDPR.DataSubjectRights do
     _ -> []
   end
 
-  defp extract_audit_data(user_id) do
+  defp extract_audit_data(_user_id) do
     # Extract relevant audit trail data
     # This would query the paper trail tables
     []
@@ -229,7 +228,7 @@ defmodule RivaAsh.GDPR.DataSubjectRights do
     |> Jason.encode!(pretty: true)
   end
 
-  defp validate_deletion_request(user) do
+  defp validate_deletion_request(_user) do
     # Check if user has active legal obligations that prevent deletion
     # For example, ongoing contracts, legal disputes, etc.
     :ok
@@ -260,12 +259,12 @@ defmodule RivaAsh.GDPR.DataSubjectRights do
   defp validate_objection_grounds(purposes) do
     valid_purposes = [
       "marketing",
-      "analytics", 
+      "analytics",
       "profiling",
       "automated_decision_making",
       "legitimate_interest_processing"
     ]
-    
+
     if Enum.all?(purposes, &(&1 in valid_purposes)) do
       :ok
     else
@@ -283,14 +282,14 @@ defmodule RivaAsh.GDPR.DataSubjectRights do
         user_agent: "gdpr_objection"
       })
     end)
-    
+
     {:ok, user}
   end
 
   defp validate_corrections(corrections) do
     # Validate that corrections are for allowed fields
     allowed_fields = [:name, :email, :phone]
-    
+
     if Map.keys(corrections) |> Enum.all?(&(&1 in allowed_fields)) do
       :ok
     else
@@ -306,8 +305,10 @@ defmodule RivaAsh.GDPR.DataSubjectRights do
   end
 
   defp log_data_subject_request(user_id, request_type, status, details \\ nil) do
-    Logger.info("GDPR Request: user=#{user_id}, type=#{request_type}, status=#{status}, details=#{inspect(details)}")
-    
+    Logger.info(
+      "GDPR Request: user=#{user_id}, type=#{request_type}, status=#{status}, details=#{inspect(details)}"
+    )
+
     # This should also be stored in a dedicated audit table for GDPR requests
     # to maintain compliance records
   end

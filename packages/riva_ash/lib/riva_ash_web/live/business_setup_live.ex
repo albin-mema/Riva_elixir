@@ -14,15 +14,31 @@ defmodule RivaAshWeb.BusinessSetupLive do
   import RivaAshWeb.Components.Organisms.PageHeader
   import RivaAshWeb.Components.Molecules.Card
   import RivaAshWeb.Components.Atoms.Button
-  import RivaAshWeb.Components.Forms.BusinessForm
+
   import RivaAshWeb.Components.Interactive.PlotLayoutDesigner
   import RivaAshWeb.Live.AuthHelpers
 
   @setup_steps [
-    %{id: "business", title: "Business Information", description: "Basic business details and settings"},
-    %{id: "layout", title: "Physical Layout", description: "Design your space with plots and sections"},
-    %{id: "items", title: "Item Configuration", description: "Set up your bookable items and types"},
-    %{id: "schedule", title: "Operating Hours", description: "Configure availability and schedules"},
+    %{
+      id: "business",
+      title: "Business Information",
+      description: "Basic business details and settings"
+    },
+    %{
+      id: "layout",
+      title: "Physical Layout",
+      description: "Design your space with plots and sections"
+    },
+    %{
+      id: "items",
+      title: "Item Configuration",
+      description: "Set up your bookable items and types"
+    },
+    %{
+      id: "schedule",
+      title: "Operating Hours",
+      description: "Configure availability and schedules"
+    },
     %{id: "pricing", title: "Pricing Setup", description: "Set up pricing rules and rates"},
     %{id: "review", title: "Review & Launch", description: "Review settings and go live"}
   ]
@@ -42,6 +58,7 @@ defmodule RivaAshWeb.BusinessSetupLive do
           |> assign(:errors, [])
 
         {:ok, socket}
+
       {:error, _} ->
         {:ok, redirect(socket, to: "/sign-in")}
     end
@@ -414,16 +431,5 @@ defmodule RivaAshWeb.BusinessSetupLive do
     step_index = Enum.find_index(steps, &(&1.id == step_id))
 
     step_index < current_index
-  end
-
-  defp get_current_user_from_session(session) do
-    case session["user_token"] do
-      nil -> {:error, :no_token}
-      token ->
-        case RivaAsh.Accounts.get_user_by_session_token(token) do
-          nil -> {:error, :invalid_token}
-          user -> {:ok, user}
-        end
-    end
   end
 end

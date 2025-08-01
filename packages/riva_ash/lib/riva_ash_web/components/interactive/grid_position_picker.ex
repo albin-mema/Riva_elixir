@@ -8,16 +8,16 @@ defmodule RivaAshWeb.Components.Interactive.GridPositionPicker do
   @doc """
   Renders a grid position picker interface.
   """
-  attr :grid_rows, :integer, required: true
-  attr :grid_columns, :integer, required: true
-  attr :selected_row, :integer, default: nil
-  attr :selected_column, :integer, default: nil
-  attr :occupied_positions, :list, default: []
-  attr :on_position_select, :string, required: true
-  attr :show_coordinates, :boolean, default: true
-  attr :allow_multiple, :boolean, default: false
-  attr :class, :string, default: ""
-  attr :rest, :global
+  attr(:grid_rows, :integer, required: true)
+  attr(:grid_columns, :integer, required: true)
+  attr(:selected_row, :integer, default: nil)
+  attr(:selected_column, :integer, default: nil)
+  attr(:occupied_positions, :list, default: [])
+  attr(:on_position_select, :string, required: true)
+  attr(:show_coordinates, :boolean, default: true)
+  attr(:allow_multiple, :boolean, default: false)
+  attr(:class, :string, default: "")
+  attr(:rest, :global)
 
   def grid_position_picker(assigns) do
     ~H"""

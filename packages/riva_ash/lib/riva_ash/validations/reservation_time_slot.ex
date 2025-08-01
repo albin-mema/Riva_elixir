@@ -5,7 +5,7 @@ defmodule RivaAsh.Validations.ReservationTimeSlot do
   """
   use Ash.Resource.Validation
   require Ash.Expr
-  import Ash.Expr
+
   alias Ash.Error.Changes.InvalidChanges
 
   @impl true
@@ -25,12 +25,14 @@ defmodule RivaAsh.Validations.ReservationTimeSlot do
          ) do
       {:ok, :no_overlap} ->
         :ok
+
       {:ok, :overlap_found} ->
         {:error,
          InvalidChanges.exception(
            field: :reserved_from,
            message: "Time slot overlaps with an existing reservation"
          )}
+
       {:error, reason} ->
         {:error,
          InvalidChanges.exception(

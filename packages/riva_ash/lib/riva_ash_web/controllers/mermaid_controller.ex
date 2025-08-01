@@ -58,7 +58,9 @@ defmodule RivaAshWeb.MermaidController do
 
   defp generate_mermaid_diagram do
     # Generate Mermaid diagram using Ash's built-in functionality
-    with {:ok, _} <- Mix.Task.run("ash.generate_resource_diagrams", ["--domain", "RivaAsh.Domain"]) |> ErrorHelpers.to_result(),
+    with {:ok, _} <-
+           Mix.Task.run("ash.generate_resource_diagrams", ["--domain", "RivaAsh.Domain"])
+           |> ErrorHelpers.to_result(),
          {:ok, content} <- read_generated_diagram() do
       ErrorHelpers.success(content)
     else

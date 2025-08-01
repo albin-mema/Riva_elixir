@@ -5,21 +5,21 @@ defmodule RivaAshWeb.Components.Molecules.SearchBar do
   use Phoenix.Component
   import RivaAshWeb.Components.Atoms.Input
   import RivaAshWeb.Components.Atoms.Button
-  import RivaAshWeb.Components.Atoms.Icon
+
 
   @doc """
   Renders a search bar with optional filters.
   """
-  attr :value, :string, default: ""
-  attr :placeholder, :string, default: "Search..."
-  attr :show_filters, :boolean, default: false
-  attr :filters, :list, default: []
-  attr :suggestions, :list, default: []
-  attr :loading, :boolean, default: false
-  attr :on_search, :string, required: true
-  attr :on_clear, :string, default: nil
-  attr :class, :string, default: ""
-  attr :rest, :global
+  attr(:value, :string, default: "")
+  attr(:placeholder, :string, default: "Search...")
+  attr(:show_filters, :boolean, default: false)
+  attr(:filters, :list, default: [])
+  attr(:suggestions, :list, default: [])
+  attr(:loading, :boolean, default: false)
+  attr(:on_search, :string, required: true)
+  attr(:on_clear, :string, default: nil)
+  attr(:class, :string, default: "")
+  attr(:rest, :global)
 
   def search_bar(assigns) do
     ~H"""

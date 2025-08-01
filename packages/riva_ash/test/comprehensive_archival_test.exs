@@ -9,11 +9,27 @@ defmodule RivaAsh.ComprehensiveArchivalTest do
   require Ash.Query
 
   alias RivaAsh.Domain
+
   alias RivaAsh.Resources.{
-    Business, Client, Employee, Item, ItemType, Section, Plot, Layout,
-    ItemPosition, ItemHold, ItemSchedule, AvailabilityException,
-    Reservation, Payment, Pricing, Permission, EmployeePermission,
-    RecurringReservation, RecurringReservationInstance
+    Business,
+    Client,
+    Employee,
+    Item,
+    ItemType,
+    Section,
+    Plot,
+    Layout,
+    ItemPosition,
+    ItemHold,
+    ItemSchedule,
+    AvailabilityException,
+    Reservation,
+    Payment,
+    Pricing,
+    Permission,
+    EmployeePermission,
+    RecurringReservation,
+    RecurringReservationInstance
   }
 
   # List of resources that should have archival functionality
@@ -46,8 +62,10 @@ defmodule RivaAsh.ComprehensiveArchivalTest do
         archived_at_attr = Enum.find(attributes, &(&1.name == :archived_at))
 
         assert archived_at_attr, "#{resource} should have archived_at attribute"
+
         assert archived_at_attr.type == :utc_datetime_usec,
                "#{resource} archived_at should be utc_datetime_usec"
+
         assert archived_at_attr.allow_nil?,
                "#{resource} archived_at should allow nil"
       end

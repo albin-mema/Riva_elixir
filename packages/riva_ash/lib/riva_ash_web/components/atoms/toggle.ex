@@ -7,16 +7,16 @@ defmodule RivaAshWeb.Components.Atoms.Toggle do
   @doc """
   Renders a toggle switch.
   """
-  attr :field, Phoenix.HTML.FormField, default: nil
-  attr :checked, :boolean, default: false
-  attr :value, :string, default: "true"
-  attr :label, :string, default: nil
-  attr :description, :string, default: nil
-  attr :disabled, :boolean, default: false
-  attr :size, :string, default: "md", values: ~w(sm md lg)
-  attr :variant, :string, default: "default", values: ~w(default success warning destructive)
-  attr :class, :string, default: ""
-  attr :rest, :global
+  attr(:field, Phoenix.HTML.FormField, default: nil)
+  attr(:checked, :boolean, default: false)
+  attr(:value, :string, default: "true")
+  attr(:label, :string, default: nil)
+  attr(:description, :string, default: nil)
+  attr(:disabled, :boolean, default: false)
+  attr(:size, :string, default: "md", values: ~w(sm md lg))
+  attr(:variant, :string, default: "default", values: ~w(default success warning destructive))
+  attr(:class, :string, default: "")
+  attr(:rest, :global)
 
   def toggle(assigns) do
     ~H"""

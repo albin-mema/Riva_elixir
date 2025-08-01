@@ -9,16 +9,16 @@ defmodule RivaAshWeb.Components.Interactive.AvailabilityGrid do
   @doc """
   Renders a weekly availability grid editor.
   """
-  attr :availability, :map, required: true
-  attr :on_slot_toggle, :string, required: true
-  attr :on_bulk_action, :string, default: nil
-  attr :time_slots, :list, default: []
-  attr :start_hour, :integer, default: 8
-  attr :end_hour, :integer, default: 18
-  attr :slot_duration, :integer, default: 60
-  attr :editable, :boolean, default: true
-  attr :class, :string, default: ""
-  attr :rest, :global
+  attr(:availability, :map, required: true)
+  attr(:on_slot_toggle, :string, required: true)
+  attr(:on_bulk_action, :string, default: nil)
+  attr(:time_slots, :list, default: [])
+  attr(:start_hour, :integer, default: 8)
+  attr(:end_hour, :integer, default: 18)
+  attr(:slot_duration, :integer, default: 60)
+  attr(:editable, :boolean, default: true)
+  attr(:class, :string, default: "")
+  attr(:rest, :global)
 
   def availability_grid(assigns) do
     ~H"""

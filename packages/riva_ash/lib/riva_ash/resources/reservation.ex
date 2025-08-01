@@ -146,7 +146,16 @@ defmodule RivaAsh.Resources.Reservation do
     defaults([:read, :update, :destroy])
 
     create :create do
-      accept([:client_id, :item_id, :employee_id, :reserved_from, :reserved_until, :notes, :total_amount])
+      accept([
+        :client_id,
+        :item_id,
+        :employee_id,
+        :reserved_from,
+        :reserved_until,
+        :notes,
+        :total_amount
+      ])
+
       primary?(true)
 
       # Automatically set business_id from item
@@ -188,7 +197,7 @@ defmodule RivaAsh.Resources.Reservation do
     # Confirm provisional reservation (when payment is received)
     update :confirm_provisional do
       accept([:total_amount, :notes])
-      require_atomic? false
+      require_atomic?(false)
       change(set_attribute(:status, :confirmed))
       change(set_attribute(:is_provisional, false))
       change(set_attribute(:is_paid, true))
@@ -198,7 +207,7 @@ defmodule RivaAsh.Resources.Reservation do
 
     # Cancel expired provisional reservations
     update :cancel_expired do
-      require_atomic? false
+      require_atomic?(false)
       change(set_attribute(:status, :cancelled))
       change(set_attribute(:is_provisional, false))
       description("Cancel expired provisional reservation")
@@ -265,6 +274,7 @@ defmodule RivaAsh.Resources.Reservation do
 
     read :expired_provisional do
       now = Timex.now()
+
       filter(
         expr(
           status == :provisional and
@@ -276,6 +286,7 @@ defmodule RivaAsh.Resources.Reservation do
 
     read :active_provisional do
       now = Timex.now()
+
       filter(
         expr(
           status == :provisional and
@@ -324,14 +335,14 @@ defmodule RivaAsh.Resources.Reservation do
     end
 
     action :create_with_validation, :struct do
-      constraints instance_of: RivaAsh.Resources.Reservation
-      argument :client_id, :uuid, allow_nil?: false
-      argument :employee_id, :uuid, allow_nil?: false
-      argument :item_id, :uuid, allow_nil?: false
-      argument :start_datetime, :utc_datetime, allow_nil?: false
-      argument :end_datetime, :utc_datetime, allow_nil?: false
-      argument :notes, :string, allow_nil?: true
-      run RivaAsh.Reactors.ReservationReactor
+      constraints(instance_of: RivaAsh.Resources.Reservation)
+      argument(:client_id, :uuid, allow_nil?: false)
+      argument(:employee_id, :uuid, allow_nil?: false)
+      argument(:item_id, :uuid, allow_nil?: false)
+      argument(:start_datetime, :utc_datetime, allow_nil?: false)
+      argument(:end_datetime, :utc_datetime, allow_nil?: false)
+      argument(:notes, :string, allow_nil?: true)
+      run(RivaAsh.Reactors.ReservationReactor)
     end
   end
 
@@ -458,16 +469,16 @@ defmodule RivaAsh.Resources.Reservation do
   end
 
   calculations do
-    calculate :calculated_days, :integer, expr(
-      fragment("EXTRACT(DAY FROM (? - ?))", reserved_until, reserved_from) + 1
-    ) do
+    calculate :calculated_days,
+              :integer,
+              expr(fragment("EXTRACT(DAY FROM (? - ?))", reserved_until, reserved_from) + 1) do
       public?(true)
       description("Calculated number of days for this reservation")
     end
 
-    calculate :is_multi_day, :boolean, expr(
-      fragment("EXTRACT(DAY FROM (? - ?))", reserved_until, reserved_from) > 0
-    ) do
+    calculate :is_multi_day,
+              :boolean,
+              expr(fragment("EXTRACT(DAY FROM (? - ?))", reserved_until, reserved_from) > 0) do
       public?(true)
       description("Whether this is a multi-day reservation")
     end
@@ -476,7 +487,8 @@ defmodule RivaAsh.Resources.Reservation do
   validations do
     # Basic field validations
     validate(present([:client_id, :item_id, :reserved_from, :reserved_until]),
-      message: "Required fields must be present")
+      message: "Required fields must be present"
+    )
 
     # Time range validation
     validate(&RivaAsh.Validations.validate_time_range/2)

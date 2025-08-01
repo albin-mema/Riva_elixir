@@ -45,10 +45,12 @@ defmodule RivaAsh.DataCase do
   def setup_sandbox(tags) do
     # Check if repo is using SQL Sandbox
     repo_config = RivaAsh.Repo.config()
+
     case repo_config[:pool] do
       Ecto.Adapters.SQL.Sandbox ->
         pid = Ecto.Adapters.SQL.Sandbox.start_owner!(RivaAsh.Repo, shared: not tags[:async])
         on_exit(fn -> Ecto.Adapters.SQL.Sandbox.stop_owner(pid) end)
+
       _ ->
         Ecto.Adapters.SQL.Sandbox.checkout(RivaAsh.Repo)
         on_exit(fn -> Ecto.Adapters.SQL.Sandbox.checkin(RivaAsh.Repo) end)

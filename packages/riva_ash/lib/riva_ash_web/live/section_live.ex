@@ -5,7 +5,6 @@ defmodule RivaAshWeb.SectionLive do
   use RivaAshWeb, :live_view
 
   # Explicitly set the authenticated layout
-  @layout {RivaAshWeb.Layouts, :authenticated}
 
   import RivaAshWeb.Components.Organisms.PageHeader
   import RivaAshWeb.Components.Atoms.Button
@@ -13,7 +12,6 @@ defmodule RivaAshWeb.SectionLive do
   import RivaAshWeb.Components.Molecules.NotificationToast
   import RivaAshWeb.Components.Atoms.Spinner
   import RivaAshWeb.Components.Forms.SectionForm
-  import Flop.Phoenix, except: [table: 1]
 
   alias RivaAsh.Resources.Section
   alias RivaAsh.Resources.Business
@@ -44,10 +42,12 @@ defmodule RivaAshWeb.SectionLive do
 
           {:ok, socket}
         rescue
-          error in [Ash.Error.Forbidden, Ash.Error.Invalid] ->
+          _error in [Ash.Error.Forbidden, Ash.Error.Invalid] ->
             {:ok, redirect(socket, to: "/access-denied")}
+
           error ->
-            {:ok, socket |> assign(:error_message, "Failed to load data: #{Exception.message(error)}")}
+            {:ok,
+             socket |> assign(:error_message, "Failed to load data: #{Exception.message(error)}")}
         end
 
       {:error, :not_authenticated} ->
@@ -67,12 +67,14 @@ defmodule RivaAshWeb.SectionLive do
         |> assign(:sections, sections)
         |> assign(:meta, meta)
         |> then(&{:noreply, &1})
+
       _ ->
         socket =
           socket
           |> assign(:sections, [])
           |> assign(:meta, %{})
           |> assign(:error_message, "Failed to load sections")
+
         {:noreply, socket}
     end
   end
@@ -266,6 +268,7 @@ defmodule RivaAshWeb.SectionLive do
           socket
           |> assign(:error_message, "Section not found.")
           |> assign(:show_form, false)
+
         {:noreply, socket}
     end
   end
@@ -297,6 +300,7 @@ defmodule RivaAshWeb.SectionLive do
 
           {:error, error} ->
             error_message = format_error_message(error)
+
             socket =
               socket
               |> assign(:loading, false)
@@ -307,6 +311,7 @@ defmodule RivaAshWeb.SectionLive do
 
       {:error, error} ->
         error_message = format_error_message(error)
+
         socket =
           socket
           |> assign(:loading, false)
@@ -333,7 +338,9 @@ defmodule RivaAshWeb.SectionLive do
   def handle_event("validate_section", %{"form" => params}, socket) do
     form =
       if socket.assigns.editing_section do
-        AshPhoenix.Form.for_update(socket.assigns.editing_section, :update, actor: socket.assigns.current_user)
+        AshPhoenix.Form.for_update(socket.assigns.editing_section, :update,
+          actor: socket.assigns.current_user
+        )
       else
         AshPhoenix.Form.for_create(Section, :create, actor: socket.assigns.current_user)
       end
@@ -352,7 +359,7 @@ defmodule RivaAshWeb.SectionLive do
     result = AshPhoenix.Form.submit(socket.assigns.form, params: params, actor: user)
 
     case result do
-      {:ok, section} ->
+      {:ok, _section} ->
         action_text = if socket.assigns.editing_section, do: "updated", else: "created"
 
         socket =
@@ -403,8 +410,12 @@ defmodule RivaAshWeb.SectionLive do
     user_token = session["user_token"]
 
     if user_token do
-      with {:ok, user_id} <- Phoenix.Token.verify(RivaAshWeb.Endpoint, "user_auth", user_token, max_age: 86_400) |> RivaAsh.ErrorHelpers.to_result(),
-           {:ok, user} <- Ash.get(RivaAsh.Accounts.User, user_id, domain: RivaAsh.Accounts) |> RivaAsh.ErrorHelpers.to_result() do
+      with {:ok, user_id} <-
+             Phoenix.Token.verify(RivaAshWeb.Endpoint, "user_auth", user_token, max_age: 86_400)
+             |> RivaAsh.ErrorHelpers.to_result(),
+           {:ok, user} <-
+             Ash.get(RivaAsh.Accounts.User, user_id, domain: RivaAsh.Accounts)
+             |> RivaAsh.ErrorHelpers.to_result() do
         RivaAsh.ErrorHelpers.success(user)
       else
         _ -> RivaAsh.ErrorHelpers.failure(:not_authenticated)
@@ -447,12 +458,14 @@ defmodule RivaAshWeb.SectionLive do
 
   defp apply_sorting(sections, %Flop{order_by: nil}), do: sections
   defp apply_sorting(sections, %Flop{order_by: []}), do: sections
+
   defp apply_sorting(sections, %Flop{order_by: order_by, order_directions: order_directions}) do
     # Default to :asc if no directions provided
     directions = order_directions || Enum.map(order_by, fn _ -> :asc end)
 
     # Zip order_by and directions, pad directions with :asc if needed
-    order_specs = Enum.zip_with([order_by, directions], fn [field, direction] -> {field, direction} end)
+    order_specs =
+      Enum.zip_with([order_by, directions], fn [field, direction] -> {field, direction} end)
 
     Enum.sort(sections, fn sec1, sec2 ->
       compare_sections(sec1, sec2, order_specs)
@@ -460,6 +473,7 @@ defmodule RivaAshWeb.SectionLive do
   end
 
   defp compare_sections(_sec1, _sec2, []), do: true
+
   defp compare_sections(sec1, sec2, [{field, direction} | rest]) do
     val1 = get_field_value(sec1, field)
     val2 = get_field_value(sec2, field)
@@ -494,6 +508,7 @@ defmodule RivaAshWeb.SectionLive do
         offset = (page - 1) * page_size
 
         paginated = sections |> Enum.drop(offset) |> Enum.take(page_size)
+
         pagination_info = %{
           type: :page,
           page: page,
@@ -501,6 +516,7 @@ defmodule RivaAshWeb.SectionLive do
           offset: offset,
           total_count: total_count
         }
+
         {paginated, pagination_info}
 
       # Offset-based pagination
@@ -509,23 +525,27 @@ defmodule RivaAshWeb.SectionLive do
         limit = flop.limit
 
         paginated = sections |> Enum.drop(offset) |> Enum.take(limit)
+
         pagination_info = %{
           type: :offset,
           offset: offset,
           limit: limit,
           total_count: total_count
         }
+
         {paginated, pagination_info}
 
       # Limit only
       flop.limit ->
         limit = flop.limit
         paginated = Enum.take(sections, limit)
+
         pagination_info = %{
           type: :limit,
           limit: limit,
           total_count: total_count
         }
+
         {paginated, pagination_info}
 
       # No pagination
@@ -534,6 +554,7 @@ defmodule RivaAshWeb.SectionLive do
           type: :none,
           total_count: total_count
         }
+
         {sections, pagination_info}
     end
   end

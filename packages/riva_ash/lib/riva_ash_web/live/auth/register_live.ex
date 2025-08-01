@@ -120,13 +120,22 @@ defmodule RivaAshWeb.Auth.RegisterLive do
     """
   end
 
-  def handle_event("register", %{"name" => name, "email" => email, "password" => password, "password_confirmation" => password_confirmation}, socket) do
+  def handle_event(
+        "register",
+        %{
+          "name" => name,
+          "email" => email,
+          "password" => password,
+          "password_confirmation" => password_confirmation
+        },
+        socket
+      ) do
     case Accounts.register(%{
-      "name" => name,
-      "email" => email,
-      "password" => password,
-      "password_confirmation" => password_confirmation
-    }) do
+           "name" => name,
+           "email" => email,
+           "password" => password,
+           "password_confirmation" => password_confirmation
+         }) do
       {:ok, _user} ->
         {:noreply, redirect(socket, to: "/sign-in")}
 

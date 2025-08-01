@@ -32,26 +32,29 @@ defmodule RivaAshWeb.DashboardLive do
           today_start = DateTime.new!(today, ~T[00:00:00], "Etc/UTC")
           today_end = DateTime.new!(today, ~T[23:59:59], "Etc/UTC")
 
-          today_reservations = Reservation.read!(
-            actor: user,
-            filter: [
-              business_id: [in: business_ids],
-              reserved_from: [greater_than_or_equal_to: today_start],
-              reserved_from: [less_than_or_equal_to: today_end]
-            ]
-          )
+          today_reservations =
+            Reservation.read!(
+              actor: user,
+              filter: [
+                business_id: [in: business_ids],
+                reserved_from: [greater_than_or_equal_to: today_start],
+                reserved_from: [less_than_or_equal_to: today_end]
+              ]
+            )
 
           # Get recent reservations (last 7 days)
           week_ago = DateTime.add(today_start, -7, :day)
-          recent_reservations = Reservation.read!(
-            actor: user,
-            filter: [
-              business_id: [in: business_ids],
-              reserved_from: [greater_than_or_equal_to: week_ago]
-            ],
-            sort: [reserved_from: :desc],
-            page: [limit: 10]
-          )
+
+          recent_reservations =
+            Reservation.read!(
+              actor: user,
+              filter: [
+                business_id: [in: business_ids],
+                reserved_from: [greater_than_or_equal_to: week_ago]
+              ],
+              sort: [reserved_from: :desc],
+              page: [limit: 10]
+            )
 
           # Calculate stats
           stats = calculate_dashboard_stats(user, business_ids)
@@ -71,6 +74,7 @@ defmodule RivaAshWeb.DashboardLive do
           error in [Ash.Error.Forbidden, Ash.Error.Invalid] ->
             {:ok, redirect(socket, to: "/access-denied")}
         end
+
       {:error, _} ->
         {:ok, redirect(socket, to: "/sign-in")}
     end
@@ -324,44 +328,48 @@ defmodule RivaAshWeb.DashboardLive do
     # Calculate weekly revenue
     week_ago = DateTime.add(DateTime.utc_now(), -7, :day)
 
-    weekly_payments = Payment.read!(
-      actor: user,
-      filter: [
-        business_id: [in: business_ids],
-        inserted_at: [greater_than_or_equal_to: week_ago]
-      ]
-    )
+    weekly_payments =
+      Payment.read!(
+        actor: user,
+        filter: [
+          business_id: [in: business_ids],
+          inserted_at: [greater_than_or_equal_to: week_ago]
+        ]
+      )
 
-    weekly_revenue = weekly_payments
-    |> Enum.map(& &1.amount || 0)
-    |> Enum.sum()
-    |> case do
-      %Decimal{} = decimal -> Decimal.to_float(decimal)
-      number when is_number(number) -> number
-      _ -> 0
-    end
-    |> Float.round(2)
+    weekly_revenue =
+      weekly_payments
+      |> Enum.map(&(&1.amount || 0))
+      |> Enum.sum()
+      |> case do
+        %Decimal{} = decimal -> Decimal.to_float(decimal)
+        number when is_number(number) -> number
+        _ -> 0
+      end
+      |> Float.round(2)
 
     # Count active clients (clients with reservations in last 30 days)
     month_ago = DateTime.add(DateTime.utc_now(), -30, :day)
 
-    active_clients = Reservation.read!(
-      actor: user,
-      filter: [
-        business_id: [in: business_ids],
-        reserved_from: [greater_than_or_equal_to: month_ago]
-      ]
-    )
-    |> Enum.map(& &1.client_id)
-    |> Enum.uniq()
-    |> length()
+    active_clients =
+      Reservation.read!(
+        actor: user,
+        filter: [
+          business_id: [in: business_ids],
+          reserved_from: [greater_than_or_equal_to: month_ago]
+        ]
+      )
+      |> Enum.map(& &1.client_id)
+      |> Enum.uniq()
+      |> length()
 
     # Count available items
-    available_items = Item.read!(
-      actor: user,
-      filter: [section: [plot: [business_id: [in: business_ids]]]]
-    )
-    |> length()
+    available_items =
+      Item.read!(
+        actor: user,
+        filter: [section: [plot: [business_id: [in: business_ids]]]]
+      )
+      |> length()
 
     %{
       weekly_revenue: weekly_revenue,
@@ -370,16 +378,5 @@ defmodule RivaAshWeb.DashboardLive do
     }
   rescue
     _ -> %{weekly_revenue: 0, active_clients: 0, available_items: 0}
-  end
-
-  defp get_current_user_from_session(session) do
-    case session["user_token"] do
-      nil -> {:error, :no_token}
-      token ->
-        case RivaAsh.Accounts.get_user_by_session_token(token) do
-          nil -> {:error, :invalid_token}
-          user -> {:ok, user}
-        end
-    end
   end
 end

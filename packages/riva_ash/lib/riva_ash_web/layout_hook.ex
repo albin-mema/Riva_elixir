@@ -14,7 +14,7 @@ defmodule RivaAshWeb.LayoutHook do
   defmacro __before_compile__(_env) do
     quote do
       # Ensure the layout is set if not already specified
-      unless Module.has_attribute?(__MODULE__, :layout) do
+      if !Module.has_attribute?(__MODULE__, :layout) do
         @layout {RivaAshWeb.Layouts, :authenticated}
       end
     end

@@ -15,9 +15,7 @@ defmodule RivaAsh.Permissions.Constants do
   @can_modify_reservations "can_modify_reservations"
   @can_cancel_reservations "can_cancel_reservations"
   @can_view_own_reservations "can_view_own_reservations"
-  @can_confirm_provisional_reservations "can_confirm_provisional_reservations"
-  @can_make_provisional_reservations "can_make_provisional_reservations"
-  @can_extend_reservation_hold "can_extend_reservation_hold"
+
 
   # Employee management permissions
   @can_view_employees "can_view_employees"
@@ -36,16 +34,15 @@ defmodule RivaAsh.Permissions.Constants do
   @can_manage_sections "can_manage_sections"
 
   # Plot management permissions
-  @can_manage_plots_and_layouts "can_manage_plots_and_layouts"
-  @can_create_plot "can_create_plot"
-  @can_update_plot "can_update_plot"
+
+
   @can_delete_plot "can_delete_plot"
   @can_view_plot "can_view_plot"
 
   # Item hold permissions
   @can_create_item_hold "can_create_item_hold"
   @can_release_item_hold "can_release_item_hold"
-  @can_view_active_holds "can_view_active_holds"
+
 
   # Client management permissions
   @can_view_clients "can_view_clients"

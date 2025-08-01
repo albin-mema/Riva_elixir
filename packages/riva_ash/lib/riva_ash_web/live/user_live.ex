@@ -24,12 +24,14 @@ defmodule RivaAshWeb.UserLive do
             |> assign(:current_user, user)
             |> assign(:page_title, "Users")
             |> assign(:users, users)
-            |> assign(:meta, %{}) # Placeholder for pagination/metadata
+            # Placeholder for pagination/metadata
+            |> assign(:meta, %{})
 
           {:ok, socket}
         else
           {:ok, redirect(socket, to: "/access-denied")}
         end
+
       {:error, _} ->
         {:ok, redirect(socket, to: "/sign-in")}
     end

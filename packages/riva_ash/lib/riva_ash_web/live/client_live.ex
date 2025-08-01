@@ -74,6 +74,4 @@ defmodule RivaAshWeb.ClientLive do
   def handle_event(_event, _params, socket) do
     {:noreply, socket}
   end
-
-
 end

@@ -42,11 +42,12 @@ defmodule RivaAsh.Queries do
       start_datetime = DateTime.new!(date, ~T[00:00:00], "Etc/UTC")
       end_datetime = DateTime.new!(date, ~T[23:59:59], "Etc/UTC")
 
-      with {:ok, items} <- Item
-                          |> Ash.Query.filter(expr(section.plot.business_id == ^business_id))
-                          |> Ash.Query.filter(expr(is_active == true))
-                          |> Ash.Query.filter(expr(is_nil(archived_at)))
-                          |> Ash.read(domain: RivaAsh.Domain) do
+      with {:ok, items} <-
+             Item
+             |> Ash.Query.filter(expr(section.plot.business_id == ^business_id))
+             |> Ash.Query.filter(expr(is_active == true))
+             |> Ash.Query.filter(expr(is_nil(archived_at)))
+             |> Ash.read(domain: RivaAsh.Domain) do
         # Check each item's availability
         available_items = filter_available_items(items, start_datetime, end_datetime)
         {:ok, available_items}
@@ -110,10 +111,13 @@ defmodule RivaAsh.Queries do
       period = Keyword.get(opts, :period, :month)
       {start_date, end_date} = get_period_range(period)
 
-      with {:ok, reservations} <- Reservation
-                                 |> Ash.Query.filter(expr(item.section.plot.business_id == ^business_id))
-                                 |> Ash.Query.filter(expr(reserved_from >= ^start_date and reserved_from <= ^end_date))
-                                 |> Ash.read(domain: RivaAsh.Domain) do
+      with {:ok, reservations} <-
+             Reservation
+             |> Ash.Query.filter(expr(item.section.plot.business_id == ^business_id))
+             |> Ash.Query.filter(
+               expr(reserved_from >= ^start_date and reserved_from <= ^end_date)
+             )
+             |> Ash.read(domain: RivaAsh.Domain) do
         metrics = calculate_metrics(reservations, period, start_date, end_date)
         {:ok, metrics}
       else
@@ -161,10 +165,11 @@ defmodule RivaAsh.Queries do
   """
   def items_with_conflicts(business_id, start_datetime, end_datetime) do
     try do
-      with {:ok, items} <- Item
-                          |> Ash.Query.filter(expr(section.plot.business_id == ^business_id))
-                          |> Ash.Query.filter(expr(is_active == true))
-                          |> Ash.read(domain: RivaAsh.Domain) do
+      with {:ok, items} <-
+             Item
+             |> Ash.Query.filter(expr(section.plot.business_id == ^business_id))
+             |> Ash.Query.filter(expr(is_active == true))
+             |> Ash.read(domain: RivaAsh.Domain) do
         conflicted_items = find_conflicted_items(items, start_datetime, end_datetime)
         {:ok, conflicted_items}
       else
@@ -179,7 +184,8 @@ defmodule RivaAsh.Queries do
   defp find_conflicted_items(items, start_datetime, end_datetime) do
     Enum.filter(items, fn item ->
       case RivaAsh.Validations.check_reservation_overlap(item.id, start_datetime, end_datetime) do
-        {:error, _} -> true  # Consider errors as conflicts
+        # Consider errors as conflicts
+        {:error, _} -> true
         {:ok, :no_overlap} -> false
       end
     end)
@@ -193,10 +199,13 @@ defmodule RivaAsh.Queries do
       period = Keyword.get(opts, :period, :week)
       {start_date, end_date} = get_period_range(period)
 
-      with {:ok, reservations} <- Reservation
-                                 |> Ash.Query.filter(expr(employee_id == ^employee_id))
-                                 |> Ash.Query.filter(expr(reserved_from >= ^start_date and reserved_from <= ^end_date))
-                                 |> Ash.read(domain: RivaAsh.Domain) do
+      with {:ok, reservations} <-
+             Reservation
+             |> Ash.Query.filter(expr(employee_id == ^employee_id))
+             |> Ash.Query.filter(
+               expr(reserved_from >= ^start_date and reserved_from <= ^end_date)
+             )
+             |> Ash.read(domain: RivaAsh.Domain) do
         workload = calculate_workload(reservations, period, start_date, end_date)
         {:ok, workload}
       else
@@ -224,10 +233,11 @@ defmodule RivaAsh.Queries do
   """
   def popular_items_for_business(business_id, limit \\ 10) do
     try do
-      with {:ok, items} <- Item
-                          |> Ash.Query.filter(expr(section.plot.business_id == ^business_id))
-                          |> Ash.Query.filter(expr(is_active == true))
-                          |> Ash.read(domain: RivaAsh.Domain) do
+      with {:ok, items} <-
+             Item
+             |> Ash.Query.filter(expr(section.plot.business_id == ^business_id))
+             |> Ash.Query.filter(expr(is_active == true))
+             |> Ash.read(domain: RivaAsh.Domain) do
         items_with_counts = calculate_item_popularity(items)
         popular_items = extract_popular_items(items_with_counts, limit)
         {:ok, popular_items}
@@ -242,14 +252,16 @@ defmodule RivaAsh.Queries do
 
   defp calculate_item_popularity(items) do
     Enum.map(items, fn item ->
-      count = Reservation
-              |> Ash.Query.filter(expr(item_id == ^item.id))
-              |> Ash.Query.filter(expr(status in [:confirmed, :completed]))
-              |> Ash.read(domain: RivaAsh.Domain)
-              |> case do
-                {:ok, reservations} -> length(reservations)
-                {:error, _} -> 0
-              end
+      count =
+        Reservation
+        |> Ash.Query.filter(expr(item_id == ^item.id))
+        |> Ash.Query.filter(expr(status in [:confirmed, :completed]))
+        |> Ash.read(domain: RivaAsh.Domain)
+        |> case do
+          {:ok, reservations} -> length(reservations)
+          {:error, _} -> 0
+        end
+
       {item, count}
     end)
   end
@@ -268,18 +280,22 @@ defmodule RivaAsh.Queries do
     try do
       include_inactive = Keyword.get(opts, :include_inactive, false)
 
-      query = Item
-      |> Ash.Query.filter(expr(section.plot.business_id == ^business_id))
-      |> Ash.Query.filter(expr(
-        ilike(name, ^"%#{search_term}%") or
-        ilike(section.name, ^"%#{search_term}%")
-      ))
+      query =
+        Item
+        |> Ash.Query.filter(expr(section.plot.business_id == ^business_id))
+        |> Ash.Query.filter(
+          expr(
+            ilike(name, ^"%#{search_term}%") or
+              ilike(section.name, ^"%#{search_term}%")
+          )
+        )
 
-      query = if include_inactive do
-        query
-      else
-        Ash.Query.filter(query, expr(is_active == true and is_nil(archived_at)))
-      end
+      query =
+        if include_inactive do
+          query
+        else
+          Ash.Query.filter(query, expr(is_active == true and is_nil(archived_at)))
+        end
 
       query
       |> Ash.read(domain: RivaAsh.Domain)
@@ -298,7 +314,9 @@ defmodule RivaAsh.Queries do
 
       Reservation
       |> Ash.Query.filter(expr(item.section.plot.business_id == ^business_id))
-      |> Ash.Query.filter(expr(reserved_from >= ^start_datetime and reserved_from <= ^end_datetime))
+      |> Ash.Query.filter(
+        expr(reserved_from >= ^start_datetime and reserved_from <= ^end_datetime)
+      )
       |> Ash.Query.filter(expr(status in [:confirmed, :pending]))
       |> Ash.Query.sort(reserved_from: :asc)
       |> Ash.read(domain: RivaAsh.Domain)
@@ -316,14 +334,17 @@ defmodule RivaAsh.Queries do
         start_datetime = Timex.beginning_of_day(today)
         end_datetime = Timex.end_of_day(today)
         {start_datetime, end_datetime}
+
       :week ->
         start_date = Timex.beginning_of_week(today, :mon)
         end_date = Timex.end_of_week(today, :mon)
         {start_date, end_date}
+
       :month ->
         start_date = Timex.beginning_of_month(today)
         end_date = Timex.end_of_month(today)
         {start_date, end_date}
+
       _ ->
         # Default to current month
         start_date = Timex.beginning_of_month(today)

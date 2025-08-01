@@ -34,7 +34,6 @@ defmodule RivaAshWeb.FallbackController do
     |> json(%{error: "Internal server error", details: inspect(error)})
   end
 
-
   defp format_changeset_errors(%Ash.Error.Invalid{errors: errors}) do
     Enum.map(errors, fn error ->
       %{

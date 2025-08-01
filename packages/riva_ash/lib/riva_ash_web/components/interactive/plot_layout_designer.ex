@@ -5,26 +5,26 @@ defmodule RivaAshWeb.Components.Interactive.PlotLayoutDesigner do
   use Phoenix.Component
   import RivaAshWeb.Components.Atoms.Button
   import RivaAshWeb.Components.Atoms.Input
-  import RivaAshWeb.Components.Atoms.Select
+
 
   @doc """
   Renders a visual plot layout designer.
   """
-  attr :layout, :map, required: true
-  attr :sections, :list, default: []
-  attr :items, :list, default: []
-  attr :grid_rows, :integer, required: true
-  attr :grid_columns, :integer, required: true
-  attr :on_section_move, :string, required: true
-  attr :on_item_move, :string, required: true
-  attr :on_add_section, :string, required: true
-  attr :on_add_item, :string, required: true
-  attr :on_remove_element, :string, required: true
-  attr :on_grid_resize, :string, required: true
-  attr :selected_element, :map, default: nil
-  attr :mode, :string, default: "view", values: ~w(view edit)
-  attr :class, :string, default: ""
-  attr :rest, :global
+  attr(:layout, :map, required: true)
+  attr(:sections, :list, default: [])
+  attr(:items, :list, default: [])
+  attr(:grid_rows, :integer, required: true)
+  attr(:grid_columns, :integer, required: true)
+  attr(:on_section_move, :string, required: true)
+  attr(:on_item_move, :string, required: true)
+  attr(:on_add_section, :string, required: true)
+  attr(:on_add_item, :string, required: true)
+  attr(:on_remove_element, :string, required: true)
+  attr(:on_grid_resize, :string, required: true)
+  attr(:selected_element, :map, default: nil)
+  attr(:mode, :string, default: "view", values: ~w(view edit))
+  attr(:class, :string, default: "")
+  attr(:rest, :global)
 
   def plot_layout_designer(assigns) do
     ~H"""
@@ -35,19 +35,13 @@ defmodule RivaAshWeb.Components.Interactive.PlotLayoutDesigner do
           <h3>Grid Settings</h3>
           <.input
             type="number"
-            label="Rows"
             value={@grid_rows}
-            min="1"
-            max="50"
             phx-change={@on_grid_resize}
             phx-value-dimension="rows"
           />
           <.input
             type="number"
-            label="Columns"
             value={@grid_columns}
-            min="1"
-            max="50"
             phx-change={@on_grid_resize}
             phx-value-dimension="columns"
           />
@@ -131,20 +125,14 @@ defmodule RivaAshWeb.Components.Interactive.PlotLayoutDesigner do
           <div>
             <.input
               type="number"
-              label="Row"
               value={@selected_element.grid_row}
-              min="1"
-              max={@grid_rows}
               phx-change={if @selected_element.type == "section", do: @on_section_move, else: @on_item_move}
               phx-value-id={@selected_element.id}
               phx-value-dimension="row"
             />
             <.input
               type="number"
-              label="Column"
               value={@selected_element.grid_column}
-              min="1"
-              max={@grid_columns}
               phx-change={if @selected_element.type == "section", do: @on_section_move, else: @on_item_move}
               phx-value-id={@selected_element.id}
               phx-value-dimension="column"

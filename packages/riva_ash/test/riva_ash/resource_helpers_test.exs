@@ -10,7 +10,8 @@ defmodule RivaAsh.ResourceHelpersTest do
     end
 
     test "returns error when resource not found" do
-      assert {:error, :not_found} = ResourceHelpers.get_resource_by_id("resource-type", "nonexistent")
+      assert {:error, :not_found} =
+               ResourceHelpers.get_resource_by_id("resource-type", "nonexistent")
     end
   end
 
@@ -45,7 +46,8 @@ defmodule RivaAsh.ResourceHelpersTest do
     end
 
     test "handles non-existent resource" do
-      assert {:error, :not_found} = ResourceHelpers.delete_resource("resource-type", "nonexistent")
+      assert {:error, :not_found} =
+               ResourceHelpers.delete_resource("resource-type", "nonexistent")
     end
   end
 

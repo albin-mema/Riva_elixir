@@ -6,9 +6,6 @@ defmodule RivaAshWeb.Router do
   import Phoenix.LiveView.Router
   import AshAdmin.Router
 
-
-
-
   pipeline :api do
     plug(:accepts, ["json"])
   end

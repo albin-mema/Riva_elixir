@@ -26,15 +26,17 @@ defmodule RivaAshWeb.InventoryManagementLive do
           business_ids = Enum.map(businesses, & &1.id)
 
           # Load inventory data
-          items = Item.read!(
-            actor: user,
-            filter: [section: [plot: [business_id: [in: business_ids]]]]
-          )
+          items =
+            Item.read!(
+              actor: user,
+              filter: [section: [plot: [business_id: [in: business_ids]]]]
+            )
 
-          item_types = ItemType.read!(
-            actor: user,
-            filter: [business_id: [in: business_ids]]
-          )
+          item_types =
+            ItemType.read!(
+              actor: user,
+              filter: [business_id: [in: business_ids]]
+            )
 
           socket =
             socket
@@ -54,6 +56,7 @@ defmodule RivaAshWeb.InventoryManagementLive do
           error in [Ash.Error.Forbidden, Ash.Error.Invalid] ->
             {:ok, redirect(socket, to: "/access-denied")}
         end
+
       {:error, _} ->
         {:ok, redirect(socket, to: "/sign-in")}
     end
@@ -456,16 +459,5 @@ defmodule RivaAshWeb.InventoryManagementLive do
 
   defp count_maintenance_items(items) do
     Enum.count(items, &(get_item_status(&1) == "maintenance"))
-  end
-
-  defp get_current_user_from_session(session) do
-    case session["user_token"] do
-      nil -> {:error, :no_token}
-      token ->
-        case RivaAsh.Accounts.get_user_by_session_token(token) do
-          nil -> {:error, :invalid_token}
-          user -> {:ok, user}
-        end
-    end
   end
 end

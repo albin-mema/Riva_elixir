@@ -214,11 +214,13 @@ defmodule RivaAsh.Resources.ItemType do
     RivaAsh.Resources.ItemType
     |> Ash.read!()
     |> Enum.map(fn item_type ->
-      business_name = if item_type.business do
-        item_type.business.name
-      else
-        "Unknown Business"
-      end
+      business_name =
+        if item_type.business do
+          item_type.business.name
+        else
+          "Unknown Business"
+        end
+
       {item_type.id, "#{item_type.name} (#{business_name})"}
     end)
   end

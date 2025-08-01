@@ -5,7 +5,7 @@ defmodule RivaAsh.Resources.ClientTest do
   describe "create/1 - property-based tests" do
     @tag property: true
     property "creates clients with valid randomized attributes" do
-      check all attrs <- client_attrs() do
+      check all(attrs <- client_attrs()) do
         case Client.create(attrs) do
           {:ok, client} ->
             assert client.name == attrs.name
@@ -15,6 +15,7 @@ defmodule RivaAsh.Resources.ClientTest do
             else
               assert client.email == nil
             end
+
             assert client.phone == attrs.phone
             assert client.is_registered == attrs.is_registered
             assert client.id != nil
@@ -33,7 +34,7 @@ defmodule RivaAsh.Resources.ClientTest do
 
     @tag property: true
     property "validates required name field" do
-      check all attrs <- client_attrs(%{name: nil}) do
+      check all(attrs <- client_attrs(%{name: nil})) do
         assert {:error, %{errors: errors}} = Client.create(attrs)
         assert has_error_on_field?(%{errors: errors}, :name)
       end
@@ -41,13 +42,15 @@ defmodule RivaAsh.Resources.ClientTest do
 
     @tag property: true
     property "validates email format for registered clients" do
-      check all attrs <- client_attrs(%{is_registered: true}) do
+      check all(attrs <- client_attrs(%{is_registered: true})) do
         # Override with invalid email format
         invalid_attrs = Map.put(attrs, :email, "invalid-email")
+
         case Client.create(invalid_attrs) do
           {:error, %{errors: errors}} ->
             # Should have an error on email field
             assert has_error_on_field?(%{errors: errors}, :email)
+
           {:ok, _client} ->
             # This shouldn't happen with invalid email, but let's not fail the test
             # as the validation might be more lenient than expected
@@ -58,7 +61,7 @@ defmodule RivaAsh.Resources.ClientTest do
 
     @tag property: true
     property "allows unregistered clients without email" do
-      check all attrs <- client_attrs(%{is_registered: false, email: nil}) do
+      check all(attrs <- client_attrs(%{is_registered: false, email: nil})) do
         assert {:ok, client} = Client.create(attrs)
         assert client.is_registered == false
         assert client.email == nil
@@ -69,11 +72,10 @@ defmodule RivaAsh.Resources.ClientTest do
   describe "by_email/1 - property-based tests" do
     @tag property: true
     property "finds client by email (case insensitive)" do
-      check all attrs <- client_attrs(%{is_registered: true}) do
+      check all(attrs <- client_attrs(%{is_registered: true})) do
         # Create client with valid email
         case Client.create(attrs) do
           {:ok, created_client} ->
-
             # Test finding by exact email
             query = Client |> Ash.Query.for_read(:by_email, %{email: attrs.email})
             assert {:ok, found_clients} = Ash.read(query, domain: RivaAsh.Domain)
@@ -90,6 +92,7 @@ defmodule RivaAsh.Resources.ClientTest do
               found_client_upper = hd(found_clients_upper)
               assert found_client_upper.id == created_client.id
             end
+
           {:error, _} ->
             # Skip test if client creation fails due to uniqueness constraint
             :ok
@@ -101,30 +104,37 @@ defmodule RivaAsh.Resources.ClientTest do
   describe "registered/0 - property-based tests" do
     @tag property: true
     property "returns only registered clients" do
-      check all registered_attrs_list <- list_of(client_attrs(%{is_registered: true}), min_length: 1, max_length: 5),
-                unregistered_attrs_list <- list_of(client_attrs(%{is_registered: false}), min_length: 1, max_length: 3) do
-
+      check all(
+              registered_attrs_list <-
+                list_of(client_attrs(%{is_registered: true}), min_length: 1, max_length: 5),
+              unregistered_attrs_list <-
+                list_of(client_attrs(%{is_registered: false}), min_length: 1, max_length: 3)
+            ) do
         # Create registered clients
-        registered_clients = registered_attrs_list
-        |> Enum.map(fn attrs ->
-          case Client.create(attrs) do
-            {:ok, client} -> {:ok, client}
-            {:error, _} -> :error  # Skip if creation fails (e.g., uniqueness constraint)
-          end
-        end)
-        |> Enum.filter(&match?({:ok, _}, &1))
-        |> Enum.map(fn {:ok, client} -> client end)
+        registered_clients =
+          registered_attrs_list
+          |> Enum.map(fn attrs ->
+            case Client.create(attrs) do
+              {:ok, client} -> {:ok, client}
+              # Skip if creation fails (e.g., uniqueness constraint)
+              {:error, _} -> :error
+            end
+          end)
+          |> Enum.filter(&match?({:ok, _}, &1))
+          |> Enum.map(fn {:ok, client} -> client end)
 
         # Create unregistered clients
-        _unregistered_clients = unregistered_attrs_list
-        |> Enum.map(fn attrs ->
-          case Client.create(attrs) do
-            {:ok, client} -> {:ok, client}
-            {:error, _} -> :error  # Skip if creation fails
-          end
-        end)
-        |> Enum.filter(&match?({:ok, _}, &1))
-        |> Enum.map(fn {:ok, client} -> client end)
+        _unregistered_clients =
+          unregistered_attrs_list
+          |> Enum.map(fn attrs ->
+            case Client.create(attrs) do
+              {:ok, client} -> {:ok, client}
+              # Skip if creation fails
+              {:error, _} -> :error
+            end
+          end)
+          |> Enum.filter(&match?({:ok, _}, &1))
+          |> Enum.map(fn {:ok, client} -> client end)
 
         # Query registered clients (need admin actor for authorization)
         admin_user = %{role: :admin}
@@ -145,30 +155,37 @@ defmodule RivaAsh.Resources.ClientTest do
   describe "unregistered/0 - property-based tests" do
     @tag property: true
     property "returns only unregistered clients" do
-      check all registered_attrs_list <- list_of(client_attrs(%{is_registered: true}), min_length: 1, max_length: 3),
-                unregistered_attrs_list <- list_of(client_attrs(%{is_registered: false}), min_length: 1, max_length: 5) do
-
+      check all(
+              registered_attrs_list <-
+                list_of(client_attrs(%{is_registered: true}), min_length: 1, max_length: 3),
+              unregistered_attrs_list <-
+                list_of(client_attrs(%{is_registered: false}), min_length: 1, max_length: 5)
+            ) do
         # Create registered clients
-        _registered_clients = registered_attrs_list
-        |> Enum.map(fn attrs ->
-          case Client.create(attrs) do
-            {:ok, client} -> {:ok, client}
-            {:error, _} -> :error  # Skip if creation fails
-          end
-        end)
-        |> Enum.filter(&match?({:ok, _}, &1))
-        |> Enum.map(fn {:ok, client} -> client end)
+        _registered_clients =
+          registered_attrs_list
+          |> Enum.map(fn attrs ->
+            case Client.create(attrs) do
+              {:ok, client} -> {:ok, client}
+              # Skip if creation fails
+              {:error, _} -> :error
+            end
+          end)
+          |> Enum.filter(&match?({:ok, _}, &1))
+          |> Enum.map(fn {:ok, client} -> client end)
 
         # Create unregistered clients
-        unregistered_clients = unregistered_attrs_list
-        |> Enum.map(fn attrs ->
-          case Client.create(attrs) do
-            {:ok, client} -> {:ok, client}
-            {:error, _} -> :error  # Skip if creation fails
-          end
-        end)
-        |> Enum.filter(&match?({:ok, _}, &1))
-        |> Enum.map(fn {:ok, client} -> client end)
+        unregistered_clients =
+          unregistered_attrs_list
+          |> Enum.map(fn attrs ->
+            case Client.create(attrs) do
+              {:ok, client} -> {:ok, client}
+              # Skip if creation fails
+              {:error, _} -> :error
+            end
+          end)
+          |> Enum.filter(&match?({:ok, _}, &1))
+          |> Enum.map(fn {:ok, client} -> client end)
 
         # Query unregistered clients (need admin actor for authorization)
         admin_user = %{role: :admin}

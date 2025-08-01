@@ -10,16 +10,16 @@ defmodule RivaAshWeb.Components.Navigation.NotificationCenter do
   @doc """
   Renders a notification center.
   """
-  attr :notifications, :list, default: []
-  attr :unread_count, :integer, default: 0
-  attr :show_panel, :boolean, default: false
-  attr :on_toggle, :string, required: true
-  attr :on_mark_read, :string, required: true
-  attr :on_mark_all_read, :string, required: true
-  attr :on_notification_click, :string, default: nil
-  attr :max_display, :integer, default: 10
-  attr :class, :string, default: ""
-  attr :rest, :global
+  attr(:notifications, :list, default: [])
+  attr(:unread_count, :integer, default: 0)
+  attr(:show_panel, :boolean, default: false)
+  attr(:on_toggle, :string, required: true)
+  attr(:on_mark_read, :string, required: true)
+  attr(:on_mark_all_read, :string, required: true)
+  attr(:on_notification_click, :string, default: nil)
+  attr(:max_display, :integer, default: 10)
+  attr(:class, :string, default: "")
+  attr(:rest, :global)
 
   def notification_center(assigns) do
     ~H"""

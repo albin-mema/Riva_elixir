@@ -6,44 +6,40 @@ defmodule RivaAshWeb.Components.Forms.ReservationForm do
   import RivaAshWeb.Components.Molecules.FormField
   import RivaAshWeb.Components.Molecules.Card
   import RivaAshWeb.Components.Atoms.Button
-  import RivaAshWeb.Components.Atoms.Select
   import RivaAshWeb.Components.Atoms.DatePicker
   import RivaAshWeb.Components.Atoms.TimePicker
-  import RivaAshWeb.Components.Atoms.Spinner
 
   @doc """
   Renders a reservation form for creating or editing reservations.
   """
-  attr :form, :map, required: true
-  attr :editing, :boolean, default: false
-  attr :loading, :boolean, default: false
-  attr :clients, :list, default: []
-  attr :items, :list, default: []
-  attr :employees, :list, default: []
-  attr :on_submit, :string, required: true
-  attr :on_change, :string, required: true
-  attr :on_cancel, :string, required: true
-  attr :class, :string, default: ""
-  attr :rest, :global
+  attr(:form, :map, required: true)
+  attr(:editing, :boolean, default: false)
+  attr(:loading, :boolean, default: false)
+  attr(:clients, :list, default: [])
+  attr(:items, :list, default: [])
+  attr(:employees, :list, default: [])
+  attr(:on_submit, :string, required: true)
+  attr(:on_change, :string, required: true)
+  attr(:on_cancel, :string, required: true)
+  attr(:class, :string, default: "")
+  attr(:rest, :global)
 
   def reservation_form(assigns) do
     ~H"""
     <.card variant="elevated" {@rest}>
       <:body>
         <form phx-submit={@on_submit} phx-change={@on_change} class="space-y-6">
-          <.form_field
+          <.select_field
             field={@form[:client_id]}
             label="Client"
-            type="select"
             options={@clients}
             required
             helper_text="Select the client for this reservation"
           />
 
-          <.form_field
+          <.select_field
             field={@form[:item_id]}
             label="Item"
-            type="select"
             options={@items}
             required
             helper_text="Select the item to reserve"
@@ -52,13 +48,11 @@ defmodule RivaAshWeb.Components.Forms.ReservationForm do
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <.date_picker
               field={@form[:reserved_from]}
-              label="Start Date"
               required
             />
 
             <.time_picker
               field={@form[:reserved_from]}
-              label="Start Time"
               required
             />
           </div>
@@ -66,21 +60,18 @@ defmodule RivaAshWeb.Components.Forms.ReservationForm do
           <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
             <.date_picker
               field={@form[:reserved_until]}
-              label="End Date"
               required
             />
 
             <.time_picker
               field={@form[:reserved_until]}
-              label="End Time"
               required
             />
           </div>
 
-          <.form_field
+          <.select_field
             field={@form[:employee_id]}
             label="Employee"
-            type="select"
             options={@employees}
             helper_text="Select the employee handling this reservation (optional)"
           />

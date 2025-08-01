@@ -52,10 +52,12 @@ defmodule RivaAsh.QueriesTest do
 
     test "handles multiple sort fields" do
       base_query = Queries.build_query("users", %{})
-      sorted_query = Queries.apply_sorting(base_query, [
-        %{field: :name, direction: :asc},
-        %{field: :inserted_at, direction: :desc}
-      ])
+
+      sorted_query =
+        Queries.apply_sorting(base_query, [
+          %{field: :name, direction: :asc},
+          %{field: :inserted_at, direction: :desc}
+        ])
 
       assert is_struct(sorted_query, Ecto.Query)
     end
@@ -64,9 +66,11 @@ defmodule RivaAsh.QueriesTest do
   describe "apply_joins/2" do
     test "applies joins to query" do
       base_query = Queries.build_query("users", %{})
-      joined_query = Queries.apply_joins(base_query, [
-        %{table: :businesses, on: [user_id: :id]}
-      ])
+
+      joined_query =
+        Queries.apply_joins(base_query, [
+          %{table: :businesses, on: [user_id: :id]}
+        ])
 
       assert is_struct(joined_query, Ecto.Query)
     end
@@ -96,10 +100,11 @@ defmodule RivaAsh.QueriesTest do
 
   describe "build_aggregate_query/2" do
     test "builds aggregate query" do
-      query = Queries.build_aggregate_query("users", %{
-        group_by: [:status],
-        aggregates: [count: :id, max: :inserted_at]
-      })
+      query =
+        Queries.build_aggregate_query("users", %{
+          group_by: [:status],
+          aggregates: [count: :id, max: :inserted_at]
+        })
 
       assert is_struct(query, Ecto.Query)
     end

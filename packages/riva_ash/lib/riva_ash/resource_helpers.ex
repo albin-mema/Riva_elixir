@@ -30,12 +30,14 @@ defmodule RivaAsh.ResourceHelpers do
       attribute :name, :string do
         allow_nil?(false)
         public?(true)
-        constraints [
+
+        constraints(
           min_length: unquote(min_length),
           max_length: unquote(max_length),
           trim?: true,
           allow_empty?: false
-        ]
+        )
+
         description(unquote(description))
       end
     end
@@ -79,10 +81,12 @@ defmodule RivaAsh.ResourceHelpers do
       attribute :description, :string do
         allow_nil?(not unquote(required))
         public?(true)
-        constraints [
+
+        constraints(
           max_length: unquote(max_length),
           trim?: true
-        ]
+        )
+
         description("Description of the resource")
       end
     end
@@ -122,7 +126,9 @@ defmodule RivaAsh.ResourceHelpers do
         change_tracking_mode(:full_diff)
 
         # Don't store timestamps in the changes by default
-        ignore_attributes(unquote(Keyword.get(opts, :ignore_attributes, [:inserted_at, :updated_at])))
+        ignore_attributes(
+          unquote(Keyword.get(opts, :ignore_attributes, [:inserted_at, :updated_at]))
+        )
 
         # Store action name for better auditing
         store_action_name?(true)
@@ -177,7 +183,7 @@ defmodule RivaAsh.ResourceHelpers do
       standard_archive()
       standard_paper_trail()
 
-      unless unquote(admin_columns) == [] do
+      if unquote(admin_columns) != [] do
         standard_admin(unquote(admin_columns))
       end
     end
@@ -301,7 +307,10 @@ defmodule RivaAsh.ResourceHelpers do
 
       read :by_business_active do
         argument(:business_id, :uuid, allow_nil?: false)
-        filter(expr(business_id == ^arg(:business_id) and is_active == true and is_nil(archived_at)))
+
+        filter(
+          expr(business_id == ^arg(:business_id) and is_active == true and is_nil(archived_at))
+        )
       end
     end
   end
@@ -404,12 +413,12 @@ defmodule RivaAsh.ResourceHelpers do
 
       # Policy for business-scoped access
       policy action_type([:read, :create, :update, :destroy]) do
-        authorize_if expr(^actor(:current_business_id) == record.business_id)
+        authorize_if(expr(^actor(:current_business_id) == record.business_id))
       end
 
       # Policy for admin access (bypasses business scope)
       policy action_type([:read, :create, :update, :destroy]) do
-        authorize_if expr(actor(:role) in [:admin, :super_admin])
+        authorize_if(expr(actor(:role) in [:admin, :super_admin]))
       end
     end
   end

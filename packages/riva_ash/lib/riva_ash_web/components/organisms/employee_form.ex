@@ -23,15 +23,15 @@ defmodule RivaAshWeb.Components.Organisms.EmployeeForm do
         on_cancel="cancel_form"
       />
   """
-  attr :form, :map, required: true
-  attr :editing, :boolean, default: false
-  attr :loading, :boolean, default: false
-  attr :businesses, :list, default: []
-  attr :permissions, :list, default: []
-  attr :on_submit, :string, required: true
-  attr :on_change, :string, required: true
-  attr :on_cancel, :string, required: true
-  attr :class, :string, default: ""
+  attr(:form, :map, required: true)
+  attr(:editing, :boolean, default: false)
+  attr(:loading, :boolean, default: false)
+  attr(:businesses, :list, default: [])
+  attr(:permissions, :list, default: [])
+  attr(:on_submit, :string, required: true)
+  attr(:on_change, :string, required: true)
+  attr(:on_cancel, :string, required: true)
+  attr(:class, :string, default: "")
 
   def employee_form(assigns) do
     ~H"""

@@ -51,7 +51,8 @@ defmodule RivaAsh.GDPR.RetentionPolicy do
   Get retention period for a specific data type.
   """
   def retention_period(data_type) do
-    Map.get(@retention_periods, data_type, 365) # Default to 1 year
+    # Default to 1 year
+    Map.get(@retention_periods, data_type, 365)
   end
 
   @doc """
@@ -105,10 +106,11 @@ defmodule RivaAsh.GDPR.RetentionPolicy do
 
     # Find users that have been archived and are past retention period
     # Note: We need to unset the base filter to include archived records
-    expired_users = User
-    |> Ash.Query.unset([:filter])
-    |> Ash.Query.filter(expr(not is_nil(archived_at) and archived_at < ^cutoff_date))
-    |> Ash.read!(domain: RivaAsh.Accounts)
+    expired_users =
+      User
+      |> Ash.Query.unset([:filter])
+      |> Ash.Query.filter(expr(not is_nil(archived_at) and archived_at < ^cutoff_date))
+      |> Ash.read!(domain: RivaAsh.Accounts)
 
     count = length(expired_users)
 
@@ -116,6 +118,7 @@ defmodule RivaAsh.GDPR.RetentionPolicy do
       case hard_delete_user(user) do
         :ok ->
           Logger.info("GDPR: Hard deleted expired user #{user.id}")
+
         {:error, reason} ->
           Logger.error("GDPR: Failed to delete user #{user.id}: #{inspect(reason)}")
       end
@@ -155,13 +158,16 @@ defmodule RivaAsh.GDPR.RetentionPolicy do
     cutoff_date = DateTime.utc_now() |> DateTime.add(-@retention_periods.consent_records, :day)
 
     # Only delete consent records that have been withdrawn and are past retention
-    expired_consents = ConsentRecord
-    |> Ash.Query.filter(expr(
-      consent_given == false and
-      not is_nil(withdrawal_date) and
-      withdrawal_date < ^cutoff_date
-    ))
-    |> Ash.read!(domain: RivaAsh.Domain)
+    expired_consents =
+      ConsentRecord
+      |> Ash.Query.filter(
+        expr(
+          consent_given == false and
+            not is_nil(withdrawal_date) and
+            withdrawal_date < ^cutoff_date
+        )
+      )
+      |> Ash.read!(domain: RivaAsh.Domain)
 
     count = length(expired_consents)
 
@@ -169,6 +175,7 @@ defmodule RivaAsh.GDPR.RetentionPolicy do
       case Ash.destroy(consent) do
         :ok ->
           Logger.info("GDPR: Deleted expired consent record #{consent.id}")
+
         {:error, reason} ->
           Logger.error("GDPR: Failed to delete consent #{consent.id}: #{inspect(reason)}")
       end
@@ -234,7 +241,7 @@ defmodule RivaAsh.GDPR.RetentionPolicy do
   defp anonymize_user(user) do
     anonymized_data = %{
       name: "Anonymized User",
-      email: "anonymized_#{user.id}@deleted.local",
+      email: "anonymized_#{user.id}@deleted.local"
       # Keep ID for referential integrity but remove personal data
     }
 

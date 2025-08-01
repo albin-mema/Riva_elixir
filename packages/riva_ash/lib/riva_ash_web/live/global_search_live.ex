@@ -20,7 +20,10 @@ defmodule RivaAshWeb.GlobalSearchLive do
       |> assign(:loading, false)
       |> assign(:searched, false)
       |> assign(:page_title, "Find & Book Reservations - RivaAsh")
-      |> assign(:meta_description, "Discover and book reservations at thousands of businesses. Find restaurants, services, and activities near you. No registration required to search.")
+      |> assign(
+        :meta_description,
+        "Discover and book reservations at thousands of businesses. Find restaurants, services, and activities near you. No registration required to search."
+      )
       |> assign(:available_cities, get_available_cities())
       |> assign(:available_countries, get_available_countries())
 
@@ -49,14 +52,23 @@ defmodule RivaAshWeb.GlobalSearchLive do
 
     # Build query params
     query_params = []
-    query_params = if search_term != "", do: [{"q", search_term} | query_params], else: query_params
-    query_params = if city_filter != "", do: [{"city", city_filter} | query_params], else: query_params
-    query_params = if country_filter != "", do: [{"country", country_filter} | query_params], else: query_params
 
-    query_string = case query_params do
-      [] -> ""
-      params -> "?" <> URI.encode_query(params)
-    end
+    query_params =
+      if search_term != "", do: [{"q", search_term} | query_params], else: query_params
+
+    query_params =
+      if city_filter != "", do: [{"city", city_filter} | query_params], else: query_params
+
+    query_params =
+      if country_filter != "",
+        do: [{"country", country_filter} | query_params],
+        else: query_params
+
+    query_string =
+      case query_params do
+        [] -> ""
+        params -> "?" <> URI.encode_query(params)
+      end
 
     {:noreply, push_patch(socket, to: "/search#{query_string}")}
   end
@@ -84,7 +96,8 @@ defmodule RivaAshWeb.GlobalSearchLive do
     {:noreply, push_navigate(socket, to: ~p"/item/#{item_id}")}
   end
 
-  defp maybe_perform_search(socket, search_term, city_filter, country_filter) when search_term != "" or city_filter != "" or country_filter != "" do
+  defp maybe_perform_search(socket, search_term, city_filter, country_filter)
+       when search_term != "" or city_filter != "" or country_filter != "" do
     socket
     |> assign(:loading, true)
     |> start_async(:search, fn -> perform_search(search_term, city_filter, country_filter) end)
@@ -123,39 +136,53 @@ defmodule RivaAshWeb.GlobalSearchLive do
   defp perform_search(search_term, city_filter, country_filter) do
     # Build search params
     search_params = %{}
-    search_params = if search_term != "", do: Map.put(search_params, :search_term, search_term), else: search_params
-    search_params = if city_filter != "", do: Map.put(search_params, :city, city_filter), else: search_params
-    search_params = if country_filter != "", do: Map.put(search_params, :country, country_filter), else: search_params
+
+    search_params =
+      if search_term != "",
+        do: Map.put(search_params, :search_term, search_term),
+        else: search_params
+
+    search_params =
+      if city_filter != "", do: Map.put(search_params, :city, city_filter), else: search_params
+
+    search_params =
+      if country_filter != "",
+        do: Map.put(search_params, :country, country_filter),
+        else: search_params
 
     # Search businesses
-    businesses_result = Business
-    |> Ash.Query.for_read(:public_search, search_params)
-    |> Ash.read(domain: RivaAsh.Domain)
+    businesses_result =
+      Business
+      |> Ash.Query.for_read(:public_search, search_params)
+      |> Ash.read(domain: RivaAsh.Domain)
 
     # Search items (with business location filtering)
-    items_result = Item
-    |> Ash.Query.for_read(:public_search, search_params)
-    |> Ash.Query.load([:business])
-    |> Ash.read(domain: RivaAsh.Domain)
+    items_result =
+      Item
+      |> Ash.Query.for_read(:public_search, search_params)
+      |> Ash.Query.load([:business])
+      |> Ash.read(domain: RivaAsh.Domain)
 
-    businesses = case businesses_result do
-      {:ok, businesses} -> businesses
-      _ -> []
-    end
+    businesses =
+      case businesses_result do
+        {:ok, businesses} -> businesses
+        _ -> []
+      end
 
-    items = case items_result do
-      {:ok, items} -> items
-      _ -> []
-    end
+    items =
+      case items_result do
+        {:ok, items} -> items
+        _ -> []
+      end
 
     {businesses, items}
   end
 
   defp get_available_cities do
     case Business
-    |> Ash.Query.for_read(:public_search)
-    |> Ash.Query.select([:city])
-    |> Ash.read(domain: RivaAsh.Domain) do
+         |> Ash.Query.for_read(:public_search)
+         |> Ash.Query.select([:city])
+         |> Ash.read(domain: RivaAsh.Domain) do
       {:ok, businesses} ->
         businesses
         |> Enum.map(& &1.city)
@@ -163,15 +190,17 @@ defmodule RivaAshWeb.GlobalSearchLive do
         |> Enum.reject(&(&1 == ""))
         |> Enum.uniq()
         |> Enum.sort()
-      _ -> []
+
+      _ ->
+        []
     end
   end
 
   defp get_available_countries do
     case Business
-    |> Ash.Query.for_read(:public_search)
-    |> Ash.Query.select([:country])
-    |> Ash.read(domain: RivaAsh.Domain) do
+         |> Ash.Query.for_read(:public_search)
+         |> Ash.Query.select([:country])
+         |> Ash.read(domain: RivaAsh.Domain) do
       {:ok, businesses} ->
         businesses
         |> Enum.map(& &1.country)
@@ -179,7 +208,9 @@ defmodule RivaAshWeb.GlobalSearchLive do
         |> Enum.reject(&(&1 == ""))
         |> Enum.uniq()
         |> Enum.sort()
-      _ -> []
+
+      _ ->
+        []
     end
   end
 
@@ -220,7 +251,6 @@ defmodule RivaAshWeb.GlobalSearchLive do
                 <div class="flex-1">
                   <.input
                     type="text"
-                    name="term"
                     value={@search_term}
                     placeholder="Search businesses, items, or services..."
                     class="w-full px-4 py-3 text-lg border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"

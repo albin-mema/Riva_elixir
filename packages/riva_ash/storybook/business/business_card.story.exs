@@ -11,7 +11,8 @@ defmodule Storybook.Business.BusinessCard do
           business: %{
             id: "123e4567-e89b-12d3-a456-426614174000",
             name: "Sunny Beach Resort",
-            description: "A beautiful beachfront resort with stunning ocean views and world-class amenities.",
+            description:
+              "A beautiful beachfront resort with stunning ocean views and world-class amenities.",
             address: "123 Ocean Drive, Miami Beach, FL 33139",
             phone: "+1 (305) 555-0123",
             email: "info@sunnybeachresort.com",
@@ -36,7 +37,8 @@ defmodule Storybook.Business.BusinessCard do
           business: %{
             id: "456e7890-e89b-12d3-a456-426614174001",
             name: "The Garden Bistro",
-            description: "Farm-to-table dining experience with seasonal menus and locally sourced ingredients.",
+            description:
+              "Farm-to-table dining experience with seasonal menus and locally sourced ingredients.",
             address: "456 Main Street, Downtown, CA 90210",
             phone: "+1 (555) 123-4567",
             email: "reservations@gardenbistro.com",

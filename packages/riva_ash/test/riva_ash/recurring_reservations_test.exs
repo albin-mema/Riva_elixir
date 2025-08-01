@@ -40,7 +40,8 @@ defmodule RivaAsh.RecurringReservationsTest do
         end_date: ~D[2024-01-31],
         frequency: :weekly,
         interval: 1,
-        weekdays: [1, 3, 5], # Monday, Wednesday, Friday
+        # Monday, Wednesday, Friday
+        weekdays: [1, 3, 5],
         start_time: ~T[09:00:00],
         end_time: ~T[17:00:00]
       }
@@ -89,19 +90,24 @@ defmodule RivaAsh.RecurringReservationsTest do
 
   describe "calculate_next_occurrence/2" do
     test "calculates next weekly occurrence" do
-      current_date = ~D[2024-01-01] # Monday
+      # Monday
+      current_date = ~D[2024-01-01]
+
       rule = %{
         frequency: :weekly,
         interval: 1,
-        weekdays: [1, 3, 5] # Monday, Wednesday, Friday
+        # Monday, Wednesday, Friday
+        weekdays: [1, 3, 5]
       }
 
       next_date = RecurringReservations.calculate_next_occurrence(current_date, rule)
-      assert next_date == ~D[2024-01-03] # Next Wednesday
+      # Next Wednesday
+      assert next_date == ~D[2024-01-03]
     end
 
     test "calculates next daily occurrence" do
       current_date = ~D[2024-01-01]
+
       rule = %{
         frequency: :daily,
         interval: 2
@@ -117,7 +123,9 @@ defmodule RivaAsh.RecurringReservationsTest do
       reservation_id = "recurring-123"
       params = %{end_date: ~D[2025-12-31], frequency: :monthly}
 
-      assert {:ok, reservation} = RecurringReservations.update_recurring_reservation(reservation_id, params)
+      assert {:ok, reservation} =
+               RecurringReservations.update_recurring_reservation(reservation_id, params)
+
       assert reservation.end_date == ~D[2025-12-31]
       assert reservation.frequency == :monthly
     end
@@ -131,7 +139,9 @@ defmodule RivaAsh.RecurringReservationsTest do
 
     test "handles non-existent reservation" do
       reservation_id = "nonexistent"
-      assert {:error, :not_found} = RecurringReservations.cancel_recurring_reservation(reservation_id)
+
+      assert {:error, :not_found} =
+               RecurringReservations.cancel_recurring_reservation(reservation_id)
     end
   end
 
@@ -187,7 +197,13 @@ defmodule RivaAsh.RecurringReservationsTest do
       start_date = ~D[2024-01-01]
       end_date = ~D[2024-01-31]
 
-      assert {:ok, occurrences} = RecurringReservations.get_occurrences_in_range(reservation_id, start_date, end_date)
+      assert {:ok, occurrences} =
+               RecurringReservations.get_occurrences_in_range(
+                 reservation_id,
+                 start_date,
+                 end_date
+               )
+
       assert is_list(occurrences)
     end
   end

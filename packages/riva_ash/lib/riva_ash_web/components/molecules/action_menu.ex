@@ -9,13 +9,18 @@ defmodule RivaAshWeb.Components.Molecules.ActionMenu do
   @doc """
   Renders a dropdown action menu.
   """
-  attr :trigger_label, :string, default: "Actions"
-  attr :trigger_icon, :atom, default: :ellipsis_vertical
-  attr :actions, :list, required: true
-  attr :position, :string, default: "bottom-right", values: ~w(bottom-left bottom-right top-left top-right)
-  attr :size, :string, default: "md", values: ~w(sm md lg)
-  attr :class, :string, default: ""
-  attr :rest, :global
+  attr(:trigger_label, :string, default: "Actions")
+  attr(:trigger_icon, :atom, default: :ellipsis_vertical)
+  attr(:actions, :list, required: true)
+
+  attr(:position, :string,
+    default: "bottom-right",
+    values: ~w(bottom-left bottom-right top-left top-right)
+  )
+
+  attr(:size, :string, default: "md", values: ~w(sm md lg))
+  attr(:class, :string, default: "")
+  attr(:rest, :global)
 
   def action_menu(assigns) do
     ~H"""

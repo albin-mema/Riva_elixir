@@ -5,20 +5,20 @@ defmodule RivaAshWeb.Components.Forms.PaymentForm do
   use Phoenix.Component
   import RivaAshWeb.Components.Molecules.FormField
   import RivaAshWeb.Components.Atoms.Button
-  import RivaAshWeb.Components.Atoms.Select
+
 
   @doc """
   Renders a payment form.
   """
-  attr :form, :map, required: true
-  attr :reservation, :map, required: true
-  attr :payment_methods, :list, default: []
-  attr :on_submit, :string, required: true
-  attr :on_change, :string, required: true
-  attr :on_cancel, :string, required: true
-  attr :loading, :boolean, default: false
-  attr :class, :string, default: ""
-  attr :rest, :global
+  attr(:form, :map, required: true)
+  attr(:reservation, :map, required: true)
+  attr(:payment_methods, :list, default: [])
+  attr(:on_submit, :string, required: true)
+  attr(:on_change, :string, required: true)
+  attr(:on_cancel, :string, required: true)
+  attr(:loading, :boolean, default: false)
+  attr(:class, :string, default: "")
+  attr(:rest, :global)
 
   def payment_form(assigns) do
     ~H"""
@@ -36,10 +36,9 @@ defmodule RivaAshWeb.Components.Forms.PaymentForm do
         </div>
       </div>
 
-      <.form_field
+      <.select_field
         field={@form[:payment_method]}
         label="Payment Method"
-        type="select"
         options={Enum.map(@payment_methods, &{Atom.to_string(&1) |> String.capitalize(), &1})}
         required
       />
@@ -50,12 +49,12 @@ defmodule RivaAshWeb.Components.Forms.PaymentForm do
         <.form_field field={@form[:card_holder_name]} label="Cardholder Name" type="text" required />
 
         <div style="display: flex; gap: 1rem;">
-          <.form_field field={@form[:expiry_month]} label="Month" type="select" options={[
+          <.select_field field={@form[:expiry_month]} label="Month" options={[
             {"01", "01"}, {"02", "02"}, {"03", "03"}, {"04", "04"},
             {"05", "05"}, {"06", "06"}, {"07", "07"}, {"08", "08"},
             {"09", "09"}, {"10", "10"}, {"11", "11"}, {"12", "12"}
           ]} required />
-          <.form_field field={@form[:expiry_year]} label="Year" type="select" options={
+          <.select_field field={@form[:expiry_year]} label="Year" options={
             for year <- 2024..2034, do: {to_string(year), to_string(year)}
           } required />
           <.form_field field={@form[:cvv]} label="CVV" type="text" required />
@@ -70,8 +69,8 @@ defmodule RivaAshWeb.Components.Forms.PaymentForm do
 
       <div :if={@form[:payment_method].value == "cash"}>
         <h4>Cash Payment</h4>
-        <.form_field field={@form[:amount_received]} label="Amount Received" type="number" step="0.01" required />
-        <.form_field field={@form[:change_given]} label="Change Given" type="number" step="0.01" readonly />
+        <.form_field field={@form[:amount_received]} label="Amount Received" type="number" required />
+        <.form_field field={@form[:change_given]} label="Change Given" type="number" readonly />
       </div>
 
       <.form_field field={@form[:notes]} label="Payment Notes" type="textarea" />

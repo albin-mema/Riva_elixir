@@ -13,18 +13,21 @@ defmodule RivaAsh.Mermaid do
   def generate_erd(domain) do
     try do
       resources = Ash.Domain.Info.resources(domain)
-      mermaid_resources = Enum.map(resources, fn resource ->
-        case resource_to_mermaid(resource) do
-          {:ok, result} -> result
-          {:error, _} -> ""
-        end
-      end)
 
-      result = """
-      erDiagram
-      #{Enum.join(mermaid_resources, "\n\n")}
-      """
-      |> String.trim()
+      mermaid_resources =
+        Enum.map(resources, fn resource ->
+          case resource_to_mermaid(resource) do
+            {:ok, result} -> result
+            {:error, _} -> ""
+          end
+        end)
+
+      result =
+        """
+        erDiagram
+        #{Enum.join(mermaid_resources, "\n\n")}
+        """
+        |> String.trim()
 
       {:ok, result}
     rescue
@@ -42,17 +45,23 @@ defmodule RivaAsh.Mermaid do
         {:ok, attributes_str} ->
           case format_relationships(resource_name, relationships) do
             {:ok, relationships_str} ->
-              result = """
-              #{resource_name} {
-                #{attributes_str}
-                #{relationships_str}
-              }
-              """
-              |> String.trim()
+              result =
+                """
+                #{resource_name} {
+                  #{attributes_str}
+                  #{relationships_str}
+                }
+                """
+                |> String.trim()
+
               {:ok, result}
-            {:error, error} -> {:error, error}
+
+            {:error, error} ->
+              {:error, error}
           end
-        {:error, error} -> {:error, error}
+
+        {:error, error} ->
+          {:error, error}
       end
     rescue
       error -> {:error, error}
@@ -60,17 +69,18 @@ defmodule RivaAsh.Mermaid do
   end
 
   defp format_attributes(attributes) do
-    result = attributes
-    |> Enum.map(fn {name, types} ->
-      type =
-        case types do
-          [t | _] -> inspect(t)
-          _ -> "any"
-        end
+    result =
+      attributes
+      |> Enum.map(fn {name, types} ->
+        type =
+          case types do
+            [t | _] -> inspect(t)
+            _ -> "any"
+          end
 
-      "    #{name} #{type}"
-    end)
-    |> Enum.join("\n")
+        "    #{name} #{type}"
+      end)
+      |> Enum.join("\n")
 
     {:ok, result}
   end
@@ -94,7 +104,8 @@ defmodule RivaAsh.Mermaid do
          type: type
        }) do
     with {:ok, dest_resource} <- format_destination_resource(destination),
-         {:ok, relationship_line} <- format_relationship_line(source_resource, dest_resource, name, cardinality, type) do
+         {:ok, relationship_line} <-
+           format_relationship_line(source_resource, dest_resource, name, cardinality, type) do
       {:ok, relationship_line}
     else
       {:error, error} -> {:error, error}
@@ -109,24 +120,25 @@ defmodule RivaAsh.Mermaid do
   end
 
   defp format_relationship_line(source_resource, dest_resource, name, cardinality, type) do
-    result = case type do
-      :belongs_to ->
-        "    #{source_resource} ||--o{ #{dest_resource} : " <>
-          if(cardinality == :one, do: "belongs_to", else: "has_many") <>
-          "_#{name}"
+    result =
+      case type do
+        :belongs_to ->
+          "    #{source_resource} ||--o{ #{dest_resource} : " <>
+            if(cardinality == :one, do: "belongs_to", else: "has_many") <>
+            "_#{name}"
 
-      :has_many ->
-        "    #{source_resource} ||--o{ #{dest_resource} : has_many_#{name}"
+        :has_many ->
+          "    #{source_resource} ||--o{ #{dest_resource} : has_many_#{name}"
 
-      :has_one ->
-        "    #{source_resource} ||--|| #{dest_resource} : has_one_#{name}"
+        :has_one ->
+          "    #{source_resource} ||--|| #{dest_resource} : has_one_#{name}"
 
-      :many_to_many ->
-        "    #{source_resource} }o--o{ #{dest_resource} : many_to_many_#{name}"
+        :many_to_many ->
+          "    #{source_resource} }o--o{ #{dest_resource} : many_to_many_#{name}"
 
-      _ ->
-        "    #{source_resource} -- #{dest_resource} : #{name} (#{inspect(type)})"
-    end
+        _ ->
+          "    #{source_resource} -- #{dest_resource} : #{name} (#{inspect(type)})"
+      end
 
     {:ok, result}
   end

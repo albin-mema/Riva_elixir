@@ -7,14 +7,14 @@ defmodule RivaAshWeb.Components.Atoms.Tooltip do
   @doc """
   Renders a tooltip with trigger content.
   """
-  attr :content, :string, required: true
-  attr :position, :string, default: "top", values: ~w(top bottom left right)
-  attr :trigger, :string, default: "hover", values: ~w(hover click focus)
-  attr :delay, :integer, default: 200
-  attr :class, :string, default: ""
-  attr :rest, :global
+  attr(:content, :string, required: true)
+  attr(:position, :string, default: "top", values: ~w(top bottom left right))
+  attr(:trigger, :string, default: "hover", values: ~w(hover click focus))
+  attr(:delay, :integer, default: 200)
+  attr(:class, :string, default: "")
+  attr(:rest, :global)
 
-  slot :inner_block, required: true
+  slot(:inner_block, required: true)
 
   def tooltip(assigns) do
     ~H"""

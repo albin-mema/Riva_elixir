@@ -28,14 +28,14 @@ defmodule RivaAshWeb.Components.Molecules.Card do
         <:body>Simple card with just body content</:body>
       </.card>
   """
-  attr :variant, :string, default: "elevated", values: ~w(elevated bordered ghost)
-  attr :padding, :string, default: "normal", values: ~w(none compact normal spacious)
-  attr :class, :string, default: ""
-  attr :rest, :global
+  attr(:variant, :string, default: "elevated", values: ~w(elevated bordered ghost))
+  attr(:padding, :string, default: "normal", values: ~w(none compact normal spacious))
+  attr(:class, :string, default: "")
+  attr(:rest, :global)
 
-  slot :header
-  slot :body, required: true
-  slot :footer
+  slot(:header)
+  slot(:body, required: true)
+  slot(:footer)
 
   def card(assigns) do
     assigns = assign(assigns, :card_class, card_class(assigns))
@@ -64,8 +64,8 @@ defmodule RivaAshWeb.Components.Molecules.Card do
   @doc """
   Card title component for use in card headers.
   """
-  attr :class, :string, default: ""
-  slot :inner_block, required: true
+  attr(:class, :string, default: "")
+  slot(:inner_block, required: true)
 
   def card_title(assigns) do
     ~H"""
@@ -78,8 +78,8 @@ defmodule RivaAshWeb.Components.Molecules.Card do
   @doc """
   Card description component for use in card headers.
   """
-  attr :class, :string, default: ""
-  slot :inner_block, required: true
+  attr(:class, :string, default: "")
+  slot(:inner_block, required: true)
 
   def card_description(assigns) do
     ~H"""

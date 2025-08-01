@@ -10,6 +10,7 @@ defmodule RivaAsh.Accounts do
   def sign_in(email, password) do
     try do
       strategy = AshAuthentication.Info.strategy!(RivaAsh.Accounts.User, :password)
+
       case AshAuthentication.Strategy.action(
              strategy,
              :sign_in,
@@ -31,6 +32,7 @@ defmodule RivaAsh.Accounts do
     RivaAsh.Accounts.User
     |> Ash.Changeset.for_create(:register_with_password, params)
     |> Ash.create()
+
     # Removed redundant pipe and function
   end
 

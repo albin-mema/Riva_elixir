@@ -30,10 +30,24 @@ defmodule RivaAsh.Factory do
   import StreamData
 
   alias RivaAsh.Resources.{
-    Business, Plot, Section, ItemType, Item, Layout, ItemPosition,
-    Client, Employee, Permission, EmployeePermission, Reservation,
-    Pricing, Payment, ItemSchedule, AvailabilityException,
-    RecurringReservation, RecurringReservationInstance
+    Business,
+    Plot,
+    Section,
+    ItemType,
+    Item,
+    Layout,
+    ItemPosition,
+    Client,
+    Employee,
+    Permission,
+    EmployeePermission,
+    Reservation,
+    Pricing,
+    Payment,
+    ItemSchedule,
+    AvailabilityException,
+    RecurringReservation,
+    RecurringReservationInstance
   }
 
   # ============================================================================
@@ -45,9 +59,16 @@ defmodule RivaAsh.Factory do
     one_of([
       string(:alphanumeric, min_length: 2, max_length: 50),
       member_of([
-        "Acme Corp", "Tech Solutions Inc", "Green Valley Farm", "City Cafe",
-        "Mountain View Resort", "Ocean Breeze Hotel", "Downtown Fitness",
-        "Sunset Restaurant", "Pine Tree Lodge", "River Side Marina"
+        "Acme Corp",
+        "Tech Solutions Inc",
+        "Green Valley Farm",
+        "City Cafe",
+        "Mountain View Resort",
+        "Ocean Breeze Hotel",
+        "Downtown Fitness",
+        "Sunset Restaurant",
+        "Pine Tree Lodge",
+        "River Side Marina"
       ])
     ])
   end
@@ -78,12 +99,12 @@ defmodule RivaAsh.Factory do
       end),
       # International format
       bind(integer(1..999), fn country ->
-        bind(integer(1000000000..9999999999), fn number ->
+        bind(integer(1_000_000_000..9_999_999_999), fn number ->
           constant("+#{country} #{number}")
         end)
       end),
       # Simple format
-      bind(integer(1000000000..9999999999), fn number ->
+      bind(integer(1_000_000_000..9_999_999_999), fn number ->
         constant("#{number}")
       end)
     ])
@@ -110,6 +131,7 @@ defmodule RivaAsh.Factory do
       bind(integer(0..23), fn hours ->
         bind(integer(0..59), fn minutes ->
           base_time = Timex.now()
+
           Timex.shift(base_time, days: days, hours: hours, minutes: minutes)
           |> constant()
         end)
@@ -123,6 +145,7 @@ defmodule RivaAsh.Factory do
       bind(integer(0..23), fn hours ->
         bind(integer(0..59), fn minutes ->
           base_time = Timex.now()
+
           Timex.shift(base_time, days: -days, hours: -hours, minutes: -minutes)
           |> constant()
         end)
@@ -178,11 +201,12 @@ defmodule RivaAsh.Factory do
             final_is_registered = Map.get(merged_attrs, :is_registered, is_registered)
 
             # Ensure registered clients have email, unregistered can have nil
-            final_email = if final_is_registered do
-              Map.get(overrides, :email, email_addr)
-            else
-              Map.get(overrides, :email, if(is_registered, do: email_addr, else: nil))
-            end
+            final_email =
+              if final_is_registered do
+                Map.get(overrides, :email, email_addr)
+              else
+                Map.get(overrides, :email, if(is_registered, do: email_addr, else: nil))
+              end
 
             %{
               name: merged_attrs.name,
@@ -226,30 +250,35 @@ defmodule RivaAsh.Factory do
       bind(uuid(), fn item_id ->
         bind(future_datetime(), fn reserved_from ->
           bind(future_datetime(), fn reserved_until ->
-            bind(member_of([:pending, :provisional, :confirmed, :cancelled, :completed]), fn status ->
-              bind(description(), fn notes ->
-                bind(one_of([constant(nil), uuid()]), fn employee_id ->
-                  # Ensure reserved_until is after reserved_from
-                  actual_until = if Timex.compare(reserved_until, reserved_from) == 1 do
-                    reserved_until
-                  else
-                    Timex.shift(reserved_from, hours: 1)  # Add 1 hour
-                  end
+            bind(
+              member_of([:pending, :provisional, :confirmed, :cancelled, :completed]),
+              fn status ->
+                bind(description(), fn notes ->
+                  bind(one_of([constant(nil), uuid()]), fn employee_id ->
+                    # Ensure reserved_until is after reserved_from
+                    actual_until =
+                      if Timex.compare(reserved_until, reserved_from) == 1 do
+                        reserved_until
+                      else
+                        # Add 1 hour
+                        Timex.shift(reserved_from, hours: 1)
+                      end
 
-                  %{
-                    client_id: client_id,
-                    item_id: item_id,
-                    employee_id: employee_id,
-                    reserved_from: reserved_from,
-                    reserved_until: actual_until,
-                    status: status,
-                    notes: notes
-                  }
-                  |> Map.merge(overrides)
-                  |> constant()
+                    %{
+                      client_id: client_id,
+                      item_id: item_id,
+                      employee_id: employee_id,
+                      reserved_from: reserved_from,
+                      reserved_until: actual_until,
+                      status: status,
+                      notes: notes
+                    }
+                    |> Map.merge(overrides)
+                    |> constant()
+                  end)
                 end)
-              end)
-            end)
+              end
+            )
           end)
         end)
       end)
@@ -390,16 +419,17 @@ defmodule RivaAsh.Factory do
       {:ok, client} = RivaAsh.Factory.create(:client, %{name: "John Doe"})
   """
   def create(resource_type, overrides \\ %{}) do
-    attrs = case resource_type do
-      :business -> business_attrs(overrides) |> Enum.take(1) |> hd()
-      :client -> client_attrs(overrides) |> Enum.take(1) |> hd()
-      :item -> item_attrs(overrides) |> Enum.take(1) |> hd()
-      :reservation -> reservation_attrs(overrides) |> Enum.take(1) |> hd()
-      :plot -> plot_attrs(overrides) |> Enum.take(1) |> hd()
-      :section -> section_attrs(overrides) |> Enum.take(1) |> hd()
-      :item_type -> item_type_attrs(overrides) |> Enum.take(1) |> hd()
-      :employee -> employee_attrs(overrides) |> Enum.take(1) |> hd()
-    end
+    attrs =
+      case resource_type do
+        :business -> business_attrs(overrides) |> Enum.take(1) |> hd()
+        :client -> client_attrs(overrides) |> Enum.take(1) |> hd()
+        :item -> item_attrs(overrides) |> Enum.take(1) |> hd()
+        :reservation -> reservation_attrs(overrides) |> Enum.take(1) |> hd()
+        :plot -> plot_attrs(overrides) |> Enum.take(1) |> hd()
+        :section -> section_attrs(overrides) |> Enum.take(1) |> hd()
+        :item_type -> item_type_attrs(overrides) |> Enum.take(1) |> hd()
+        :employee -> employee_attrs(overrides) |> Enum.take(1) |> hd()
+      end
 
     case resource_type do
       :business -> Business.create(attrs)
@@ -462,7 +492,9 @@ defmodule RivaAsh.Factory do
     {:ok, item_type} = ItemType.create(item_type_attrs)
 
     # Create item for the section
-    item_attrs = item_attrs(%{section_id: section.id, item_type_id: item_type.id}) |> Enum.take(1) |> hd()
+    item_attrs =
+      item_attrs(%{section_id: section.id, item_type_id: item_type.id}) |> Enum.take(1) |> hd()
+
     {:ok, item} = Item.create(item_attrs)
 
     # Create client

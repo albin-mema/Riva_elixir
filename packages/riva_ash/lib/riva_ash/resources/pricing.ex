@@ -112,8 +112,9 @@ defmodule RivaAsh.Resources.Pricing do
         :name,
         :description
       ])
+
       primary?(true)
-      require_atomic? false
+      require_atomic?(false)
 
       # Validate pricing constraints
       validate(&RivaAsh.Validations.validate_pricing_date_overlap/2)
@@ -137,6 +138,7 @@ defmodule RivaAsh.Resources.Pricing do
         :name,
         :description
       ])
+
       primary?(true)
 
       # Validate cross-business relationships
@@ -178,12 +180,15 @@ defmodule RivaAsh.Resources.Pricing do
 
     read :for_date do
       argument(:date, :date, allow_nil?: false)
-      filter(expr(
-        is_active == true and
-        is_nil(archived_at) and
-        (is_nil(effective_from) or effective_from <= ^arg(:date)) and
-        (is_nil(effective_until) or effective_until >= ^arg(:date))
-      ))
+
+      filter(
+        expr(
+          is_active == true and
+            is_nil(archived_at) and
+            (is_nil(effective_from) or effective_from <= ^arg(:date)) and
+            (is_nil(effective_until) or effective_until >= ^arg(:date))
+        )
+      )
     end
 
     # Action to get effective pricing for a specific item type and date
@@ -192,14 +197,16 @@ defmodule RivaAsh.Resources.Pricing do
       argument(:item_type_id, :uuid, allow_nil?: false)
       argument(:date, :date, allow_nil?: false)
 
-      filter(expr(
-        business_id == ^arg(:business_id) and
-        item_type_id == ^arg(:item_type_id) and
-        is_active == true and
-        is_nil(archived_at) and
-        (is_nil(effective_from) or effective_from <= ^arg(:date)) and
-        (is_nil(effective_until) or effective_until >= ^arg(:date))
-      ))
+      filter(
+        expr(
+          business_id == ^arg(:business_id) and
+            item_type_id == ^arg(:item_type_id) and
+            is_active == true and
+            is_nil(archived_at) and
+            (is_nil(effective_from) or effective_from <= ^arg(:date)) and
+            (is_nil(effective_until) or effective_until >= ^arg(:date))
+        )
+      )
     end
   end
 
@@ -307,26 +314,40 @@ defmodule RivaAsh.Resources.Pricing do
   end
 
   calculations do
-    calculate :effective_weekday_price, :decimal, expr(
-      if(has_day_type_pricing and not is_nil(weekday_price), weekday_price, price_per_day)
-    ) do
+    calculate :effective_weekday_price,
+              :decimal,
+              expr(
+                if(
+                  has_day_type_pricing and not is_nil(weekday_price),
+                  weekday_price,
+                  price_per_day
+                )
+              ) do
       public?(true)
       description("The effective price for weekday reservations")
     end
 
-    calculate :effective_weekend_price, :decimal, expr(
-      if(has_day_type_pricing and not is_nil(weekend_price), weekend_price, price_per_day)
-    ) do
+    calculate :effective_weekend_price,
+              :decimal,
+              expr(
+                if(
+                  has_day_type_pricing and not is_nil(weekend_price),
+                  weekend_price,
+                  price_per_day
+                )
+              ) do
       public?(true)
       description("The effective price for weekend reservations")
     end
 
-    calculate :has_different_day_pricing, :boolean, expr(
-      has_day_type_pricing and
-      not is_nil(weekday_price) and
-      not is_nil(weekend_price) and
-      weekday_price != weekend_price
-    ) do
+    calculate :has_different_day_pricing,
+              :boolean,
+              expr(
+                has_day_type_pricing and
+                  not is_nil(weekday_price) and
+                  not is_nil(weekend_price) and
+                  weekday_price != weekend_price
+              ) do
       public?(true)
       description("Whether this pricing has different rates for weekdays vs weekends")
     end
@@ -334,7 +355,13 @@ defmodule RivaAsh.Resources.Pricing do
 
   identities do
     # Prevent exact duplicates while allowing validation to handle business logic
-    identity(:unique_pricing_rule, [:business_id, :item_type_id, :pricing_type, :effective_from, :effective_until])
+    identity(:unique_pricing_rule, [
+      :business_id,
+      :item_type_id,
+      :pricing_type,
+      :effective_from,
+      :effective_until
+    ])
   end
 
   validations do
@@ -358,11 +385,13 @@ defmodule RivaAsh.Resources.Pricing do
   end
 
   calculations do
-    calculate :is_currently_effective, :boolean, expr(
-      is_active == true and
-      (is_nil(effective_from) or effective_from <= fragment("NOW()::date")) and
-      (is_nil(effective_until) or effective_until >= fragment("NOW()::date"))
-    ) do
+    calculate :is_currently_effective,
+              :boolean,
+              expr(
+                is_active == true and
+                  (is_nil(effective_from) or effective_from <= fragment("NOW()::date")) and
+                  (is_nil(effective_until) or effective_until >= fragment("NOW()::date"))
+              ) do
       public?(true)
       description("Whether this pricing is currently effective based on dates and active status")
     end

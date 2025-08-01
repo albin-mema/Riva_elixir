@@ -24,20 +24,23 @@ defmodule RivaAshWeb.ItemLive do
           business_ids = Enum.map(businesses, & &1.id)
 
           # Get items for user's businesses (through section -> plot -> business relationship)
-          items = Item.read!(actor: user, filter: [section: [plot: [business_id: [in: business_ids]]]])
+          items =
+            Item.read!(actor: user, filter: [section: [plot: [business_id: [in: business_ids]]]])
 
           socket =
             socket
             |> assign(:current_user, user)
             |> assign(:page_title, "Items")
             |> assign(:items, items)
-            |> assign(:meta, %{}) # Placeholder for pagination/metadata
+            # Placeholder for pagination/metadata
+            |> assign(:meta, %{})
 
           {:ok, socket}
         rescue
           error in [Ash.Error.Forbidden, Ash.Error.Invalid] ->
             {:ok, redirect(socket, to: "/access-denied")}
         end
+
       {:error, _} ->
         {:ok, redirect(socket, to: "/sign-in")}
     end
@@ -101,8 +104,12 @@ defmodule RivaAshWeb.ItemLive do
     user_token = session["user_token"]
 
     if user_token do
-      with {:ok, user_id} <- Phoenix.Token.verify(RivaAshWeb.Endpoint, "user_auth", user_token, max_age: 86_400) |> RivaAsh.ErrorHelpers.to_result(),
-           {:ok, user} <- Ash.get(RivaAsh.Accounts.User, user_id, domain: RivaAsh.Accounts) |> RivaAsh.ErrorHelpers.to_result() do
+      with {:ok, user_id} <-
+             Phoenix.Token.verify(RivaAshWeb.Endpoint, "user_auth", user_token, max_age: 86_400)
+             |> RivaAsh.ErrorHelpers.to_result(),
+           {:ok, user} <-
+             Ash.get(RivaAsh.Accounts.User, user_id, domain: RivaAsh.Accounts)
+             |> RivaAsh.ErrorHelpers.to_result() do
         RivaAsh.ErrorHelpers.success(user)
       else
         _ -> RivaAsh.ErrorHelpers.failure(:not_authenticated)

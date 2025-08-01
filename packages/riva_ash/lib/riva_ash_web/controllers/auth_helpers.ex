@@ -30,9 +30,17 @@ defmodule RivaAshWeb.AuthHelpers do
   def fetch_current_user(conn, _opts) do
     user_token = get_session(conn, :user_token)
 
-    with {:ok, token} <- (if user_token, do: ErrorHelpers.success(user_token), else: ErrorHelpers.failure(:no_token)),
-         {:ok, user_id} <- Phoenix.Token.verify(RivaAshWeb.Endpoint, "user_auth", token, max_age: 86_400) |> ErrorHelpers.to_result(),
-         {:ok, user} <- Ash.get(RivaAsh.Accounts.User, user_id, domain: RivaAsh.Accounts) |> ErrorHelpers.to_result() do
+    with {:ok, token} <-
+           if(user_token,
+             do: ErrorHelpers.success(user_token),
+             else: ErrorHelpers.failure(:no_token)
+           ),
+         {:ok, user_id} <-
+           Phoenix.Token.verify(RivaAshWeb.Endpoint, "user_auth", token, max_age: 86_400)
+           |> ErrorHelpers.to_result(),
+         {:ok, user} <-
+           Ash.get(RivaAsh.Accounts.User, user_id, domain: RivaAsh.Accounts)
+           |> ErrorHelpers.to_result() do
       assign(conn, :current_user, user)
     else
       _ ->
@@ -51,7 +59,9 @@ defmodule RivaAshWeb.AuthHelpers do
         conn
         |> put_session(:user_token, token)
         |> assign(:current_user, validated_user)
-      {:error, _} -> conn
+
+      {:error, _} ->
+        conn
     end
   end
 

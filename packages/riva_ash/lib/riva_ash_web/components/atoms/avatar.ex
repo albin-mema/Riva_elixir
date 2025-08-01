@@ -8,15 +8,15 @@ defmodule RivaAshWeb.Components.Atoms.Avatar do
   @doc """
   Renders an avatar with image or initials fallback.
   """
-  attr :src, :string, default: nil
-  attr :alt, :string, default: ""
-  attr :initials, :string, default: nil
-  attr :name, :string, default: nil
-  attr :size, :string, default: "md", values: ~w(xs sm md lg xl 2xl)
-  attr :shape, :string, default: "circle", values: ~w(circle square rounded)
-  attr :status, :string, default: nil
-  attr :class, :string, default: ""
-  attr :rest, :global
+  attr(:src, :string, default: nil)
+  attr(:alt, :string, default: "")
+  attr(:initials, :string, default: nil)
+  attr(:name, :string, default: nil)
+  attr(:size, :string, default: "md", values: ~w(xs sm md lg xl 2xl))
+  attr(:shape, :string, default: "circle", values: ~w(circle square rounded))
+  attr(:status, :string, default: nil)
+  attr(:class, :string, default: "")
+  attr(:rest, :global)
 
   def avatar(assigns) do
     assigns = assign(assigns, :avatar_class, avatar_class(assigns))
@@ -69,7 +69,7 @@ defmodule RivaAshWeb.Components.Atoms.Avatar do
     end
   end
 
-  defp initials_class(assigns) do
+  defp initials_class(_assigns) do
     "font-medium text-foreground select-none"
   end
 

@@ -15,16 +15,24 @@ defmodule RivaAshWeb.Components.Atoms.Text do
       <.text variant="small" color="muted">Subtitle text</.text>
       <.text variant="label" required>Field Label</.text>
   """
-  attr :variant, :string, default: "p", values: ~w(h1 h2 h3 h4 h5 h6 p lead small label caption code)
-  attr :color, :string, default: "default", values: ~w(default primary secondary muted destructive success warning)
-  attr :align, :string, default: "left", values: ~w(left center right justify)
-  attr :weight, :string, default: "normal", values: ~w(light normal medium semibold bold)
-  attr :italic, :boolean, default: false
-  attr :required, :boolean, default: false
-  attr :class, :string, default: ""
-  attr :rest, :global
+  attr(:variant, :string,
+    default: "p",
+    values: ~w(h1 h2 h3 h4 h5 h6 p lead small label caption code)
+  )
 
-  slot :inner_block, required: true
+  attr(:color, :string,
+    default: "default",
+    values: ~w(default primary secondary muted destructive success warning)
+  )
+
+  attr(:align, :string, default: "left", values: ~w(left center right justify))
+  attr(:weight, :string, default: "normal", values: ~w(light normal medium semibold bold))
+  attr(:italic, :boolean, default: false)
+  attr(:required, :boolean, default: false)
+  attr(:class, :string, default: "")
+  attr(:rest, :global)
+
+  slot(:inner_block, required: true)
 
   def text(assigns) do
     assigns = assign(assigns, :text_class, text_class(assigns))
@@ -126,13 +134,13 @@ defmodule RivaAshWeb.Components.Atoms.Text do
   Renders a heading with consistent styling.
   Convenience function for headings.
   """
-  attr :level, :integer, default: 1, values: [1, 2, 3, 4, 5, 6]
-  attr :color, :string, default: "default"
-  attr :align, :string, default: "left"
-  attr :class, :string, default: ""
-  attr :rest, :global
+  attr(:level, :integer, default: 1, values: [1, 2, 3, 4, 5, 6])
+  attr(:color, :string, default: "default")
+  attr(:align, :string, default: "left")
+  attr(:class, :string, default: "")
+  attr(:rest, :global)
 
-  slot :inner_block, required: true
+  slot(:inner_block, required: true)
 
   def heading(assigns) do
     assigns = assign(assigns, :variant, "h#{assigns.level}")
@@ -156,19 +164,44 @@ defmodule RivaAshWeb.Components.Atoms.Text do
 
   defp base_classes(variant) do
     case variant do
-      "h1" -> "text-4xl lg:text-5xl tracking-tight"
-      "h2" -> "text-3xl lg:text-4xl tracking-tight"
-      "h3" -> "text-2xl lg:text-3xl tracking-tight"
-      "h4" -> "text-xl lg:text-2xl"
-      "h5" -> "text-lg lg:text-xl"
-      "h6" -> "text-base lg:text-lg"
-      "p" -> "text-base leading-7"
-      "lead" -> "text-xl text-muted-foreground"
-      "small" -> "text-sm leading-6"
-      "label" -> "text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-      "caption" -> "text-xs text-muted-foreground"
-      "code" -> "font-mono text-sm bg-muted px-[0.3rem] py-[0.2rem] rounded"
-      _ -> "text-base"
+      "h1" ->
+        "text-4xl lg:text-5xl tracking-tight"
+
+      "h2" ->
+        "text-3xl lg:text-4xl tracking-tight"
+
+      "h3" ->
+        "text-2xl lg:text-3xl tracking-tight"
+
+      "h4" ->
+        "text-xl lg:text-2xl"
+
+      "h5" ->
+        "text-lg lg:text-xl"
+
+      "h6" ->
+        "text-base lg:text-lg"
+
+      "p" ->
+        "text-base leading-7"
+
+      "lead" ->
+        "text-xl text-muted-foreground"
+
+      "small" ->
+        "text-sm leading-6"
+
+      "label" ->
+        "text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+
+      "caption" ->
+        "text-xs text-muted-foreground"
+
+      "code" ->
+        "font-mono text-sm bg-muted px-[0.3rem] py-[0.2rem] rounded"
+
+      _ ->
+        "text-base"
     end
   end
 

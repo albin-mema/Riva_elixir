@@ -8,15 +8,15 @@ defmodule RivaAshWeb.Components.Interactive.MonthlyCalendar do
   @doc """
   Renders a monthly calendar view.
   """
-  attr :current_date, :string, required: true
-  attr :events, :list, default: []
-  attr :on_date_click, :string, required: true
-  attr :on_event_click, :string, default: nil
-  attr :on_navigate, :string, required: true
-  attr :selectable_dates, :list, default: []
-  attr :disabled_dates, :list, default: []
-  attr :class, :string, default: ""
-  attr :rest, :global
+  attr(:current_date, :string, required: true)
+  attr(:events, :list, default: [])
+  attr(:on_date_click, :string, required: true)
+  attr(:on_event_click, :string, default: nil)
+  attr(:on_navigate, :string, required: true)
+  attr(:selectable_dates, :list, default: [])
+  attr(:disabled_dates, :list, default: [])
+  attr(:class, :string, default: "")
+  attr(:rest, :global)
 
   def monthly_calendar(assigns) do
     ~H"""

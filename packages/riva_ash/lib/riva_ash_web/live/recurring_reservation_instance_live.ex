@@ -45,8 +45,10 @@ defmodule RivaAshWeb.RecurringReservationInstanceLive do
         rescue
           error in [Ash.Error.Forbidden, Ash.Error.Invalid] ->
             {:ok, redirect(socket, to: "/access-denied")}
+
           error ->
-            {:ok, socket |> assign(:error_message, "Failed to load data: #{Exception.message(error)}")}
+            {:ok,
+             socket |> assign(:error_message, "Failed to load data: #{Exception.message(error)}")}
         end
 
       {:error, :not_authenticated} ->
@@ -66,12 +68,14 @@ defmodule RivaAshWeb.RecurringReservationInstanceLive do
         |> assign(:recurring_reservation_instances, instances)
         |> assign(:meta, meta)
         |> then(&{:noreply, &1})
+
       _ ->
         socket =
           socket
           |> assign(:recurring_reservation_instances, [])
           |> assign(:meta, %{})
           |> assign(:error_message, "Failed to load instances")
+
         {:noreply, socket}
     end
   end
@@ -283,6 +287,7 @@ defmodule RivaAshWeb.RecurringReservationInstanceLive do
           socket
           |> assign(:error_message, "Instance not found.")
           |> assign(:show_form, false)
+
         {:noreply, socket}
     end
   end
@@ -314,6 +319,7 @@ defmodule RivaAshWeb.RecurringReservationInstanceLive do
 
           {:error, error} ->
             error_message = format_error_message(error)
+
             socket =
               socket
               |> assign(:loading, false)
@@ -324,6 +330,7 @@ defmodule RivaAshWeb.RecurringReservationInstanceLive do
 
       {:error, error} ->
         error_message = format_error_message(error)
+
         socket =
           socket
           |> assign(:loading, false)
@@ -350,9 +357,13 @@ defmodule RivaAshWeb.RecurringReservationInstanceLive do
   def handle_event("validate_instance", %{"form" => params}, socket) do
     form =
       if socket.assigns.editing_instance do
-        AshPhoenix.Form.for_update(socket.assigns.editing_instance, :update, actor: socket.assigns.current_user)
+        AshPhoenix.Form.for_update(socket.assigns.editing_instance, :update,
+          actor: socket.assigns.current_user
+        )
       else
-        AshPhoenix.Form.for_create(RecurringReservationInstance, :create, actor: socket.assigns.current_user)
+        AshPhoenix.Form.for_create(RecurringReservationInstance, :create,
+          actor: socket.assigns.current_user
+        )
       end
       |> AshPhoenix.Form.validate(params, errors: true)
       |> to_form()
@@ -450,12 +461,14 @@ defmodule RivaAshWeb.RecurringReservationInstanceLive do
 
   defp apply_sorting(instances, %Flop{order_by: nil}), do: instances
   defp apply_sorting(instances, %Flop{order_by: []}), do: instances
+
   defp apply_sorting(instances, %Flop{order_by: order_by, order_directions: order_directions}) do
     # Default to :asc if no directions provided
     directions = order_directions || Enum.map(order_by, fn _ -> :asc end)
 
     # Zip order_by and directions, pad directions with :asc if needed
-    order_specs = Enum.zip_with([order_by, directions], fn [field, direction] -> {field, direction} end)
+    order_specs =
+      Enum.zip_with([order_by, directions], fn [field, direction] -> {field, direction} end)
 
     Enum.sort(instances, fn inst1, inst2 ->
       compare_instances(inst1, inst2, order_specs)
@@ -463,6 +476,7 @@ defmodule RivaAshWeb.RecurringReservationInstanceLive do
   end
 
   defp compare_instances(_inst1, _inst2, []), do: true
+
   defp compare_instances(inst1, inst2, [{field, direction} | rest]) do
     val1 = get_field_value(inst1, field)
     val2 = get_field_value(inst2, field)
@@ -499,6 +513,7 @@ defmodule RivaAshWeb.RecurringReservationInstanceLive do
         offset = (page - 1) * page_size
 
         paginated = instances |> Enum.drop(offset) |> Enum.take(page_size)
+
         pagination_info = %{
           type: :page,
           page: page,
@@ -506,6 +521,7 @@ defmodule RivaAshWeb.RecurringReservationInstanceLive do
           offset: offset,
           total_count: total_count
         }
+
         {paginated, pagination_info}
 
       # Offset-based pagination
@@ -514,23 +530,27 @@ defmodule RivaAshWeb.RecurringReservationInstanceLive do
         limit = flop.limit
 
         paginated = instances |> Enum.drop(offset) |> Enum.take(limit)
+
         pagination_info = %{
           type: :offset,
           offset: offset,
           limit: limit,
           total_count: total_count
         }
+
         {paginated, pagination_info}
 
       # Limit only
       flop.limit ->
         limit = flop.limit
         paginated = Enum.take(instances, limit)
+
         pagination_info = %{
           type: :limit,
           limit: limit,
           total_count: total_count
         }
+
         {paginated, pagination_info}
 
       # No pagination
@@ -539,6 +559,7 @@ defmodule RivaAshWeb.RecurringReservationInstanceLive do
           type: :none,
           total_count: total_count
         }
+
         {instances, pagination_info}
     end
   end
@@ -602,7 +623,12 @@ defmodule RivaAshWeb.RecurringReservationInstanceLive do
   defp load_instances_simple(user, business_ids) do
     try do
       # Get instances for user's businesses
-      case RecurringReservationInstance.read(actor: user, filter: [recurring_reservation: [item: [section: [plot: [business_id: [in: business_ids]]]]]]) do
+      case RecurringReservationInstance.read(
+             actor: user,
+             filter: [
+               recurring_reservation: [item: [section: [plot: [business_id: [in: business_ids]]]]]
+             ]
+           ) do
         {:ok, instances} -> instances
         _ -> []
       end
@@ -613,7 +639,10 @@ defmodule RivaAshWeb.RecurringReservationInstanceLive do
 
   defp load_recurring_reservations(user, business_ids) do
     try do
-      case RecurringReservation.read(actor: user, filter: [item: [section: [plot: [business_id: [in: business_ids]]]]]) do
+      case RecurringReservation.read(
+             actor: user,
+             filter: [item: [section: [plot: [business_id: [in: business_ids]]]]]
+           ) do
         {:ok, recurring_reservations} -> recurring_reservations
         _ -> []
       end
@@ -624,7 +653,10 @@ defmodule RivaAshWeb.RecurringReservationInstanceLive do
 
   defp load_reservations(user, business_ids) do
     try do
-      case Reservation.read(actor: user, filter: [item: [section: [plot: [business_id: [in: business_ids]]]]]) do
+      case Reservation.read(
+             actor: user,
+             filter: [item: [section: [plot: [business_id: [in: business_ids]]]]]
+           ) do
         {:ok, reservations} -> reservations
         _ -> []
       end

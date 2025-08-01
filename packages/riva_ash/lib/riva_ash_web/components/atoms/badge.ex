@@ -16,15 +16,19 @@ defmodule RivaAshWeb.Components.Atoms.Badge do
       <.badge variant="destructive" size="lg">Critical</.badge>
       <.badge variant="outline" icon={:check}>Verified</.badge>
   """
-  attr :variant, :string, default: "default", values: ~w(default secondary success warning destructive outline)
-  attr :size, :string, default: "md", values: ~w(sm md lg)
-  attr :icon, :atom, default: nil
-  attr :icon_position, :string, default: "left", values: ~w(left right)
-  attr :pill, :boolean, default: false
-  attr :class, :string, default: ""
-  attr :rest, :global
+  attr(:variant, :string,
+    default: "default",
+    values: ~w(default secondary success warning destructive outline)
+  )
 
-  slot :inner_block, required: true
+  attr(:size, :string, default: "md", values: ~w(sm md lg))
+  attr(:icon, :atom, default: nil)
+  attr(:icon_position, :string, default: "left", values: ~w(left right))
+  attr(:pill, :boolean, default: false)
+  attr(:class, :string, default: "")
+  attr(:rest, :global)
+
+  slot(:inner_block, required: true)
 
   def badge(assigns) do
     assigns = assign(assigns, :badge_class, badge_class(assigns))
@@ -53,7 +57,8 @@ defmodule RivaAshWeb.Components.Atoms.Badge do
   end
 
   defp base_classes(pill) do
-    base = "inline-flex items-center gap-1 font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+    base =
+      "inline-flex items-center gap-1 font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
 
     if pill do
       "#{base} rounded-full"

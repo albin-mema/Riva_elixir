@@ -34,7 +34,8 @@ defmodule RivaAshWeb.Live.RecurringReservationInstanceLiveTest do
 
     test "redirects to sign-in page for unauthenticated user", %{conn: conn} do
       # Try to access the page without authentication
-      assert {:error, {:redirect, %{to: "/sign-in"}}} = live(conn, "/recurring-reservation-instances")
+      assert {:error, {:redirect, %{to: "/sign-in"}}} =
+               live(conn, "/recurring-reservation-instances")
     end
 
     test "redirects to access-denied page for unauthorized user", %{conn: conn} do
@@ -90,17 +91,19 @@ defmodule RivaAshWeb.Live.RecurringReservationInstanceLiveTest do
       recurring_reservation = create_recurring_reservation!(item, user)
 
       # Create some instances
-      instance1 = create_recurring_reservation_instance!(recurring_reservation, %{
-        scheduled_date: Date.utc_today(),
-        sequence_number: 1,
-        status: :pending
-      })
+      instance1 =
+        create_recurring_reservation_instance!(recurring_reservation, %{
+          scheduled_date: Date.utc_today(),
+          sequence_number: 1,
+          status: :pending
+        })
 
-      instance2 = create_recurring_reservation_instance!(recurring_reservation, %{
-        scheduled_date: Date.add(Date.utc_today(), 1),
-        sequence_number: 2,
-        status: :confirmed
-      })
+      instance2 =
+        create_recurring_reservation_instance!(recurring_reservation, %{
+          scheduled_date: Date.add(Date.utc_today(), 1),
+          sequence_number: 2,
+          status: :confirmed
+        })
 
       # Create a session with the user token
       conn = assign_user_token(conn, user)
@@ -180,11 +183,12 @@ defmodule RivaAshWeb.Live.RecurringReservationInstanceLiveTest do
       recurring_reservation = create_recurring_reservation!(item, user)
 
       # Create an instance
-      instance = create_recurring_reservation_instance!(recurring_reservation, %{
-        scheduled_date: Date.utc_today(),
-        sequence_number: 1,
-        status: :pending
-      })
+      instance =
+        create_recurring_reservation_instance!(recurring_reservation, %{
+          scheduled_date: Date.utc_today(),
+          sequence_number: 1,
+          status: :pending
+        })
 
       # Create a session with the user token
       conn = assign_user_token(conn, user)
@@ -217,11 +221,12 @@ defmodule RivaAshWeb.Live.RecurringReservationInstanceLiveTest do
       recurring_reservation = create_recurring_reservation!(item, user)
 
       # Create an instance
-      instance = create_recurring_reservation_instance!(recurring_reservation, %{
-        scheduled_date: Date.utc_today(),
-        sequence_number: 1,
-        status: :pending
-      })
+      instance =
+        create_recurring_reservation_instance!(recurring_reservation, %{
+          scheduled_date: Date.utc_today(),
+          sequence_number: 1,
+          status: :pending
+        })
 
       # Create a session with the user token
       conn = assign_user_token(conn, user)
@@ -252,11 +257,12 @@ defmodule RivaAshWeb.Live.RecurringReservationInstanceLiveTest do
       recurring_reservation = create_recurring_reservation!(item, user)
 
       # Create an instance
-      instance = create_recurring_reservation_instance!(recurring_reservation, %{
-        scheduled_date: Date.utc_today(),
-        sequence_number: 1,
-        status: :pending
-      })
+      instance =
+        create_recurring_reservation_instance!(recurring_reservation, %{
+          scheduled_date: Date.utc_today(),
+          sequence_number: 1,
+          status: :pending
+        })
 
       # Create a session with the user token
       conn = assign_user_token(conn, user)
@@ -290,11 +296,12 @@ defmodule RivaAshWeb.Live.RecurringReservationInstanceLiveTest do
       recurring_reservation = create_recurring_reservation!(item, user)
 
       # Create an instance
-      instance = create_recurring_reservation_instance!(recurring_reservation, %{
-        scheduled_date: Date.utc_today(),
-        sequence_number: 1,
-        status: :pending
-      })
+      instance =
+        create_recurring_reservation_instance!(recurring_reservation, %{
+          scheduled_date: Date.utc_today(),
+          sequence_number: 1,
+          status: :pending
+        })
 
       # Create a session with the user token
       conn = assign_user_token(conn, user)
@@ -315,9 +322,10 @@ defmodule RivaAshWeb.Live.RecurringReservationInstanceLiveTest do
 
   describe "Property-based tests for RecurringReservationInstanceLive" do
     property "renders with random page numbers for pagination", %{conn: conn} do
-      check all page <- integer(1..10),
-                max_runs: 20 do
-
+      check all(
+              page <- integer(1..10),
+              max_runs: 20
+            ) do
         # Create a user
         user = create_user!()
 
@@ -352,9 +360,10 @@ defmodule RivaAshWeb.Live.RecurringReservationInstanceLiveTest do
     end
 
     property "handles random status values correctly", %{conn: conn} do
-      check all status <- member_of([:pending, :confirmed, :failed, :skipped, :cancelled]),
-                max_runs: 20 do
-
+      check all(
+              status <- member_of([:pending, :confirmed, :failed, :skipped, :cancelled]),
+              max_runs: 20
+            ) do
         # Create a user
         user = create_user!()
 
@@ -369,11 +378,12 @@ defmodule RivaAshWeb.Live.RecurringReservationInstanceLiveTest do
         recurring_reservation = create_recurring_reservation!(item, user)
 
         # Create an instance with random status
-        instance = create_recurring_reservation_instance!(recurring_reservation, %{
-          scheduled_date: Date.utc_today(),
-          sequence_number: 1,
-          status: status
-        })
+        instance =
+          create_recurring_reservation_instance!(recurring_reservation, %{
+            scheduled_date: Date.utc_today(),
+            sequence_number: 1,
+            status: status
+          })
 
         # Create a session with the user token
         conn = assign_user_token(conn, user)
@@ -405,13 +415,16 @@ defmodule RivaAshWeb.Live.RecurringReservationInstanceLiveTest do
       view |> element("button", "New Instance") |> render_click()
 
       # Try to submit form with invalid data (missing required fields)
-      html = view |> element("form") |> render_submit(%{
-        form: %{
-          scheduled_date: "",
-          sequence_number: "",
-          status: ""
-        }
-      })
+      html =
+        view
+        |> element("form")
+        |> render_submit(%{
+          form: %{
+            scheduled_date: "",
+            sequence_number: "",
+            status: ""
+          }
+        })
 
       # Check that error message is shown
       assert html =~ "Failed to save instance"
@@ -432,11 +445,12 @@ defmodule RivaAshWeb.Live.RecurringReservationInstanceLiveTest do
       recurring_reservation = create_recurring_reservation!(item, user)
 
       # Create an instance
-      instance = create_recurring_reservation_instance!(recurring_reservation, %{
-        scheduled_date: Date.utc_today(),
-        sequence_number: 1,
-        status: :pending
-      })
+      instance =
+        create_recurring_reservation_instance!(recurring_reservation, %{
+          scheduled_date: Date.utc_today(),
+          sequence_number: 1,
+          status: :pending
+        })
 
       # Create a session with the user token
       conn = assign_user_token(conn, user)
@@ -448,13 +462,16 @@ defmodule RivaAshWeb.Live.RecurringReservationInstanceLiveTest do
       view |> element("button[phx-value-id='#{instance.id}']", "Edit") |> render_click()
 
       # Try to submit form with invalid data
-      html = view |> element("form") |> render_submit(%{
-        form: %{
-          scheduled_date: "",
-          sequence_number: "",
-          status: ""
-        }
-      })
+      html =
+        view
+        |> element("form")
+        |> render_submit(%{
+          form: %{
+            scheduled_date: "",
+            sequence_number: "",
+            status: ""
+          }
+        })
 
       # Check that error message is shown
       assert html =~ "Failed to save instance"

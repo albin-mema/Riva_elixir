@@ -8,12 +8,12 @@ defmodule RivaAshWeb.Components.Molecules.BreadcrumbNav do
   @doc """
   Renders breadcrumb navigation.
   """
-  attr :items, :list, required: true
-  attr :separator, :atom, default: :chevron_right
-  attr :show_home, :boolean, default: true
-  attr :home_path, :string, default: "/"
-  attr :class, :string, default: ""
-  attr :rest, :global
+  attr(:items, :list, required: true)
+  attr(:separator, :atom, default: :chevron_right)
+  attr(:show_home, :boolean, default: true)
+  attr(:home_path, :string, default: "/")
+  attr(:class, :string, default: "")
+  attr(:rest, :global)
 
   def breadcrumb_nav(assigns) do
     ~H"""

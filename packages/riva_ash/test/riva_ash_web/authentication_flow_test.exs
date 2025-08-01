@@ -14,36 +14,41 @@ defmodule RivaAshWeb.AuthenticationFlowTest do
 
     test "user can register with valid credentials via controller", %{conn: conn} do
       # Test registration via controller POST
-      conn = post(conn, "/register", %{
-        "name" => "Test User",
-        "email" => "test@example.com",
-        "password" => "password123",
-        "password_confirmation" => "password123"
-      })
+      conn =
+        post(conn, "/register", %{
+          "name" => "Test User",
+          "email" => "test@example.com",
+          "password" => "password123",
+          "password_confirmation" => "password123"
+        })
 
       # Should redirect to sign-in page after successful registration
       assert redirected_to(conn) == "/sign-in"
 
       # Verify user was created in database
       query = User |> Ash.Query.for_read(:read) |> Ash.Query.filter(email == "test@example.com")
+
       case Ash.read(query, domain: RivaAsh.Accounts) do
         {:ok, [user]} ->
           assert user.name == "Test User"
           assert to_string(user.email) == "test@example.com"
+
         {:ok, []} ->
           flunk("User was not created")
+
         {:error, error} ->
           flunk("Error reading user: #{inspect(error)}")
       end
     end
 
     test "registration fails with password mismatch via controller", %{conn: conn} do
-      conn = post(conn, "/register", %{
-        "name" => "Test User",
-        "email" => "test@example.com",
-        "password" => "password123",
-        "password_confirmation" => "different_password"
-      })
+      conn =
+        post(conn, "/register", %{
+          "name" => "Test User",
+          "email" => "test@example.com",
+          "password" => "password123",
+          "password_confirmation" => "different_password"
+        })
 
       # Should redirect back to register with error
       assert redirected_to(conn) == "/register"
@@ -51,12 +56,13 @@ defmodule RivaAshWeb.AuthenticationFlowTest do
     end
 
     test "registration fails with invalid data via controller", %{conn: conn} do
-      conn = post(conn, "/register", %{
-        "name" => "",
-        "email" => "invalid-email",
-        "password" => "123",
-        "password_confirmation" => "123"
-      })
+      conn =
+        post(conn, "/register", %{
+          "name" => "",
+          "email" => "invalid-email",
+          "password" => "123",
+          "password_confirmation" => "123"
+        })
 
       # Should redirect back to register with error
       assert redirected_to(conn) == "/register"
@@ -67,14 +73,15 @@ defmodule RivaAshWeb.AuthenticationFlowTest do
   describe "User Login Flow" do
     setup do
       # Create a test user for login tests using Ash
-      {:ok, user} = User
-      |> Ash.Changeset.for_create(:register_with_password, %{
-        name: "Test User",
-        email: "test@example.com",
-        password: "password123",
-        password_confirmation: "password123"
-      })
-      |> Ash.create(domain: RivaAsh.Accounts)
+      {:ok, user} =
+        User
+        |> Ash.Changeset.for_create(:register_with_password, %{
+          name: "Test User",
+          email: "test@example.com",
+          password: "password123",
+          password_confirmation: "password123"
+        })
+        |> Ash.create(domain: RivaAsh.Accounts)
 
       %{user: user}
     end
@@ -87,10 +94,11 @@ defmodule RivaAshWeb.AuthenticationFlowTest do
 
     test "user can login with valid credentials via controller", %{conn: conn, user: user} do
       # Test login via controller POST
-      conn = post(conn, "/sign-in", %{
-        "email" => to_string(user.email),
-        "password" => "password123"
-      })
+      conn =
+        post(conn, "/sign-in", %{
+          "email" => to_string(user.email),
+          "password" => "password123"
+        })
 
       # Should redirect to businesses page after successful login
       assert redirected_to(conn) == "/businesses"
@@ -98,10 +106,11 @@ defmodule RivaAshWeb.AuthenticationFlowTest do
     end
 
     test "login fails with invalid email via controller", %{conn: conn} do
-      conn = post(conn, "/sign-in", %{
-        "email" => "nonexistent@example.com",
-        "password" => "password123"
-      })
+      conn =
+        post(conn, "/sign-in", %{
+          "email" => "nonexistent@example.com",
+          "password" => "password123"
+        })
 
       # Should redirect back to sign-in with error
       assert redirected_to(conn) == "/sign-in"
@@ -109,10 +118,11 @@ defmodule RivaAshWeb.AuthenticationFlowTest do
     end
 
     test "login fails with invalid password via controller", %{conn: conn, user: user} do
-      conn = post(conn, "/sign-in", %{
-        "email" => to_string(user.email),
-        "password" => "wrong_password"
-      })
+      conn =
+        post(conn, "/sign-in", %{
+          "email" => to_string(user.email),
+          "password" => "wrong_password"
+        })
 
       # Should redirect back to sign-in with error
       assert redirected_to(conn) == "/sign-in"
@@ -123,14 +133,15 @@ defmodule RivaAshWeb.AuthenticationFlowTest do
   describe "User Logout Flow" do
     setup do
       # Create and authenticate a test user using Ash
-      {:ok, user} = User
-      |> Ash.Changeset.for_create(:register_with_password, %{
-        name: "Test User",
-        email: "logout_test@example.com",
-        password: "password123",
-        password_confirmation: "password123"
-      })
-      |> Ash.create(domain: RivaAsh.Accounts)
+      {:ok, user} =
+        User
+        |> Ash.Changeset.for_create(:register_with_password, %{
+          name: "Test User",
+          email: "logout_test@example.com",
+          password: "password123",
+          password_confirmation: "password123"
+        })
+        |> Ash.create(domain: RivaAsh.Accounts)
 
       %{user: user}
     end
@@ -138,8 +149,10 @@ defmodule RivaAshWeb.AuthenticationFlowTest do
     test "authenticated user can logout", %{conn: conn, user: user} do
       # First, authenticate the user
       token = Phoenix.Token.sign(RivaAshWeb.Endpoint, "user_auth", user.id)
-      conn = conn
-      |> init_test_session(%{"user_token" => token})
+
+      conn =
+        conn
+        |> init_test_session(%{"user_token" => token})
 
       # Verify user is authenticated by accessing dashboard
       {:ok, _view, html} = live(conn, "/dashboard")
@@ -164,10 +177,13 @@ defmodule RivaAshWeb.AuthenticationFlowTest do
       case result do
         {:error, {:redirect, %{to: "/sign-in"}}} ->
           assert true
+
         {:error, {:live_redirect, %{to: "/sign-in"}}} ->
           assert true
+
         {:ok, _view, html} ->
           assert html =~ "Access Denied" or html =~ "Sign in"
+
         _ ->
           flunk("Expected redirect to sign-in or access denied message")
       end
@@ -176,14 +192,15 @@ defmodule RivaAshWeb.AuthenticationFlowTest do
 
   describe "Authentication Session Management" do
     setup do
-      {:ok, user} = User
-      |> Ash.Changeset.for_create(:register_with_password, %{
-        name: "Session Test User",
-        email: "session_test@example.com",
-        password: "password123",
-        password_confirmation: "password123"
-      })
-      |> Ash.create(domain: RivaAsh.Accounts)
+      {:ok, user} =
+        User
+        |> Ash.Changeset.for_create(:register_with_password, %{
+          name: "Session Test User",
+          email: "session_test@example.com",
+          password: "password123",
+          password_confirmation: "password123"
+        })
+        |> Ash.create(domain: RivaAsh.Accounts)
 
       %{user: user}
     end
@@ -191,8 +208,10 @@ defmodule RivaAshWeb.AuthenticationFlowTest do
     test "session persists across requests", %{conn: conn, user: user} do
       # Authenticate user
       token = Phoenix.Token.sign(RivaAshWeb.Endpoint, "user_auth", user.id)
-      conn = conn
-      |> init_test_session(%{"user_token" => token})
+
+      conn =
+        conn
+        |> init_test_session(%{"user_token" => token})
 
       # Access multiple protected routes
       {:ok, _view, html1} = live(conn, "/dashboard")
@@ -204,8 +223,9 @@ defmodule RivaAshWeb.AuthenticationFlowTest do
 
     test "invalid session token is handled gracefully", %{conn: conn} do
       # Set invalid token
-      conn = conn
-      |> init_test_session(%{"user_token" => "invalid_token"})
+      conn =
+        conn
+        |> init_test_session(%{"user_token" => "invalid_token"})
 
       # Try to access protected route
       result = live(conn, "/dashboard")
@@ -214,21 +234,29 @@ defmodule RivaAshWeb.AuthenticationFlowTest do
       case result do
         {:error, {:redirect, %{to: "/sign-in"}}} ->
           assert true
+
         {:error, {:live_redirect, %{to: "/sign-in"}}} ->
           assert true
+
         {:ok, _view, html} ->
           assert html =~ "Access Denied" or html =~ "Sign in"
+
         _ ->
-          assert true # Any graceful handling is acceptable
+          # Any graceful handling is acceptable
+          assert true
       end
     end
 
     test "expired session token is handled gracefully", %{conn: conn, user: user} do
       # Create an expired token (this is a simulation - in real tests you'd need to mock time)
-      expired_token = Phoenix.Token.sign(RivaAshWeb.Endpoint, "user_auth", user.id, signed_at: System.system_time(:second) - 86401)
+      expired_token =
+        Phoenix.Token.sign(RivaAshWeb.Endpoint, "user_auth", user.id,
+          signed_at: System.system_time(:second) - 86401
+        )
 
-      conn = conn
-      |> init_test_session(%{"user_token" => expired_token})
+      conn =
+        conn
+        |> init_test_session(%{"user_token" => expired_token})
 
       # Try to access protected route
       result = live(conn, "/dashboard")
@@ -237,12 +265,16 @@ defmodule RivaAshWeb.AuthenticationFlowTest do
       case result do
         {:error, {:redirect, %{to: "/sign-in"}}} ->
           assert true
+
         {:error, {:live_redirect, %{to: "/sign-in"}}} ->
           assert true
+
         {:ok, _view, html} ->
           assert html =~ "Access Denied" or html =~ "Sign in"
+
         _ ->
-          assert true # Any graceful handling is acceptable
+          # Any graceful handling is acceptable
+          assert true
       end
     end
   end
@@ -259,14 +291,15 @@ defmodule RivaAshWeb.AuthenticationFlowTest do
 
     setup do
       # Create a test user for login tests using Ash
-      {:ok, user} = User
-      |> Ash.Changeset.for_create(:register_with_password, %{
-        name: "Browser Test User",
-        email: "browser_test@example.com",
-        password: "password123",
-        password_confirmation: "password123"
-      })
-      |> Ash.create(domain: RivaAsh.Accounts)
+      {:ok, user} =
+        User
+        |> Ash.Changeset.for_create(:register_with_password, %{
+          name: "Browser Test User",
+          email: "browser_test@example.com",
+          password: "password123",
+          password_confirmation: "password123"
+        })
+        |> Ash.create(domain: RivaAsh.Accounts)
 
       %{user: user}
     end
@@ -291,13 +324,17 @@ defmodule RivaAshWeb.AuthenticationFlowTest do
       |> assert_has("h2", text: "Sign in to your account")
 
       # Verify user was created in database
-      query = User |> Ash.Query.for_read(:read) |> Ash.Query.filter(email == "newuser@example.com")
+      query =
+        User |> Ash.Query.for_read(:read) |> Ash.Query.filter(email == "newuser@example.com")
+
       case Ash.read(query, domain: RivaAsh.Accounts) do
         {:ok, [user]} ->
           assert user.name == "New Browser User"
           assert to_string(user.email) == "newuser@example.com"
+
         {:ok, []} ->
           flunk("User was not created")
+
         {:error, error} ->
           flunk("Error reading user: #{inspect(error)}")
       end
@@ -332,20 +369,24 @@ defmodule RivaAshWeb.AuthenticationFlowTest do
 
       # Should stay on sign-in page and show error
       |> assert_path("/sign-in")
+
       # Note: Error messages might be shown via flash messages or inline
       # The exact assertion would depend on how errors are displayed
     end
 
-    test "complete authentication flow: register -> login -> access protected -> logout", %{conn: conn} do
+    test "complete authentication flow: register -> login -> access protected -> logout", %{
+      conn: conn
+    } do
       # Step 1: Register a new user
-      session = conn
-      |> visit("/register")
-      |> fill_in("Name", with: "Flow Test User")
-      |> fill_in("Email", with: "flowtest@example.com")
-      |> fill_in("Password", with: "password123")
-      |> fill_in("Confirm Password", with: "password123")
-      |> click_button("Create Account")
-      |> assert_path("/sign-in")
+      session =
+        conn
+        |> visit("/register")
+        |> fill_in("Name", with: "Flow Test User")
+        |> fill_in("Email", with: "flowtest@example.com")
+        |> fill_in("Password", with: "password123")
+        |> fill_in("Confirm Password", with: "password123")
+        |> click_button("Create Account")
+        |> assert_path("/sign-in")
 
       # Step 2: Login with the new user
       session
@@ -385,17 +426,20 @@ defmodule RivaAshWeb.AuthenticationFlowTest do
 
       # Submit form with invalid data
       session
-      |> fill_in("Name", with: "")  # Empty name
-      |> fill_in("Email", with: "invalid-email")  # Invalid email
-      |> fill_in("Password", with: "123")  # Too short password
-      |> fill_in("Confirm Password", with: "456")  # Mismatched confirmation
+      # Empty name
+      |> fill_in("Name", with: "")
+      # Invalid email
+      |> fill_in("Email", with: "invalid-email")
+      # Too short password
+      |> fill_in("Password", with: "123")
+      # Mismatched confirmation
+      |> fill_in("Confirm Password", with: "456")
       |> click_button("Create Account")
 
       # Should stay on registration page and show validation errors
       session |> assert_path("/register")
+
       # Note: Specific error message assertions would depend on how validation errors are displayed
     end
   end
-
-
 end

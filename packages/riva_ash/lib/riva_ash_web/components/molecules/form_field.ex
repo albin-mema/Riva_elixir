@@ -28,18 +28,18 @@ defmodule RivaAshWeb.Components.Molecules.FormField do
         icon={:lock_closed}
       />
   """
-  attr :field, Phoenix.HTML.FormField, required: true
-  attr :label, :string, default: nil
-  attr :type, :string, default: "text"
-  attr :placeholder, :string, default: ""
-  attr :helper_text, :string, default: nil
-  attr :required, :boolean, default: false
-  attr :disabled, :boolean, default: false
-  attr :readonly, :boolean, default: false
-  attr :icon, :atom, default: nil
-  attr :icon_position, :string, default: "left", values: ~w(left right)
-  attr :class, :string, default: ""
-  attr :rest, :global
+  attr(:field, Phoenix.HTML.FormField, required: true)
+  attr(:label, :string, default: nil)
+  attr(:type, :string, default: "text")
+  attr(:placeholder, :string, default: "")
+  attr(:helper_text, :string, default: nil)
+  attr(:required, :boolean, default: false)
+  attr(:disabled, :boolean, default: false)
+  attr(:readonly, :boolean, default: false)
+  attr(:icon, :atom, default: nil)
+  attr(:icon_position, :string, default: "left", values: ~w(left right))
+  attr(:class, :string, default: "")
+  attr(:rest, :global)
 
   def form_field(assigns) do
     ~H"""
@@ -90,16 +90,16 @@ defmodule RivaAshWeb.Components.Molecules.FormField do
   @doc """
   Renders a textarea form field.
   """
-  attr :field, Phoenix.HTML.FormField, required: true
-  attr :label, :string, default: nil
-  attr :placeholder, :string, default: ""
-  attr :helper_text, :string, default: nil
-  attr :required, :boolean, default: false
-  attr :disabled, :boolean, default: false
-  attr :readonly, :boolean, default: false
-  attr :rows, :integer, default: 4
-  attr :class, :string, default: ""
-  attr :rest, :global
+  attr(:field, Phoenix.HTML.FormField, required: true)
+  attr(:label, :string, default: nil)
+  attr(:placeholder, :string, default: "")
+  attr(:helper_text, :string, default: nil)
+  attr(:required, :boolean, default: false)
+  attr(:disabled, :boolean, default: false)
+  attr(:readonly, :boolean, default: false)
+  attr(:rows, :integer, default: 4)
+  attr(:class, :string, default: "")
+  attr(:rest, :global)
 
   def textarea_field(assigns) do
     ~H"""
@@ -135,15 +135,15 @@ defmodule RivaAshWeb.Components.Molecules.FormField do
   @doc """
   Renders a select form field.
   """
-  attr :field, Phoenix.HTML.FormField, required: true
-  attr :label, :string, default: nil
-  attr :options, :list, required: true
-  attr :prompt, :string, default: nil
-  attr :helper_text, :string, default: nil
-  attr :required, :boolean, default: false
-  attr :disabled, :boolean, default: false
-  attr :class, :string, default: ""
-  attr :rest, :global
+  attr(:field, Phoenix.HTML.FormField, required: true)
+  attr(:label, :string, default: nil)
+  attr(:options, :list, required: true)
+  attr(:prompt, :string, default: nil)
+  attr(:helper_text, :string, default: nil)
+  attr(:required, :boolean, default: false)
+  attr(:disabled, :boolean, default: false)
+  attr(:class, :string, default: "")
+  attr(:rest, :global)
 
   def select_field(assigns) do
     ~H"""
@@ -185,12 +185,12 @@ defmodule RivaAshWeb.Components.Molecules.FormField do
   @doc """
   Renders a checkbox form field.
   """
-  attr :field, Phoenix.HTML.FormField, required: true
-  attr :label, :string, required: true
-  attr :helper_text, :string, default: nil
-  attr :disabled, :boolean, default: false
-  attr :class, :string, default: ""
-  attr :rest, :global
+  attr(:field, Phoenix.HTML.FormField, required: true)
+  attr(:label, :string, required: true)
+  attr(:helper_text, :string, default: nil)
+  attr(:disabled, :boolean, default: false)
+  attr(:class, :string, default: "")
+  attr(:rest, :global)
 
   def checkbox_field(assigns) do
     ~H"""
@@ -228,43 +228,50 @@ defmodule RivaAshWeb.Components.Molecules.FormField do
   end
 
   defp input_class(icon, icon_position, has_errors) do
-    base = "flex h-9 w-full rounded-md border bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+    base =
+      "flex h-9 w-full rounded-md border bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
 
-    padding = cond do
-      icon && icon_position == "left" -> "pl-10"
-      icon && icon_position == "right" -> "pr-10"
-      true -> ""
-    end
+    padding =
+      cond do
+        icon && icon_position == "left" -> "pl-10"
+        icon && icon_position == "right" -> "pr-10"
+        true -> ""
+      end
 
-    border = if has_errors do
-      "border-destructive focus-visible:ring-destructive"
-    else
-      "border-input"
-    end
+    border =
+      if has_errors do
+        "border-destructive focus-visible:ring-destructive"
+      else
+        "border-input"
+      end
 
     Enum.join([base, padding, border], " ")
   end
 
   defp textarea_class(has_errors) do
-    base = "flex min-h-[60px] w-full rounded-md border bg-transparent px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+    base =
+      "flex min-h-[60px] w-full rounded-md border bg-transparent px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
 
-    border = if has_errors do
-      "border-destructive focus-visible:ring-destructive"
-    else
-      "border-input"
-    end
+    border =
+      if has_errors do
+        "border-destructive focus-visible:ring-destructive"
+      else
+        "border-input"
+      end
 
     "#{base} #{border}"
   end
 
   defp select_class(has_errors) do
-    base = "flex h-9 w-full items-center justify-between rounded-md border bg-transparent px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+    base =
+      "flex h-9 w-full items-center justify-between rounded-md border bg-transparent px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
 
-    border = if has_errors do
-      "border-destructive focus:ring-destructive"
-    else
-      "border-input"
-    end
+    border =
+      if has_errors do
+        "border-destructive focus:ring-destructive"
+      else
+        "border-input"
+      end
 
     "#{base} #{border}"
   end

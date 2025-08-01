@@ -10,7 +10,7 @@ defmodule RivaAshWeb.Layouts do
 
   import RivaAshWeb.CoreComponents
 
-  embed_templates "core/layouts/*"
+  embed_templates("core/layouts/*")
 
   def root(assigns) do
     ~H"""

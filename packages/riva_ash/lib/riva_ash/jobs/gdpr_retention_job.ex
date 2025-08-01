@@ -20,7 +20,8 @@ defmodule RivaAsh.Jobs.GDPRRetentionJob do
   require Logger
 
   @job_name "gdpr_retention_cleanup"
-  @default_schedule "0 2 * * *" # Run at 2 AM daily
+  # Run at 2 AM daily
+  @default_schedule "0 2 * * *"
 
   def start_link(opts \\ []) do
     GenServer.start_link(__MODULE__, opts, name: __MODULE__)
@@ -56,19 +57,22 @@ defmodule RivaAsh.Jobs.GDPRRetentionJob do
 
       # Update state with results
       new_state = %{
-        state |
-        last_run: DateTime.utc_now(),
-        stats: Map.merge(results, %{
-          execution_time_ms: execution_time,
-          report: report
-        })
+        state
+        | last_run: DateTime.utc_now(),
+          stats:
+            Map.merge(results, %{
+              execution_time_ms: execution_time,
+              report: report
+            })
       }
 
       # Log success
-      Logger.info("GDPR: Retention cleanup completed successfully", extra: %{
-        execution_time_ms: execution_time,
-        results: results
-      })
+      Logger.info("GDPR: Retention cleanup completed successfully",
+        extra: %{
+          execution_time_ms: execution_time,
+          results: results
+        }
+      )
 
       # Send notification if there were any issues
       if has_compliance_issues?(results) do
@@ -79,13 +83,14 @@ defmodule RivaAsh.Jobs.GDPRRetentionJob do
       schedule_next_run(state.schedule)
 
       {:noreply, new_state}
-
     rescue
       error ->
-        Logger.error("GDPR: Retention cleanup failed", extra: %{
-          error: inspect(error),
-          stacktrace: __STACKTRACE__
-        })
+        Logger.error("GDPR: Retention cleanup failed",
+          extra: %{
+            error: inspect(error),
+            stacktrace: __STACKTRACE__
+          }
+        )
 
         # Send alert about failure
         send_failure_alert(error)
@@ -157,13 +162,14 @@ defmodule RivaAsh.Jobs.GDPRRetentionJob do
 
   defp has_compliance_issues?(results) do
     # Check if any cleanup operations failed or if there are concerning patterns
-    total_processed = results
-    |> Map.values()
-    |> Enum.sum()
+    total_processed =
+      results
+      |> Map.values()
+      |> Enum.sum()
 
     # Alert if we processed more than expected (might indicate a problem)
     total_processed > 1000 or
-    Map.get(results, :errors, 0) > 0
+      Map.get(results, :errors, 0) > 0
   end
 
   defp send_compliance_alert(results) do
@@ -184,10 +190,12 @@ defmodule RivaAsh.Jobs.GDPRRetentionJob do
   end
 
   defp send_failure_alert(error) do
-    Logger.error("GDPR: Critical failure in retention cleanup job", extra: %{
-      error: inspect(error),
-      timestamp: DateTime.utc_now()
-    })
+    Logger.error("GDPR: Critical failure in retention cleanup job",
+      extra: %{
+        error: inspect(error),
+        timestamp: DateTime.utc_now()
+      }
+    )
 
     # In production, this would send immediate alerts to technical team
     _alert_data = %{
@@ -219,8 +227,10 @@ defmodule RivaAsh.Jobs.GDPRRetentionJob do
           cond do
             hours_since_last_run > 48 ->
               {:error, "Job has not run in #{hours_since_last_run} hours"}
+
             hours_since_last_run > 25 ->
               {:warning, "Job is overdue (#{hours_since_last_run} hours since last run)"}
+
             true ->
               {:ok, "Job is running normally (last run: #{hours_since_last_run} hours ago)"}
           end

@@ -7,16 +7,16 @@ defmodule RivaAshWeb.Components.Atoms.Checkbox do
   @doc """
   Renders a checkbox input.
   """
-  attr :field, Phoenix.HTML.FormField, default: nil
-  attr :checked, :boolean, default: false
-  attr :value, :string, default: "true"
-  attr :label, :string, default: nil
-  attr :description, :string, default: nil
-  attr :disabled, :boolean, default: false
-  attr :size, :string, default: "md", values: ~w(sm md lg)
-  attr :variant, :string, default: "default", values: ~w(default error success)
-  attr :class, :string, default: ""
-  attr :rest, :global
+  attr(:field, Phoenix.HTML.FormField, default: nil)
+  attr(:checked, :boolean, default: false)
+  attr(:value, :string, default: "true")
+  attr(:label, :string, default: nil)
+  attr(:description, :string, default: nil)
+  attr(:disabled, :boolean, default: false)
+  attr(:size, :string, default: "md", values: ~w(sm md lg))
+  attr(:variant, :string, default: "default", values: ~w(default error success))
+  attr(:class, :string, default: "")
+  attr(:rest, :global)
 
   def checkbox(assigns) do
     assigns = assign(assigns, :checkbox_class, checkbox_class(assigns))
@@ -49,7 +49,9 @@ defmodule RivaAshWeb.Components.Atoms.Checkbox do
   end
 
   defp checkbox_class(assigns) do
-    base = "rounded border border-input bg-background focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+    base =
+      "rounded border border-input bg-background focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+
     size = size_classes(assigns.size)
     variant = variant_classes(assigns.variant)
 
@@ -57,7 +59,9 @@ defmodule RivaAshWeb.Components.Atoms.Checkbox do
   end
 
   defp label_class(assigns) do
-    base = "text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+    base =
+      "text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+
     size = label_size_classes(assigns.size)
 
     Enum.join([base, size], " ")

@@ -96,9 +96,9 @@ defmodule RivaAsh.ArchivalTest do
         |> Ash.read!(actor: user, domain: Domain)
 
       # Verify our archived business is in the results
-      assert Enum.any?(all_records, fn b -> 
-        b.id == archived_business.id && not is_nil(b.archived_at)
-      end)
+      assert Enum.any?(all_records, fn b ->
+               b.id == archived_business.id && not is_nil(b.archived_at)
+             end)
     end
 
     test "hard delete removes record completely" do
@@ -119,7 +119,7 @@ defmodule RivaAsh.ArchivalTest do
       # Check if hard delete action exists, if not skip this test
       actions = Ash.Resource.Info.actions(Business)
       destroy_actions = Enum.filter(actions, &(&1.type == :destroy))
-      
+
       if Enum.any?(destroy_actions, &(&1.name == :destroy_permanently)) do
         # Hard delete the business
         business

@@ -120,9 +120,18 @@ defmodule RivaAsh.Resources.Item do
     defaults([:read, :destroy])
 
     update :update do
-      accept([:name, :section_id, :item_type_id, :is_active, :is_always_available, :is_public_searchable, :public_description])
+      accept([
+        :name,
+        :section_id,
+        :item_type_id,
+        :is_active,
+        :is_always_available,
+        :is_public_searchable,
+        :public_description
+      ])
+
       primary?(true)
-      require_atomic? false
+      require_atomic?(false)
 
       # Validate cross-business relationships
       validate(&RivaAsh.Validations.validate_section_business_match/2)
@@ -130,7 +139,17 @@ defmodule RivaAsh.Resources.Item do
     end
 
     create :create do
-      accept([:name, :section_id, :item_type_id, :business_id, :is_active, :is_always_available, :is_public_searchable, :public_description])
+      accept([
+        :name,
+        :section_id,
+        :item_type_id,
+        :business_id,
+        :is_active,
+        :is_always_available,
+        :is_public_searchable,
+        :public_description
+      ])
+
       primary?(true)
 
       # Validate business access
@@ -189,62 +208,81 @@ defmodule RivaAsh.Resources.Item do
     end
 
     read :available_now do
-      filter(expr(
-        is_active == true and
-        is_nil(archived_at) and
-        not exists(reservations,
-          status in [:confirmed, :pending] and
-          reserved_from <= now() and
-          reserved_until >= now()
+      filter(
+        expr(
+          is_active == true and
+            is_nil(archived_at) and
+            not exists(
+              reservations,
+              status in [:confirmed, :pending] and
+                reserved_from <= now() and
+                reserved_until >= now()
+            )
         )
-      ))
+      )
     end
 
     read :available_for_date do
       argument(:date, :date, allow_nil?: false)
 
-      filter(expr(
-        is_active == true and
-        is_nil(archived_at) and
-        not exists(reservations,
-          status in [:confirmed, :pending] and
-          fragment("DATE(reserved_from) <= ? AND DATE(reserved_until) >= ?",
-            ^arg(:date), ^arg(:date))
+      filter(
+        expr(
+          is_active == true and
+            is_nil(archived_at) and
+            not exists(
+              reservations,
+              status in [:confirmed, :pending] and
+                fragment(
+                  "DATE(reserved_from) <= ? AND DATE(reserved_until) >= ?",
+                  ^arg(:date),
+                  ^arg(:date)
+                )
+            )
         )
-      ))
+      )
     end
 
     read :public_search do
       # Public search action for unregistered users
       # No authorization required, only returns publicly searchable items from publicly searchable businesses
-      filter(expr(
-        is_public_searchable == true and
-        is_active == true and
-        is_nil(archived_at) and
-        business.is_public_searchable == true and
-        is_nil(business.archived_at)
-      ))
+      filter(
+        expr(
+          is_public_searchable == true and
+            is_active == true and
+            is_nil(archived_at) and
+            business.is_public_searchable == true and
+            is_nil(business.archived_at)
+        )
+      )
 
       # Allow searching by name, description, and business name
       argument(:search_term, :string, allow_nil?: true)
       argument(:business_id, :uuid, allow_nil?: true)
 
       prepare(fn query, _context ->
-        query = case Ash.Query.get_argument(query, :business_id) do
-          nil -> query
-          business_id -> Ash.Query.filter(query, expr(business_id == ^business_id))
-        end
+        query =
+          case Ash.Query.get_argument(query, :business_id) do
+            nil -> query
+            business_id -> Ash.Query.filter(query, expr(business_id == ^business_id))
+          end
 
         case Ash.Query.get_argument(query, :search_term) do
-          nil -> query
-          "" -> query
+          nil ->
+            query
+
+          "" ->
+            query
+
           search_term ->
-            Ash.Query.filter(query, expr(
-              ilike(name, ^"%#{search_term}%") or
-              ilike(public_description, ^"%#{search_term}%") or
-              ilike(business.name, ^"%#{search_term}%") or
-              ilike(business.public_description, ^"%#{search_term}%")
-            ))
+            Ash.Query.filter(
+              query,
+              expr(
+                ilike(name, ^"%#{search_term}%") or
+                  ilike(public_description, ^"%#{search_term}%") or
+                  ilike(business.name, ^"%#{search_term}%") or
+                  ilike(business.public_description, ^"%#{search_term}%")
+              )
+            )
         end
       end)
     end
@@ -261,18 +299,23 @@ defmodule RivaAsh.Resources.Item do
         try do
           # Use bulk update functionality
           case Ash.bulk_update(__MODULE__, :update, %{is_active: is_active},
-                               domain: RivaAsh.Domain,
-                               actor: context[:actor],
-                               filter: [id: [in: ids]]) do
+                 domain: RivaAsh.Domain,
+                 actor: context[:actor],
+                 filter: [id: [in: ids]]
+               ) do
             %Ash.BulkResult{records: records, errors: []} ->
               {:ok, records}
+
             %Ash.BulkResult{records: records, errors: errors} ->
               # Log errors but return successful records
               require Logger
+
               Enum.each(errors, fn error ->
                 Logger.error("Bulk update error: #{inspect(error)}")
               end)
+
               {:ok, records}
+
             {:error, error} ->
               {:error, "Failed to perform bulk update: #{inspect(error)}"}
           end
@@ -396,12 +439,19 @@ defmodule RivaAsh.Resources.Item do
 
   # Calculations for frequently accessed data
   calculations do
-    calculate(:is_available_now, :boolean, expr(
-      is_active and
-      is_nil(archived_at) and
-      not exists(reservations, status == :confirmed and
-        reserved_from <= now() and reserved_until >= now())
-    ))
+    calculate(
+      :is_available_now,
+      :boolean,
+      expr(
+        is_active and
+          is_nil(archived_at) and
+          not exists(
+            reservations,
+            status == :confirmed and
+              reserved_from <= now() and reserved_until >= now()
+          )
+      )
+    )
   end
 
   validations do

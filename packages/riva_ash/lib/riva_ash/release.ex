@@ -9,11 +9,13 @@ defmodule RivaAsh.Release do
   def migrate do
     with {:ok, _} <- load_app(),
          {:ok, repos} <- repos() do
-      results = Enum.map(repos, fn repo ->
-        case Ecto.Migrator.with_repo(repo, &Ecto.Migrator.run(&1, :up, all: true)) do
-          {status, _, _} -> {status, repo}
-        end
-      end)
+      results =
+        Enum.map(repos, fn repo ->
+          case Ecto.Migrator.with_repo(repo, &Ecto.Migrator.run(&1, :up, all: true)) do
+            {status, _, _} -> {status, repo}
+          end
+        end)
+
       ErrorHelpers.success(results)
     else
       {:error, reason} -> ErrorHelpers.failure(reason)

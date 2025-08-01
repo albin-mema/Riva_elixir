@@ -12,17 +12,17 @@ defmodule RivaAshWeb.Components.Organisms.ReservationForm do
   @doc """
   Renders a reservation form with all necessary fields.
   """
-  attr :form, :map, required: true
-  attr :clients, :list, default: []
-  attr :items, :list, default: []
-  attr :employees, :list, default: []
-  attr :on_submit, :string, required: true
-  attr :on_change, :string, required: true
-  attr :on_cancel, :string, required: true
-  attr :loading, :boolean, default: false
-  attr :step, :integer, default: 1
-  attr :class, :string, default: ""
-  attr :rest, :global
+  attr(:form, :map, required: true)
+  attr(:clients, :list, default: [])
+  attr(:items, :list, default: [])
+  attr(:employees, :list, default: [])
+  attr(:on_submit, :string, required: true)
+  attr(:on_change, :string, required: true)
+  attr(:on_cancel, :string, required: true)
+  attr(:loading, :boolean, default: false)
+  attr(:step, :integer, default: 1)
+  attr(:class, :string, default: "")
+  attr(:rest, :global)
 
   def reservation_form(assigns) do
     ~H"""
