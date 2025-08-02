@@ -6,10 +6,8 @@ defmodule RivaAshWeb.InventoryManagementLive do
   use RivaAshWeb, :live_view
 
   # Explicitly set the authenticated layout
-  @layout {RivaAshWeb.Layouts, :authenticated}
 
-  alias RivaAsh.Resources.{Business, Item, ItemType, ItemSchedule, ItemHold, Pricing}
-  alias RivaAsh.ErrorHelpers
+  alias RivaAsh.Resources.{Business, Item, ItemType}
 
   import RivaAshWeb.Components.Organisms.PageHeader
   import RivaAshWeb.Components.Molecules.Card
@@ -53,7 +51,7 @@ defmodule RivaAshWeb.InventoryManagementLive do
 
           {:ok, socket}
         rescue
-          error in [Ash.Error.Forbidden, Ash.Error.Invalid] ->
+          _error in [Ash.Error.Forbidden, Ash.Error.Invalid] ->
             {:ok, redirect(socket, to: "/access-denied")}
         end
 
@@ -179,6 +177,7 @@ defmodule RivaAshWeb.InventoryManagementLive do
         <div class="space-y-6">
           <!-- Quick Stats -->
           <.card>
+            <:body>
             <div class="p-6">
               <h3 class="text-lg font-medium text-gray-900 mb-4">Inventory Overview</h3>
               <div class="space-y-3">
@@ -200,10 +199,12 @@ defmodule RivaAshWeb.InventoryManagementLive do
                 </div>
               </div>
             </div>
+            </:body>
           </.card>
 
           <!-- Quick Actions -->
           <.card>
+            <:body>
             <div class="p-6">
               <h3 class="text-lg font-medium text-gray-900 mb-4">Quick Actions</h3>
               <div class="space-y-3">
@@ -239,6 +240,7 @@ defmodule RivaAshWeb.InventoryManagementLive do
                 </.button>
               </div>
             </div>
+            </:body>
           </.card>
 
           <!-- Item Details -->
@@ -295,6 +297,7 @@ defmodule RivaAshWeb.InventoryManagementLive do
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
       <%= for item <- @items do %>
         <.card>
+          <:body>
           <div class="p-6 cursor-pointer hover:bg-gray-50" phx-click="select_item" phx-value-id={item.id}>
             <div class="flex items-center justify-between mb-4">
               <h3 class="text-lg font-medium text-gray-900"><%= item.name %></h3>
@@ -334,17 +337,20 @@ defmodule RivaAshWeb.InventoryManagementLive do
               </.button>
             </div>
           </div>
+          </:body>
         </.card>
       <% end %>
 
       <!-- Add New Item Card -->
       <.card>
+        <:body>
         <div class="p-6 border-2 border-dashed border-gray-300 text-center cursor-pointer hover:border-gray-400 hover:bg-gray-50" phx-click="new_item">
           <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
           </svg>
           <p class="mt-2 text-sm text-gray-600">Add New Item</p>
         </div>
+        </:body>
       </.card>
     </div>
     """
@@ -353,6 +359,7 @@ defmodule RivaAshWeb.InventoryManagementLive do
   defp render_list_view(assigns) do
     ~H"""
     <.card>
+      <:body>
       <div class="overflow-hidden">
         <table class="min-w-full divide-y divide-gray-200">
           <thead class="bg-gray-50">
@@ -407,6 +414,7 @@ defmodule RivaAshWeb.InventoryManagementLive do
           </tbody>
         </table>
       </div>
+      </:body>
     </.card>
     """
   end

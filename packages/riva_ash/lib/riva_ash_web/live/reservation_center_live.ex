@@ -393,12 +393,12 @@ defmodule RivaAshWeb.ReservationCenterLive do
           <div class={[
             "min-h-[100px] p-2 border border-gray-200 cursor-pointer hover:bg-gray-50",
             if(Date.compare(date, Date.utc_today()) == :eq, do: "bg-blue-50 border-blue-200", else: "bg-white"),
-            if(Date.month(date) != Date.month(@current_date), do: "text-gray-400 bg-gray-50")
+            if(Date.months_in_year(date) == 12 and Date.months_in_year(@current_date) == 12 and Date.compare(date, @current_date) != :eq, do: "text-gray-400 bg-gray-50")
           ]}
           phx-click="date_clicked"
           phx-value-date={date}>
             <div class="text-sm font-medium">
-              <%= Date.day(date) %>
+              <%= elem(Date.to_erl(date), 2) %>
             </div>
 
             <!-- Reservations for this date -->

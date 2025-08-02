@@ -6,14 +6,10 @@ defmodule RivaAshWeb.DashboardLive do
   use RivaAshWeb, :live_view
 
   # Explicitly set the authenticated layout
-  @layout {RivaAshWeb.Layouts, :authenticated}
 
-  alias RivaAsh.Resources.{Business, Reservation, Client, Item, Payment}
-  alias RivaAsh.ErrorHelpers
+  alias RivaAsh.Resources.{Business, Reservation, Item, Payment}
 
   import RivaAshWeb.Components.Organisms.PageHeader
-  import RivaAshWeb.Components.Organisms.DashboardStats
-  import RivaAshWeb.Components.Organisms.CalendarView
   import RivaAshWeb.Components.Molecules.Card
   import RivaAshWeb.Components.Atoms.Button
   import RivaAshWeb.Live.AuthHelpers
@@ -71,7 +67,7 @@ defmodule RivaAshWeb.DashboardLive do
 
           {:ok, socket}
         rescue
-          error in [Ash.Error.Forbidden, Ash.Error.Invalid] ->
+          _error in [Ash.Error.Forbidden, Ash.Error.Invalid] ->
             {:ok, redirect(socket, to: "/access-denied")}
         end
 
@@ -99,6 +95,7 @@ defmodule RivaAshWeb.DashboardLive do
       <!-- Key Metrics Row -->
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <.card>
+          <:body>
           <div class="p-6">
             <div class="flex items-center">
               <div class="flex-shrink-0">
@@ -116,9 +113,11 @@ defmodule RivaAshWeb.DashboardLive do
               </div>
             </div>
           </div>
+          </:body>
         </.card>
 
         <.card>
+          <:body>
           <div class="p-6">
             <div class="flex items-center">
               <div class="flex-shrink-0">
@@ -136,9 +135,11 @@ defmodule RivaAshWeb.DashboardLive do
               </div>
             </div>
           </div>
+          </:body>
         </.card>
 
         <.card>
+          <:body>
           <div class="p-6">
             <div class="flex items-center">
               <div class="flex-shrink-0">
@@ -156,9 +157,11 @@ defmodule RivaAshWeb.DashboardLive do
               </div>
             </div>
           </div>
+          </:body>
         </.card>
 
         <.card>
+          <:body>
           <div class="p-6">
             <div class="flex items-center">
               <div class="flex-shrink-0">
@@ -176,6 +179,7 @@ defmodule RivaAshWeb.DashboardLive do
               </div>
             </div>
           </div>
+          </:body>
         </.card>
       </div>
 
@@ -184,6 +188,7 @@ defmodule RivaAshWeb.DashboardLive do
         <!-- Today's Schedule -->
         <div class="lg:col-span-2">
           <.card>
+            <:body>
             <div class="px-4 py-5 sm:p-6">
               <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4">Today's Schedule</h3>
               <div class="space-y-3">
@@ -227,6 +232,7 @@ defmodule RivaAshWeb.DashboardLive do
                 <% end %>
               </div>
             </div>
+            </:body>
           </.card>
         </div>
 
@@ -234,6 +240,7 @@ defmodule RivaAshWeb.DashboardLive do
         <div class="space-y-6">
           <!-- Quick Actions -->
           <.card>
+            <:body>
             <div class="px-4 py-5 sm:p-6">
               <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4">Quick Actions</h3>
               <div class="space-y-3">
@@ -263,10 +270,12 @@ defmodule RivaAshWeb.DashboardLive do
                 </.button>
               </div>
             </div>
+            </:body>
           </.card>
 
           <!-- Recent Activity -->
           <.card>
+            <:body>
             <div class="px-4 py-5 sm:p-6">
               <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4">Recent Activity</h3>
               <div class="space-y-3">
@@ -291,6 +300,7 @@ defmodule RivaAshWeb.DashboardLive do
                 <% end %>
               </div>
             </div>
+            </:body>
           </.card>
         </div>
       </div>

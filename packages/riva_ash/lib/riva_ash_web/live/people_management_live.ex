@@ -6,10 +6,8 @@ defmodule RivaAshWeb.PeopleManagementLive do
   use RivaAshWeb, :live_view
 
   # Explicitly set the authenticated layout
-  @layout {RivaAshWeb.Layouts, :authenticated}
 
-  alias RivaAsh.Resources.{Business, Client, Employee, User}
-  alias RivaAsh.ErrorHelpers
+  alias RivaAsh.Resources.{Business, Client, Employee}
 
   import RivaAshWeb.Components.Organisms.PageHeader
   import RivaAshWeb.Components.Molecules.Card
@@ -53,7 +51,7 @@ defmodule RivaAshWeb.PeopleManagementLive do
 
           {:ok, socket}
         rescue
-          error in [Ash.Error.Forbidden, Ash.Error.Invalid] ->
+          _error in [Ash.Error.Forbidden, Ash.Error.Invalid] ->
             {:ok, redirect(socket, to: "/access-denied")}
         end
 
@@ -227,6 +225,7 @@ defmodule RivaAshWeb.PeopleManagementLive do
           <!-- Person Details -->
           <%= if @selected_person do %>
             <.card>
+              <:body>
               <div class="p-6">
                 <h3 class="text-lg font-medium text-gray-900 mb-4">Contact Details</h3>
                 <div class="space-y-3">
@@ -252,6 +251,7 @@ defmodule RivaAshWeb.PeopleManagementLive do
                   </div>
                 </div>
               </div>
+              </:body>
             </.card>
           <% end %>
         </div>
@@ -264,6 +264,7 @@ defmodule RivaAshWeb.PeopleManagementLive do
   defp render_clients_view(assigns) do
     ~H"""
     <.card>
+      <:body>
       <div class="overflow-hidden">
         <table class="min-w-full divide-y divide-gray-200">
           <thead class="bg-gray-50">
@@ -318,6 +319,7 @@ defmodule RivaAshWeb.PeopleManagementLive do
           </tbody>
         </table>
       </div>
+      </:body>
     </.card>
     """
   end
@@ -325,6 +327,7 @@ defmodule RivaAshWeb.PeopleManagementLive do
   defp render_employees_view(assigns) do
     ~H"""
     <.card>
+      <:body>
       <div class="overflow-hidden">
         <table class="min-w-full divide-y divide-gray-200">
           <thead class="bg-gray-50">
@@ -379,6 +382,7 @@ defmodule RivaAshWeb.PeopleManagementLive do
           </tbody>
         </table>
       </div>
+      </:body>
     </.card>
     """
   end
@@ -386,6 +390,7 @@ defmodule RivaAshWeb.PeopleManagementLive do
   defp render_permissions_view(assigns) do
     ~H"""
     <.card>
+      <:body>
       <div class="p-6">
         <h3 class="text-lg font-medium text-gray-900 mb-4">Permission Management</h3>
         <div class="bg-gray-50 p-6 rounded-lg">
@@ -393,6 +398,7 @@ defmodule RivaAshWeb.PeopleManagementLive do
           <p class="text-center text-sm text-gray-400 mt-2">Role-based access control and user permissions</p>
         </div>
       </div>
+      </:body>
     </.card>
     """
   end

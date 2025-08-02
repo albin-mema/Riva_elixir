@@ -6,10 +6,8 @@ defmodule RivaAshWeb.FinancialOperationsLive do
   use RivaAshWeb, :live_view
 
   # Explicitly set the authenticated layout
-  @layout {RivaAshWeb.Layouts, :authenticated}
 
   alias RivaAsh.Resources.{Business, Payment, Pricing}
-  alias RivaAsh.ErrorHelpers
 
   import RivaAshWeb.Components.Organisms.PageHeader
   import RivaAshWeb.Components.Molecules.Card
@@ -51,7 +49,7 @@ defmodule RivaAshWeb.FinancialOperationsLive do
 
           {:ok, socket}
         rescue
-          error in [Ash.Error.Forbidden, Ash.Error.Invalid] ->
+          _error in [Ash.Error.Forbidden, Ash.Error.Invalid] ->
             {:ok, redirect(socket, to: "/access-denied")}
         end
 
@@ -83,6 +81,7 @@ defmodule RivaAshWeb.FinancialOperationsLive do
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <!-- Revenue Card -->
         <.card>
+          <:body>
           <div class="p-6">
             <div class="flex items-center">
               <div class="flex-shrink-0">
@@ -100,10 +99,12 @@ defmodule RivaAshWeb.FinancialOperationsLive do
               </div>
             </div>
           </div>
+          </:body>
         </.card>
 
         <!-- Monthly Revenue -->
         <.card>
+          <:body>
           <div class="p-6">
             <div class="flex items-center">
               <div class="flex-shrink-0">
@@ -121,10 +122,12 @@ defmodule RivaAshWeb.FinancialOperationsLive do
               </div>
             </div>
           </div>
+          </:body>
         </.card>
 
         <!-- Pending Payments -->
         <.card>
+          <:body>
           <div class="p-6">
             <div class="flex items-center">
               <div class="flex-shrink-0">
@@ -142,10 +145,12 @@ defmodule RivaAshWeb.FinancialOperationsLive do
               </div>
             </div>
           </div>
+          </:body>
         </.card>
 
         <!-- Active Pricing Rules -->
         <.card>
+          <:body>
           <div class="p-6">
             <div class="flex items-center">
               <div class="flex-shrink-0">
@@ -163,6 +168,7 @@ defmodule RivaAshWeb.FinancialOperationsLive do
               </div>
             </div>
           </div>
+          </:body>
         </.card>
       </div>
 
@@ -235,6 +241,7 @@ defmodule RivaAshWeb.FinancialOperationsLive do
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
       <!-- Revenue Chart -->
       <.card>
+        <:body>
         <div class="p-6">
           <h3 class="text-lg font-medium text-gray-900 mb-4">Revenue Trend</h3>
           <div class="bg-gray-50 p-6 rounded-lg h-64 flex items-center justify-center">
@@ -247,10 +254,12 @@ defmodule RivaAshWeb.FinancialOperationsLive do
             </div>
           </div>
         </div>
+        </:body>
       </.card>
 
       <!-- Recent Transactions -->
       <.card>
+        <:body>
         <div class="p-6">
           <h3 class="text-lg font-medium text-gray-900 mb-4">Recent Transactions</h3>
           <div class="space-y-3">
@@ -278,6 +287,7 @@ defmodule RivaAshWeb.FinancialOperationsLive do
             <% end %>
           </div>
         </div>
+        </:body>
       </.card>
     </div>
     """
@@ -286,6 +296,7 @@ defmodule RivaAshWeb.FinancialOperationsLive do
   defp render_payments_view(assigns) do
     ~H"""
     <.card>
+      <:body>
       <div class="p-6">
         <h3 class="text-lg font-medium text-gray-900 mb-4">Payment Management</h3>
         <div class="bg-gray-50 p-6 rounded-lg">
@@ -293,6 +304,7 @@ defmodule RivaAshWeb.FinancialOperationsLive do
           <p class="text-center text-sm text-gray-400 mt-2">Payment history, processing, and refunds</p>
         </div>
       </div>
+      </:body>
     </.card>
     """
   end
@@ -300,6 +312,7 @@ defmodule RivaAshWeb.FinancialOperationsLive do
   defp render_pricing_view(assigns) do
     ~H"""
     <.card>
+      <:body>
       <div class="p-6">
         <h3 class="text-lg font-medium text-gray-900 mb-4">Pricing Rules</h3>
         <div class="bg-gray-50 p-6 rounded-lg">
@@ -307,6 +320,7 @@ defmodule RivaAshWeb.FinancialOperationsLive do
           <p class="text-center text-sm text-gray-400 mt-2">Dynamic pricing, discounts, and rate management</p>
         </div>
       </div>
+      </:body>
     </.card>
     """
   end
@@ -314,6 +328,7 @@ defmodule RivaAshWeb.FinancialOperationsLive do
   defp render_reports_view(assigns) do
     ~H"""
     <.card>
+      <:body>
       <div class="p-6">
         <h3 class="text-lg font-medium text-gray-900 mb-4">Financial Reports</h3>
         <div class="bg-gray-50 p-6 rounded-lg">
@@ -321,6 +336,7 @@ defmodule RivaAshWeb.FinancialOperationsLive do
           <p class="text-center text-sm text-gray-400 mt-2">Revenue reports, analytics, and insights</p>
         </div>
       </div>
+      </:body>
     </.card>
     """
   end
