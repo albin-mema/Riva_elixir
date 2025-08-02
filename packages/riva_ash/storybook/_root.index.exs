@@ -13,4 +13,11 @@ defmodule Storybook.Root do
       icon: {:fa, "hand-wave", :thin}
     ]
   end
+
+  def entry("property_testing") do
+    [
+      name: "Property-Based Testing",
+      icon: {:fa, "flask", :thin}
+    ]
+  end
 end
