@@ -36,7 +36,7 @@ defmodule RivaAsh.DatabaseHealth do
   defp wait_for_database(retries_left) do
     check_database_connection()
     |> case do
-      :ok ->
+      {:ok, :ok} ->
         Logger.info("Database connection successful!")
         :ok
 
