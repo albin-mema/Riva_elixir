@@ -3,10 +3,7 @@ defmodule RivaAshWeb.Components.Interactive.RecurrencePattern do
   Recurring reservation pattern setup component.
   """
   use Phoenix.Component
-  import RivaAshWeb.Components.Atoms.Select
-  import RivaAshWeb.Components.Atoms.Input
-  import RivaAshWeb.Components.Atoms.Checkbox
-  import RivaAshWeb.Components.Atoms.DatePicker
+  import RivaAshWeb.Components.Molecules.FormField
 
   @doc """
   Renders a recurrence pattern configuration interface.
@@ -25,109 +22,89 @@ defmodule RivaAshWeb.Components.Interactive.RecurrencePattern do
     <div {@rest}>
       <div>
         <h3>Recurrence Pattern</h3>
-        
-        <.select
-          field={:pattern_type}
+
+        <.select_field
+          field={@pattern[:form][:pattern_type]}
+          label="Pattern Type"
           options={[
             {"Daily", "daily"},
             {"Weekly", "weekly"},
             {"Monthly", "monthly"},
             {"Custom", "custom"}
           ]}
-          value={@pattern[:pattern_type] || "daily"}
-          phx-change={@on_pattern_change}
+          prompt="Select pattern type"
         />
       </div>
-      
+
       <div :if={@pattern[:pattern_type] == "daily"}>
-        <.input
-          type="number"
-          field={:interval}
+        <.form_field
+          field={@pattern[:form][:interval]}
           label="Every X days"
-          value={@pattern[:interval] || 1}
-          min="1"
-          max="30"
-          phx-change={@on_pattern_change}
+          type="number"
         />
       </div>
-      
+
       <div :if={@pattern[:pattern_type] == "weekly"}>
-        <.input
-          type="number"
-          field={:interval}
+        <.form_field
+          field={@pattern[:form][:interval]}
           label="Every X weeks"
-          value={@pattern[:interval] || 1}
-          min="1"
-          max="12"
-          phx-change={@on_pattern_change}
+          type="number"
         />
-        
+
         <div>
           <label>Days of the week:</label>
-          <.checkbox field={:monday} label="Monday" phx-change={@on_pattern_change} />
-          <.checkbox field={:tuesday} label="Tuesday" phx-change={@on_pattern_change} />
-          <.checkbox field={:wednesday} label="Wednesday" phx-change={@on_pattern_change} />
-          <.checkbox field={:thursday} label="Thursday" phx-change={@on_pattern_change} />
-          <.checkbox field={:friday} label="Friday" phx-change={@on_pattern_change} />
-          <.checkbox field={:saturday} label="Saturday" phx-change={@on_pattern_change} />
-          <.checkbox field={:sunday} label="Sunday" phx-change={@on_pattern_change} />
+          <.form_field field={@pattern[:form][:monday]} label="Monday" type="checkbox" />
+          <.form_field field={@pattern[:form][:tuesday]} label="Tuesday" type="checkbox" />
+          <.form_field field={@pattern[:form][:wednesday]} label="Wednesday" type="checkbox" />
+          <.form_field field={@pattern[:form][:thursday]} label="Thursday" type="checkbox" />
+          <.form_field field={@pattern[:form][:friday]} label="Friday" type="checkbox" />
+          <.form_field field={@pattern[:form][:saturday]} label="Saturday" type="checkbox" />
+          <.form_field field={@pattern[:form][:sunday]} label="Sunday" type="checkbox" />
         </div>
       </div>
-      
+
       <div :if={@pattern[:pattern_type] == "monthly"}>
-        <.select
-          field={:monthly_type}
+        <.select_field
+          field={@pattern[:form][:monthly_type]}
+          label="Monthly Type"
           options={[
             {"Same date each month", "date"},
             {"Same day of week", "day_of_week"}
           ]}
-          value={@pattern[:monthly_type] || "date"}
-          phx-change={@on_pattern_change}
         />
       </div>
-      
+
       <div>
-        <.date_picker
-          field={:start_date}
-          label="Start Date"
-          value={@pattern[:start_date]}
-          phx-change={@on_pattern_change}
-        />
-        
-        <.select
-          field={:end_type}
+        <.form_field field={@pattern[:form][:start_date]} label="Start Date" type="date" />
+
+        <.select_field
+          field={@pattern[:form][:end_type]}
+          label="End Type"
           options={[
             {"Never", "never"},
             {"After X occurrences", "count"},
             {"On specific date", "date"}
           ]}
-          value={@pattern[:end_type] || "never"}
-          phx-change={@on_pattern_change}
         />
-        
-        <.input
+
+        <.form_field
           :if={@pattern[:end_type] == "count"}
-          type="number"
-          field={:occurrence_count}
+          field={@pattern[:form][:occurrence_count]}
           label="Number of occurrences"
-          value={@pattern[:occurrence_count] || 1}
-          min="1"
-          max={@max_occurrences}
-          phx-change={@on_pattern_change}
+          type="number"
         />
-        
-        <.date_picker
+
+        <.form_field
           :if={@pattern[:end_type] == "date"}
-          field={:end_date}
+          field={@pattern[:form][:end_date]}
           label="End Date"
-          value={@pattern[:end_date]}
-          phx-change={@on_pattern_change}
+          type="date"
         />
       </div>
-      
+
       <div :if={@on_preview}>
         <button phx-click={@on_preview}>Preview Dates</button>
-        
+
         <div :if={@preview_dates != []}>
           <h4>Preview (first 10 dates):</h4>
           <ul>

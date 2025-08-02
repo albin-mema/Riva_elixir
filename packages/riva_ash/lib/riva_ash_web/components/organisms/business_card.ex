@@ -120,7 +120,7 @@ defmodule RivaAshWeb.Components.Organisms.BusinessCard do
         size="sm"
         phx-click={@on_edit}
         phx-value-id={@business_id}
-        icon_left={:pencil}
+        icon_left="pencil"
       >
         Edit
       </.button>
@@ -131,7 +131,7 @@ defmodule RivaAshWeb.Components.Organisms.BusinessCard do
         phx-click={@on_delete}
         phx-value-id={@business_id}
         data-confirm="Are you sure you want to delete this business? This action cannot be undone."
-        icon_left={:trash}
+        icon_left="trash"
       >
         Delete
       </.button>

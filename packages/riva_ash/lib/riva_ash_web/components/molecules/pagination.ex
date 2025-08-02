@@ -4,7 +4,6 @@ defmodule RivaAshWeb.Components.Molecules.Pagination do
   """
   use Phoenix.Component
   import RivaAshWeb.Components.Atoms.Button
-  import RivaAshWeb.Components.Atoms.Select
 
   @doc """
   Renders pagination controls.

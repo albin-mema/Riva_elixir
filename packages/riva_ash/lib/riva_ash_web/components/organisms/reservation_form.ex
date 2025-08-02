@@ -7,7 +7,6 @@ defmodule RivaAshWeb.Components.Organisms.ReservationForm do
   import RivaAshWeb.Components.Atoms.Button
   import RivaAshWeb.Components.Atoms.DatePicker
   import RivaAshWeb.Components.Atoms.TimePicker
-  import RivaAshWeb.Components.Atoms.Select
 
   @doc """
   Renders a reservation form with all necessary fields.
@@ -30,15 +29,15 @@ defmodule RivaAshWeb.Components.Organisms.ReservationForm do
     <form phx-submit={@on_submit} phx-change={@on_change} {@rest}>
       <div :if={@step == 1}>
         <!-- Step 1: Basic info -->
-        <.form_field field={@form[:client_id]} label="Client" type="select" options={Enum.map(@clients, &{&1.name, &1.id})} />
-        <.form_field field={@form[:item_id]} label="Item" type="select" options={Enum.map(@items, &{&1.name, &1.id})} />
+        <.select_field field={@form[:client_id]} label="Client" options={Enum.map(@clients, &{&1.name, &1.id})} />
+        <.select_field field={@form[:item_id]} label="Item" options={Enum.map(@items, &{&1.name, &1.id})} />
       </div>
 
       <div :if={@step == 2}>
         <!-- Step 2: Date/Time -->
-        <.date_picker field={@form[:reserved_date]} />
-        <.time_picker field={@form[:start_time]} />
-        <.time_picker field={@form[:end_time]} />
+        <.date_picker field={@form[:reserved_date]} placeholder="Reservation Date" />
+        <.time_picker field={@form[:start_time]} placeholder="Start Time" />
+        <.time_picker field={@form[:end_time]} placeholder="End Time" />
       </div>
 
       <div>

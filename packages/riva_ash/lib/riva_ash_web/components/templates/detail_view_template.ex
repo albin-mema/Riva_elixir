@@ -32,12 +32,12 @@ defmodule RivaAshWeb.Components.Templates.DetailViewTemplate do
     ~H"""
     <!-- Detail view template implementation will go here -->
     <div {@rest} class={["detail-view-template", @class]}>
-      <.page_header title={@title} subtitle={@subtitle} description={@description}>
+      <.page_header title={@title} description={@description}>
         <:action :for={action <- @actions}>
           <%= render_slot(action) %>
         </:action>
       </.page_header>
-      
+
       <div :if={@header_content != []} class="detail-header">
         <.card>
           <:body>
@@ -45,7 +45,7 @@ defmodule RivaAshWeb.Components.Templates.DetailViewTemplate do
           </:body>
         </.card>
       </div>
-      
+
       <div :if={@tabs != []} class="detail-tabs">
         <.tab_navigation
           tabs={@tabs}
@@ -53,7 +53,7 @@ defmodule RivaAshWeb.Components.Templates.DetailViewTemplate do
           on_tab_change={@on_tab_change}
         />
       </div>
-      
+
       <div class="detail-content">
         <div :for={tab <- @tab_content}>
           <div :if={tab[:tab_id] == @active_tab || @tabs == []}>

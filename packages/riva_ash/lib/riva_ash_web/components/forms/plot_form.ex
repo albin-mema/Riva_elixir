@@ -5,7 +5,6 @@ defmodule RivaAshWeb.Components.Forms.PlotForm do
   use Phoenix.Component
   import RivaAshWeb.Components.Molecules.FormField
   import RivaAshWeb.Components.Atoms.Button
-  import RivaAshWeb.Components.Atoms.Select
 
   @doc """
   Renders a plot form.
@@ -22,21 +21,20 @@ defmodule RivaAshWeb.Components.Forms.PlotForm do
 
   def plot_form(assigns) do
     ~H"""
-    <!-- Plot form implementation will go here -->
     <form phx-submit={@on_submit} phx-change={@on_change} {@rest}>
       <.form_field field={@form[:name]} label="Plot Name" required />
-      <.form_field field={@form[:description]} label="Description" type="textarea" />
-      <.form_field field={@form[:business_id]} label="Business" type="select" options={@businesses} required />
-      
-      <.form_field field={@form[:address]} label="Address" type="textarea" />
+      <.textarea_field field={@form[:description]} label="Description" />
+      <.select_field field={@form[:business_id]} label="Business" options={@businesses} required />
+
+      <.textarea_field field={@form[:address]} label="Address" />
       <.form_field field={@form[:total_area]} label="Total Area (sq ft)" type="number" />
-      
+
       <div>
         <h3>Location Details</h3>
-        <.form_field field={@form[:latitude]} label="Latitude" type="number" step="any" />
-        <.form_field field={@form[:longitude]} label="Longitude" type="number" step="any" />
+        <.form_field field={@form[:latitude]} label="Latitude" type="number" />
+        <.form_field field={@form[:longitude]} label="Longitude" type="number" />
       </div>
-      
+
       <div>
         <.button type="submit" loading={@loading}>
           <%= if @editing, do: "Update Plot", else: "Create Plot" %>
