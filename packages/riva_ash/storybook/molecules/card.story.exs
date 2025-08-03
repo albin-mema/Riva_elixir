@@ -11,14 +11,14 @@ defmodule Storybook.Molecules.Card do
         slots: [
           """
           <:header>
-            <:title>Card Title</:title>
-            <:subtitle>Card subtitle</:subtitle>
+            <.card_title>Card Title</.card_title>
+            <.card_description>Card subtitle</.card_description>
           </:header>
-          <:content>
+          <:body>
             This is the main content of the card. It can contain any HTML or Phoenix components.
-          </:content>
+          </:body>
           <:footer>
-            <button class="px-4 py-2 bg-blue-500 text-white rounded">Action</button>
+            <button class="px-4 py-2 bg-primary text-primary-foreground rounded">Action</button>
           </:footer>
           """
         ]
@@ -31,12 +31,12 @@ defmodule Storybook.Molecules.Card do
         slots: [
           """
           <:header>
-            <:title>Bordered Card</:title>
-            <:subtitle>This card has a border</:subtitle>
+            <.card_title>Bordered Card</.card_title>
+            <.card_description>This card has a border</.card_description>
           </:header>
-          <:content>
+          <:body>
             This card uses the bordered variant which adds a border around the card.
-          </:content>
+          </:body>
           """
         ]
       },
@@ -48,12 +48,12 @@ defmodule Storybook.Molecules.Card do
         slots: [
           """
           <:header>
-            <:title>Elevated Card</:title>
-            <:subtitle>This card has elevation</:subtitle>
+            <.card_title>Elevated Card</.card_title>
+            <.card_description>This card has elevation</.card_description>
           </:header>
-          <:content>
+          <:body>
             This card uses the elevated variant which adds a shadow to create depth.
-          </:content>
+          </:body>
           """
         ]
       },
@@ -65,12 +65,12 @@ defmodule Storybook.Molecules.Card do
         slots: [
           """
           <:header>
-            <:title>Custom Styled Card</:title>
-            <:subtitle>With custom CSS classes</:subtitle>
+            <.card_title>Custom Styled Card</.card_title>
+            <.card_description>With custom CSS classes</.card_description>
           </:header>
-          <:content>
+          <:body>
             This card demonstrates how you can apply custom CSS classes to style the card.
-          </:content>
+          </:body>
           """
         ]
       },
@@ -79,9 +79,9 @@ defmodule Storybook.Molecules.Card do
         attributes: %{},
         slots: [
           """
-          <:content>
+          <:body>
             This is a simple card with only content, no header or footer.
-          </:content>
+          </:body>
           """
         ]
       }

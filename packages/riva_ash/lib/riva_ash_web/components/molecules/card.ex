@@ -34,7 +34,7 @@ defmodule RivaAshWeb.Components.Molecules.Card do
   attr(:rest, :global)
 
   slot(:header)
-  slot(:body, required: true)
+  slot(:body)
   slot(:footer)
 
   def card(assigns) do
