@@ -21,7 +21,12 @@ defmodule RivaAshWeb.Components.Atoms.Button do
     <button
       type={@type}
       class={[
-        "px-4 py-2 rounded-md font-semibold text-white",
+        "inline-flex items-center justify-center rounded-lg font-medium",
+        "transition-colors duration-200 focus:outline-none focus:ring-2",
+        "focus:ring-ring/30 focus:ring-offset-2 ring-offset-background",
+        "disabled:opacity-50 disabled:cursor-not-allowed",
+        size_classes(@size),
+        variant_classes(@variant),
         @class
       ]}
       disabled={@disabled}
@@ -30,5 +35,30 @@ defmodule RivaAshWeb.Components.Atoms.Button do
       <%= render_slot(@inner_block) %>
     </button>
     """
+  end
+
+  defp size_classes(size) do
+    case size do
+      "sm" -> "text-sm px-3 py-1.5"
+      "md" -> "text-base px-4 py-2"
+      "lg" -> "text-lg px-6 py-3"
+      _ -> "text-base px-4 py-2"
+    end
+  end
+
+  defp variant_classes(variant) do
+    case variant do
+      "primary" ->
+        "bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm"
+      "secondary" ->
+        "bg-secondary text-secondary-foreground hover:bg-secondary/80 border border-secondary-border"
+      "outline" ->
+        "border-2 border-input bg-transparent hover:bg-accent/20 text-foreground"
+      "ghost" ->
+        "hover:bg-accent/20 text-foreground/80 hover:text-foreground"
+      "link" ->
+        "text-primary underline-offset-4 hover:underline decoration-2"
+      _ -> "bg-primary text-primary-foreground"
+    end
   end
 end
