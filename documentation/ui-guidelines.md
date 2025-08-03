@@ -23,6 +23,11 @@
 
 **Tables**: Always use Flop library for table functionality.
 
+## Component Patterns
+- **Stateful Combinations**: Use LiveView to manage state across multiple atomic components
+- **Validation Flows**: Implement real-time validation using Phoenix form handling
+- **Paginated Data**: Combine tables with pagination controls for large datasets
+
 ## Common Patterns
 
 ### 3. UI Component Creation
