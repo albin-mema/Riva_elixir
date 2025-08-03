@@ -1,5 +1,6 @@
 defmodule RivaAshWeb.BusinessLiveTest do
   use RivaAshWeb.FeatureCase, async: true
+  use RivaAsh.TestHelpers
 
   # alias RivaAsh.Resources.Business
 

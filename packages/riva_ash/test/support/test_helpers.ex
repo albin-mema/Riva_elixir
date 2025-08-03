@@ -1,215 +1,289 @@
 defmodule RivaAsh.TestHelpers do
   @moduledoc """
-  Test helpers for RivaAsh application.
-  Simplified version that only includes working functions for current domain.
+  Helper functions for testing.
+
+  This module provides common test helpers for setting up test data,
+  making requests, and asserting responses in a consistent way.
+
+  ## Usage
+
+  Add this to your test module:
+
+      use RivaAsh.TestHelpers
+
+  Or import specific functions:
+
+      import RivaAsh.TestHelpers, only: [create_item: 1]
   """
+
+  import ExUnit.Assertions
+  import Phoenix.ConnTest
+  import Plug.Conn
+  defmacro __using__(_opts) do
+    quote do
+      import ExUnit.Assertions
+      import Plug.Conn
+      import Phoenix.ConnTest
+
+      alias RivaAsh.Resources.Item
+      alias RivaAsh.Accounts.User
+      alias RivaAsh.Domain
+      alias RivaAsh.Accounts
+      alias Plug.Conn
+
+      # Setup the SQL sandbox for tests.
+      setup tags do
+        # The sandbox is already started in test_helper.exs, so we just need to set the mode.
+        unless tags[:async] do
+          Ecto.Adapters.SQL.Sandbox.mode(RivaAsh.Repo, {:shared, self()})
+        end
+
+        :ok
+      end
+    end
+  end
+
 
   @doc """
-  Creates a test business with default attributes.
+  Run a function in a sandbox transaction.
+
+  This is useful for isolating test data within a test case.
   """
-  def create_business(attrs \\ %{}) do
-    default_attrs = %{
-      name: "Test Business",
-      description: "A test business",
-      address: "123 Test St",
-      phone: "555-0123",
-      email: "test@business.com",
-      website: "https://testbusiness.com",
-      is_active: true
+  @spec sandboxed((-> any())) :: any()
+  def sandboxed(fun) when is_function(fun, 0) do
+    :ok = Ecto.Adapters.SQL.Sandbox.checkout(RivaAsh.Repo)
+    fun.()
+  end
+
+  @doc """
+  Create a test item with the given attributes.
+
+  ## Examples
+
+      # Create with default name
+      {:ok, item} = create_item()
+
+      # Create with custom attributes
+      {:ok, item} = create_item(%{name: "Custom Name"})
+
+  """
+  @spec create_item(map()) :: {:ok, Item.t()} | {:error, any()}
+  def create_item(attrs) when is_map(attrs) do
+    defaults = %{
+      name: "Test Item #{System.unique_integer([:positive, :monotonic])}"
     }
 
-    attrs = Map.merge(default_attrs, attrs)
+    attrs = Map.merge(defaults, attrs)
+    Ash.create(Item, attrs, domain: Domain)
+  end
+
+  @doc """
+  Create a test item with default attributes.
+  """
+  @spec create_item() :: {:ok, Item.t()} | {:error, any()}
+  def create_item do
+    create_item(%{})
+  end
+
+  @doc """
+  Create a test item and return it, raising on error.
+
+  ## Examples
+
+      # Create with default name
+      item = create_item!()
+
+      # Create with custom attributes
+      item = create_item!(%{name: "Custom Name"})
+
+  """
+  @spec create_item!(map()) :: Item.t()
+  def create_item!(attrs) when is_map(attrs) do
+    case create_item(attrs) do
+      {:ok, item} -> item
+      {:error, error} -> raise "Failed to create test item: #{inspect(error)}"
+    end
+  end
+
+  @doc """
+  Create a test item with default attributes and return it, raising on error.
+  """
+  @spec create_item!() :: Item.t()
+  def create_item! do
+    create_item!(%{})
+  end
+
+  @doc """
+  Recursively assert that all key-value pairs in expected exist in actual.
+
+  This is more flexible than a direct comparison as it allows for partial matches.
+  """
+  @spec assert_maps_match(any(), any(), [String.t()]) :: :ok | no_return()
+  def assert_maps_match(expected, actual, path \\ []) do
+    cond do
+      is_map(expected) and is_map(actual) ->
+        Enum.each(expected, fn {key, expected_value} ->
+          assert Map.has_key?(actual, key),
+                 "Expected key `#{key}` not found in #{inspect(actual)} at path #{inspect(path)}"
+
+          assert_maps_match(
+            expected_value,
+            actual[key] || actual[to_string(key)],
+            path ++ [to_string(key)]
+          )
+        end)
+
+      is_list(expected) and is_list(actual) ->
+        assert length(expected) == length(actual),
+               "Expected list of length #{length(expected)} but got #{length(actual)} at path #{inspect(path)}"
+
+        Enum.zip(expected, actual)
+        |> Enum.with_index()
+        |> Enum.each(fn {{expected_item, actual_item}, index} ->
+          assert_maps_match(expected_item, actual_item, path ++ ["[#{index}]"])
+        end)
+
+      true ->
+        assert expected == actual,
+               "Expected #{inspect(expected)} but got #{inspect(actual)} at path #{inspect(path)}"
+    end
+
+    :ok
+  end
+
+  @doc """
+  Create a test user with the given attributes.
+
+  ## Examples
+
+      # Create with default attributes
+      {:ok, user} = create_user()
+
+      # Create with custom attributes
+      {:ok, user} = create_user(%{email: "test@example.com", role: :admin})
+
+  """
+  @spec create_user(map()) :: {:ok, User.t()} | {:error, any()}
+  def create_user(attrs \\ %{}) do
+    defaults = %{
+      email: "test_#{System.unique_integer([:positive, :monotonic])}@example.com",
+      password: "password123",
+      name: "Test User",
+      role: :admin
+    }
+
+    attrs = Map.merge(defaults, attrs)
+
+    User
+    |> Ash.Changeset.for_create(:register_with_password, attrs)
+    |> Ash.create(domain: RivaAsh.Accounts)
+  end
+
+  @doc """
+  Create a test user and return it, raising on error.
+  """
+  @spec create_user!(map()) :: User.t()
+  def create_user!(attrs \\ %{}) do
+    case create_user(attrs) do
+      {:ok, user} -> user
+      {:error, error} -> raise "Failed to create test user: #{inspect(error)}"
+    end
+  end
+
+  @doc """
+  Sign in a user for testing by setting up the session and assigns.
+
+  ## Examples
+
+      conn = build_conn() |> sign_in_user(user)
+
+  """
+  @spec sign_in_user(Conn.t(), User.t()) :: Conn.t()
+  def sign_in_user(conn, user) do
+    token = Phoenix.Token.sign(RivaAshWeb.Endpoint, "user_auth", user.id)
+
+    conn
+    |> Plug.Test.init_test_session(%{})
+    |> put_session(:user_token, token)
+    |> assign(:current_user, user)
+  end
+
+  @doc """
+  Create a user and sign them in for testing.
+
+  ## Examples
+
+      {conn, user} = build_conn() |> create_and_sign_in_user()
+      {conn, user} = build_conn() |> create_and_sign_in_user(%{role: :admin})
+
+  """
+  @spec create_and_sign_in_user(Conn.t(), map()) :: {Conn.t(), User.t()}
+  def create_and_sign_in_user(conn, attrs \\ %{}) do
+    user = create_user!(attrs)
+    conn = sign_in_user(conn, user)
+    {conn, user}
+  end
+
+  @doc """
+  Create a test business with the given attributes and actor.
+
+  ## Examples
+
+      # Create with default attributes and admin user
+      user = create_user!(%{role: :admin})
+      {:ok, business} = create_business(%{name: "Test Business"}, user)
+
+  """
+  @spec create_business(map(), User.t()) :: {:ok, any()} | {:error, any()}
+  def create_business(attrs \\ %{}, actor) do
+    defaults = %{
+      name: "Test Business #{System.unique_integer([:positive, :monotonic])}",
+      description: "A test business",
+      owner_id: actor.id
+    }
+
+    attrs = Map.merge(defaults, attrs)
 
     RivaAsh.Resources.Business
     |> Ash.Changeset.for_create(:create, attrs)
-    |> Ash.create!()
+    |> Ash.create(actor: actor, domain: RivaAsh.Domain)
   end
 
   @doc """
-  Creates a test client with default attributes.
+  Create a test business and return it, raising on error.
   """
-  def create_client(attrs \\ %{}) do
-    default_attrs = %{
-      name: "Test Client",
-      email: "test@client.com",
-      phone: "555-0123"
-    }
-
-    attrs = Map.merge(default_attrs, attrs)
-
-    RivaAsh.Resources.Client
-    |> Ash.Changeset.for_create(:create, attrs)
-    |> Ash.create!()
-  end
-
-  @doc """
-  Creates a test plot with default attributes.
-  """
-  def create_plot(business_id, attrs \\ %{}) do
-    default_attrs = %{
-      name: "Test Plot",
-      description: "A test plot",
-      business_id: business_id
-    }
-
-    attrs = Map.merge(default_attrs, attrs)
-
-    RivaAsh.Resources.Plot
-    |> Ash.Changeset.for_create(:create, attrs)
-    |> Ash.create!()
-  end
-
-  @doc """
-  Creates a test section with default attributes.
-  """
-  def create_section(plot_id, attrs \\ %{}) do
-    default_attrs = %{
-      name: "Test Section",
-      description: "A test section",
-      plot_id: plot_id
-    }
-
-    attrs = Map.merge(default_attrs, attrs)
-
-    RivaAsh.Resources.Section
-    |> Ash.Changeset.for_create(:create, attrs)
-    |> Ash.create!()
-  end
-
-  @doc """
-  Creates a test item type with default attributes.
-  """
-  def create_item_type(attrs \\ %{}) do
-    default_attrs = %{
-      name: "Test Item Type",
-      description: "A test item type"
-    }
-
-    attrs = Map.merge(default_attrs, attrs)
-
-    RivaAsh.Resources.ItemType
-    |> Ash.Changeset.for_create(:create, attrs)
-    |> Ash.create!()
-  end
-
-  @doc """
-  Creates a test item with default attributes.
-  """
-  def create_item(section_id, item_type_id, attrs \\ %{}) do
-    default_attrs = %{
-      name: "Test Item",
-      description: "A test item",
-      is_active: true,
-      is_always_available: true,
-      section_id: section_id,
-      item_type_id: item_type_id
-    }
-
-    attrs = Map.merge(default_attrs, attrs)
-
-    RivaAsh.Resources.Item
-    |> Ash.Changeset.for_create(:create, attrs)
-    |> Ash.create!()
-  end
-
-  @doc """
-  Creates a test reservation with default attributes.
-  """
-  def create_reservation(client_id, item_id, attrs \\ %{}) do
-    start_time = DateTime.utc_now() |> DateTime.add(3600, :second)
-    end_time = DateTime.utc_now() |> DateTime.add(7200, :second)
-
-    default_attrs = %{
-      client_id: client_id,
-      item_id: item_id,
-      start_time: start_time,
-      end_time: end_time,
-      status: :pending
-    }
-
-    attrs = Map.merge(default_attrs, attrs)
-
-    RivaAsh.Resources.Reservation
-    |> Ash.Changeset.for_create(:create, attrs)
-    |> Ash.create!()
-  end
-
-  @doc """
-  Creates a complete test business setup with all related resources.
-  """
-  def create_test_business(name \\ "Test Business") do
-    # Create business
-    business = create_business(%{name: name})
-
-    # Create plot
-    plot = create_plot(business.id)
-
-    # Create section
-    section = create_section(plot.id)
-
-    # Create item type
-    item_type = create_item_type()
-
-    # Create item
-    item = create_item(section.id, item_type.id)
-
-    # Create client
-    client = create_client()
-
-    %{
-      business: business,
-      plot: plot,
-      section: section,
-      item_type: item_type,
-      item: item,
-      client: client
-    }
-  end
-
-  @doc """
-  Benchmark function execution time.
-  """
-  def benchmark(fun) do
-    {time, result} = :timer.tc(fun)
-    {time, result}
-  end
-
-  @doc """
-  Assert that a function completes within a given time limit.
-  """
-  def assert_performance(fun, max_time_microseconds) do
-    {time, result} = benchmark(fun)
-
-    if time > max_time_microseconds do
-      raise "Function took #{time}μs, expected <= #{max_time_microseconds}μs"
-    end
-
-    result
-  end
-
-  @doc """
-  Assert that an operation fails with an authorization error.
-  """
-  def assert_authorization_error(fun) do
-    try do
-      fun.()
-      raise "Expected authorization error but operation succeeded"
-    rescue
-      e in [Ash.Error.Forbidden] -> :ok
-      other -> raise "Expected authorization error but got: #{inspect(other)}"
+  @spec create_business!(map(), User.t()) :: any()
+  def create_business!(attrs \\ %{}, actor) do
+    case create_business(attrs, actor) do
+      {:ok, business} -> business
+      {:error, error} -> raise "Failed to create test business: #{inspect(error)}"
     end
   end
 
   @doc """
-  Assert that an operation fails with a validation error.
+  Generate a unique string for testing.
+
+  This is useful for creating unique values in tests to avoid conflicts.
+
+  ## Examples
+
+      # Generate a unique string
+      unique = unique_string()
+
+      # With a prefix
+      email = unique_string("user_") <> "@example.com"
+
   """
-  def assert_validation_error(fun) do
-    try do
-      fun.()
-      raise "Expected validation error but operation succeeded"
-    rescue
-      e in [Ash.Error.Invalid] -> :ok
-      other -> raise "Expected validation error but got: #{inspect(other)}"
-    end
+  @spec unique_string(String.t()) :: String.t()
+  def unique_string(prefix) when is_binary(prefix) do
+    "#{prefix}#{System.unique_integer([:positive, :monotonic])}"
+  end
+
+  @doc """
+  Generate a unique string with no prefix.
+  """
+  @spec unique_string() :: String.t()
+  def unique_string do
+    unique_string("")
   end
 end

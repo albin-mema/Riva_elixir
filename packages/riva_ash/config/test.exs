@@ -6,10 +6,11 @@ import Config
 # to provide built-in test partitioning in CI environment.
 # Run `mix help test` for more information.
 config :riva_ash, RivaAsh.Repo,
-  username: "postgres",
-  password: "postgres",
-  hostname: "localhost",
-  database: "riva_ash_test#{System.get_env("MIX_TEST_PARTITION")}",
+  username: System.get_env("DB_USERNAME", "postgres"),
+  password: System.get_env("DB_PASSWORD", "postgres"),
+  hostname: System.get_env("DB_HOSTNAME", "localhost"),
+  database: System.get_env("DB_NAME", "riva_ash_test#{System.get_env("MIX_TEST_PARTITION")}"),
+  port: String.to_integer(System.get_env("DB_PORT", "5432")),
   pool: Ecto.Adapters.SQL.Sandbox,
   pool_size: 10,
   ownership_timeout: 15000,

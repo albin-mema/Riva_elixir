@@ -1,6 +1,6 @@
 defmodule RivaAshWeb.API.V1.ItemsControllerTest do
   use RivaAshWeb.EndpointCase, async: true
-  import RivaAsh.TestHelpers
+  use RivaAsh.TestHelpers
 
   alias RivaAsh.Resources.Item
 

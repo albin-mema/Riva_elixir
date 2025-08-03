@@ -76,6 +76,8 @@ defmodule RivaAshWeb.Router do
     #   pipe_through(:browser)
     #   live_storybook "/storybook", backend_module: RivaAshWeb.Storybook
     # end
+
+    forward("/dev", RivaAshWeb.Dev.Router)
   end
 
   # Client-facing booking API (public)
