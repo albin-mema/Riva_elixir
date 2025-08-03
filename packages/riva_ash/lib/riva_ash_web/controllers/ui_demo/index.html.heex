@@ -1,0 +1,139 @@
+<div class="container mx-auto py-8">
+  <h1 class="text-3xl font-bold mb-8">UI Component Library Demo</h1>
+  
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+    <!-- Buttons Section -->
+    <div class="space-y-4">
+      <h2 class="text-2xl font-semibold">Buttons</h2>
+      
+      <div class="flex flex-wrap gap-2">
+        <.button>Default</.button>
+        <.button variant="destructive">Destructive</.button>
+        <.button variant="outline">Outline</.button>
+        <.button variant="secondary">Secondary</.button>
+        <.button variant="ghost">Ghost</.button>
+        <.button variant="link">Link</.button>
+      </div>
+      
+      <div class="flex flex-wrap gap-2">
+        <.button size="sm">Small</.button>
+        <.button>Default</.button>
+        <.button size="lg">Large</.button>
+      </div>
+      
+      <div class="flex flex-wrap gap-2">
+        <.button loading={true}>Loading</.button>
+        <.button disabled={true}>Disabled</.button>
+      </div>
+    </div>
+    
+    <!-- Inputs Section -->
+    <div class="space-y-4">
+      <h2 class="text-2xl font-semibold">Inputs</h2>
+      
+      <div class="space-y-4">
+        <.input placeholder="Default input" />
+        <.input variant="error" placeholder="Error input" />
+        <.input variant="success" placeholder="Success input" />
+        <.textarea placeholder="Textarea" rows="3" />
+      </div>
+      
+      <div class="flex flex-wrap gap-2">
+        <.input size="sm" placeholder="Small input" />
+        <.input placeholder="Default input" />
+        <.input size="lg" placeholder="Large input" />
+      </div>
+    </div>
+    
+    <!-- Checkboxes Section -->
+    <div class="space-y-4">
+      <h2 class="text-2xl font-semibold">Checkboxes</h2>
+      
+      <div class="space-y-2">
+        <.checkbox label="Default checkbox" />
+        <.checkbox variant="error" label="Error checkbox" />
+        <.checkbox variant="success" label="Success checkbox" />
+        <.checkbox label="Checkbox with description" description="This is a description for the checkbox" />
+      </div>
+      
+      <div class="flex flex-wrap gap-2">
+        <.checkbox size="sm" label="Small" />
+        <.checkbox label="Default" />
+        <.checkbox size="lg" label="Large" />
+      </div>
+    </div>
+    
+    <!-- Selects Section -->
+    <div class="space-y-4">
+      <h2 class="text-2xl font-semibold">Selects</h2>
+      
+      <div class="space-y-4">
+        <.select prompt="Default select" options={[{"Option 1", "1"}, {"Option 2", "2"}, {"Option 3", "3"}]} />
+        <.select variant="error" prompt="Error select" options={[{"Option 1", "1"}, {"Option 2", "2"}, {"Option 3", "3"}]} />
+        <.select variant="success" prompt="Success select" options={[{"Option 1", "1"}, {"Option 2", "2"}, {"Option 3", "3"}]} />
+      </div>
+      
+      <div class="flex flex-wrap gap-2">
+        <.select size="sm" prompt="Small" options={[{"Option 1", "1"}, {"Option 2", "2"}]} />
+        <.select prompt="Default" options={[{"Option 1", "1"}, {"Option 2", "2"}]} />
+        <.select size="lg" prompt="Large" options={[{"Option 1", "1"}, {"Option 2", "2"}]} />
+      </div>
+    </div>
+    
+    <!-- Badges Section -->
+    <div class="space-y-4">
+      <h2 class="text-2xl font-semibold">Badges</h2>
+      
+      <div class="flex flex-wrap gap-2">
+        <.badge>Default</.badge>
+        <.badge variant="secondary">Secondary</.badge>
+        <.badge variant="destructive">Destructive</.badge>
+        <.badge variant="outline">Outline</.badge>
+      </div>
+      
+      <div class="flex flex-wrap gap-2">
+        <.badge size="sm">Small</.badge>
+        <.badge>Default</.badge>
+        <.badge size="lg">Large</.badge>
+      </div>
+    </div>
+    
+    <!-- Cards Section -->
+    <div class="space-y-4">
+      <h2 class="text-2xl font-semibold">Cards</h2>
+      
+      <.card>
+        <.card_header>
+          <.card_title>Card Title</.card_title>
+          <.card_description>Card description</.card_description>
+        </.card_header>
+        <.card_content>
+          <p>This is a card with header, content, and footer sections.</p>
+        </.card_content>
+        <.card_footer>
+          <.button variant="secondary">Card Footer Button</.button>
+        </.card_footer>
+      </.card>
+    </div>
+    
+    <!-- Alerts Section -->
+    <div class="space-y-4">
+      <h2 class="text-2xl font-semibold">Alerts</h2>
+      
+      <div class="space-y-2">
+        <.alert title="Default Alert">
+          This is a default alert.
+        </.alert>
+        <.alert variant="destructive" title="Destructive Alert">
+          This is a destructive alert.
+        </.alert>
+        <.alert variant="success" title="Success Alert">
+          This is a success alert.
+        </.alert>
+        <.alert variant="warning" title="Warning Alert">
+          This is a warning alert.
+        </.alert>
+      </div>
+    </div>
+  </div>
+</div>
