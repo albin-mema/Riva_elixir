@@ -13,8 +13,14 @@ defmodule RivaAshWeb.Auth.SignInLive do
   end
 
   def mount(_params, _session, socket) do
+    client_ip = get_client_ip(socket)
     form = to_form(%{"email" => "", "password" => ""})
-    {:ok, assign(socket, form: form, error_message: nil, loading: false)}
+    {:ok, assign(socket,
+      form: form,
+      error_message: nil,
+      loading: false,
+      client_ip: client_ip
+    )}
   end
 
   def render(assigns) do
