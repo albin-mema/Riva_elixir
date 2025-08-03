@@ -3,7 +3,7 @@ import Config
 # Configure your database
 config :riva_ash, RivaAsh.Repo,
   username: System.get_env("DB_USERNAME") || "postgres",
-  password: System.get_env("DB_PASSWORD"),
+  password: System.get_env("DB_PASSWORD") || "postgres",
   hostname: System.get_env("DB_HOSTNAME") || "localhost",
   database: System.get_env("DB_NAME") || "riva_ash_dev",
   port: String.to_integer(System.get_env("DB_PORT") || "5432"),

@@ -14,6 +14,29 @@ Application.put_env(:riva_ash, :test_mode, true)
 # Configure test logger
 Logger.configure(level: :warn)
 
+# Load minimal support files for unit tests
+try do
+  Code.require_file("test/support/property_helpers.ex")
+rescue
+  _ -> IO.puts("Skipping property_helpers.ex (dependencies not available)")
+end
+
+# Load property testing support files (only the ones that work in unit tests)
+try do
+  Code.require_file("test/support/property_testing/state_machine.ex")
+rescue
+  e -> IO.puts("Skipping state_machine.ex: #{inspect(e)}")
+end
+
+try do
+  Code.require_file("test/support/property_testing/route_enumerator.ex")
+rescue
+  e -> IO.puts("Skipping route_enumerator.ex: #{inspect(e)}")
+end
+
+# Skip flow_generator, browser_executor, and data_manager for unit tests
+# as they have dependencies not available in unit test environment
+
 # Configure ExUnit for unit tests only
 ExUnit.configure(
   formatters: [ExUnit.CLIFormatter],

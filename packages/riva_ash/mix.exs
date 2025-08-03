@@ -115,11 +115,12 @@ defmodule RivaAsh.MixProject do
       setup: ["deps.get", "ecto.setup"],
       "ecto.setup": ["ecto.create", "ecto.migrate", "run priv/repo/seeds.exs"],
       "ecto.reset": ["ecto.drop", "ecto.setup"],
-      test: fn _ ->
+      test: fn args ->
         if System.get_env("SKIP_DB") == "true" do
-          ["test"]
+          # Use unit test helper for tests without database
+          ["run", "-e", "Code.require_file(\"test/unit_test_helper.exs\"); ExUnit.CLI.run(#{inspect(args)})"]
         else
-          ["ecto.create --quiet", "ecto.migrate --quiet", "test"]
+          ["ecto.create --quiet", "ecto.migrate --quiet", "test"] ++ args
         end
       end,
       "assets.deploy": [

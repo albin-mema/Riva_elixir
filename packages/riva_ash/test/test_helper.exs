@@ -55,13 +55,8 @@ if skip_db do
       :database,
       :repo,
       :ecto
-    ],
-    include: [
-      :unit,
-      :fast,
-      :core,
-      :pure
     ]
+    # Removed include filter - run all tests that aren't excluded
   )
 else
   # For full test suite with database
@@ -73,11 +68,7 @@ else
       :slow,
       :property_based
     ],
-    include: [
-      :unit,
-      :fast,
-      :core
-    ],
+    # Removed include filter - run all tests that aren't excluded
     trace: false,
     capture_log: false,
     colors: [enabled: true]
@@ -168,6 +159,25 @@ defmodule RivaAsh.TestSetup do
     end
   end
 end
+
+# Load all test support files
+IO.puts("Loading test support files...")
+Code.require_file("test/support/test_helpers.ex")
+Code.require_file("test/support/data_case.ex")
+Code.require_file("test/support/endpoint_case.ex")
+Code.require_file("test/support/conn_case.ex")
+Code.require_file("test/support/feature_case.ex")
+Code.require_file("test/support/mocks/repo_mock.ex")
+Code.require_file("test/support/factory.ex")
+Code.require_file("test/support/property_helpers.ex")
+
+# Load property testing support files
+IO.puts("Loading property testing support files...")
+Code.require_file("test/support/property_testing/state_machine.ex")
+Code.require_file("test/support/property_testing/route_enumerator.ex")
+Code.require_file("test/support/property_testing/flow_generator.ex")
+Code.require_file("test/support/property_testing/browser_executor.ex")
+Code.require_file("test/support/property_testing/data_manager.ex")
 
 # Set up the test environment
 RivaAsh.TestSetup.setup_test_environment()
