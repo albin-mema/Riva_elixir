@@ -156,7 +156,7 @@ defmodule RivaAsh.PropertyTesting.RouteEnumerator do
   end
 
   defp has_auth_pipeline?(route, pipeline) do
-    case route.pipe_through do
+    case Map.get(route, :pipe_through) do
       pipelines when is_list(pipelines) -> pipeline in pipelines
       _ -> false
     end
@@ -305,11 +305,23 @@ defmodule RivaAsh.PropertyTesting.RouteEnumerator do
     select_weighted_route(weighted_routes)
   end
 
+  defp select_weighted_route([]) do
+    # No routes available, return nil
+    nil
+  end
+
   defp select_weighted_route(weighted_routes) do
     total_weight = Enum.sum(Enum.map(weighted_routes, fn {_route, weight} -> weight end))
-    random_value = :rand.uniform(total_weight)
 
-    select_route_by_weight(weighted_routes, random_value, 0)
+    # Handle case where all routes have zero weight
+    if total_weight == 0 do
+      # Just pick the first route if all have zero weight
+      {route, _weight} = hd(weighted_routes)
+      route
+    else
+      random_value = :rand.uniform(total_weight)
+      select_route_by_weight(weighted_routes, random_value, 0)
+    end
   end
 
   defp select_route_by_weight([{route, weight} | _rest], random_value, acc)

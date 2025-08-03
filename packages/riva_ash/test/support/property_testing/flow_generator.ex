@@ -10,7 +10,11 @@ defmodule RivaAsh.PropertyTesting.FlowGenerator do
   import StreamData
 
   alias RivaAsh.PropertyTesting.{StateMachine, RouteEnumerator}
-  alias RivaAsh.Factory
+
+  # Conditionally alias Factory if available
+  if Code.ensure_loaded?(RivaAsh.Factory) do
+    alias RivaAsh.Factory
+  end
 
   @type flow_step :: {atom(), map()}
   @type user_flow :: [flow_step()]
@@ -250,19 +254,35 @@ defmodule RivaAsh.PropertyTesting.FlowGenerator do
   end
 
   defp generate_resource_data(:business) do
-    Factory.business_attrs() |> Enum.take(1) |> hd()
+    if Code.ensure_loaded?(RivaAsh.Factory) do
+      RivaAsh.Factory.business_attrs() |> Enum.take(1) |> hd()
+    else
+      %{name: "Test Business", description: "Test Description"}
+    end
   end
 
   defp generate_resource_data(:client) do
-    Factory.client_attrs() |> Enum.take(1) |> hd()
+    if Code.ensure_loaded?(RivaAsh.Factory) do
+      RivaAsh.Factory.client_attrs() |> Enum.take(1) |> hd()
+    else
+      %{name: "Test Client", email: "test@example.com"}
+    end
   end
 
   defp generate_resource_data(:item) do
-    Factory.item_attrs() |> Enum.take(1) |> hd()
+    if Code.ensure_loaded?(RivaAsh.Factory) do
+      RivaAsh.Factory.item_attrs() |> Enum.take(1) |> hd()
+    else
+      %{name: "Test Item", price: 100}
+    end
   end
 
   defp generate_resource_data(:employee) do
-    Factory.employee_attrs() |> Enum.take(1) |> hd()
+    if Code.ensure_loaded?(RivaAsh.Factory) do
+      RivaAsh.Factory.employee_attrs() |> Enum.take(1) |> hd()
+    else
+      %{name: "Test Employee", email: "employee@example.com"}
+    end
   end
 
   defp create_flow_generator(resource_type) do

@@ -1,13 +1,15 @@
-defmodule RivaAsh.PropertyTesting.BrowserExecutor do
-  @moduledoc """
-  Executes property-based generated user flows using Playwright browser automation.
+if Code.ensure_loaded?(PhoenixTest) do
+  defmodule RivaAsh.PropertyTesting.BrowserExecutor do
+    @moduledoc """
+    Executes property-based generated user flows using Playwright browser automation.
 
-  This module takes generated user flows and executes them in real browsers,
-  handling authentication, navigation, form filling, and error recovery.
-  """
+    This module takes generated user flows and executes them in real browsers,
+    handling authentication, navigation, form filling, and error recovery.
+    """
 
-  import PhoenixTest
-  alias RivaAsh.PropertyTesting.{StateMachine, DataManager}
+    import PhoenixTest
+
+    alias RivaAsh.PropertyTesting.{StateMachine, DataManager}
 
   @type execution_result :: {:ok, map()} | {:error, term()}
   @type flow_step :: {atom(), map()}
@@ -417,5 +419,16 @@ defmodule RivaAsh.PropertyTesting.BrowserExecutor do
     |> String.replace("/", "_")
     |> String.replace(":", "_")
     |> String.replace("?", "_")
+  end
+  end
+else
+  defmodule RivaAsh.PropertyTesting.BrowserExecutor do
+    @moduledoc """
+    Stub module for BrowserExecutor when PhoenixTest is not available.
+    """
+
+    def execute_flow(_flow, _opts \\ []) do
+      {:error, :phoenix_test_not_available}
+    end
   end
 end

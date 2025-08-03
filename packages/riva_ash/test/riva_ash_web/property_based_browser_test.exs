@@ -44,8 +44,8 @@ defmodule RivaAshWeb.PropertyBasedBrowserTest do
     @tag :slow
     property "random user flows complete successfully", %{conn: conn} do
       check all(
-              flow <- user_flow_generator(max_steps: 8, min_steps: 3),
-              max_runs: 20
+              flow <- user_flow_generator(max_steps: 12, min_steps: 3),
+              max_runs: 50
             ) do
         IO.puts(("\n" <> "=") |> String.duplicate(60))
         IO.puts("🎯 PROPERTY TEST: Random User Flow")
@@ -125,7 +125,7 @@ defmodule RivaAshWeb.PropertyBasedBrowserTest do
     property "navigation flows don't break the application", %{conn: conn} do
       check all(
               flow <- navigation_flow_generator(:authenticated),
-              max_runs: 15
+              max_runs: 30
             ) do
         # Start with authenticated user
         auth_flow = [
@@ -157,7 +157,7 @@ defmodule RivaAshWeb.PropertyBasedBrowserTest do
       check all(
               resource_type <- member_of([:business, :client, :item]),
               flow <- crud_flow_generator(resource_type),
-              max_runs: 8
+              max_runs: 20
             ) do
         # Start with authenticated user
         auth_flow = [
