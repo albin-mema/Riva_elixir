@@ -14,6 +14,13 @@ defmodule Storybook.Root do
     ]
   end
 
+  def entry("design_tokens") do
+    [
+      name: "Design Tokens",
+      icon: {:fa, "palette", :thin}
+    ]
+  end
+
   def entry("property_testing") do
     [
       name: "Property-Based Testing",
