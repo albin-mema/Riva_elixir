@@ -5,7 +5,9 @@ defmodule RivaAshWeb.Router do
   import Phoenix.Controller
   import Phoenix.LiveView.Router
   import AshAdmin.Router
-  import PhoenixStorybook.Router
+
+  # PhoenixStorybook.Router import disabled for test environment
+  # import PhoenixStorybook.Router
 
   pipeline :api do
     plug(:accepts, ["json"])
@@ -65,14 +67,15 @@ defmodule RivaAshWeb.Router do
       )
     end
 
-    scope "/" do
-      storybook_assets()
-    end
+    # Storybook routes disabled for test environment
+    # scope "/" do
+    #   storybook_assets()
+    # end
 
-    scope "/", RivaAshWeb do
-      pipe_through(:browser)
-      live_storybook "/storybook", backend_module: RivaAshWeb.Storybook
-    end
+    # scope "/", RivaAshWeb do
+    #   pipe_through(:browser)
+    #   live_storybook "/storybook", backend_module: RivaAshWeb.Storybook
+    # end
   end
 
   # Client-facing booking API (public)
