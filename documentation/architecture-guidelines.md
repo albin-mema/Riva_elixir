@@ -11,7 +11,7 @@
 - **Testing**: ExUnit with property-based testing (StreamData)
 - **Authentication**: AshAuthentication with role-based access
 - **Authorization**: Ash Policies with SimpleSat SAT solver
-- **UI**: Tailwind CSS with Atomic Design patterns
+- **UI**: Tailwind CSS with Atomic Design patterns and canonical UI system
 
 ## Architecture Patterns
 
@@ -50,10 +50,47 @@ use Ash.Resource,
 
 ### 3. UI Component Architecture
 
-**Atomic Design Pattern**: All UI components follow atomic design:
-- **Atoms**: `lib/riva_ash_web/components/atoms/` (Button, Input, Text, etc.)
-- **Molecules**: `lib/riva_ash_web/components/molecules/` (Card, FormField, etc.)
-- **Organisms**: `lib/riva_ash_web/components/organisms/` (DataTable, CalendarView, etc.)
+**Canonical UI System**: The application uses a canonical UI component system:
+
+- **UI Components** (`RivaAshWeb.Components.UI.*`): Single source of truth for design system primitives
+  - `UI.Button`, `UI.Input`, `UI.Card`, `UI.Text`, etc.
+  - Follow design system tokens and consistent styling
+  - Comprehensive prop APIs with variants, sizes, and states
+
+- **Compatibility Wrappers** (`RivaAshWeb.Components.Atoms.*`): Backward-compatible wrappers
+  - Delegate to UI components while preserving legacy APIs
+  - Map legacy sizes/variants to canonical equivalents
+  - Will be removed after migration completion
+
+- **Composed Components** (`RivaAshWeb.Components.Molecules.*`): Higher-level compositions
+  - Use UI components internally while preserving composed APIs
+  - Examples: `FormField`, `Card` with header/body/footer slots
+  - Provide domain-specific functionality
+
+**Component Import Patterns**:
+```elixir
+# ✅ Preferred for new code
+alias RivaAshWeb.Components.UI.Button, as: UIButton
+alias RivaAshWeb.Components.UI.Input, as: UIInput
+
+# ✅ Acceptable during migration
+import RivaAshWeb.Components.Atoms.Button  # Delegates to UI.Button
+
+# ✅ For composed functionality
+import RivaAshWeb.Components.Molecules.FormField
+```
+
+**Design System Integration**:
+- All UI components use Tailwind CSS with design tokens
+- Consistent spacing, typography, and color schemes
+- Support for dark/light themes through CSS variables
+- Accessibility-first approach with proper ARIA attributes
+
+**Testing Strategy**:
+- Focus testing on canonical UI components
+- Property-based testing for component variants and states
+- Compatibility wrapper tests ensure proper delegation
+- Integration tests for composed molecule components
 
 **Custom Components**: Always create reusable custom components instead of inline HTML.
 
@@ -177,6 +214,22 @@ packages/
 - Use for frontend data fetching
 - Implement proper field selection
 - Handle errors gracefully
+- Authorization: GraphQL layer authorization is enabled and resource policies are enforced. The web layer must pass the authenticated actor into the Absinthe context for policy evaluation so policies can run consistently across transports.
+
+## Runtime and Secrets (Production)
+
+The following environment variables are required in production and are validated at runtime:
+
+- DATABASE_URL (ecto://USER:PASS@HOST/DATABASE)
+- SECRET_KEY_BASE (generate via: mix phx.gen.secret)
+- AUTH_TOKEN_SECRET (used by AshAuthentication to sign tokens)
+- PHX_HOST, PORT (endpoint configuration)
+- POOL_SIZE (DB pool sizing)
+
+Docker notes:
+- docker-compose defaults MIX_ENV to dev to avoid accidental prod with weak defaults.
+- SECRET_KEY_BASE and AUTH_TOKEN_SECRET must be provided explicitly when running in prod.
+- A JSON health endpoint is exposed at GET /health, used by container health checks.
 
 ## Deployment Considerations
 
