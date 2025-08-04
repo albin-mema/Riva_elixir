@@ -31,7 +31,7 @@ config = %{
 # Helper functions for seeding
 defmodule SeedHelpers do
   def create_or_find_user(email, attrs) do
-    case User |> Ash.Query.filter(expr(email == ^email)) |> Ash.read_one() do
+    case User |> Ash.Query.filter(expr(email == ^email)) |> Ash.read_one(action: :seed_read) do
       {:ok, user} when not is_nil(user) ->
         IO.puts("User already exists: #{user.email} (ID: #{user.id})")
         user
@@ -84,7 +84,7 @@ IO.puts("Creating admin user...")
 admin_user = SeedHelpers.create_or_find_user("admin@example.com", %{
   email: "admin@example.com",
   name: "Admin User",
-  role: :admin,
+  role: "admin",
   password: "admin123456"
 })
 
@@ -100,7 +100,7 @@ regular_users = Enum.map(1..config.users.regular, fn i ->
   SeedHelpers.create_or_find_user(email, %{
     email: email,
     name: Faker.Person.name(),
-    role: :user,
+    role: "user",
     password: "password123"
   })
 end) |> Enum.filter(&(&1 != nil))

@@ -32,9 +32,22 @@ defmodule RivaAsh.Repo.Migrations.AddArchivalFields do
       add(:archived_at, :utc_datetime_usec)
     end
 
-    alter table(:businesses) do
-      add(:archived_at, :utc_datetime_usec)
-    end
+    # businesses already has archived_at from an earlier migration in this ordering.
+    # Add it conditionally to avoid duplicate_column error when re-running migrations.
+    execute("""
+    DO $$
+    BEGIN
+      IF NOT EXISTS (
+        SELECT 1
+        FROM information_schema.columns
+        WHERE table_name = 'businesses'
+          AND column_name = 'archived_at'
+      ) THEN
+        ALTER TABLE businesses ADD COLUMN archived_at timestamp(6) with time zone;
+      END IF;
+    END;
+    $$;
+    """)
 
     alter table(:availability_exceptions) do
       add(:archived_at, :utc_datetime_usec)
