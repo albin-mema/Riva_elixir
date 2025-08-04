@@ -14,8 +14,9 @@ defmodule RivaAshWeb.ConnCase do
       import RivaAshWeb.ConnCase
       import RivaAsh.TestHelpers
 
-      # PhoenixTest disabled - not available in current setup
-      # import PhoenixTest
+      # Helper imports for convenience
+      import RivaAsh.Test.TimeHelpers
+      import RivaAsh.Test.JsonApiHelpers
 
       alias RivaAshWeb.Router.Helpers, as: Routes
 
@@ -27,12 +28,14 @@ defmodule RivaAshWeb.ConnCase do
   setup tags do
     :ok = Ecto.Adapters.SQL.Sandbox.checkout(RivaAsh.Repo)
 
-    if !tags[:async] do
+    if tags[:shared_db] do
       Ecto.Adapters.SQL.Sandbox.mode(RivaAsh.Repo, {:shared, self()})
+    else
+      unless tags[:async] do
+        Ecto.Adapters.SQL.Sandbox.mode(RivaAsh.Repo, {:shared, self()})
+      end
     end
 
-    # Skip mock setup for now - using real repo in sandbox mode
-
-    conn = Phoenix.ConnTest.build_conn()
+    {:ok, conn: Phoenix.ConnTest.build_conn()}
   end
 end

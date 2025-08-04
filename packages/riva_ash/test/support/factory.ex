@@ -1,28 +1,23 @@
 defmodule RivaAsh.Factory do
   @moduledoc """
-  Factory module for generating test data using StreamData for property-based testing.
+  Factory and generators for core resources.
 
-  This module provides generators for all Ash resources in the system,
-  allowing tests to use randomized data instead of hardcoded values.
+  This file augments existing generators with concise builders and a business context.
 
-  ## Usage
+  Usage examples:
 
-      # Generate a single business
-      business = RivaAsh.Factory.business() |> Enum.take(1) |> hd()
+      # Build or insert core entities with minimal boilerplate
+      attrs = RivaAsh.Factory.business_attrs() |> Enum.take(1) |> hd()
+      {:ok, business} = RivaAsh.Resources.Business.create(attrs)
 
-      # Generate multiple businesses
-      businesses = RivaAsh.Factory.business() |> Enum.take(5)
+      # Build a ready-to-use business context (admin user + business)
+      ctx = RivaAsh.Factory.build(:business_context)
+      # or persist related entities
+      ctx = RivaAsh.Factory.insert(:business_context)
 
-      # Generate business with specific attributes
-      business = RivaAsh.Factory.business(%{name: "Specific Name"}) |> Enum.take(1) |> hd()
-
-      # Use in property-based tests
-      property "business names are always valid" do
-        check all business_attrs <- RivaAsh.Factory.business_attrs() do
-          assert {:ok, business} = RivaAsh.Resources.Business.create(business_attrs)
-          assert String.length(business.name) >= 2
-        end
-      end
+  The business_context contains:
+    - :user (admin)
+    - :business (owned by user)
   """
 
   use ExUnitProperties
@@ -50,9 +45,9 @@ defmodule RivaAsh.Factory do
     RecurringReservationInstance
   }
 
-  # ============================================================================
-  # Basic Data Generators
-  # ============================================================================
+  # =============================================================================
+  # Existing Generators (kept) + Minimal Additions
+  # =============================================================================
 
   @doc "Generate valid business names"
   def business_name do
@@ -78,7 +73,6 @@ defmodule RivaAsh.Factory do
     bind(string(:alphanumeric, min_length: 3, max_length: 10), fn username ->
       bind(string(:alphanumeric, min_length: 3, max_length: 10), fn domain ->
         bind(member_of(["com", "org", "net", "edu", "gov"]), fn tld ->
-          # Use UUID to ensure uniqueness
           uuid = Ash.UUID.generate()
           constant("#{username}#{uuid}@#{domain}.#{tld}")
         end)
@@ -89,7 +83,6 @@ defmodule RivaAsh.Factory do
   @doc "Generate valid phone numbers"
   def phone do
     one_of([
-      # US format
       bind(integer(100..999), fn area ->
         bind(integer(100..999), fn exchange ->
           bind(integer(1000..9999), fn number ->
@@ -97,13 +90,11 @@ defmodule RivaAsh.Factory do
           end)
         end)
       end),
-      # International format
       bind(integer(1..999), fn country ->
         bind(integer(1_000_000_000..9_999_999_999), fn number ->
           constant("+#{country} #{number}")
         end)
       end),
-      # Simple format
       bind(integer(1_000_000_000..9_999_999_999), fn number ->
         constant("#{number}")
       end)
@@ -131,7 +122,6 @@ defmodule RivaAsh.Factory do
       bind(integer(0..23), fn hours ->
         bind(integer(0..59), fn minutes ->
           base_time = Timex.now()
-
           Timex.shift(base_time, days: days, hours: hours, minutes: minutes)
           |> constant()
         end)
@@ -145,7 +135,6 @@ defmodule RivaAsh.Factory do
       bind(integer(0..23), fn hours ->
         bind(integer(0..59), fn minutes ->
           base_time = Timex.now()
-
           Timex.shift(base_time, days: -days, hours: -hours, minutes: -minutes)
           |> constant()
         end)
@@ -163,9 +152,9 @@ defmodule RivaAsh.Factory do
     end)
   end
 
-  # ============================================================================
-  # Resource Attribute Generators
-  # ============================================================================
+  # =============================================================================
+  # Resource Attribute Generators (kept)
+  # =============================================================================
 
   @doc "Generate attributes for Business resource"
   def business_attrs(overrides \\ %{}) do
@@ -190,7 +179,6 @@ defmodule RivaAsh.Factory do
       bind(email(), fn email_addr ->
         bind(phone(), fn phone_num ->
           bind(boolean(), fn is_registered ->
-            # Apply overrides first to check if is_registered is being overridden
             base_attrs = %{
               name: name,
               phone: phone_num,
@@ -200,7 +188,6 @@ defmodule RivaAsh.Factory do
             merged_attrs = Map.merge(base_attrs, overrides)
             final_is_registered = Map.get(merged_attrs, :is_registered, is_registered)
 
-            # Ensure registered clients have email, unregistered can have nil
             final_email =
               if final_is_registered do
                 Map.get(overrides, :email, email_addr)
@@ -255,12 +242,10 @@ defmodule RivaAsh.Factory do
               fn status ->
                 bind(description(), fn notes ->
                   bind(one_of([constant(nil), uuid()]), fn employee_id ->
-                    # Ensure reserved_until is after reserved_from
                     actual_until =
                       if Timex.compare(reserved_until, reserved_from) == 1 do
                         reserved_until
                       else
-                        # Add 1 hour
                         Timex.shift(reserved_from, hours: 1)
                       end
 
@@ -362,61 +347,12 @@ defmodule RivaAsh.Factory do
     end)
   end
 
-  # ============================================================================
-  # Resource Generators (for creating actual records)
-  # ============================================================================
-
-  @doc "Generate Business records"
-  def business(overrides \\ %{}) do
-    business_attrs(overrides)
-  end
-
-  @doc "Generate Client records"
-  def client(overrides \\ %{}) do
-    client_attrs(overrides)
-  end
-
-  @doc "Generate Item records"
-  def item(overrides \\ %{}) do
-    item_attrs(overrides)
-  end
-
-  @doc "Generate Reservation records"
-  def reservation(overrides \\ %{}) do
-    reservation_attrs(overrides)
-  end
-
-  @doc "Generate Plot records"
-  def plot(overrides \\ %{}) do
-    plot_attrs(overrides)
-  end
-
-  @doc "Generate Section records"
-  def section(overrides \\ %{}) do
-    section_attrs(overrides)
-  end
-
-  @doc "Generate ItemType records"
-  def item_type(overrides \\ %{}) do
-    item_type_attrs(overrides)
-  end
-
-  @doc "Generate Employee records"
-  def employee(overrides \\ %{}) do
-    employee_attrs(overrides)
-  end
-
-  # ============================================================================
-  # Helper Functions
-  # ============================================================================
+  # =============================================================================
+  # Minimal Builders for Core Phase 1 resources (non-persistent generators already exist)
+  # =============================================================================
 
   @doc """
   Create a resource using generated attributes.
-
-  ## Examples
-
-      {:ok, business} = RivaAsh.Factory.create(:business)
-      {:ok, client} = RivaAsh.Factory.create(:client, %{name: "John Doe"})
   """
   def create(resource_type, overrides \\ %{}) do
     attrs =
@@ -443,9 +379,7 @@ defmodule RivaAsh.Factory do
     end
   end
 
-  @doc """
-  Create a resource and return it, raising on error.
-  """
+  @doc "Create and raise on error."
   def create!(resource_type, overrides \\ %{}) do
     case create(resource_type, overrides) do
       {:ok, resource} -> resource
@@ -453,9 +387,7 @@ defmodule RivaAsh.Factory do
     end
   end
 
-  @doc """
-  Generate a list of attributes for a given resource type.
-  """
+  @doc "Generate a list of attributes for a given resource type."
   def attrs_list(resource_type, count, overrides \\ %{}) do
     case resource_type do
       :business -> business_attrs(overrides) |> Enum.take(count)
@@ -471,33 +403,25 @@ defmodule RivaAsh.Factory do
 
   @doc """
   Generate sample data for testing with proper relationships.
-
-  This creates a complete hierarchy: Business -> Plot -> Section -> Item
   """
   def sample_data do
-    # Create business first
     business_attrs = business_attrs() |> Enum.take(1) |> hd()
     {:ok, business} = Business.create(business_attrs)
 
-    # Create plot for the business
     plot_attrs = plot_attrs(%{business_id: business.id}) |> Enum.take(1) |> hd()
     {:ok, plot} = Plot.create(plot_attrs)
 
-    # Create section for the plot
     section_attrs = section_attrs(%{plot_id: plot.id}) |> Enum.take(1) |> hd()
     {:ok, section} = Section.create(section_attrs)
 
-    # Create item type for the business
     item_type_attrs = item_type_attrs(%{business_id: business.id}) |> Enum.take(1) |> hd()
     {:ok, item_type} = ItemType.create(item_type_attrs)
 
-    # Create item for the section
     item_attrs =
       item_attrs(%{section_id: section.id, item_type_id: item_type.id}) |> Enum.take(1) |> hd()
 
     {:ok, item} = Item.create(item_attrs)
 
-    # Create client
     client_attrs = client_attrs() |> Enum.take(1) |> hd()
     {:ok, client} = Client.create(client_attrs)
 
@@ -510,4 +434,46 @@ defmodule RivaAsh.Factory do
       client: client
     }
   end
+
+  # =============================================================================
+  # Business Context Builder (admin user + business)
+  # =============================================================================
+
+  @doc """
+  Build a concise business context without persisting non-Ash records.
+
+  Returns a map with at least:
+    - :user (admin)
+    - :business
+
+  Uses the Accounts domain to register the user.
+  """
+  def build(:business_context) do
+    user =
+      RivaAsh.Accounts.User
+      |> Ash.Changeset.for_create(:register_with_password, %{
+        name: "Admin #{System.unique_integer([:positive])}",
+        email: "admin#{System.unique_integer([:positive])}@example.com",
+        password: "password123",
+        role: :admin
+      })
+      |> Ash.create!(domain: RivaAsh.Accounts)
+
+    business =
+      Business
+      |> Ash.Changeset.for_create(:create, %{
+        name: "Business #{System.unique_integer([:positive])}",
+        description: "Test Business",
+        owner_id: user.id
+      })
+      |> Ash.create!()
+
+    %{user: user, business: business}
+  end
+
+  @doc """
+  Insert (persist) a business context (admin user + owned business).
+  Same as build/1 since both create persisted Ash resources.
+  """
+  def insert(:business_context), do: build(:business_context)
 end

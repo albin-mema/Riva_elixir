@@ -130,20 +130,17 @@ defmodule RivaAsh.PropertyTesting.DataManager do
       %{
         name: "Test User",
         email: "test@example.com",
-        password: "password123",
-        password_confirmation: "password123"
+        password: "password123"
       },
       %{
         name: "Admin User",
         email: "admin@example.com",
-        password: "admin123",
-        password_confirmation: "admin123"
+        password: "admin123"
       },
       %{
         name: "Manager User",
         email: "manager@example.com",
-        password: "manager123",
-        password_confirmation: "manager123"
+        password: "manager123"
       }
     ]
 
@@ -222,8 +219,7 @@ defmodule RivaAsh.PropertyTesting.DataManager do
     default_attrs = %{
       name: "Generated User #{:rand.uniform(1000)}",
       email: "user#{:rand.uniform(1000)}@example.com",
-      password: "password123",
-      password_confirmation: "password123"
+      password: "password123"
     }
 
     merged_attrs = Map.merge(default_attrs, attrs)
@@ -312,8 +308,7 @@ defmodule RivaAsh.PropertyTesting.DataManager do
     %{
       name: Faker.Person.name(),
       email: Faker.Internet.email(),
-      password: "password123",
-      password_confirmation: "password123"
+      password: "password123"
     }
   end
 

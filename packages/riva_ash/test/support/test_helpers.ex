@@ -19,6 +19,7 @@ defmodule RivaAsh.TestHelpers do
   import ExUnit.Assertions
   import Phoenix.ConnTest
   import Plug.Conn
+  require Ash.Query
   defmacro __using__(_opts) do
     quote do
       import ExUnit.Assertions
@@ -163,18 +164,18 @@ defmodule RivaAsh.TestHelpers do
       {:ok, user} = create_user(%{email: "test@example.com", role: :admin})
 
   """
-  @spec create_user(map()) :: {:ok, User.t()} | {:error, any()}
+  @spec create_user(map()) :: {:ok, RivaAsh.Accounts.User.t()} | {:error, any()}
   def create_user(attrs \\ %{}) do
     defaults = %{
       email: "test_#{System.unique_integer([:positive, :monotonic])}@example.com",
       password: "password123",
       name: "Test User",
-      role: :admin
+      role: "admin"
     }
 
     attrs = Map.merge(defaults, attrs)
 
-    User
+    RivaAsh.Accounts.User
     |> Ash.Changeset.for_create(:register_with_password, attrs)
     |> Ash.create(domain: RivaAsh.Accounts)
   end
@@ -182,7 +183,7 @@ defmodule RivaAsh.TestHelpers do
   @doc """
   Create a test user and return it, raising on error.
   """
-  @spec create_user!(map()) :: User.t()
+  @spec create_user!(map()) :: RivaAsh.Accounts.User.t()
   def create_user!(attrs \\ %{}) do
     case create_user(attrs) do
       {:ok, user} -> user
@@ -198,13 +199,12 @@ defmodule RivaAsh.TestHelpers do
       conn = build_conn() |> sign_in_user(user)
 
   """
-  @spec sign_in_user(Conn.t(), User.t()) :: Conn.t()
+  @spec sign_in_user(Conn.t(), RivaAsh.Accounts.User.t()) :: Conn.t()
   def sign_in_user(conn, user) do
     token = Phoenix.Token.sign(RivaAshWeb.Endpoint, "user_auth", user.id)
 
     conn
-    |> Plug.Test.init_test_session(%{})
-    |> put_session(:user_token, token)
+    |> Plug.Test.init_test_session(%{"user_token" => token})
     |> assign(:current_user, user)
   end
 
@@ -217,7 +217,7 @@ defmodule RivaAsh.TestHelpers do
       {conn, user} = build_conn() |> create_and_sign_in_user(%{role: :admin})
 
   """
-  @spec create_and_sign_in_user(Conn.t(), map()) :: {Conn.t(), User.t()}
+  @spec create_and_sign_in_user(Conn.t(), map()) :: {Conn.t(), RivaAsh.Accounts.User.t()}
   def create_and_sign_in_user(conn, attrs \\ %{}) do
     user = create_user!(attrs)
     conn = sign_in_user(conn, user)
@@ -234,7 +234,7 @@ defmodule RivaAsh.TestHelpers do
       {:ok, business} = create_business(%{name: "Test Business"}, user)
 
   """
-  @spec create_business(map(), User.t()) :: {:ok, any()} | {:error, any()}
+  @spec create_business(map(), RivaAsh.Accounts.User.t()) :: {:ok, any()} | {:error, any()}
   def create_business(attrs \\ %{}, actor) do
     defaults = %{
       name: "Test Business #{System.unique_integer([:positive, :monotonic])}",
@@ -252,11 +252,199 @@ defmodule RivaAsh.TestHelpers do
   @doc """
   Create a test business and return it, raising on error.
   """
-  @spec create_business!(map(), User.t()) :: any()
+  @spec create_business!(map(), RivaAsh.Accounts.User.t()) :: any()
   def create_business!(attrs \\ %{}, actor) do
     case create_business(attrs, actor) do
       {:ok, business} -> business
       {:error, error} -> raise "Failed to create test business: #{inspect(error)}"
+    end
+  end
+
+  @doc """
+  Assign a user token to a connection for authentication in tests.
+
+  This is equivalent to sign_in_user but with a different name for compatibility.
+  """
+  @spec assign_user_token(Conn.t(), RivaAsh.Accounts.User.t()) :: Conn.t()
+  def assign_user_token(conn, user) do
+    sign_in_user(conn, user)
+  end
+
+  @doc """
+  Create a test section with the given attributes and business context.
+  """
+  @spec create_section(map(), any()) :: {:ok, any()} | {:error, any()}
+  def create_section(attrs \\ %{}, business) do
+    create_section(attrs, business, nil)
+  end
+
+  @doc """
+  Create a test section with the given attributes, business context, and actor.
+  """
+  @spec create_section(map(), any(), any()) :: {:ok, any()} | {:error, any()}
+  def create_section(attrs, business, actor) do
+
+    # First create a plot for the business if not provided
+    plot = case Map.get(attrs, :plot_id) do
+      nil ->
+        plot_attrs = %{
+          name: "Test Plot #{System.unique_integer([:positive, :monotonic])}",
+          description: "A test plot",
+          business_id: business.id
+        }
+        case RivaAsh.Resources.Plot
+             |> Ash.Changeset.for_create(:create, plot_attrs)
+             |> Ash.create(actor: actor, domain: RivaAsh.Domain) do
+          {:ok, plot} -> plot
+          {:error, error} -> raise "Failed to create test plot: #{inspect(error)}"
+        end
+      _plot_id -> nil
+    end
+
+    defaults = %{
+      name: "Test Section #{System.unique_integer([:positive, :monotonic])}",
+      description: "A test section",
+      plot_id: plot && plot.id || attrs[:plot_id]
+    }
+
+    attrs = Map.merge(defaults, attrs)
+
+    RivaAsh.Resources.Section
+    |> Ash.Changeset.for_create(:create, attrs)
+    |> Ash.create(actor: actor, domain: RivaAsh.Domain)
+  end
+
+  @doc """
+  Create a test section and return it, raising on error.
+  """
+  @spec create_section!(any()) :: any()
+  def create_section!(business) do
+    create_section!(business, nil)
+  end
+
+  @doc """
+  Create a test section with actor and return it, raising on error.
+  """
+  @spec create_section!(any(), any()) :: any()
+  def create_section!(business, actor) do
+    case create_section(%{}, business, actor) do
+      {:ok, section} -> section
+      {:error, error} -> raise "Failed to create test section: #{inspect(error)}"
+    end
+  end
+
+  @doc """
+  Create a test item with the given section context.
+  This overrides the previous create_item! function to work with sections.
+  """
+  @spec create_item!(any()) :: any()
+  def create_item!(section) when is_map(section) do
+    # Load the section with its plot to get business_id
+    import Ash.Expr
+
+    section_with_plot = RivaAsh.Resources.Section
+    |> Ash.Query.load(:plot)
+    |> Ash.Query.filter(expr(id == ^section.id))
+    |> Ash.read_one!(domain: RivaAsh.Domain)
+
+    business_id = section_with_plot.plot.business_id
+
+    item_type_attrs = %{
+      name: "Test Item Type #{System.unique_integer([:positive, :monotonic])}",
+      description: "A test item type",
+      business_id: business_id,
+      default_capacity: 1
+    }
+
+    {:ok, item_type} = RivaAsh.Resources.ItemType
+    |> Ash.Changeset.for_create(:create, item_type_attrs)
+    |> Ash.create(domain: RivaAsh.Domain)
+
+    item_attrs = %{
+      name: "Test Item #{System.unique_integer([:positive, :monotonic])}",
+      description: "A test item",
+      section_id: section.id,
+      item_type_id: item_type.id,
+      capacity: 1
+    }
+
+    case RivaAsh.Resources.Item.create(item_attrs) do
+      {:ok, item} -> item
+      {:error, error} -> raise "Failed to create test item: #{inspect(error)}"
+    end
+  end
+
+  # Fallback for the original create_item! function with attributes
+  def create_item!(attrs) when is_map(attrs) do
+    case create_item(attrs) do
+      {:ok, item} -> item
+      {:error, error} -> raise "Failed to create test item: #{inspect(error)}"
+    end
+  end
+
+  @doc """
+  Create a test recurring reservation with the given item and user.
+  """
+  @spec create_recurring_reservation!(any(), RivaAsh.Accounts.User.t()) :: any()
+  def create_recurring_reservation!(item, user) do
+    import Ash.Expr
+
+    # Load the item with its relationships to get business_id
+    item_with_relations = RivaAsh.Resources.Item
+    |> Ash.Query.load(section: :plot)
+    |> Ash.Query.filter(expr(id == ^item.id))
+    |> Ash.read_one!(domain: RivaAsh.Domain)
+
+    business_id = item_with_relations.section.plot.business_id
+
+    # Create a client first
+    client_attrs = %{
+      name: "Test Client #{System.unique_integer([:positive, :monotonic])}",
+      email: "client#{System.unique_integer([:positive, :monotonic])}@example.com",
+      phone: "555-0123",
+      business_id: business_id
+    }
+
+    {:ok, client} = RivaAsh.Resources.Client
+    |> Ash.Changeset.for_create(:create, client_attrs)
+    |> Ash.create(actor: user, domain: RivaAsh.Domain)
+
+    recurring_reservation_attrs = %{
+      client_id: client.id,
+      item_id: item.id,
+      start_date: Date.utc_today(),
+      start_time: ~T[09:00:00],
+      end_time: ~T[10:00:00],
+      consecutive_days: 5,
+      pattern_type: :daily,
+      title: "Test Recurring Reservation",
+      notes: "Test notes"
+    }
+
+    case RivaAsh.Resources.RecurringReservation.create(recurring_reservation_attrs) do
+      {:ok, recurring_reservation} -> recurring_reservation
+      {:error, error} -> raise "Failed to create test recurring reservation: #{inspect(error)}"
+    end
+  end
+
+  @doc """
+  Create a test recurring reservation instance with the given recurring reservation and attributes.
+  """
+  @spec create_recurring_reservation_instance!(any(), map()) :: any()
+  def create_recurring_reservation_instance!(recurring_reservation, attrs \\ %{}) do
+    defaults = %{
+      recurring_reservation_id: recurring_reservation.id,
+      scheduled_date: Date.utc_today(),
+      sequence_number: 1,
+      status: :pending,
+      notes: "Test instance notes"
+    }
+
+    attrs = Map.merge(defaults, attrs)
+
+    case RivaAsh.Resources.RecurringReservationInstance.create(attrs) do
+      {:ok, instance} -> instance
+      {:error, error} -> raise "Failed to create test recurring reservation instance: #{inspect(error)}"
     end
   end
 

@@ -21,7 +21,11 @@ defmodule RivaAshWeb.EndpointCase do
 
   setup tags do
     # Setup sandbox for database access
-    :ok = RivaAsh.TestHelpers.setup_sandbox(tags)
+    :ok = Ecto.Adapters.SQL.Sandbox.checkout(RivaAsh.Repo)
+
+    unless tags[:async] do
+      Ecto.Adapters.SQL.Sandbox.mode(RivaAsh.Repo, {:shared, self()})
+    end
 
     # Build a connection for testing
     conn = Phoenix.ConnTest.build_conn()

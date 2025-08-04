@@ -215,8 +215,7 @@ defmodule RivaAsh.PropertyTesting.FlowGenerator do
       %{
         name: name,
         email: email,
-        password: password,
-        password_confirmation: password
+        password: password
       }
     end
   end
@@ -378,8 +377,7 @@ defmodule RivaAsh.PropertyTesting.FlowGenerator do
            %{
              name: "Test User",
              email: "test@example.com",
-             password: "password123",
-             password_confirmation: "password123"
+             password: "password123"
            }},
           {:visit, %{path: "/sign-in"}},
           {:login, %{email: "test@example.com", password: "password123"}},

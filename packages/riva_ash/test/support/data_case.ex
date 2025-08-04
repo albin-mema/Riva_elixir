@@ -29,6 +29,9 @@ defmodule RivaAsh.DataCase do
       import RivaAsh.PropertyHelpers
       import RivaAsh.TestHelpers
 
+      # New helpers
+      import RivaAsh.Test.TimeHelpers
+
       # Enable property-based testing
       use ExUnitProperties
     end
@@ -48,7 +51,7 @@ defmodule RivaAsh.DataCase do
 
     case repo_config[:pool] do
       Ecto.Adapters.SQL.Sandbox ->
-        pid = Ecto.Adapters.SQL.Sandbox.start_owner!(RivaAsh.Repo, shared: not tags[:async])
+        pid = Ecto.Adapters.SQL.Sandbox.start_owner!(RivaAsh.Repo, shared: not tags[:async] or tags[:shared_db])
         on_exit(fn -> Ecto.Adapters.SQL.Sandbox.stop_owner(pid) end)
 
       _ ->

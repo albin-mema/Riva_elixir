@@ -151,6 +151,20 @@ mix test test/path/to/test.exs
 
 # Run tests with coverage
 mix test --cover
+# Coverage report export and HTML generation
+mix test --cover --export-coverage=cover --cover-html
+
+# Run a focused category by tag
+mix test --only liveview
+mix test --only component
+mix test --only job
+mix test --only gdpr
+mix test --only jsonapi
+
+# Seed matrix to reproduce flaky issues more easily
+MIX_TEST_SEED=0 mix test
+MIX_TEST_SEED=12345 mix test
+MIX_TEST_SEED=$(date +%s) mix test
 
 # Run tests in watch mode during development
 mix test.watch
@@ -196,3 +210,63 @@ mix test.watch
 - Verify error messages and handling
 - Test with various user roles and permissions
 - Ensure tests are deterministic despite using random data
+
+### Coverage & Focused Runs
+
+Use these commands to generate coverage artifacts and focused runs:
+
+```fish
+# Generate coverage with export directory and HTML report
+mix test --cover --export-coverage=cover --cover-html
+
+# Common tags used in the suite
+# :liveview, :component, :job, :gdpr, :jsonapi
+mix test --only liveview
+mix test --only jsonapi
+
+# Reproducibility: control the random seed
+MIX_TEST_SEED=12345 mix test
+```
+
+---
+
+## First Coverage Report & CI Tips
+
+To generate the first HTML coverage report and a quick summary locally:
+
+```fish
+# Generate coverage artifacts and HTML
+mix test --cover --export-coverage=cover --cover-html
+
+# Open the report locally (adjust for your OS)
+# On Linux/macOS:
+open cover/index.html  || xdg-open cover/index.html
+# On Windows (PowerShell):
+# start cover/index.html
+```
+
+CI seed matrix example (run a small matrix across stable seeds):
+
+```yaml
+# .github/workflows/ci.yml (excerpt)
+strategy:
+  fail-fast: false
+  matrix:
+    mix_test_seed: [0, 1, 2]
+steps:
+  - run: MIX_TEST_SEED=${{ matrix.mix_test_seed }} mix test --cover --export-coverage=cover
+```
+
+Flaky retries tip:
+
+```fish
+# After a failing run:
+mix test --failed
+# Re-run failed again to confirm flakiness
+mix test --failed
+```
+
+Notes:
+- Prefer :shared DB mode for LiveView/feature tests where isolation may break socket/session flows.
+- Keep selectors durable: prefer data-testid, roles, or stable ids/classes.
+- For JSON:API negative cases, verify the top-level "errors" array shape over exact wording.
