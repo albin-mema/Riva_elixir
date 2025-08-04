@@ -37,7 +37,11 @@ defmodule RivaAshWeb.Components.Forms.ItemTypeForm do
       
       <div>
         <h3>Pricing</h3>
-        <.form_field field={@form[:base_price]} label="Base Price" type="number" step="0.01" />
+        <.form_field field={@form[:base_price]} label="Base Price" type="number">
+          <:input>
+            <input type="number" step="0.01" name={@form[:base_price].name} value={@form[:base_price].value} class="input" />
+          </:input>
+        </.form_field>
         <.form_field field={@form[:price_unit]} label="Price Unit" type="select" options={[
           {"Per Hour", "hour"},
           {"Per Day", "day"},

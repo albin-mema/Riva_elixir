@@ -6,7 +6,7 @@ defmodule RivaAshWeb.Components.Forms.SectionForm do
   import RivaAshWeb.Components.Molecules.FormField
   import RivaAshWeb.Components.Molecules.Card
   import RivaAshWeb.Components.Atoms.Button
-  import RivaAshWeb.Components.Atoms.Select
+  # removed unused import to reduce warnings
 
   @doc """
   Renders a section form.
@@ -42,7 +42,11 @@ defmodule RivaAshWeb.Components.Forms.SectionForm do
             field={@form[:plot_id]}
             label="Plot"
             type="select"
-            options={plot_options(@plots)}
+          >
+            <:input>
+              <RivaAshWeb.Components.UI.Select.select options={plot_options(@plots)} prompt="Select a plot" />
+            </:input>
+          </.form_field>
             required
             helper_text="Select the plot this section belongs to"
           />

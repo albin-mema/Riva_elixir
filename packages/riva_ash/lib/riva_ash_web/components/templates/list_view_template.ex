@@ -67,7 +67,7 @@ defmodule RivaAshWeb.Components.Templates.ListViewTemplate do
           meta={@meta}
           path={@path}
           id={@table_id}
-          columns={@columns}
+          columns={@columns || []}
           show_search={@show_search}
           show_filters={false}
           show_pagination={true}

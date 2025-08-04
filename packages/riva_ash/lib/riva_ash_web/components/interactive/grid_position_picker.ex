@@ -3,7 +3,7 @@ defmodule RivaAshWeb.Components.Interactive.GridPositionPicker do
   Grid position selector component for row/column positioning.
   """
   use Phoenix.Component
-  import RivaAshWeb.Components.Atoms.Button
+  # removed unused import to reduce warnings
 
   @doc """
   Renders a grid position picker interface.

@@ -78,14 +78,20 @@ defmodule RivaAshWeb.Components.Forms.RecurringReservationInstanceForm do
               field={@form[:status]}
               label="Status"
               type="select"
-              options={[
-                "pending": "Pending",
-                "confirmed": "Confirmed",
-                "failed": "Failed",
-                "skipped": "Skipped",
-                "cancelled": "Cancelled"
-              ]}
-              prompt="Select a status"
+            >
+              <:input>
+                <RivaAshWeb.Components.UI.Select.select
+                  options={[
+                    {"Pending", "pending"},
+                    {"Confirmed", "confirmed"},
+                    {"Failed", "failed"},
+                    {"Skipped", "skipped"},
+                    {"Cancelled", "cancelled"}
+                  ]}
+                  prompt="Select a status"
+                />
+              </:input>
+            </.form_field>
               required={true}
             />
 
@@ -94,8 +100,14 @@ defmodule RivaAshWeb.Components.Forms.RecurringReservationInstanceForm do
                 field={@form[:recurring_reservation_id]}
                 label="Recurring Reservation"
                 type="select"
-                options={Enum.map(@recurring_reservations, &{"Reservation ##{&1.id}", &1.id})}
-                prompt="Select a recurring reservation"
+              >
+                <:input>
+                  <RivaAshWeb.Components.UI.Select.select
+                    options={Enum.map(@recurring_reservations, &{"Reservation ##{&1.id}", &1.id})}
+                    prompt="Select a recurring reservation"
+                  />
+                </:input>
+              </.form_field>
                 required={true}
               />
             <% end %>
@@ -148,8 +160,14 @@ defmodule RivaAshWeb.Components.Forms.RecurringReservationInstanceForm do
                   field={@form[:reservation_id]}
                   label="Reservation"
                   type="select"
-                  options={[{"No reservation", ""} | Enum.map(@reservations, &{"Reservation ##{&1.id}", &1.id})]}
-                  prompt="Select a reservation"
+                >
+                  <:input>
+                    <RivaAshWeb.Components.UI.Select.select
+                      options={[{"No reservation", ""} | Enum.map(@reservations, &{"Reservation ##{&1.id}", &1.id})]}
+                      prompt="Select a reservation"
+                    />
+                  </:input>
+                </.form_field>
                 />
               <% end %>
             </div>

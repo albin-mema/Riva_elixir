@@ -4,7 +4,7 @@ defmodule RivaAshWeb.Components.Navigation.ExpandedSidebar do
   """
   use Phoenix.Component
   import RivaAshWeb.Components.Atoms.Icon
-  import RivaAshWeb.Components.Atoms.Badge
+  # removed unused import to reduce warnings
 
   @doc """
   Renders an expanded sidebar navigation.
