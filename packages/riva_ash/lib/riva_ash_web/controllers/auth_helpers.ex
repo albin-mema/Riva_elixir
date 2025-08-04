@@ -39,7 +39,7 @@ defmodule RivaAshWeb.AuthHelpers do
            Phoenix.Token.verify(RivaAshWeb.Endpoint, "user_auth", token, max_age: 86_400)
            |> ErrorHelpers.to_result(),
          {:ok, user} <-
-           Ash.get(RivaAsh.Accounts.User, user_id, domain: RivaAsh.Accounts)
+           Ash.get(RivaAsh.Accounts.User, user_id, domain: RivaAsh.Domain)
            |> ErrorHelpers.to_result() do
       assign(conn, :current_user, user)
     else

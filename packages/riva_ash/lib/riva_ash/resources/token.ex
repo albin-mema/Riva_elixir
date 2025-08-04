@@ -1,6 +1,6 @@
 defmodule RivaAsh.Accounts.Token do
   use Ash.Resource,
-    domain: RivaAsh.Accounts,
+    domain: RivaAsh.Domain,
     data_layer: AshPostgres.DataLayer,
     extensions: [AshAuthentication.TokenResource]
 
@@ -10,7 +10,7 @@ defmodule RivaAsh.Accounts.Token do
   end
 
   token do
-    domain(RivaAsh.Accounts)
+    domain(RivaAsh.Domain)
   end
 
   # If using policies, add authorization for the token resource

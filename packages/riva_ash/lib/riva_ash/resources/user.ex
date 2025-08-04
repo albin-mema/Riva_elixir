@@ -2,12 +2,17 @@ defmodule RivaAsh.Accounts.User do
   alias AshAuthentication.Strategy.Password.SignInPreparation
 
   use Ash.Resource,
-    domain: RivaAsh.Accounts,
+    domain: RivaAsh.Domain,
     data_layer: AshPostgres.DataLayer,
+    authorizers: [Ash.Policy.Authorizer],
     extensions: [
       AshAuthentication,
       AshAuthentication.Strategy.Password,
-      AshArchival.Resource
+      AshJsonApi.Resource,
+      AshGraphql.Resource,
+      AshPaperTrail.Resource,
+      AshArchival.Resource,
+      AshAdmin.Resource
     ]
 
   postgres do
@@ -29,7 +34,7 @@ defmodule RivaAsh.Accounts.User do
 
     # Profile attributes
     attribute(:name, :string)
-    attribute(:role, :atom, constraints: [one_of: [:admin, :user]], default: :user)
+    attribute(:role, :atom, constraints: [one_of: [:admin, :user, :superadmin]], default: :user)
 
     create_timestamp(:inserted_at)
     update_timestamp(:updated_at)
@@ -46,7 +51,7 @@ defmodule RivaAsh.Accounts.User do
                   )
 
   authentication do
-    domain(RivaAsh.Accounts)
+    domain(RivaAsh.Domain)
     session_identifier(:jti)
 
     strategies do
@@ -82,7 +87,11 @@ defmodule RivaAsh.Accounts.User do
 
   # Define the relationships
   relationships do
-    # Add any relationships here
+    has_many :owned_businesses, RivaAsh.Resources.Business do
+      destination_attribute(:owner_id)
+      public?(true)
+      description("Businesses owned by this user")
+    end
   end
 
   # Define the validations
@@ -90,8 +99,33 @@ defmodule RivaAsh.Accounts.User do
     validate(present([:email]))
   end
 
+  # Define authorization policies
+  policies do
+    # Superadmins can do everything
+    policy action_type([:create, :read, :update, :destroy]) do
+      authorize_if expr(actor(:role) == :superadmin)
+    end
+
+    # Users can read their own profile
+    policy action_type(:read) do
+      authorize_if expr(id == ^actor(:id))
+    end
+
+    # Users can update their own profile (except role)
+    policy action_type(:update) do
+      authorize_if expr(id == ^actor(:id))
+      forbid_if changing_attributes([:role])
+    end
+
+    # Only superadmins can create users or destroy them
+    policy action_type([:create, :destroy]) do
+      authorize_if expr(actor(:role) == :superadmin)
+    end
+  end
+
   # Define the calculations for the User resource
   calculations do
     calculate(:is_admin, :boolean, expr(role == :admin))
+    calculate(:is_superadmin, :boolean, expr(role == :superadmin))
   end
 end

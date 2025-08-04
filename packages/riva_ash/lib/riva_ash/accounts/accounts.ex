@@ -30,10 +30,8 @@ defmodule RivaAsh.Accounts do
   def register(params) do
     # Use the register action created by AshAuthentication
     RivaAsh.Accounts.User
-    |> Ash.Changeset.for_create(:register_with_password, params)
-    |> Ash.create()
-
-    # Removed redundant pipe and function
+    |> Ash.Changeset.for_create(:register_with_password, params, domain: RivaAsh.Domain)
+    |> Ash.create(domain: RivaAsh.Domain)
   end
 
   alias RivaAsh.ErrorHelpers

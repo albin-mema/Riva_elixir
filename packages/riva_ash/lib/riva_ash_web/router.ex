@@ -6,8 +6,13 @@ defmodule RivaAshWeb.Router do
   import Phoenix.LiveView.Router
   import AshAdmin.Router
 
-  # PhoenixStorybook.Router import disabled for test environment
-  # import PhoenixStorybook.Router
+  # PhoenixStorybook.Router import (disabled for now)
+  # @compile {:no_warn_undefined, PhoenixStorybook.Router}
+  #
+  # # Only import and define storybook functions in dev environment
+  # if Mix.env() == :dev do
+  #   import PhoenixStorybook.Router
+  # end
 
   pipeline :api do
     plug(:accepts, ["json"])
@@ -67,14 +72,16 @@ defmodule RivaAshWeb.Router do
       )
     end
 
-    # Storybook routes disabled for test environment
-    # scope "/" do
-    #   storybook_assets()
-    # end
+    # Storybook routes (disabled for now)
+    # if Mix.env() == :dev do
+    #   scope "/" do
+    #     storybook_assets()
+    #   end
 
-    # scope "/", RivaAshWeb do
-    #   pipe_through(:browser)
-    #   live_storybook "/storybook", backend_module: RivaAshWeb.Storybook
+    #   scope "/", RivaAshWeb do
+    #     pipe_through(:browser)
+    #     live_storybook "/storybook", backend_module: RivaAshWeb.Storybook
+    #   end
     # end
 
     forward("/dev", RivaAshWeb.Dev.Router)

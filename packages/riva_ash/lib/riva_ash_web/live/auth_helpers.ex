@@ -3,6 +3,8 @@ defmodule RivaAshWeb.Live.AuthHelpers do
   Authentication helpers for LiveViews.
   """
 
+  import Phoenix.Component, only: [assign: 3]
+  import Phoenix.LiveView, only: [redirect: 2, put_flash: 3]
   alias RivaAsh.ErrorHelpers
   alias RivaAsh.Resources.Business
 
@@ -18,7 +20,7 @@ defmodule RivaAshWeb.Live.AuthHelpers do
              Phoenix.Token.verify(RivaAshWeb.Endpoint, "user_auth", user_token, max_age: 86_400)
              |> ErrorHelpers.to_result(),
            {:ok, user} <-
-             Ash.get(RivaAsh.Accounts.User, user_id, domain: RivaAsh.Accounts)
+             Ash.get(RivaAsh.Accounts.User, user_id, domain: RivaAsh.Domain)
              |> ErrorHelpers.to_result() do
         ErrorHelpers.success(user)
       else
@@ -197,5 +199,40 @@ defmodule RivaAshWeb.Live.AuthHelpers do
     |> String.to_atom()
     # Pluralize
     |> then(fn name -> :"#{name}s" end)
+  end
+
+  @doc """
+  Standardized mount helper for simple authenticated pages.
+  """
+  def mount_authenticated_simple(socket, session, page_title \\ "Page") do
+    case get_current_user_from_session(session) do
+      {:ok, user} ->
+        socket =
+          socket
+          |> assign(:current_user, user)
+          |> assign(:page_title, page_title)
+
+        {:ok, socket}
+
+      {:error, :not_authenticated} ->
+        {:ok, redirect(socket, to: "/sign-in")}
+    end
+  end
+
+  @doc """
+  Standardized error handling for LiveViews.
+  """
+  def handle_liveview_error(socket, error) do
+    case error do
+      %Ash.Error.Forbidden{} ->
+        {:ok, redirect(socket, to: "/access-denied")}
+      %Ash.Error.Invalid{} ->
+        {:ok, redirect(socket, to: "/access-denied")}
+      _ ->
+        {:ok,
+         socket
+         |> put_flash(:error, "An unexpected error occurred")
+         |> redirect(to: "/dashboard")}
+    end
   end
 end

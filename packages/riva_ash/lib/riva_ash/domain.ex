@@ -14,6 +14,11 @@ defmodule RivaAsh.Domain do
   end
 
   resources do
+    # Authentication resources
+    resource(RivaAsh.Accounts.User)
+    resource(RivaAsh.Accounts.Token)
+
+    # Business domain resources
     resource(RivaAsh.Resources.Business)
     resource(RivaAsh.Resources.Plot)
     resource(RivaAsh.Resources.Section)
@@ -33,6 +38,8 @@ defmodule RivaAsh.Domain do
     resource(RivaAsh.Resources.AvailabilityException)
     resource(RivaAsh.Resources.RecurringReservation)
     resource(RivaAsh.Resources.RecurringReservationInstance)
+
+    # GDPR compliance resources
     resource(RivaAsh.GDPR.ConsentRecord)
   end
 
@@ -40,6 +47,8 @@ defmodule RivaAsh.Domain do
     prefix("/api")
 
     open_api do
+      tag("Authentication")
+      tag("Users")
       tag("Businesses")
       tag("Sections")
       tag("Item Types")

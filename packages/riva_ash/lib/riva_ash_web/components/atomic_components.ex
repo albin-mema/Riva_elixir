@@ -51,15 +51,14 @@ defmodule RivaAshWeb.Components.AtomicComponents do
   """
   defmacro atoms do
     quote do
+      # Use modern UI components where available
+      import RivaAshWeb.Components.UI
+
+      # Legacy atomic components for specialized use cases
       import RivaAshWeb.Components.Atoms.Avatar
-      import RivaAshWeb.Components.Atoms.Badge
-      import RivaAshWeb.Components.Atoms.Button
-      import RivaAshWeb.Components.Atoms.Checkbox
       import RivaAshWeb.Components.Atoms.DatePicker
       import RivaAshWeb.Components.Atoms.Icon
-      import RivaAshWeb.Components.Atoms.Input
       import RivaAshWeb.Components.Atoms.Radio
-      import RivaAshWeb.Components.Atoms.Select
       import RivaAshWeb.Components.Atoms.Spinner
       import RivaAshWeb.Components.Atoms.Text
       import RivaAshWeb.Components.Atoms.TimePicker
