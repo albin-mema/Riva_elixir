@@ -26,7 +26,7 @@ defmodule RivaAsh.Validations.ReservationTimeSlot do
       {:ok, :no_overlap} ->
         :ok
 
-      {:ok, :overlap_found} ->
+      {:ok, :no_overlap} ->
         {:error,
          InvalidChanges.exception(
            field: :reserved_from,

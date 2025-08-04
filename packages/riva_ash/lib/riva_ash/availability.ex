@@ -67,7 +67,7 @@ defmodule RivaAsh.Availability do
         else
           case get_scheduled_slots(item_id, day_of_week, date, slot_duration_minutes) do
             {:ok, slots} -> slots
-            {:error, _} -> []
+            {:error, _reason} -> []
           end
         end
 

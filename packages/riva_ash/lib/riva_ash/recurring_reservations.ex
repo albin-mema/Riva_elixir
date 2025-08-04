@@ -367,7 +367,7 @@ defmodule RivaAsh.RecurringReservations do
             ErrorHelpers.failure("Failed to check item availability: #{error}")
         end
 
-      {:ok, :overlap_found} ->
+      {:ok, :no_overlap} ->
         ErrorHelpers.success(%{
           available: false,
           reason: "Time slot conflicts with existing reservation"

@@ -72,9 +72,9 @@ defmodule RivaAsh.Domain do
   end
 
   graphql do
-    # Generate queries and mutations for all resources
-    # Disable authorization for now, can be enabled later
-    authorize?(false)
+    # Enable authorization at GraphQL layer; resource policies still apply.
+    # Ensure your web layer passes the actor into Absinthe context.
+    authorize?(true)
   end
 
   admin do

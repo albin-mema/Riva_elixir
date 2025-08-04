@@ -7,7 +7,7 @@ defmodule RivaAsh.Resources.ItemSchedule do
   use Ash.Resource,
     domain: RivaAsh.Domain,
     data_layer: AshPostgres.DataLayer,
-    extensions: [AshJsonApi.Resource, AshArchival.Resource]
+    extensions: [AshJsonApi.Resource, AshArchival.Resource, AshPaperTrail.Resource]
 
   postgres do
     table("item_schedules")
@@ -20,6 +20,16 @@ defmodule RivaAsh.Resources.ItemSchedule do
     attribute(:archived_at)
     # Allow both soft and hard deletes
     base_filter?(false)
+  end
+
+  # Enable audit trail for this resource
+  paper_trail do
+    change_tracking_mode(:full_diff)
+    ignore_attributes([:inserted_at, :updated_at])
+    store_action_name?(true)
+    store_action_inputs?(true)
+    store_resource_identifier?(true)
+    create_version_on_destroy?(true)
   end
 
   json_api do
