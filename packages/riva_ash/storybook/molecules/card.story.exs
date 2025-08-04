@@ -3,6 +3,33 @@ defmodule Storybook.Molecules.Card do
 
   def function, do: &RivaAshWeb.Components.Molecules.Card.card/1
 
+  def doc do
+    """
+    # Card (Molecule)
+
+    A composed card component that uses canonical UI components internally while providing
+    a convenient header/body/footer slot API for page composition.
+
+    ## Features
+
+    - Uses `UI.Card` internally for consistent styling
+    - Uses `UI.Text` for title and description components
+    - Provides convenient slots for header, body, and footer content
+    - Maintains backward compatibility with existing card usage
+
+    ## When to Use
+
+    - **Use Molecules.Card** for page composition where header/body/footer slots are desired
+    - **Use UI.Card directly** for low-level layout control
+
+    ## Internal Components
+
+    This molecule uses these canonical UI components:
+    - `UI.Card` for the container
+    - `UI.Text` for title and description (via `.card_title` and `.card_description`)
+    """
+  end
+
   def variations do
     [
       %Variation{
@@ -18,7 +45,7 @@ defmodule Storybook.Molecules.Card do
             This is the main content of the card. It can contain any HTML or Phoenix components.
           </:body>
           <:footer>
-            <button class="px-4 py-2 bg-primary text-primary-foreground rounded">Action</button>
+            <RivaAshWeb.Components.UI.Button.button variant="default">Action</RivaAshWeb.Components.UI.Button.button>
           </:footer>
           """
         ]
