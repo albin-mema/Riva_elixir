@@ -33,8 +33,6 @@ config :riva_ash, RivaAshWeb.Endpoint,
 # Configure Ecto repos
 config :riva_ash, ecto_repos: [RivaAsh.Repo]
 
-# Skip mailer configuration in test
-
 # Print only warnings and errors during test
 config :logger, level: :warning
 
@@ -62,3 +60,6 @@ config :riva_ash, :property_testing,
   excluded_routes: ["/admin/dangerous-action"],
   log_successful_flows: System.get_env("LOG_SUCCESSFUL_FLOWS", "true") == "true",
   screenshot_failures: System.get_env("SCREENSHOT_FAILURES", "true") == "true"
+
+# Oban removed from project: delete testing config
+# (left intentionally blank)
