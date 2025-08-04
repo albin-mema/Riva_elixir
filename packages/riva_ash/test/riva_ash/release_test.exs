@@ -11,7 +11,7 @@ defmodule RivaAsh.ReleaseTest do
       # This would need mocking for failure scenario
       # For now, test the interface
       result = Release.migrate()
-      assert result in [:ok, {:error, _reason}]
+      assert result == :ok or match?({:error, _}, result)
     end
   end
 
@@ -33,7 +33,7 @@ defmodule RivaAsh.ReleaseTest do
     test "handles seeding failures gracefully" do
       # This would need mocking for failure scenario
       result = Release.seed()
-      assert result in [:ok, {:error, _reason}]
+      assert result == :ok or match?({:error, _}, result)
     end
   end
 
@@ -77,7 +77,7 @@ defmodule RivaAsh.ReleaseTest do
     test "handles setup failures gracefully" do
       # This would need mocking for failure scenario
       result = Release.setup()
-      assert result in [:ok, {:error, _reason}]
+      assert result == :ok or match?({:error, _}, result)
     end
   end
 

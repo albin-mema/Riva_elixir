@@ -1,6 +1,7 @@
 defmodule RivaAshWeb.Components.Molecules.CardTest do
   use RivaAshWeb.ConnCase, async: true
   import Phoenix.LiveViewTest
+  import Phoenix.Component, only: [sigil_H: 2]
   import RivaAshWeb.Components.Molecules.Card
 
   describe "card/1" do

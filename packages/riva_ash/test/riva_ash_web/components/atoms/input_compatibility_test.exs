@@ -1,6 +1,7 @@
 defmodule RivaAshWeb.Components.Atoms.InputCompatibilityTest do
   use RivaAshWeb.ConnCase, async: true
   import Phoenix.LiveViewTest
+  import Phoenix.Component, only: [sigil_H: 2]
   import RivaAshWeb.Components.Atoms.Input
 
   describe "input/1 compatibility wrapper" do
@@ -61,12 +62,9 @@ defmodule RivaAshWeb.Components.Atoms.InputCompatibilityTest do
     end
 
     test "handles form field" do
-      field = %Phoenix.HTML.FormField{
-        id: "test_field",
-        name: "test_field",
-        value: "field value",
-        errors: []
-      }
+      # Build a valid form and field using Phoenix.Component.to_form/1
+      form = Phoenix.Component.to_form(%{"test_field" => "field value"})
+      field = form[:test_field]
 
       assigns = %{field: field}
 
@@ -85,9 +83,9 @@ defmodule RivaAshWeb.Components.Atoms.InputCompatibilityTest do
 
       html =
         rendered_to_string(~H"""
-        <.input 
-          type="email" 
-          value="test@example.com" 
+        <.input
+          type="email"
+          value="test@example.com"
           placeholder="Enter email"
           disabled
           readonly
@@ -143,12 +141,14 @@ defmodule RivaAshWeb.Components.Atoms.InputCompatibilityTest do
     end
 
     test "handles error variant with form field errors" do
-      field = %Phoenix.HTML.FormField{
-        id: "test_field",
-        name: "test_field",
-        value: "",
-        errors: [{"can't be blank", []}]
-      }
+      # Construct a form with errors; to_form supports :errors option
+      form =
+        Phoenix.Component.to_form(%{"test_field" => ""},
+          as: "test_field",
+          errors: [test_field: {"can't be blank", []}]
+        )
+
+      field = form[:test_field]
 
       assigns = %{field: field}
 

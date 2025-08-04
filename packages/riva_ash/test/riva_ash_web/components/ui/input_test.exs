@@ -142,12 +142,9 @@ defmodule RivaAshWeb.Components.UI.InputTest do
     end
 
     test "renders with form field" do
-      field = %Phoenix.HTML.FormField{
-        id: "test_field",
-        name: "test_field",
-        value: "field value",
-        errors: []
-      }
+      # Use to_form/1 to build a proper form and take field from it
+      form = Phoenix.Component.to_form(%{"test_field" => "field value"})
+      field = form[:test_field]
 
       assigns = %{field: field}
 
@@ -162,12 +159,14 @@ defmodule RivaAshWeb.Components.UI.InputTest do
     end
 
     test "renders error variant with form field errors" do
-      field = %Phoenix.HTML.FormField{
-        id: "test_field",
-        name: "test_field",
-        value: "",
-        errors: [{"can't be blank", []}]
-      }
+      # Build a proper form using to_form; inject errors via a changeset so required keys are present
+      cs =
+        {%{}, %{}}
+        |> Ecto.Changeset.change(%{})
+        |> Ecto.Changeset.add_error(:test_field, "can't be blank")
+
+      form = Phoenix.Component.to_form(cs)
+      field = form[:test_field]
 
       assigns = %{field: field}
 

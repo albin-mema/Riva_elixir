@@ -1,5 +1,7 @@
 defmodule RivaAshWeb.Components.UI.ButtonTest do
   use RivaAshWeb.ConnCase, async: true
+  # Enable ~H sigil for HEEx and component rendering
+  import Phoenix.Component
   import Phoenix.LiveViewTest
   import RivaAshWeb.Components.UI.Button
 

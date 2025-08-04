@@ -1,5 +1,6 @@
 defmodule RivaAshWeb.Components.UI.ButtonComponentTest do
   use ExUnit.Case, async: true
+  # Import Component to enable ~H and supply assigns map before using ~H
   import Phoenix.Component
   import Phoenix.LiveViewTest
   alias RivaAshWeb.Components.UI.Button
@@ -7,6 +8,7 @@ defmodule RivaAshWeb.Components.UI.ButtonComponentTest do
   @moduledoc false
 
   test "renders default button with inner content" do
+    assigns = %{}
     html =
       rendered_to_string(~H"""
       <Button.button>Click</Button.button>
@@ -18,6 +20,7 @@ defmodule RivaAshWeb.Components.UI.ButtonComponentTest do
   end
 
   test "renders destructive variant and loading spinner" do
+    assigns = %{}
     html =
       rendered_to_string(~H"""
       <Button.button variant="destructive" loading={true}>Delete</Button.button>
@@ -29,6 +32,7 @@ defmodule RivaAshWeb.Components.UI.ButtonComponentTest do
   end
 
   test "respects size mappings" do
+    assigns = %{}
     html_sm =
       rendered_to_string(~H"""
       <Button.button size="sm">Small</Button.button>

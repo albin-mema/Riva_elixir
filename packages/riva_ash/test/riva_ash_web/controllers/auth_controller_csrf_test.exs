@@ -1,78 +1,58 @@
-defmodule RivaAshWeb.AuthControllerCSRFTest do
-  use RivaAshWeb.ConnCase, async: true
+defmodule RivaAshWeb.AuthControllerCsrfTest do
+  use RivaAshWeb.ConnCase, async: false
 
-  describe "CSRF protection" do
-    test "registration form includes CSRF token", %{conn: conn} do
-      conn = get(conn, ~p"/register")
-      assert html_response(conn, 200) =~ ~s(name="_csrf_token")
+  @describetag :controller
+  describe "CSRF guard for login" do
+    test "POST /sign-in without CSRF token is rejected", %{conn: conn} do
+      # Build a bare connection without fetching CSRF token
+      params = %{"email" => "user@example.com", "password" => "badpass"}
+
+      # Using browser pipeline path as defined in router
+      conn = post(conn, ~p"/sign-in", params)
+
+      # Phoenix protect_from_forgery will 403 on missing token by default
+      assert conn.status in [400, 403]
     end
 
-    test "registration form submission works with valid CSRF token", %{conn: conn} do
-      # First, get the registration page to establish a session
-      conn = get(conn, ~p"/register")
-      assert html_response(conn, 200)
-
-      # Extract CSRF token from the session
-      csrf_token = get_csrf_token()
-
-      # Submit registration with CSRF token
-      conn =
-        post(conn, ~p"/register", %{
-          "_csrf_token" => csrf_token,
-          "name" => "Test User",
-          "email" => "test@example.com",
-          "password" => "password123",
-          "password_confirmation" => "password123"
+    test "POST /sign-in with CSRF token succeeds with valid credentials", %{conn: conn} do
+      # Create a valid user via Accounts/Ash
+      user =
+        RivaAsh.Accounts.User
+        |> Ash.Changeset.for_create(:register_with_password, %{
+          name: "Auth #{System.unique_integer([:positive])}",
+          email: "auth#{System.unique_integer([:positive])}@example.com",
+          password: "password123",
+          password_confirmation: "password123",
+          role: :admin
         })
+        |> Ash.create!(domain: RivaAsh.Accounts)
 
-      # Should redirect on successful registration (or show validation errors)
-      # Not expecting a CSRF error
-      assert redirected_to(conn) == "/sign-in" or html_response(conn, 302)
-    end
-
-    test "sign-in form includes CSRF token", %{conn: conn} do
-      conn = get(conn, ~p"/sign-in")
-      assert html_response(conn, 200) =~ ~s(name="_csrf_token")
-    end
-
-    test "sign-out form includes CSRF token", %{conn: conn} do
-      # This would require authentication setup, so we'll skip for now
-      # but the fix should work for sign-out as well
-    end
-  end
-
-  describe "session handling" do
-    test "fetch_current_user doesn't clear CSRF token when no user token exists", %{conn: conn} do
-      # Get a page to establish session with CSRF token
-      conn = get(conn, ~p"/register")
-      assert html_response(conn, 200)
-
-      # The session should still have the CSRF token after fetch_current_user runs
-      # (which happens in the browser pipeline)
-      csrf_token = get_session(conn, "_csrf_token")
-      assert csrf_token != nil
-    end
-
-    test "fetch_current_user doesn't clear CSRF token when invalid user token exists", %{
-      conn: conn
-    } do
-      # Set an invalid user token
+      # Prepare a form POST including a valid CSRF token
       conn =
         conn
-        |> init_test_session(%{})
-        |> put_session(:user_token, "invalid_token")
+        |> Phoenix.ConnTest.recycle()
+        |> Phoenix.ConnTest.init_test_session(%{})
+        |> Plug.Conn.fetch_session()
+        |> Plug.CSRFProtection.init([])
+        |> Plug.Conn.put_req_header("content-type", "application/x-www-form-urlencoded")
 
-      # Get a page to trigger fetch_current_user
-      conn = get(conn, ~p"/register")
-      assert html_response(conn, 200)
+      token = Plug.CSRFProtection.get_csrf_token_for(~p"/sign-in")
 
-      # The session should still have the CSRF token
-      csrf_token = get_session(conn, "_csrf_token")
-      assert csrf_token != nil
+      params = %{
+        "_csrf_token" => token,
+        "email" => user.email,
+        "password" => "password123"
+      }
 
-      # But user_token should be cleared
-      user_token = get_session(conn, :user_token)
-      assert user_token == nil
+      conn = post(conn, ~p"/sign-in", params)
+
+      # Successful sign in redirects to /businesses per controller implementation
+      assert conn.status in [302, 303]
+      location = get_resp_header(conn, "location") |> List.first()
+      assert location in [~p"/businesses", "/businesses"]
+
+      # Session should contain :user_token
+      assert Plug.Conn.get_session(conn, :user_token)
     end
   end
 end

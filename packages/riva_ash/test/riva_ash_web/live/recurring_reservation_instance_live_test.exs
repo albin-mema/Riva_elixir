@@ -14,15 +14,14 @@ defmodule RivaAshWeb.Live.RecurringReservationInstanceLiveTest do
   @moduletag :slow
 
   describe "RecurringReservationInstanceLive mount and render" do
-    test "mounts successfully for authenticated user", %{conn: conn} do
-      # Create a user
-      user = create_user!()
+    setup %{conn: conn} do
+      {conn, user} = create_and_sign_in_user(conn, %{role: :admin})
+      %{conn: conn, user: user}
+    end
 
+    test "mounts successfully for authenticated user", %{conn: conn, user: user} do
       # Create a business for the user
       business = create_business!(user)
-
-      # Create a session with the user token
-      conn = assign_user_token(conn, user)
 
       # Mount the LiveView
       {:ok, _view, html} = live(conn, "/recurring-reservation-instances")
@@ -40,7 +39,7 @@ defmodule RivaAshWeb.Live.RecurringReservationInstanceLiveTest do
 
     test "redirects to access-denied page for unauthorized user", %{conn: conn} do
       # Create a user without proper permissions
-      user = create_user!(%{role: :client})
+      user = create_user!(%{role: :user})
 
       # Create a session with the user token
       conn = assign_user_token(conn, user)
@@ -214,7 +213,7 @@ defmodule RivaAshWeb.Live.RecurringReservationInstanceLiveTest do
       business = create_business!(user)
 
       # Create a section and item for the recurring reservation
-      section = create_section!(business)
+      section = create_section!(business, user)
       item = create_item!(section)
 
       # Create a recurring reservation

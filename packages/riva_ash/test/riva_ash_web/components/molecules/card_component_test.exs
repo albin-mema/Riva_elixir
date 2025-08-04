@@ -7,6 +7,7 @@ defmodule RivaAshWeb.Components.Molecules.CardComponentTest do
   @moduledoc false
 
   test "renders header, body, and footer slots via UI.Card container" do
+    assigns = %{}
     html =
       rendered_to_string(~H"""
       <Card.card>

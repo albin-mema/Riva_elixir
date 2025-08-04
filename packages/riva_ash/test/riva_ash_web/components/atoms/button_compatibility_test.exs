@@ -1,5 +1,7 @@
 defmodule RivaAshWeb.Components.Atoms.ButtonCompatibilityTest do
   use RivaAshWeb.ConnCase, async: true
+  # Minimal test fix: import for ~H sigil and rendered_to_string/1 helpers
+  import Phoenix.Component
   import Phoenix.LiveViewTest
   import RivaAshWeb.Components.Atoms.Button
 

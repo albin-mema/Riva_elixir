@@ -1,4 +1,5 @@
 defmodule RivaAshWeb.AuthFlowTest do
+  # Keep PhoenixTest to support visit/fill_in/click_button/etc. macros used below.
   use RivaAshWeb.ConnCase, async: true
   use PhoenixTest
 
