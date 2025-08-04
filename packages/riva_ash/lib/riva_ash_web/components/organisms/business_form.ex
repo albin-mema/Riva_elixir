@@ -4,7 +4,8 @@ defmodule RivaAshWeb.Components.Organisms.BusinessForm do
   Uses atomic design components to provide a consistent form experience.
   """
   use Phoenix.Component
-  import RivaAshWeb.Components.Atoms.Button
+  alias RivaAshWeb.Components.UI.Button, as: UIButton
+  alias RivaAshWeb.Components.UI.Text, as: UIText
   import RivaAshWeb.Components.Molecules.Card
   import RivaAshWeb.Components.Molecules.FormField
 
@@ -120,24 +121,22 @@ defmodule RivaAshWeb.Components.Organisms.BusinessForm do
           </div>
 
           <div class="flex gap-3 pt-4">
-            <.button
+            <UIButton.button
               type="submit"
-              variant="primary"
+              variant="default"
               disabled={@loading}
               loading={@loading}
-              icon_left={if @editing, do: :check, else: :plus}
             >
               <%= if @editing, do: "Update Business", else: "Create Business" %>
-            </.button>
+            </UIButton.button>
 
-            <.button
+            <UIButton.button
               type="button"
               variant="outline"
               phx-click={@on_cancel}
-              icon_left={:x_mark}
             >
               Cancel
-            </.button>
+            </UIButton.button>
           </div>
         </.form>
       </:body>

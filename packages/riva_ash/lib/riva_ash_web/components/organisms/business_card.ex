@@ -7,7 +7,7 @@ defmodule RivaAshWeb.Components.Organisms.BusinessCard do
   import RivaAshWeb.Components.Atoms.Text
   import RivaAshWeb.Components.Atoms.Icon
   import RivaAshWeb.Components.Atoms.Badge
-  import RivaAshWeb.Components.Atoms.Button
+  # Prefer canonical UI.Button at call sites; remove unused Atoms.Button import
   import RivaAshWeb.Components.Molecules.Card
 
   @doc """
@@ -115,26 +115,24 @@ defmodule RivaAshWeb.Components.Organisms.BusinessCard do
   defp business_actions(assigns) do
     ~H"""
     <div class="flex flex-shrink-0 items-center gap-2 ml-4">
-      <.button
+      <RivaAshWeb.Components.UI.Button.button
         variant="outline"
         size="sm"
         phx-click={@on_edit}
         phx-value-id={@business_id}
-        icon_left="pencil"
       >
         Edit
-      </.button>
+      </RivaAshWeb.Components.UI.Button.button>
 
-      <.button
+      <RivaAshWeb.Components.UI.Button.button
         variant="destructive"
         size="sm"
         phx-click={@on_delete}
         phx-value-id={@business_id}
         data-confirm="Are you sure you want to delete this business? This action cannot be undone."
-        icon_left="trash"
       >
         Delete
-      </.button>
+      </RivaAshWeb.Components.UI.Button.button>
     </div>
     """
   end

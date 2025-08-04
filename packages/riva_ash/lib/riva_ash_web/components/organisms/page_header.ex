@@ -4,11 +4,10 @@ defmodule RivaAshWeb.Components.Organisms.PageHeader do
   An organism component that combines atoms and molecules for page headers.
   """
   use Phoenix.Component
-  import RivaAshWeb.Components.Atoms.Text
-  import RivaAshWeb.Components.Atoms.Icon
-  import RivaAshWeb.Components.Atoms.Button
-  import RivaAshWeb.Components.Atoms.Badge
-  import RivaAshWeb.Components.Molecules.Card
+  alias RivaAshWeb.Components.UI.Text, as: UIText
+  alias RivaAshWeb.Components.UI.Icon, as: UIIcon
+  alias RivaAshWeb.Components.UI.Badge, as: UIBadge
+  alias RivaAshWeb.Components.UI.Button, as: UIButton
 
   @doc """
   Renders a page header with title, description, metadata, and actions.
@@ -67,13 +66,13 @@ defmodule RivaAshWeb.Components.Organisms.PageHeader do
           <div class="flex items-center gap-3">
             <%= if @icon do %>
               <div class="flex-shrink-0">
-                <.icon name={@icon} size="lg" class="text-muted-foreground" />
+                <UIIcon.icon name={@icon} size="lg" class="text-muted-foreground" />
               </div>
             <% end %>
 
-            <.heading level={1} class="truncate">
+            <UIText.text variant="h1" class="truncate">
               <%= @title %>
-            </.heading>
+            </UIText.text>
 
             <%= for badge <- @badge do %>
               <div class="flex-shrink-0">
@@ -83,9 +82,9 @@ defmodule RivaAshWeb.Components.Organisms.PageHeader do
           </div>
 
           <%= if @description do %>
-            <.text variant="lead" color="muted" class="mt-2">
+            <UIText.text variant="lead" color="muted" class="mt-2">
               <%= @description %>
-            </.text>
+            </UIText.text>
           <% end %>
 
           <%= if @extra != [] do %>
@@ -160,13 +159,13 @@ defmodule RivaAshWeb.Components.Organisms.PageHeader do
             aria-current={if tab.id == @active_tab, do: "page"}
           >
             <%= if tab[:icon] do %>
-              <.icon name={tab.icon} size="sm" />
+              <UIIcon.icon name={tab.icon} size="sm" />
             <% end %>
             <span><%= tab.label %></span>
             <%= if tab[:count] do %>
-              <.badge variant="secondary" size="sm">
+              <UIBadge.badge variant="secondary" size="sm">
                 <%= tab.count %>
-              </.badge>
+              </UIBadge.badge>
             <% end %>
           </button>
         <% end %>

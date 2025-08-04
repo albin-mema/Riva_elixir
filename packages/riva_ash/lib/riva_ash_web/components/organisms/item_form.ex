@@ -6,7 +6,7 @@ defmodule RivaAshWeb.Components.Organisms.ItemForm do
   import RivaAshWeb.Components.Molecules.FormField
   import RivaAshWeb.Components.Atoms.Button
   import RivaAshWeb.Components.Atoms.Toggle
-  import RivaAshWeb.Components.Atoms.Select
+  # removed unused import to reduce warnings
 
   @doc """
   Renders an item form with positioning options.
@@ -28,8 +28,16 @@ defmodule RivaAshWeb.Components.Organisms.ItemForm do
     <form phx-submit={@on_submit} phx-change={@on_change} {@rest}>
       <.form_field field={@form[:name]} label="Item Name" required />
       <.form_field field={@form[:description]} label="Description" type="textarea" />
-      <.form_field field={@form[:section_id]} label="Section" type="select" options={@sections} />
-      <.form_field field={@form[:item_type_id]} label="Item Type" type="select" options={@item_types} />
+      <.form_field field={@form[:section_id]} label="Section" type="select">
+        <:input>
+          <RivaAshWeb.Components.UI.Select.select options={@sections} prompt="Select a section" />
+        </:input>
+      </.form_field>
+      <.form_field field={@form[:item_type_id]} label="Item Type" type="select">
+        <:input>
+          <RivaAshWeb.Components.UI.Select.select options={@item_types} prompt="Select an item type" />
+        </:input>
+      </.form_field>
 
       <.toggle field={@form[:is_active]} label="Active" />
       <.toggle field={@form[:is_always_available]} label="Always Available" />
