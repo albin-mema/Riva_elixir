@@ -39,7 +39,7 @@ config :mime,
 config :riva_ash, ecto_repos: [RivaAsh.Repo]
 
 # Configure Ash
-config :riva_ash, ash_domains: [RivaAsh.Domain, RivaAsh.Accounts]
+config :riva_ash, ash_domains: [RivaAsh.Domain]
 config :ash, :use_all_identities_in_manage_relationship?, false
 
 # Configure Ash to use SimpleSat

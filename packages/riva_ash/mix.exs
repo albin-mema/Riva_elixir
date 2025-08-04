@@ -116,11 +116,36 @@ defmodule RivaAsh.MixProject do
       "ecto.setup": ["ecto.create", "ecto.migrate", "run priv/repo/seeds.exs"],
       "ecto.reset": ["ecto.drop", "ecto.setup"],
       test: fn args ->
-        if System.get_env("SKIP_DB") == "true" do
-          # Use unit test helper for tests without database
-          ["run", "-e", "Code.require_file(\"test/unit_test_helper.exs\"); ExUnit.CLI.run(#{inspect(args)})"]
+        env = System.get_env("SKIP_DB")
+        IO.puts("[mix alias test] SKIP_DB=#{inspect(env)} args=#{inspect(args)}")
+
+        truthy? = case env do
+          "true" -> true
+          "1" -> true
+          "yes" -> true
+          "on" -> true
+          _ -> false
+        end
+
+        if truthy? do
+          IO.puts("[mix alias test] DB setup skipped due to SKIP_DB")
+          # Run tests without DB. Load a unit-only test helper if present to avoid Repo/Sandbox.
+          unit_helper = Path.join(["test", "unit_test_helper.exs"])
+          if File.exists?(unit_helper) do
+            IO.puts("[mix alias test] loading #{unit_helper}")
+            Code.require_file(unit_helper)
+          end
+
+          Mix.shell(Mix.Shell.IO)
+          Mix.Task.reenable("test")
+          Mix.Tasks.Test.run(args)
         else
-          ["ecto.create --quiet", "ecto.migrate --quiet", "test"] ++ args
+          # Prepare DB quietly, then run the built-in test task (avoid alias recursion).
+          Mix.Task.run("ecto.create", ["--quiet"])
+          Mix.Task.run("ecto.migrate", ["--quiet"])
+          Mix.shell(Mix.Shell.IO)
+          Mix.Task.reenable("test")
+          Mix.Tasks.Test.run(args)
         end
       end,
       "assets.deploy": [
