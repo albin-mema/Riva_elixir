@@ -4,8 +4,8 @@ defmodule RivaAshWeb.Components.Molecules.EmptyState do
   A molecule component that provides a consistent empty state experience.
   """
   use Phoenix.Component
-  import RivaAshWeb.Components.Atoms.Text
-  import RivaAshWeb.Components.Atoms.Icon
+  alias RivaAshWeb.Components.UI.Text, as: UIText
+  alias RivaAshWeb.Components.UI.Icon, as: UIIcon
 
 
   @doc """
@@ -48,18 +48,18 @@ defmodule RivaAshWeb.Components.Molecules.EmptyState do
     <div class={@container_class} {@rest}>
       <div class={content_class(@size)}>
         <div class={icon_wrapper_class(@size)}>
-          <.icon name={@icon} size={icon_size(@size)} class="text-muted-foreground" />
+          <UIIcon.icon name={@icon} size={icon_size(@size)} class="text-muted-foreground" />
         </div>
 
         <div class="space-y-2 text-center">
-          <.text variant={title_variant(@size)} weight="semibold">
+          <UIText.text variant={title_variant(@size)} weight="semibold">
             <%= @title %>
-          </.text>
+          </UIText.text>
 
           <%= if @description do %>
-            <.text variant={description_variant(@size)} color="muted">
+            <UIText.text variant={description_variant(@size)} color="muted">
               <%= @description %>
-            </.text>
+            </UIText.text>
           <% end %>
         </div>
 
@@ -84,11 +84,11 @@ defmodule RivaAshWeb.Components.Molecules.EmptyState do
     ~H"""
     <div class={["flex items-center justify-center gap-2 py-4 px-6 text-muted-foreground", @class]}>
       <%= if @icon do %>
-        <.icon name={@icon} size="sm" />
+        <UIIcon.icon name={@icon} size="sm" />
       <% end %>
-      <.text variant="small" color="muted">
+      <UIText.text variant="small" color="muted">
         <%= @text %>
-      </.text>
+      </UIText.text>
     </div>
     """
   end

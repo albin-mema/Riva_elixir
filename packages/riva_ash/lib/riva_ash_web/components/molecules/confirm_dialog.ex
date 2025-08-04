@@ -4,7 +4,7 @@ defmodule RivaAshWeb.Components.Molecules.ConfirmDialog do
   """
   use Phoenix.Component
   import RivaAshWeb.Components.Atoms.Button
-  import RivaAshWeb.Components.Atoms.Icon
+  # removed unused import to reduce warnings
 
   @doc """
   Renders a confirmation dialog.

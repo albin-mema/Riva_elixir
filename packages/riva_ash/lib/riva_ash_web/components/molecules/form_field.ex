@@ -4,8 +4,12 @@ defmodule RivaAshWeb.Components.Molecules.FormField do
   A molecule component that provides a complete form field experience.
   """
   use Phoenix.Component
-  import RivaAshWeb.Components.Atoms.Text
-  import RivaAshWeb.Components.Atoms.Icon
+  alias RivaAshWeb.Components.UI.Text, as: UIText
+  alias RivaAshWeb.Components.UI.Icon, as: UIIcon
+  alias RivaAshWeb.Components.UI.Input, as: UIInput
+  alias RivaAshWeb.Components.UI.Textarea, as: UITextarea
+  alias RivaAshWeb.Components.UI.Select, as: UISelect
+  alias RivaAshWeb.Components.UI.Checkbox, as: UICheckbox
 
   @doc """
   Renders a complete form field with label, input, helper text, and error messages.
@@ -45,41 +49,40 @@ defmodule RivaAshWeb.Components.Molecules.FormField do
     ~H"""
     <div class={field_wrapper_class(@class)}>
       <%= if @label do %>
-        <.text variant="label" required={@required} class="mb-2">
+        <UIText.text variant="label" required={@required} class="mb-2">
           <%= @label %>
-        </.text>
+        </UIText.text>
       <% end %>
 
       <div class="relative">
         <%= if @icon && @icon_position == "left" do %>
           <div class="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none">
-            <.icon name={@icon} size="sm" class="text-muted-foreground" />
+            <UIIcon.icon name={@icon} size="sm" class="text-muted-foreground" />
           </div>
         <% end %>
 
-        <input
+        <UIInput.input
           type={@type}
-          name={@field.name}
-          id={@field.id}
-          value={@field.value}
+          field={@field}
           placeholder={@placeholder}
           disabled={@disabled}
           readonly={@readonly}
-          class={input_class(@icon, @icon_position, @field.errors != [])}
+          variant={if @field.errors != [], do: "error", else: "default"}
+          class={if @icon, do: icon_padding_class(@icon_position), else: ""}
           {@rest}
         />
 
         <%= if @icon && @icon_position == "right" do %>
           <div class="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none">
-            <.icon name={@icon} size="sm" class="text-muted-foreground" />
+            <UIIcon.icon name={@icon} size="sm" class="text-muted-foreground" />
           </div>
         <% end %>
       </div>
 
       <%= if @helper_text && @field.errors == [] do %>
-        <.text variant="small" color="muted" class="mt-1">
+        <UIText.text variant="small" color="muted" class="mt-1">
           <%= @helper_text %>
-        </.text>
+        </UIText.text>
       <% end %>
 
       <.field_errors field={@field} />
@@ -105,26 +108,25 @@ defmodule RivaAshWeb.Components.Molecules.FormField do
     ~H"""
     <div class={field_wrapper_class(@class)}>
       <%= if @label do %>
-        <.text variant="label" required={@required} class="mb-2">
+        <UIText.text variant="label" required={@required} class="mb-2">
           <%= @label %>
-        </.text>
+        </UIText.text>
       <% end %>
 
-      <textarea
-        name={@field.name}
-        id={@field.id}
+      <UITextarea.textarea
+        field={@field}
         placeholder={@placeholder}
         disabled={@disabled}
         readonly={@readonly}
         rows={@rows}
-        class={textarea_class(@field.errors != [])}
+        variant={if @field.errors != [], do: "error", else: "default"}
         {@rest}
-      ><%= @field.value %></textarea>
+      />
 
       <%= if @helper_text && @field.errors == [] do %>
-        <.text variant="small" color="muted" class="mt-1">
+        <UIText.text variant="small" color="muted" class="mt-1">
           <%= @helper_text %>
-        </.text>
+        </UIText.text>
       <% end %>
 
       <.field_errors field={@field} />
@@ -149,32 +151,24 @@ defmodule RivaAshWeb.Components.Molecules.FormField do
     ~H"""
     <div class={field_wrapper_class(@class)}>
       <%= if @label do %>
-        <.text variant="label" required={@required} class="mb-2">
+        <UIText.text variant="label" required={@required} class="mb-2">
           <%= @label %>
-        </.text>
+        </UIText.text>
       <% end %>
 
-      <select
-        name={@field.name}
-        id={@field.id}
+      <UISelect.select
+        field={@field}
+        options={@options}
+        prompt={@prompt}
         disabled={@disabled}
-        class={select_class(@field.errors != [])}
+        variant={if @field.errors != [], do: "error", else: "default"}
         {@rest}
-      >
-        <%= if @prompt do %>
-          <option value=""><%= @prompt %></option>
-        <% end %>
-        <%= for {label, value} <- @options do %>
-          <option value={value} selected={value == @field.value}>
-            <%= label %>
-          </option>
-        <% end %>
-      </select>
+      />
 
       <%= if @helper_text && @field.errors == [] do %>
-        <.text variant="small" color="muted" class="mt-1">
+        <UIText.text variant="small" color="muted" class="mt-1">
           <%= @helper_text %>
-        </.text>
+        </UIText.text>
       <% end %>
 
       <.field_errors field={@field} />
@@ -195,28 +189,14 @@ defmodule RivaAshWeb.Components.Molecules.FormField do
   def checkbox_field(assigns) do
     ~H"""
     <div class={field_wrapper_class(@class)}>
-      <div class="flex items-start">
-        <input
-          type="checkbox"
-          name={@field.name}
-          id={@field.id}
-          value="true"
-          checked={@field.value == true || @field.value == "true"}
-          disabled={@disabled}
-          class={checkbox_class()}
-          {@rest}
-        />
-        <div class="ml-3">
-          <label for={@field.id} class="text-sm font-medium leading-6 text-foreground cursor-pointer">
-            <%= @label %>
-          </label>
-          <%= if @helper_text do %>
-            <.text variant="small" color="muted">
-              <%= @helper_text %>
-            </.text>
-          <% end %>
-        </div>
-      </div>
+      <UICheckbox.checkbox
+        field={@field}
+        label={@label}
+        description={@helper_text}
+        disabled={@disabled}
+        variant={if @field.errors != [], do: "error", else: "default"}
+        {@rest}
+      />
 
       <.field_errors field={@field} />
     </div>
@@ -227,57 +207,12 @@ defmodule RivaAshWeb.Components.Molecules.FormField do
     "space-y-1 #{class}"
   end
 
-  defp input_class(icon, icon_position, has_errors) do
-    base =
-      "flex h-9 w-full rounded-md border bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
-
-    padding =
-      cond do
-        icon && icon_position == "left" -> "pl-10"
-        icon && icon_position == "right" -> "pr-10"
-        true -> ""
-      end
-
-    border =
-      if has_errors do
-        "border-destructive focus-visible:ring-destructive"
-      else
-        "border-input"
-      end
-
-    Enum.join([base, padding, border], " ")
-  end
-
-  defp textarea_class(has_errors) do
-    base =
-      "flex min-h-[60px] w-full rounded-md border bg-transparent px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
-
-    border =
-      if has_errors do
-        "border-destructive focus-visible:ring-destructive"
-      else
-        "border-input"
-      end
-
-    "#{base} #{border}"
-  end
-
-  defp select_class(has_errors) do
-    base =
-      "flex h-9 w-full items-center justify-between rounded-md border bg-transparent px-3 py-1 text-sm shadow-sm transition-colors placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
-
-    border =
-      if has_errors do
-        "border-destructive focus:ring-destructive"
-      else
-        "border-input"
-      end
-
-    "#{base} #{border}"
-  end
-
-  defp checkbox_class do
-    "h-4 w-4 rounded border-input text-primary focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background disabled:cursor-not-allowed disabled:opacity-50"
+  defp icon_padding_class(icon_position) do
+    case icon_position do
+      "left" -> "pl-10"
+      "right" -> "pr-10"
+      _ -> ""
+    end
   end
 
   defp field_errors(assigns) do
@@ -285,10 +220,10 @@ defmodule RivaAshWeb.Components.Molecules.FormField do
     <div :if={@field.errors != []} class="mt-1 space-y-1">
       <%= for error <- @field.errors do %>
         <div class="flex items-center gap-1">
-          <.icon name={:exclamation_circle} size="xs" class="text-destructive" variant="mini" />
-          <.text variant="small" color="destructive">
+          <UIIcon.icon name={:x_mark} size="xs" class="text-destructive" />
+          <UIText.text variant="small" color="destructive">
             <%= translate_error(error) %>
-          </.text>
+          </UIText.text>
         </div>
       <% end %>
     </div>

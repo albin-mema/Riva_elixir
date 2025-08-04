@@ -1,10 +1,13 @@
 defmodule RivaAshWeb.Components.Molecules.Card do
   @moduledoc """
   Card component for grouping related content.
-  A molecule component that combines multiple atoms to create a content container.
+
+  Delegates container rendering to the canonical design-system Card while
+  preserving the header/body/footer API for molecules.
   """
   use Phoenix.Component
-  import RivaAshWeb.Components.Atoms.Text
+  alias RivaAshWeb.Components.UI.Card, as: UICard
+  alias RivaAshWeb.Components.UI.Text, as: UIText
 
   @doc """
   Renders a card container with optional header and footer.
@@ -41,7 +44,7 @@ defmodule RivaAshWeb.Components.Molecules.Card do
     assigns = assign(assigns, :card_class, card_class(assigns))
 
     ~H"""
-    <div class={@card_class} {@rest}>
+    <UICard.card class={@card_class} {@rest}>
       <%= if @header != [] do %>
         <div class={header_class(@padding)}>
           <%= render_slot(@header) %>
@@ -57,7 +60,7 @@ defmodule RivaAshWeb.Components.Molecules.Card do
           <%= render_slot(@footer) %>
         </div>
       <% end %>
-    </div>
+    </UICard.card>
     """
   end
 
@@ -69,9 +72,9 @@ defmodule RivaAshWeb.Components.Molecules.Card do
 
   def card_title(assigns) do
     ~H"""
-    <.heading level={3} class={["text-foreground", @class]}>
+    <UIText.text variant="h3" class={["text-foreground", @class]}>
       <%= render_slot(@inner_block) %>
-    </.heading>
+    </UIText.text>
     """
   end
 
@@ -83,9 +86,9 @@ defmodule RivaAshWeb.Components.Molecules.Card do
 
   def card_description(assigns) do
     ~H"""
-    <.text variant="small" color="muted" class={["mt-1", @class]}>
+    <UIText.text variant="small" color="muted" class={["mt-1", @class]}>
       <%= render_slot(@inner_block) %>
-    </.text>
+    </UIText.text>
     """
   end
 
