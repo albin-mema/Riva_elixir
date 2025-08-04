@@ -84,7 +84,9 @@ defmodule RivaAshWeb.Router do
     #   end
     # end
 
-    forward("/dev", RivaAshWeb.Dev.Router)
+    if Mix.env() == :dev and Code.ensure_loaded?(RivaAshWeb.Dev.Router) do
+      forward("/dev", RivaAshWeb.Dev.Router)
+    end
   end
 
   # Client-facing booking API (public)
