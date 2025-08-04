@@ -48,23 +48,28 @@ if config_env() == :prod do
       You can generate one by calling: mix phx.gen.secret
       """
 
+  # Authentication token secret required in production
+  auth_token_secret =
+    System.get_env("AUTH_TOKEN_SECRET") ||
+      raise """
+      environment variable AUTH_TOKEN_SECRET is missing.
+      It is used to sign authentication tokens.
+      """
+
   host = System.get_env("PHX_HOST") || "example.com"
   port = String.to_integer(System.get_env("PORT") || "4000")
 
   config :riva_ash, RivaAshWeb.Endpoint,
     url: [host: host, port: 443, scheme: "https"],
     http: [
-      # Enable IPv6 and bind on all interfaces.
-      # Set it to  {0, 0, 0, 0, 0, 0, 0, 1} for local network only access.
-      # See the documentation on https://hexdocs.pm/plug_cowboy/Plug.Cowboy.html
-      # for details about using IPv6 vs IPv4 and loopback vs public addresses.
       ip: {0, 0, 0, 0, 0, 0, 0, 0},
       port: port
     ],
-    secret_key_base: secret_key_base
+    secret_key_base: secret_key_base,
+    force_ssl: [hsts: true]
 
-  # Set the signing secret for authentication tokens
-  config :riva_ash, :signing_secret, secret_key_base
+  # Set the signing secret for authentication tokens (AshAuthentication)
+  config :ash_authentication, :token_secret, auth_token_secret
 
   # ## SSL Support
   #

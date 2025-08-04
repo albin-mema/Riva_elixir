@@ -1,5 +1,8 @@
 import Config
 
+# Development environment configuration
+# This file contains safe defaults for development and should not contain production secrets
+
 # Configure your database
 config :riva_ash, RivaAsh.Repo,
   username: System.get_env("DB_USERNAME") || "postgres",
@@ -11,6 +14,13 @@ config :riva_ash, RivaAsh.Repo,
   show_sensitive_data_on_connection_error: true,
   pool_size: 10
 
+# Development-specific database settings
+config :riva_ash, RivaAsh.Repo,
+  # Enable query logging in development
+  log: :debug,
+  # Show sensitive data for debugging (dev only)
+  show_sensitive_data_on_connection_error: true
+
 # For development, we disable any cache and enable
 # debugging and code reloading.
 config :riva_ash, RivaAshWeb.Endpoint,
@@ -20,7 +30,8 @@ config :riva_ash, RivaAshWeb.Endpoint,
   check_origin: false,
   code_reloader: true,
   debug_errors: true,
-  secret_key_base: "EuaQggrb3gfhrDAQUZqTsTMUt7zf9voCI2frB3kuyBabOCHiEue48mXJiMtL7QLj",
+  # Development secret - safe to commit, not used in production
+  secret_key_base: System.get_env("SECRET_KEY_BASE") || "EuaQggrb3gfhrDAQUZqTsTMUt7zf9voCI2frB3kuyBabOCHiEue48mXJiMtL7QLj",
   watchers: [
     tailwind: {Tailwind, :install_and_run, [:default, ~w(--watch)]},
     storybook_tailwind: {Tailwind, :install_and_run, [:storybook, ~w(--watch)]},

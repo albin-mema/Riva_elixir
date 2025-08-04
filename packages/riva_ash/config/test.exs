@@ -1,26 +1,32 @@
 import Config
 
+# Test environment configuration
+# This file contains safe defaults for testing and should not contain production secrets
+
 # Configure your database
 #
 # The MIX_TEST_PARTITION environment variable can be used
 # to provide built-in test partitioning in CI environment.
 # Run `mix help test` for more information.
 config :riva_ash, RivaAsh.Repo,
-  username: System.get_env("DB_USERNAME", "postgres"),
-  password: System.get_env("DB_PASSWORD", "postgres"),
-  hostname: System.get_env("DB_HOSTNAME", "localhost"),
-  database: System.get_env("DB_NAME", "riva_ash_test#{System.get_env("MIX_TEST_PARTITION")}"),
-  port: String.to_integer(System.get_env("DB_PORT", "5432")),
+  username: System.get_env("DB_USERNAME") || "postgres",
+  password: System.get_env("DB_PASSWORD") || "postgres",
+  hostname: System.get_env("DB_HOSTNAME") || "localhost",
+  database: System.get_env("DB_NAME") || "riva_ash_test#{System.get_env("MIX_TEST_PARTITION")}",
+  port: String.to_integer(System.get_env("DB_PORT") || "5432"),
   pool: Ecto.Adapters.SQL.Sandbox,
-  pool_size: 10,
-  ownership_timeout: 15000,
-  timeout: 15000,
-  ssl: false
+  pool_size: System.get_env("DB_POOL_SIZE") |> then(&if &1, do: String.to_integer(&1), else: 10),
+  ownership_timeout: 15_000,
+  timeout: 15_000,
+  ssl: false,
+  # Disable query logging in tests for performance
+  log: false
 
 # Enable server for browser tests
 config :riva_ash, RivaAshWeb.Endpoint,
-  http: [ip: {127, 0, 0, 1}, port: 4002],
-  secret_key_base:
+  http: [ip: {127, 0, 0, 1}, port: String.to_integer(System.get_env("PORT") || "4002")],
+  # Test secret - safe to commit, not used in production
+  secret_key_base: System.get_env("SECRET_KEY_BASE") ||
     "test_secret_key_base_change_me_in_production_this_needs_to_be_at_least_64_bytes_long_for_security",
   server: true
 
