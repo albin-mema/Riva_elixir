@@ -584,7 +584,7 @@ defmodule RivaAshWeb.EmployeeLive do
     try do
       IO.puts("DEBUG: Loading employees for user: #{inspect(user.email)} (role: #{user.role})")
 
-      if user.role == :admin do
+      if user.role == "admin" do
         # Admins can see all employees - use authorize?: false to bypass permission issues
         IO.puts("DEBUG: User is admin, loading all employees")
 
@@ -691,8 +691,8 @@ defmodule RivaAshWeb.EmployeeLive do
   end
 
   # Helper function for badge variants based on role
-  defp role_variant(:admin), do: "destructive"
-  defp role_variant(:manager), do: "default"
-  defp role_variant(:staff), do: "secondary"
+  defp role_variant("admin"), do: "destructive"
+  defp role_variant("manager"), do: "default"
+  defp role_variant("staff"), do: "secondary"
   defp role_variant(_), do: "secondary"
 end

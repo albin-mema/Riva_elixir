@@ -20,7 +20,7 @@ defmodule RivaAshWeb.Live.AuthHelpers do
              Phoenix.Token.verify(RivaAshWeb.Endpoint, "user_auth", user_token, max_age: 86_400)
              |> ErrorHelpers.to_result(),
            {:ok, user} <-
-             Ash.get(RivaAsh.Accounts.User, user_id, domain: RivaAsh.Domain)
+             Ash.get(RivaAsh.Accounts.User, user_id, action: :seed_read, domain: RivaAsh.Accounts)
              |> ErrorHelpers.to_result() do
         ErrorHelpers.success(user)
       else

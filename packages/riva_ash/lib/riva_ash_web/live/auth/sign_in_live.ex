@@ -148,8 +148,8 @@ defmodule RivaAshWeb.Auth.SignInLive do
     # Set loading state
     socket = assign(socket, loading: true, error_message: nil)
 
-    # Get client IP address for rate limiting
-    ip_address = get_client_ip(socket)
+    # Get client IP address for rate limiting (stored during mount)
+    ip_address = socket.assigns.client_ip
 
     # Check rate limiting
     case RivaAsh.Accounts.RateLimiter.check_rate(ip_address) do
