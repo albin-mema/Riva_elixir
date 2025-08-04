@@ -16,6 +16,9 @@ defmodule RivaAshWeb.Components.UI do
   # Display components
   defdelegate badge(assigns), to: RivaAshWeb.Components.UI.Badge
   defdelegate alert(assigns), to: RivaAshWeb.Components.UI.Alert
+  defdelegate icon(assigns), to: RivaAshWeb.Components.UI.Icon
+  defdelegate text(assigns), to: RivaAshWeb.Components.UI.Text
+  defdelegate spinner(assigns), to: RivaAshWeb.Components.UI.Spinner
 
   # Card components
   defdelegate card(assigns), to: RivaAshWeb.Components.UI.Card

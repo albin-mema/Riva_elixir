@@ -2,12 +2,19 @@ defmodule RivaAshWeb.Components.AtomicComponents do
   @moduledoc """
   Central module that exports all atomic design components.
 
-  This module provides a single import point for all atomic design components,
-  organized by their atomic design level (atoms, molecules, organisms, templates).
+  ⚠️ **MIGRATION NOTICE**: This module is being updated to use canonical UI components.
 
-  ## Usage
+  ## Recommended Usage (New Code)
 
-  To use all atomic components in a module:
+  For new code, prefer importing UI components directly:
+
+      alias RivaAshWeb.Components.UI.Button, as: UIButton
+      alias RivaAshWeb.Components.UI.Input, as: UIInput
+      alias RivaAshWeb.Components.UI.Text, as: UIText
+
+  ## Legacy Usage (Existing Code)
+
+  For existing code during migration:
 
       use RivaAshWeb.Components.AtomicComponents
 
@@ -15,11 +22,27 @@ defmodule RivaAshWeb.Components.AtomicComponents do
 
       import RivaAshWeb.Components.AtomicComponents, only: [atoms: 0]
       import RivaAshWeb.Components.AtomicComponents, only: [molecules: 0]
+
+  ## Migration Status
+
+  - ✅ UI Components: Canonical design system components
+  - ✅ Atom Components: Compatibility wrappers (delegate to UI components)
+  - ✅ Molecule Components: Updated to use UI components internally
+  - 🔄 Organism Components: Being updated to use UI components
   """
 
   defmacro __using__(_opts) do
     quote do
       import RivaAshWeb.Components.AtomicComponents
+      # Import UI components for new functionality
+      alias RivaAshWeb.Components.UI.Button, as: UIButton
+      alias RivaAshWeb.Components.UI.Input, as: UIInput
+      alias RivaAshWeb.Components.UI.Text, as: UIText
+      alias RivaAshWeb.Components.UI.Icon, as: UIIcon
+      alias RivaAshWeb.Components.UI.Badge, as: UIBadge
+      alias RivaAshWeb.Components.UI.Card, as: UICard
+
+      # Legacy component imports (compatibility wrappers)
       atoms()
       molecules()
       organisms()
