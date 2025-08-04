@@ -38,14 +38,15 @@ services:
       postgres:
         condition: service_healthy
     environment:
-      - MIX_ENV=${MIX_ENV:-prod}
+      - MIX_ENV=${MIX_ENV:-dev}
       - DATABASE_URL=ecto://${DB_USERNAME:-postgres}:${DB_PASSWORD:-postgres}@${DB_HOSTNAME:-postgres}:${DB_PORT:-5432}/${DB_NAME:-riva_ash_dev}
       - DB_USERNAME=${DB_USERNAME:-postgres}
       - DB_PASSWORD=${DB_PASSWORD:-postgres}
       - DB_NAME=${DB_NAME:-riva_ash_dev}
       - DB_HOSTNAME=${DB_HOSTNAME:-postgres}
       - DB_PORT=${DB_PORT:-5432}
-      - SECRET_KEY_BASE=${SECRET_KEY_BASE:-your-secret-key-base-here-change-this-in-production}
+      - SECRET_KEY_BASE=${SECRET_KEY_BASE}
+      - AUTH_TOKEN_SECRET=${AUTH_TOKEN_SECRET}
       - PHX_SERVER=true
       - PHX_HOST=${PHX_HOST:-localhost}
       - PORT=${PORT:-4000}
