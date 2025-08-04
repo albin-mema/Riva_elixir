@@ -5,8 +5,9 @@ defmodule RivaAshWeb.Components.Atoms.AllAtoms do
   use Phoenix.Component
 
   # Import individual atom components here
-  import RivaAshWeb.Components.Atoms.Button
-  import RivaAshWeb.Components.Atoms.TextInput
+  # Note: Leave imports only when this aggregator is actually re-exporting usages in this module.
+  # Since this module doesn't reference the components directly, remove unused imports to avoid warnings.
+  # Downstream code should import the specific components or the canonical UI.* components directly.
 
   # Components are available through imports above
 end

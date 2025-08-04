@@ -1,66 +1,55 @@
 defmodule RivaAshWeb.Components.Atoms.Input do
   @moduledoc """
-  Standardized input component with validation states and consistent styling.
+  Deprecated wrapper around the canonical design-system input.
+
+  Use RivaAshWeb.Components.UI.Input.input/1 directly in new code.
+  This module delegates to the canonical component to maintain backward compatibility.
   """
   use Phoenix.Component
+  alias RivaAshWeb.Components.UI.Input, as: UIInput
 
   @doc """
-  Renders a standardized input field.
+  Renders an input component.
+
+  Backwards-compatible API: maps legacy size to UI.Input API.
   """
-  attr(:type, :string, default: "text")
-  attr(:field, Phoenix.HTML.FormField, default: nil)
-  attr(:value, :string, default: nil)
-  attr(:placeholder, :string, default: "")
-  attr(:disabled, :boolean, default: false)
-  attr(:readonly, :boolean, default: false)
-  attr(:required, :boolean, default: false)
-  attr(:size, :string, default: "md", values: ~w(sm md lg))
-  attr(:variant, :string, default: "default", values: ~w(default error success))
-  attr(:class, :string, default: "")
-  attr(:rest, :global)
+  attr :type, :string, default: "text"
+  attr :field, Phoenix.HTML.FormField, default: nil
+  attr :value, :string, default: nil
+  attr :placeholder, :string, default: ""
+  attr :disabled, :boolean, default: false
+  attr :readonly, :boolean, default: false
+  attr :required, :boolean, default: false
+  attr :size, :string, default: "md", values: ~w(sm md lg)
+  attr :variant, :string, default: "default", values: ~w(default error success)
+  attr :class, :string, default: ""
+  attr :rest, :global
 
   def input(assigns) do
-    assigns = assign(assigns, :input_class, input_class(assigns))
+    assigns =
+      assigns
+      |> Phoenix.Component.assign(:ui_size, map_legacy_size(assigns[:size]))
 
     ~H"""
-    <input
+    <UIInput.input
       type={@type}
-      class={@input_class}
+      field={@field}
       value={@value}
       placeholder={@placeholder}
       disabled={@disabled}
       readonly={@readonly}
       required={@required}
+      variant={@variant}
+      size={@ui_size}
+      class={@class}
       {@rest}
     />
     """
   end
 
-  defp input_class(assigns) do
-    base =
-      "flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-
-    size = size_classes(assigns.size)
-    variant = variant_classes(assigns.variant)
-
-    Enum.join([base, size, variant, assigns.class], " ")
-  end
-
-  defp size_classes(size) do
-    case size do
-      "sm" -> "h-8 px-2 text-xs"
-      "md" -> "h-9 px-3 text-sm"
-      "lg" -> "h-10 px-4 text-base"
-      _ -> "h-9 px-3 text-sm"
-    end
-  end
-
-  defp variant_classes(variant) do
-    case variant do
-      "default" -> ""
-      "error" -> "border-destructive focus-visible:ring-destructive"
-      "success" -> "border-green-500 focus-visible:ring-green-500"
-      _ -> ""
-    end
-  end
+  # Map legacy atom sizes to UI sizes
+  defp map_legacy_size("sm"), do: "sm"
+  defp map_legacy_size("md"), do: "default"
+  defp map_legacy_size("lg"), do: "lg"
+  defp map_legacy_size(_), do: "default"
 end

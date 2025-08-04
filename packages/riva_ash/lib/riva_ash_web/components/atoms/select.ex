@@ -1,65 +1,55 @@
 defmodule RivaAshWeb.Components.Atoms.Select do
   @moduledoc """
-  Select dropdown component with search functionality and consistent styling.
+  Deprecated wrapper around the canonical design-system select.
+
+  Use RivaAshWeb.Components.UI.Select.select/1 directly in new code.
+  This module delegates to the canonical component to maintain backward compatibility.
   """
   use Phoenix.Component
+  alias RivaAshWeb.Components.UI.Select, as: UISelect
 
   @doc """
-  Renders a select dropdown.
+  Renders a select component.
+
+  Backwards-compatible API: maps legacy size to UI.Select API.
+  Note: searchable attribute is ignored as it's not supported in the canonical UI.Select.
   """
-  attr(:field, Phoenix.HTML.FormField, default: nil)
-  attr(:options, :list, default: [])
-  attr(:prompt, :string, default: nil)
-  attr(:multiple, :boolean, default: false)
-  attr(:searchable, :boolean, default: false)
-  attr(:disabled, :boolean, default: false)
-  attr(:required, :boolean, default: false)
-  attr(:size, :string, default: "md", values: ~w(sm md lg))
-  attr(:variant, :string, default: "default", values: ~w(default error success))
-  attr(:class, :string, default: "")
-  attr(:rest, :global)
+  attr :field, Phoenix.HTML.FormField, default: nil
+  attr :options, :list, default: []
+  attr :prompt, :string, default: nil
+  attr :multiple, :boolean, default: false
+  attr :searchable, :boolean, default: false
+  attr :disabled, :boolean, default: false
+  attr :required, :boolean, default: false
+  attr :size, :string, default: "md", values: ~w(sm md lg)
+  attr :variant, :string, default: "default", values: ~w(default error success)
+  attr :class, :string, default: ""
+  attr :rest, :global
 
   def select(assigns) do
-    assigns = assign(assigns, :select_class, select_class(assigns))
+    assigns =
+      assigns
+      |> Phoenix.Component.assign(:ui_size, map_legacy_size(assigns[:size]))
 
     ~H"""
-    <select
-      class={@select_class}
+    <UISelect.select
+      field={@field}
+      options={@options}
+      prompt={@prompt}
+      multiple={@multiple}
       disabled={@disabled}
       required={@required}
+      variant={@variant}
+      size={@ui_size}
+      class={@class}
       {@rest}
-    >
-      <option :if={@prompt} value=""><%= @prompt %></option>
-      <option :for={{label, value} <- @options} value={value}><%= label %></option>
-    </select>
+    />
     """
   end
 
-  defp select_class(assigns) do
-    base =
-      "flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-
-    size = size_classes(assigns.size)
-    variant = variant_classes(assigns.variant)
-
-    Enum.join([base, size, variant, assigns.class], " ")
-  end
-
-  defp size_classes(size) do
-    case size do
-      "sm" -> "h-8 px-2 text-xs"
-      "md" -> "h-9 px-3 text-sm"
-      "lg" -> "h-10 px-4 text-base"
-      _ -> "h-9 px-3 text-sm"
-    end
-  end
-
-  defp variant_classes(variant) do
-    case variant do
-      "default" -> ""
-      "error" -> "border-destructive focus:ring-destructive"
-      "success" -> "border-green-500 focus:ring-green-500"
-      _ -> ""
-    end
-  end
+  # Map legacy atom sizes to UI sizes
+  defp map_legacy_size("sm"), do: "sm"
+  defp map_legacy_size("md"), do: "default"
+  defp map_legacy_size("lg"), do: "lg"
+  defp map_legacy_size(_), do: "default"
 end

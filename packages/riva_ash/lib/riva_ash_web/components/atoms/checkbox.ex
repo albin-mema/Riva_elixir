@@ -1,96 +1,53 @@
 defmodule RivaAshWeb.Components.Atoms.Checkbox do
   @moduledoc """
-  Checkbox component with labels and validation states.
+  Deprecated wrapper around the canonical design-system checkbox.
+
+  Use RivaAshWeb.Components.UI.Checkbox.checkbox/1 directly in new code.
+  This module delegates to the canonical component to maintain backward compatibility.
   """
   use Phoenix.Component
+  alias RivaAshWeb.Components.UI.Checkbox, as: UICheckbox
 
   @doc """
-  Renders a checkbox input.
+  Renders a checkbox component.
+
+  Backwards-compatible API: maps legacy size to UI.Checkbox API.
   """
-  attr(:field, Phoenix.HTML.FormField, default: nil)
-  attr(:checked, :boolean, default: false)
-  attr(:value, :string, default: "true")
-  attr(:label, :string, default: nil)
-  attr(:description, :string, default: nil)
-  attr(:disabled, :boolean, default: false)
-  attr(:size, :string, default: "md", values: ~w(sm md lg))
-  attr(:variant, :string, default: "default", values: ~w(default error success))
-  attr(:class, :string, default: "")
-  attr(:rest, :global)
+  attr :field, Phoenix.HTML.FormField, default: nil
+  attr :checked, :boolean, default: false
+  attr :value, :string, default: "true"
+  attr :label, :string, default: nil
+  attr :description, :string, default: nil
+  attr :disabled, :boolean, default: false
+  attr :size, :string, default: "md", values: ~w(sm md lg)
+  attr :variant, :string, default: "default", values: ~w(default error success)
+  attr :class, :string, default: ""
+  attr :rest, :global
 
   def checkbox(assigns) do
-    assigns = assign(assigns, :checkbox_class, checkbox_class(assigns))
-    assigns = assign(assigns, :label_class, label_class(assigns))
+    assigns =
+      assigns
+      |> Phoenix.Component.assign(:ui_size, map_legacy_size(assigns[:size]))
 
     ~H"""
-    <div class="flex items-start gap-2">
-      <input
-        type="checkbox"
-        class={@checkbox_class}
-        checked={@checked}
-        value={@value}
-        disabled={@disabled}
-        {@rest}
-      />
-      <%= if @label do %>
-        <div class="flex flex-col">
-          <label class={@label_class}>
-            <%= @label %>
-          </label>
-          <%= if @description do %>
-            <p class="mt-1 text-muted-foreground text-sm">
-              <%= @description %>
-            </p>
-          <% end %>
-        </div>
-      <% end %>
-    </div>
+    <UICheckbox.checkbox
+      field={@field}
+      checked={@checked}
+      value={@value}
+      label={@label}
+      description={@description}
+      disabled={@disabled}
+      variant={@variant}
+      size={@ui_size}
+      class={@class}
+      {@rest}
+    />
     """
   end
 
-  defp checkbox_class(assigns) do
-    base =
-      "rounded border border-input bg-background focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
-
-    size = size_classes(assigns.size)
-    variant = variant_classes(assigns.variant)
-
-    Enum.join([base, size, variant, assigns.class], " ")
-  end
-
-  defp label_class(assigns) do
-    base =
-      "text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-
-    size = label_size_classes(assigns.size)
-
-    Enum.join([base, size], " ")
-  end
-
-  defp size_classes(size) do
-    case size do
-      "sm" -> "h-3 w-3"
-      "md" -> "h-4 w-4"
-      "lg" -> "h-5 w-5"
-      _ -> "h-4 w-4"
-    end
-  end
-
-  defp label_size_classes(size) do
-    case size do
-      "sm" -> "text-xs"
-      "md" -> "text-sm"
-      "lg" -> "text-base"
-      _ -> "text-sm"
-    end
-  end
-
-  defp variant_classes(variant) do
-    case variant do
-      "default" -> "text-primary"
-      "error" -> "border-destructive text-destructive focus:ring-destructive"
-      "success" -> "border-green-500 text-green-600 focus:ring-green-500"
-      _ -> "text-primary"
-    end
-  end
+  # Map legacy atom sizes to UI sizes
+  defp map_legacy_size("sm"), do: "sm"
+  defp map_legacy_size("md"), do: "default"
+  defp map_legacy_size("lg"), do: "lg"
+  defp map_legacy_size(_), do: "default"
 end
