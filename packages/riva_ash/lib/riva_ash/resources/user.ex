@@ -1,30 +1,18 @@
 defmodule RivaAsh.Accounts.User do
-  alias AshAuthentication.Strategy.Password.SignInPreparation
-
   use Ash.Resource,
-    domain: RivaAsh.Domain,
+    domain: RivaAsh.Accounts,
     data_layer: AshPostgres.DataLayer,
     authorizers: [Ash.Policy.Authorizer],
-    extensions: [
-      AshAuthentication,
-      AshAuthentication.Strategy.Password,
-      AshJsonApi.Resource,
-      AshGraphql.Resource,
-      AshPaperTrail.Resource,
-      AshArchival.Resource,
-      AshAdmin.Resource
-    ]
+    extensions: [AshAuthentication]
 
   postgres do
     table("users")
     repo(RivaAsh.Repo)
   end
 
-  # Configure soft delete functionality
-  archive do
-    attribute(:archived_at)
-    base_filter?(false)
-  end
+
+
+
 
   attributes do
     uuid_primary_key(:id)
@@ -34,7 +22,7 @@ defmodule RivaAsh.Accounts.User do
 
     # Profile attributes
     attribute(:name, :string)
-    attribute(:role, :atom, constraints: [one_of: [:admin, :user, :superadmin]], default: :user)
+    attribute(:role, :string, default: "user")
 
     create_timestamp(:inserted_at)
     update_timestamp(:updated_at)
@@ -51,7 +39,7 @@ defmodule RivaAsh.Accounts.User do
                   )
 
   authentication do
-    domain(RivaAsh.Domain)
+    domain(RivaAsh.Accounts)
     session_identifier(:jti)
 
     strategies do
@@ -83,6 +71,16 @@ defmodule RivaAsh.Accounts.User do
       # Only returns the current user
       filter(expr(id == ^actor(:id)))
     end
+
+    read :by_id do
+      argument(:id, :uuid, allow_nil?: false)
+      filter(expr(id == ^arg(:id)))
+    end
+
+    read :seed_read do
+      # Special action for seeding - allows reading without authentication
+      description("Read action for seeding purposes - bypasses normal authorization")
+    end
   end
 
   # Define the relationships
@@ -97,13 +95,24 @@ defmodule RivaAsh.Accounts.User do
   # Define the validations
   validations do
     validate(present([:email]))
+    validate(one_of(:role, ["admin", "user", "superadmin"]))
   end
 
   # Define authorization policies
   policies do
-    # Superadmins can do everything
-    policy action_type([:create, :read, :update, :destroy]) do
-      authorize_if expr(actor(:role) == :superadmin)
+    # Superadmins can do everything (bypass all other policies)
+    bypass actor_attribute_equals(:role, "superadmin") do
+      authorize_if always()
+    end
+
+    # Allow seeding read action without authentication (bypass all other policies)
+    bypass action(:seed_read) do
+      authorize_if always()
+    end
+
+    # Allow public registration without authentication
+    policy action(:register_with_password) do
+      authorize_if always()
     end
 
     # Users can read their own profile
@@ -117,15 +126,15 @@ defmodule RivaAsh.Accounts.User do
       forbid_if changing_attributes([:role])
     end
 
-    # Only superadmins can create users or destroy them
-    policy action_type([:create, :destroy]) do
-      authorize_if expr(actor(:role) == :superadmin)
+    # Block destroy actions (only superadmins can destroy users)
+    policy action_type(:destroy) do
+      forbid_if always()
     end
   end
 
   # Define the calculations for the User resource
   calculations do
-    calculate(:is_admin, :boolean, expr(role == :admin))
-    calculate(:is_superadmin, :boolean, expr(role == :superadmin))
+    calculate(:is_admin, :boolean, expr(role == "admin"))
+    calculate(:is_superadmin, :boolean, expr(role == "superadmin"))
   end
 end

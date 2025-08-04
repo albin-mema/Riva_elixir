@@ -40,7 +40,7 @@ defmodule RivaAsh.Permissions do
     end
 
     # Admins have all permissions
-    if employee.role == :admin do
+    if employee.role == "admin" do
       true
     else
       # Check if employee has the permission directly assigned
@@ -178,14 +178,14 @@ defmodule RivaAsh.Permissions do
        do: :ok
 
   defp validate_hierarchy(granter, employee)
-       when granter.role == :manager and employee.role == :manager,
+       when granter.role == "manager" and employee.role == "manager",
        do: {:error, :cannot_grant_to_peer}
 
   defp validate_hierarchy(granter, employee)
-       when granter.role == :manager and employee.role == :admin,
+       when granter.role == "manager" and employee.role == "admin",
        do: {:error, :cannot_grant_to_superior}
 
-  defp validate_hierarchy(granter, _employee) when granter.role == :staff,
+  defp validate_hierarchy(granter, _employee) when granter.role == "staff",
     do: {:error, :insufficient_authority}
 
   defp create_permission_assignment(employee_id, permission_id, granted_by_id, notes) do
@@ -210,7 +210,7 @@ defmodule RivaAsh.Permissions do
     end
   end
 
-  defp validate_can_revoke_permission(revoker, _employee_permission) when revoker.role == :admin,
+  defp validate_can_revoke_permission(revoker, _employee_permission) when revoker.role == "admin",
     do: :ok
 
   defp validate_can_revoke_permission(revoker, employee_permission)

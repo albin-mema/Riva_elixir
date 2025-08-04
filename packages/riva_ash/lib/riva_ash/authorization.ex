@@ -20,10 +20,10 @@ defmodule RivaAsh.Authorization do
   """
   def has_permission(actor, permission_name) do
     case actor do
-      %{role: :admin} ->
+      %{role: "admin"} ->
         true
 
-      %{role: :user} ->
+      %{role: "user"} ->
         check_user_permission(actor, permission_name)
 
       %{id: employee_id} when is_binary(employee_id) ->

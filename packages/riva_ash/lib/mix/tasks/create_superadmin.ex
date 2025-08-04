@@ -56,9 +56,9 @@ defmodule Mix.Tasks.CreateSuperadmin do
            email: email,
            name: name,
            password: password,
-           role: :superadmin
+           role: "superadmin"
          })
-         |> Ash.create(domain: Accounts, actor: %{role: :superadmin}) do
+         |> Ash.create(domain: Accounts, actor: %{role: "superadmin"}) do
       {:ok, user} ->
         {:ok, user}
 
@@ -94,7 +94,7 @@ defmodule Mix.Tasks.CreateSuperadmin do
           existing_user ->
             existing_user
             |> Ash.Changeset.for_update(:promote_to_superadmin, %{})
-            |> Ash.update(domain: Accounts, actor: %{role: :superadmin})
+            |> Ash.update(domain: Accounts, actor: %{role: "superadmin"})
         end
 
       {:error, error} ->

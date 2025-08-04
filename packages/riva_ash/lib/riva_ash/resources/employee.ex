@@ -30,7 +30,7 @@ defmodule RivaAsh.Resources.Employee do
 
   policies do
     # Admins can do everything
-    bypass actor_attribute_equals(:role, :admin) do
+    bypass actor_attribute_equals(:role, "admin") do
       authorize_if(always())
     end
 
@@ -127,7 +127,7 @@ defmodule RivaAsh.Resources.Employee do
     end
 
     read :by_role do
-      argument(:role, :atom, allow_nil?: false)
+      argument(:role, :string, allow_nil?: false)
       filter(expr(role == ^arg(:role)))
     end
 
@@ -140,11 +140,11 @@ defmodule RivaAsh.Resources.Employee do
     end
 
     read :managers do
-      filter(expr(role in [:manager, :admin]))
+      filter(expr(role in ["manager", "admin"]))
     end
 
     read :staff do
-      filter(expr(role == :staff))
+      filter(expr(role == "staff"))
     end
 
     update :update_last_login do
@@ -193,9 +193,8 @@ defmodule RivaAsh.Resources.Employee do
       description("Employee's contact phone number")
     end
 
-    attribute :role, :atom do
-      constraints(one_of: [:admin, :manager, :staff])
-      default(:staff)
+    attribute :role, :string do
+      default("staff")
       public?(true)
       description("Employee's role determining their permissions")
     end
@@ -295,6 +294,7 @@ defmodule RivaAsh.Resources.Employee do
     end)
 
     validate(present([:first_name, :last_name]), message: "first and last name are required")
+    validate(one_of(:role, ["admin", "manager", "staff"]))
   end
 
   # Flop configuration for table functionality
@@ -324,22 +324,22 @@ defmodule RivaAsh.Resources.Employee do
       description("Employee's full name")
     end
 
-    calculate :can_manage_reservations, :boolean, expr(role in [:admin, :manager]) do
+    calculate :can_manage_reservations, :boolean, expr(role in ["admin", "manager"]) do
       public?(true)
       description("Whether this employee can manage reservations")
     end
 
-    calculate :is_admin, :boolean, expr(role == :admin) do
+    calculate :is_admin, :boolean, expr(role == "admin") do
       public?(true)
       description("Whether this employee has admin privileges")
     end
 
-    calculate :can_give_permissions, :boolean, expr(role in [:admin, :manager]) do
+    calculate :can_give_permissions, :boolean, expr(role in ["admin", "manager"]) do
       public?(true)
       description("Whether this employee can grant permissions to others")
     end
 
-    calculate :is_manager_or_above, :boolean, expr(role in [:admin, :manager]) do
+    calculate :is_manager_or_above, :boolean, expr(role in ["admin", "manager"]) do
       public?(true)
       description("Whether this employee is a manager or admin")
     end
