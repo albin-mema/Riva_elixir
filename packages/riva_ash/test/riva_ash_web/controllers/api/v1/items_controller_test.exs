@@ -33,6 +33,7 @@ defmodule RivaAshWeb.API.V1.ItemsControllerTest do
   }
 
   describe "GET /api/items" do
+    @spec test_lists_all_items :: :ok
     test "lists all items", %{conn: conn} do
       # Create test items
       item1 = create_item!(%{name: "Item 1"})
@@ -55,6 +56,7 @@ defmodule RivaAshWeb.API.V1.ItemsControllerTest do
       assert "Item 2" in [name1, name2]
     end
 
+    @spec test_returns_empty_list_when_no_items_exist :: :ok
     test "returns empty list when no items exist", %{conn: conn} do
       # Ensure no items exist
       Item.read!()
@@ -68,6 +70,7 @@ defmodule RivaAshWeb.API.V1.ItemsControllerTest do
       assert response["meta"] == %{}
     end
 
+    @spec test_filters_items_by_name :: :ok
     test "filters items by name", %{conn: conn} do
       create_item!(%{name: "Special"})
       create_item!(%{name: "Other Item"})
@@ -95,6 +98,7 @@ defmodule RivaAshWeb.API.V1.ItemsControllerTest do
   end
 
   describe "GET /api/items/:id" do
+    @spec test_shows_a_single_item :: :ok
     test "shows a single item", %{conn: conn} do
       # Create a test item
       item = create_item!(%{name: "Test Item"})
@@ -115,6 +119,7 @@ defmodule RivaAshWeb.API.V1.ItemsControllerTest do
       assert item_id == item.id
     end
 
+    @spec test_returns_404_when_item_does_not_exist :: :ok
     test "returns 404 when item does not exist", %{conn: conn} do
       # Make the request with a non-existent ID
       non_existent_id = "00000000-0000-0000-0000-000000000000"
@@ -127,6 +132,7 @@ defmodule RivaAshWeb.API.V1.ItemsControllerTest do
   end
 
   describe "POST /api/items" do
+    @spec test_creates_an_item :: :ok
     test "creates an item", %{conn: conn} do
       # Make the request
       conn = post(conn, "/api/items", @create_attrs)
@@ -144,6 +150,7 @@ defmodule RivaAshWeb.API.V1.ItemsControllerTest do
       assert {:ok, _item} = Item.by_id(id)
     end
 
+    @spec test_returns_error_with_invalid_data :: :ok
     test "returns error with invalid data", %{conn: conn} do
       conn = post(conn, "/api/items", @invalid_attrs)
 
@@ -155,6 +162,7 @@ defmodule RivaAshWeb.API.V1.ItemsControllerTest do
   end
 
   describe "PATCH /api/items/:id" do
+    @spec test_updates_an_item :: :ok
     test "updates an item", %{conn: conn} do
       item = create_item!(%{name: "Original Name"})
 
@@ -165,6 +173,7 @@ defmodule RivaAshWeb.API.V1.ItemsControllerTest do
       assert %{"errors" => [%{"status" => "400"}]} = response
     end
 
+    @spec test_returns_error_for_invalid_update :: :ok
     test "returns error for invalid update", %{conn: conn} do
       item = create_item!(%{name: "Original Name"})
 
@@ -177,6 +186,7 @@ defmodule RivaAshWeb.API.V1.ItemsControllerTest do
   end
 
   describe "DELETE /api/items/:id" do
+    @spec test_deletes_an_item :: :ok
     test "deletes an item", %{conn: conn} do
       item = create_item!(%{name: "To be deleted"})
 
@@ -199,6 +209,7 @@ defmodule RivaAshWeb.API.V1.ItemsControllerTest do
     end
   end
 
+  @spec test_can_create_items_with_various_valid_names :: :ok
   test "can create items with various valid names", %{conn: conn} do
     names = [
       "Test Item",

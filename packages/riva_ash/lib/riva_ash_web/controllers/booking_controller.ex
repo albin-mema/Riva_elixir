@@ -7,6 +7,9 @@ defmodule RivaAshWeb.BookingController do
   - Create bookings (with optional registration)
   - Confirm bookings (with optional registration upgrade)
   - View their bookings
+
+  Uses functional programming patterns with proper error handling and
+  type safety specifications.
   """
 
   use Phoenix.Controller, formats: [:json]
@@ -17,135 +20,122 @@ defmodule RivaAshWeb.BookingController do
 
   action_fallback(RivaAshWeb.FallbackController)
 
-  @doc """
-  GET /api/booking/availability/:item_id
+  @type conn :: Plug.Conn.t()
+  @type params :: map()
+  @type result :: {:ok, any()} | {:error, any()}
+  @type date :: Date.t()
+  @type datetime :: DateTime.t()
+  @type duration :: pos_integer()
+  @type business_hours :: %{start: integer(), end: integer()}
 
+  @doc """
   Get available time slots for an item on a specific date.
 
-  Query parameters:
-  - date: YYYY-MM-DD (required)
-  - duration: Duration in minutes (default: 60)
-  - start_hour: Business start hour (default: 9)
-  - end_hour: Business end hour (default: 17)
+  ## Parameters
+    - item_id: The ID of the item to check availability for
+    - params: Query parameters including date, duration, business hours
+
+  ## Query Parameters
+    - date: YYYY-MM-DD (required)
+    - duration: Duration in minutes (default: 60)
+    - start_hour: Business start hour (default: 9)
+    - end_hour: Business end hour (default: 17)
+
+  ## Returns
+    - 200: JSON response with availability data
+    - 400: Error response for invalid parameters
   """
+  @spec availability(conn(), params()) :: conn()
   def availability(conn, %{"item_id" => item_id} = params) do
     with {:ok, date} <- parse_date(params["date"]),
-         duration = parse_duration(params["duration"]),
-         business_hours = parse_business_hours(params),
+         duration <- parse_duration(params["duration"]),
+         business_hours <- parse_business_hours(params),
          {:ok, slots} <- Booking.get_availability(item_id, date, duration, business_hours) do
-      conn
-      |> put_status(:ok)
-      |> json(%{
-        data: %{
-          item_id: item_id,
-          date: Date.to_iso8601(date),
-          duration_minutes: duration,
-          business_hours: business_hours,
-          time_slots: format_time_slots(slots)
-        }
-      })
+      render_availability_response(conn, item_id, date, duration, business_hours, slots)
     else
       {:error, reason} -> ErrorHelpers.failure(reason)
     end
   end
 
   @doc """
-  POST /api/booking/create
+  Create a new booking with optional client registration.
 
-  Create a new booking. Client can optionally register immediately.
+  ## Parameters
+    - params: Request body with client and booking information
 
-  Body:
-  {
-    "client": {
-      "name": "John Doe",
-      "email": "john@example.com", // optional
-      "phone": "+1234567890"       // optional
-    },
-    "booking": {
-      "item_id": "uuid",
-      "reserved_from": "2024-01-01T10:00:00Z",
-      "reserved_until": "2024-01-01T11:00:00Z",
-      "notes": "Optional notes"
-    },
-    "register_client": false  // optional, default false
-  }
+  ## Request Body
+    {
+      "client": {
+        "name": "John Doe",
+        "email": "john@example.com", // optional
+        "phone": "+1234567890"       // optional
+      },
+      "booking": {
+        "item_id": "uuid",
+        "reserved_from": "2024-01-01T10:00:00Z",
+        "reserved_until": "2024-01-01T11:00:00Z",
+        "notes": "Optional notes"
+      },
+      "register_client": false  // optional, default false
+    }
+
+  ## Returns
+    - 201: JSON response with booking confirmation
+    - 400: Error response for invalid parameters
   """
+  @spec create(conn(), params()) :: conn()
   def create(conn, params) do
     with {:ok, booking_params} <- parse_booking_params(params),
          {:ok, result} <- Booking.create_booking(booking_params) do
-      conn
-      |> put_status(:created)
-      |> json(%{
-        data: %{
-          booking_id: result.reservation.id,
-          client: format_client(result.client),
-          reservation: format_reservation(result.reservation),
-          status: "pending",
-          message:
-            if(result.client.is_registered,
-              do: "Booking created successfully! You are now registered.",
-              else: "Booking created successfully! You can register when confirming your booking."
-            )
-        }
-      })
+      render_booking_creation_response(conn, result)
     else
       {:error, reason} -> ErrorHelpers.failure(reason)
     end
   end
 
   @doc """
-  POST /api/booking/confirm/:booking_id
+  Confirm a pending booking with optional client registration.
 
-  Confirm a pending booking. Client can optionally register during confirmation.
+  ## Parameters
+    - booking_id: The ID of the booking to confirm
+    - params: Request body with registration options
 
-  Body:
-  {
-    "register_client": false,  // optional
-    "client_updates": {        // optional, for registration
-      "email": "updated@example.com"
+  ## Request Body
+    {
+      "register_client": false,  // optional
+      "client_updates": {        // optional, for registration
+        "email": "updated@example.com"
+      }
     }
-  }
+
+  ## Returns
+    - 200: JSON response with confirmation details
+    - 400: Error response for invalid parameters
+    - 404: Error response for booking not found
   """
+  @spec confirm(conn(), params()) :: conn()
   def confirm(conn, %{"booking_id" => booking_id} = params) do
-    register_client = Map.get(params, "register_client", false)
-    client_updates = Map.get(params, "client_updates", %{})
-
-    case Booking.confirm_booking(booking_id, register_client, client_updates) do
-      {:ok, result} ->
-        conn
-        |> put_status(:ok)
-        |> json(%{
-          data: %{
-            booking_id: result.reservation.id,
-            client: format_client(result.client),
-            reservation: format_reservation(result.reservation),
-            status: "confirmed",
-            message:
-              if(result.client.is_registered and register_client,
-                do: "Booking confirmed and you are now registered! Welcome!",
-                else: "Booking confirmed successfully!"
-              )
-          }
-        })
-
-      {:error, reason} ->
-        ErrorHelpers.failure(reason)
+    with {:ok, result} <- process_booking_confirmation(booking_id, params) do
+      render_booking_confirmation_response(conn, result)
+    else
+      {:error, reason} -> ErrorHelpers.failure(reason)
     end
   end
 
   @doc """
-  GET /api/booking/items
-
   Get list of available items for booking.
+
+  ## Returns
+    - 200: JSON response with list of available items
+    - 500: Error response for server errors
   """
+  @spec items(conn(), params()) :: conn()
   def items(conn, _params) do
     case Item.read(domain: RivaAsh.Domain) do
       {:ok, items} ->
         conn
         |> put_status(:ok)
-        |> json(%{
-          data: Enum.map(items, &format_item/1)
-        })
+        |> json(%{data: Enum.map(items, &format_item/1)})
 
       {:error, reason} ->
         {:error, reason}
@@ -153,33 +143,116 @@ defmodule RivaAshWeb.BookingController do
   end
 
   @doc """
-  GET /api/booking/client/:email
+  Get client bookings by email for unregistered clients.
 
-  Get client bookings by email (for unregistered clients or simple lookup).
+  ## Parameters
+    - email: The email address to search for
+
+  ## Returns
+    - 200: JSON response with client bookings
+    - 404: Error response if no bookings found
+    - 400: Error response for invalid email
   """
+  @spec client_bookings(conn(), params()) :: conn()
   def client_bookings(conn, %{"email" => email}) do
-    case Client.by_email(email, domain: RivaAsh.Domain, load: [:reservations]) do
-      {:ok, client} ->
-        conn
-        |> put_status(:ok)
-        |> json(%{
-          data: %{
-            client: format_client(client),
-            bookings: Enum.map(client.reservations, &format_reservation/1)
-          }
-        })
-
+    with {:ok, client} <- find_client_by_email(email) do
+      render_client_bookings_response(conn, client)
+    else
       {:error, %Ash.Error.Query.NotFound{}} ->
-        conn
-        |> put_status(:not_found)
-        |> json(%{error: "No bookings found for this email address"})
-
+        render_no_bookings_found(conn)
       {:error, reason} ->
         ErrorHelpers.failure(reason)
     end
   end
 
   # Private helper functions
+
+  defp render_availability_response(conn, item_id, date, duration, business_hours, slots) do
+    conn
+    |> put_status(:ok)
+    |> json(%{
+      data: %{
+        item_id: item_id,
+        date: Date.to_iso8601(date),
+        duration_minutes: duration,
+        business_hours: business_hours,
+        time_slots: format_time_slots(slots)
+      }
+    })
+  end
+
+  defp render_booking_creation_response(conn, result) do
+    conn
+    |> put_status(:created)
+    |> json(%{
+      data: %{
+        booking_id: result.reservation.id,
+        client: format_client(result.client),
+        reservation: format_reservation(result.reservation),
+        status: "pending",
+        message: generate_booking_creation_message(result.client)
+      }
+    })
+  end
+
+  defp render_booking_confirmation_response(conn, result) do
+    conn
+    |> put_status(:ok)
+    |> json(%{
+      data: %{
+        booking_id: result.reservation.id,
+        client: format_client(result.client),
+        reservation: format_reservation(result.reservation),
+        status: "confirmed",
+        message: generate_booking_confirmation_message(result.client)
+      }
+    })
+  end
+
+  defp render_client_bookings_response(conn, client) do
+    conn
+    |> put_status(:ok)
+    |> json(%{
+      data: %{
+        client: format_client(client),
+        bookings: Enum.map(client.reservations, &format_reservation/1)
+      }
+    })
+  end
+
+  defp render_no_bookings_found(conn) do
+    conn
+    |> put_status(:not_found)
+    |> json(%{error: "No bookings found for this email address"})
+  end
+
+  defp generate_booking_creation_message(%{is_registered: true}) do
+    "Booking created successfully! You are now registered."
+  end
+
+  defp generate_booking_creation_message(%{is_registered: false}) do
+    "Booking created successfully! You can register when confirming your booking."
+  end
+
+  defp generate_booking_confirmation_message(%{is_registered: true}) do
+    "Booking confirmed successfully!"
+  end
+
+  defp generate_booking_confirmation_message(%{is_registered: false}) do
+    "Booking confirmed successfully!"
+  end
+
+  defp process_booking_confirmation(booking_id, params) do
+    register_client = Map.get(params, "register_client", false)
+    client_updates = Map.get(params, "client_updates", %{})
+    Booking.confirm_booking(booking_id, register_client, client_updates)
+  end
+
+  defp find_client_by_email(email) do
+    Client.by_email(email, domain: RivaAsh.Domain, load: [:reservations])
+  end
+
+  # Parameter parsing functions
 
   defp parse_date(nil), do: ErrorHelpers.failure("Date parameter is required")
 
@@ -225,7 +298,7 @@ defmodule RivaAshWeb.BookingController do
   defp parse_booking_params(params) do
     with {:ok, client_info} <- extract_client_info(params),
          {:ok, booking_info} <- extract_booking_info(params),
-         register_client = Map.get(params, "register_client", false) do
+         register_client <- Map.get(params, "register_client", false) do
       ErrorHelpers.success(%{
         client_info: client_info,
         item_id: booking_info.item_id,
@@ -282,7 +355,7 @@ defmodule RivaAshWeb.BookingController do
     end
   end
 
-  # Formatting functions
+  # Data formatting functions
 
   defp format_time_slots(slots) do
     Enum.map(slots, fn slot ->

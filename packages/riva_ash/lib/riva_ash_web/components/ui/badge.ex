@@ -14,14 +14,39 @@ defmodule RivaAshWeb.Components.UI.Badge do
 
   slot :inner_block, required: true
 
+  @spec badge(assigns :: map()) :: Phoenix.LiveView.Rendered.t()
   def badge(assigns) do
-    assigns = assign(assigns, :badge_class, badge_class(assigns))
+    # Render badge using functional composition
+    assigns
+    |> Map.put_new(:badge_class, badge_class(assigns))
+    |> Map.put_new(:content_class, build_content_class(assigns.variant))
+    |> render_badge_component()
+  end
 
+  # Private helper for badge rendering
+  @spec render_badge_component(assigns :: map()) :: Phoenix.LiveView.Rendered.t()
+  defp render_badge_component(assigns) do
     ~H"""
     <div class={@badge_class} {@rest}>
-      <%= render_slot(@inner_block) %>
+      <span class={@content_class}>
+        <%= render_slot(@inner_block) %>
+      </span>
     </div>
     """
+  end
+
+  # Helper function to build content classes
+  @spec build_content_class(String.t()) :: String.t()
+  defp build_content_class(variant) do
+    case variant do
+      "default" -> "text-primary-foreground"
+      "secondary" -> "text-secondary-foreground"
+      "destructive" -> "text-destructive-foreground"
+      "outline" -> "text-foreground"
+      "success" -> "text-green-800 dark:text-green-100"
+      "warning" -> "text-yellow-800 dark:text-yellow-100"
+      _ -> "text-primary-foreground"
+    end
   end
 
   defp badge_class(assigns) do

@@ -19,27 +19,92 @@ defmodule RivaAshWeb.Components.UI.Textarea do
   attr :class, :string, default: ""
   attr :rest, :global
 
+  @spec textarea(assigns :: map()) :: Phoenix.LiveView.Rendered.t()
   def textarea(assigns) do
-    # Handle form field integration
-    assigns =
-      case assigns.field do
-        nil -> assigns
-        field -> assign(assigns, :value, assigns.value || field.value)
-      end
+    # Render textarea using functional composition
+    assigns
+    |> handle_form_field_integration()
+    |> Map.put_new(:textarea_class, textarea_class(assigns))
+    |> Map.put_new(:wrapper_class, build_wrapper_class(assigns.field))
+    |> Map.put_new(:error_class, build_error_class(assigns.field))
+    |> Map.put_new(:required_class, build_required_class(assigns.required))
+    |> Map.put_new(:rows_class, build_rows_class(assigns.rows))
+    |> render_textarea_component()
+  end
 
-    assigns = assign(assigns, :textarea_class, textarea_class(assigns))
-
+  # Private helper for textarea rendering
+  @spec render_textarea_component(assigns :: map()) :: Phoenix.LiveView.Rendered.t()
+  defp render_textarea_component(assigns) do
     ~H"""
-    <textarea
-      class={@textarea_class}
-      placeholder={@placeholder}
-      disabled={@disabled}
-      readonly={@readonly}
-      required={@required}
-      rows={@rows}
-      {@rest}
-    ><%= @value %></textarea>
+    <div class={@wrapper_class}>
+      <textarea
+        class={@textarea_class}
+        placeholder={@placeholder}
+        disabled={@disabled}
+        readonly={@readonly}
+        required={@required}
+        rows={@rows}
+        {@rest}
+      ><%= @value %></textarea>
+      <%= if has_error?(@field) do %>
+        <p class={@error_class}>
+          <%= error_message(@field) %>
+        </p>
+      <% end %>
+    </div>
     """
+  end
+
+  # Helper function to handle form field integration
+  @spec handle_form_field_integration(map()) :: map()
+  defp handle_form_field_integration(assigns) do
+    case assigns.field do
+      nil -> assigns
+      field -> Map.put(assigns, :value, assigns.value || field.value)
+    end
+  end
+
+  # Helper function to build wrapper classes
+  @spec build_wrapper_class(Phoenix.HTML.FormField.t() | nil) :: String.t()
+  defp build_wrapper_class(field) do
+    if field, do: "relative w-full", else: "w-full"
+  end
+
+  # Helper function to build error classes
+  @spec build_error_class(Phoenix.HTML.FormField.t() | nil) :: String.t()
+  defp build_error_class(field) do
+    if has_error?(field), do: "text-sm text-destructive mt-1", else: "hidden"
+  end
+
+  # Helper function to build required classes
+  @spec build_required_class(boolean()) :: String.t()
+  defp build_required_class(required) do
+    if required, do: "required", else: ""
+  end
+
+  # Helper function to build rows classes
+  @spec build_rows_class(integer()) :: String.t()
+  defp build_rows_class(rows) do
+    case rows do
+      1 -> "h-20"
+      2 -> "h-32"
+      3 -> "h-48"
+      4 -> "h-64"
+      5 -> "h-80"
+      _ -> "h-48"
+    end
+  end
+
+  # Helper function to check if field has errors
+  @spec has_error?(Phoenix.HTML.FormField.t() | nil) :: boolean()
+  defp has_error?(field) do
+    field && field.errors && length(field.errors) > 0
+  end
+
+  # Helper function to get error message
+  @spec error_message(Phoenix.HTML.FormField.t()) :: String.t()
+  defp error_message(field) do
+    field.errors |> List.first() |> elem(1)
   end
 
   defp textarea_class(assigns) do

@@ -12,9 +12,17 @@ defmodule RivaAshWeb.Components.UI.CardDescription do
 
   slot :inner_block, required: true
 
-  def card_description(assigns) do
-    assigns = assign(assigns, :description_class, description_class(assigns))
+  def card_description(assigns) when is_map(assigns) do
+    assigns
+    |> assign_description_class()
+    |> render_description()
+  end
 
+  defp assign_description_class(assigns) do
+    assign(assigns, :description_class, build_description_class(assigns))
+  end
+
+  defp render_description(assigns) do
     ~H"""
     <p class={@description_class} {@rest}>
       <%= render_slot(@inner_block) %>
@@ -22,9 +30,14 @@ defmodule RivaAshWeb.Components.UI.CardDescription do
     """
   end
 
-  defp description_class(assigns) do
-    base = "text-sm text-muted-foreground"
+  defp build_description_class(assigns) when is_map(assigns) do
+    assigns
+    |> Map.get(:class, "")
+    |> prepend_base_class()
+  end
 
-    Enum.join([base, assigns.class], " ")
+  defp prepend_base_class(class) when is_binary(class) do
+    base = "text-sm text-muted-foreground"
+    [base, class] |> Enum.reject(&(&1 == "")) |> Enum.join(" ")
   end
 end

@@ -1,7 +1,15 @@
 defmodule RivaAshWeb.BusinessLive do
   @moduledoc """
   LiveView for managing Businesses.
+  
+  This LiveView follows Phoenix/Ash/Elixir patterns:
+  - Uses AuthHelpers for authentication and business scoping
+  - Delegates business logic to Business context
+  - Handles UI state and user interactions
+  - Uses proper Ash error handling
+  - Implements CRUD operations through Ash actions
   """
+
   use RivaAshWeb, :live_view
 
   # Explicitly set the authenticated layout
@@ -10,33 +18,41 @@ defmodule RivaAshWeb.BusinessLive do
   import RivaAshWeb.Components.Organisms.PageHeader
   import RivaAshWeb.Components.Organisms.DataTable
   import RivaAshWeb.Components.Atoms.Button
+  import RivaAshWeb.Live.AuthHelpers
 
   alias RivaAsh.Resources.Business
+  alias RivaAsh.Businesses
+  alias RivaAsh.ErrorHelpers
 
   @impl true
   def mount(_params, session, socket) do
-    case get_current_user_from_session(session) do
-      {:ok, user} ->
-        businesses = Business.read!(actor: user)
+    case mount_business_scoped(
+           socket,
+           session,
+           Business,
+           [:owner_id],
+           "Businesses"
+         ) do
+      {:ok, socket} ->
+        {:ok, assign(socket, loading: false)}
 
-        socket =
-          socket
-          |> assign(:current_user, user)
-          |> assign(:page_title, "Businesses")
-          |> assign(:businesses, businesses)
-          # Placeholder for pagination/metadata
-          |> assign(:meta, %{})
-
-        {:ok, socket}
-
-      {:error, _} ->
-        {:ok, redirect(socket, to: "/sign-in")}
+      {:error, _} = error ->
+        {:ok, error}
     end
   end
 
   @impl true
-  def handle_params(_params, _url, socket) do
-    {:noreply, socket}
+  def handle_params(params, _url, socket) do
+    # Handle pagination, sorting, and filtering through business logic
+    case Businesses.list_businesses(socket.assigns.current_user, params) do
+      {businesses, meta} ->
+        {:noreply, assign(socket, businesses: businesses, meta: meta)}
+      {:error, reason} ->
+        {:noreply,
+         socket
+         |> put_flash(:error, "Failed to load businesses: #{reason}")
+         |> assign(loading: false)}
+    end
   end
 
   @impl true
@@ -45,47 +61,85 @@ defmodule RivaAshWeb.BusinessLive do
     <div>
       <.page_header title="Businesses" description="Manage business information">
         <:action>
-          <.button phx-click="new_business" class="bg-blue-600 hover:bg-blue-700">New Business</.button>
+          <.button phx-click="new_business" variant="primary">
+            + New Business
+          </.button>
         </:action>
       </.page_header>
 
-      <.data_table
-        id="businesses-table"
-        items={@businesses}
-        meta={@meta}
-        path="/businesses"
-      >
-        <:col :let={business} label="Name" field={:name} sortable>
-          <%= business.name %>
-        </:col>
-        <:col :let={business} label="Description">
-          <%= business.description || "No description" %>
-        </:col>
-        <:col :let={business} label="Created">
-          <%= Calendar.strftime(business.inserted_at, "%Y-%m-%d") %>
-        </:col>
-        <:col :let={business} label="Actions">
-          <.button phx-click="edit_business" phx-value-id={business.id} class="bg-green-600 hover:bg-green-700">Edit</.button>
-          <.button phx-click="delete_business" phx-value-id={business.id} class="bg-red-600 hover:bg-red-700">Delete</.button>
-        </:col>
-      </.data_table>
+      <%= if @loading do %>
+        <div class="flex justify-center items-center py-12">
+          <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+        </div>
+      <% else %>
+        <.data_table
+          id="businesses-table"
+          items={@businesses}
+          meta={@meta}
+          path={~p"/businesses"}
+        >
+          <:col :let={business} label="Name" field={:name} sortable>
+            <%= business.name %>
+          </:col>
+          <:col :let={business} label="Description">
+            <%= business.description || "No description" %>
+          </:col>
+          <:col :let={business} label="Owner">
+            <%= business.owner.name %>
+          </:col>
+          <:col :let={business} label="Status">
+            <.badge variant={status_variant(business.status)}>
+              <%= String.capitalize(to_string(business.status)) %>
+            </.badge>
+          </:col>
+          <:col :let={business} label="Created">
+            <%= Calendar.strftime(business.inserted_at, "%Y-%m-%d") %>
+          </:col>
+          <:col :let={business} label="Actions">
+            <div class="flex space-x-2">
+              <.button phx-click="edit_business" phx-value-id={business.id} variant="outline" size="sm">
+                Edit
+              </.button>
+              <.button phx-click="delete_business" phx-value-id={business.id} variant="destructive" size="sm">
+                Delete
+              </.button>
+            </div>
+          </:col>
+        </.data_table>
+      <% end %>
     </div>
     """
   end
 
   @impl true
   def handle_event("new_business", _params, socket) do
-    {:noreply, push_patch(socket, to: "/businesses/new")}
+    {:noreply, push_navigate(socket, to: ~p"/businesses/new")}
   end
 
   def handle_event("edit_business", %{"id" => id}, socket) do
-    {:noreply, push_patch(socket, to: "/businesses/#{id}/edit")}
+    {:noreply, push_navigate(socket, to: ~p"/businesses/#{id}/edit")}
   end
 
   def handle_event("delete_business", %{"id" => id}, socket) do
-    # Placeholder for delete logic
-    IO.puts("Deleting business with ID: #{id}")
-    {:noreply, socket}
+    case Businesses.delete_business(socket.assigns.current_user, id) do
+      {:ok, _business} ->
+        {:noreply,
+         socket
+         |> put_flash(:info, "Business deleted successfully")
+         |> push_patch(to: ~p"/businesses")}
+
+      {:error, %Ash.Error.Forbidden{}} ->
+        {:noreply,
+         socket
+         |> put_flash(:error, "You don't have permission to delete this business")
+         |> push_patch(to: ~p"/businesses")}
+
+      {:error, reason} ->
+        {:noreply,
+         socket
+         |> put_flash(:error, "Failed to delete business: #{reason}")
+         |> push_patch(to: ~p"/businesses")}
+    end
   end
 
   def handle_event(_event, _params, socket) do
@@ -93,22 +147,12 @@ defmodule RivaAshWeb.BusinessLive do
   end
 
   # Private helper functions
-  defp get_current_user_from_session(session) do
-    user_token = session["user_token"]
 
-    if user_token do
-      with {:ok, user_id} <-
-             Phoenix.Token.verify(RivaAshWeb.Endpoint, "user_auth", user_token, max_age: 86_400)
-             |> RivaAsh.ErrorHelpers.to_result(),
-           {:ok, user} <-
-             Ash.get(RivaAsh.Accounts.User, user_id, domain: RivaAsh.Accounts)
-             |> RivaAsh.ErrorHelpers.to_result() do
-        RivaAsh.ErrorHelpers.success(user)
-      else
-        _ -> RivaAsh.ErrorHelpers.failure(:not_authenticated)
-      end
-    else
-      RivaAsh.ErrorHelpers.failure(:not_authenticated)
-    end
-  end
+  @doc """
+  Determines the badge variant based on business status.
+  """
+  defp status_variant(:active), do: "default"
+  defp status_variant(:inactive), do: "secondary"
+  defp status_variant(:suspended), do: "destructive"
+  defp status_variant(_), do: "secondary"
 end

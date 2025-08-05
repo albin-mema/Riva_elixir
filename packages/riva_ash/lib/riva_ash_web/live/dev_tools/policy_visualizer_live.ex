@@ -16,14 +16,13 @@ defmodule RivaAshWeb.DevTools.PolicyVisualizerLive do
       {:ok, redirect(socket, to: "/")}
     end
   else
-    alias RivaAsh.Resources.{Business, Item, Reservation, Client}
-    alias RivaAsh.Accounts.User
+    alias RivaAsh.DevTools.PolicyService
 
     @impl true
     def mount(_params, _session, socket) do
       socket =
         socket
-        |> assign(:page_title, "Policy Decision Tree Visualizer")
+        |> assign(:page_title, get_page_title())
         |> assign(:selected_resource, nil)
         |> assign(:selected_action, nil)
         |> assign(:test_actor, nil)
@@ -31,74 +30,34 @@ defmodule RivaAshWeb.DevTools.PolicyVisualizerLive do
         |> assign(:evaluation_result, nil)
         |> assign(:policy_trace, [])
         |> assign(:simulation_mode, false)
-        |> load_available_resources()
-        |> load_test_actors()
+        |> PolicyService.load_initial_data()
 
       {:ok, socket}
     end
 
     @impl true
     def handle_event("select_resource", %{"resource" => resource}, socket) do
-      resource_module = String.to_existing_atom("Elixir.RivaAsh.Resources.#{resource}")
-      actions = get_resource_actions(resource_module)
-      
-      socket =
-        socket
-        |> assign(:selected_resource, resource_module)
-        |> assign(:available_actions, actions)
-        |> assign(:selected_action, nil)
-        |> assign(:policy_tree, nil)
-
-      {:noreply, socket}
+      PolicyService.select_resource(socket, resource)
     end
 
     def handle_event("select_action", %{"action" => action}, socket) do
-      action_atom = String.to_existing_atom(action)
-      
-      socket =
-        socket
-        |> assign(:selected_action, action_atom)
-        |> generate_policy_tree()
-
-      {:noreply, socket}
+      PolicyService.select_action(socket, action)
     end
 
     def handle_event("select_actor", %{"actor_id" => actor_id}, socket) do
-      actor = Enum.find(socket.assigns.test_actors, &(&1.id == actor_id))
-      
-      socket =
-        socket
-        |> assign(:test_actor, actor)
-        |> maybe_evaluate_policies()
-
-      {:noreply, socket}
+      PolicyService.select_actor(socket, actor_id)
     end
 
     def handle_event("simulate_policy", _params, socket) do
-      socket =
-        socket
-        |> assign(:simulation_mode, true)
-        |> evaluate_policies_with_trace()
-
-      {:noreply, socket}
+      PolicyService.simulate_policy(socket)
     end
 
     def handle_event("reset_simulation", _params, socket) do
-      socket =
-        socket
-        |> assign(:simulation_mode, false)
-        |> assign(:evaluation_result, nil)
-        |> assign(:policy_trace, [])
-
-      {:noreply, socket}
+      PolicyService.reset_simulation(socket)
     end
 
     def handle_event("generate_mermaid", _params, socket) do
-      if socket.assigns.policy_tree do
-        mermaid_diagram = generate_policy_mermaid(socket.assigns.policy_tree, socket.assigns.policy_trace)
-        send(self(), {:show_mermaid, mermaid_diagram})
-      end
-      {:noreply, socket}
+      PolicyService.generate_mermaid(socket)
     end
 
     @impl true
@@ -394,192 +353,7 @@ defmodule RivaAshWeb.DevTools.PolicyVisualizerLive do
     end
 
     # Helper functions
-    defp load_available_resources(socket) do
-      resources = [
-        %{name: "Business", module: Business},
-        %{name: "Item", module: Item},
-        %{name: "Reservation", module: Reservation},
-        %{name: "Client", module: Client}
-      ]
-
-      assign(socket, :available_resources, resources)
-    end
-
-    defp load_test_actors(socket) do
-      # Load some test users with different roles
-      actors = [
-        %{id: "admin-1", email: "admin@example.com", role: "admin"},
-        %{id: "manager-1", email: "manager@example.com", role: "manager"},
-        %{id: "staff-1", email: "staff@example.com", role: "staff"},
-        %{id: "user-1", email: "user@example.com", role: "user"}
-      ]
-
-      assign(socket, :test_actors, actors)
-    end
-
-    defp get_resource_actions(resource_module) do
-      # This would introspect the actual resource actions
-      # For now, return common actions
-      [:read, :create, :update, :destroy]
-    end
-
-    defp generate_policy_tree(socket) do
-      resource = socket.assigns.selected_resource
-      action = socket.assigns.selected_action
-      
-      # This would introspect the actual policies from the resource
-      # For now, generate a sample tree
-      tree = %{
-        name: "Root Policy",
-        description: "Main authorization policy for #{inspect(resource)}.#{action}",
-        type: :policy_set,
-        children: [
-          %{
-            name: "Authentication Check",
-            description: "Verify user is authenticated",
-            type: :policy,
-            condition: "actor != nil",
-            children: []
-          },
-          %{
-            name: "Role-Based Access",
-            description: "Check user role permissions",
-            type: :policy,
-            condition: "actor.role in allowed_roles",
-            children: [
-              %{
-                name: "Admin Access",
-                description: "Full access for admins",
-                type: :policy,
-                condition: "actor.role == 'admin'",
-                children: []
-              },
-              %{
-                name: "Manager Access",
-                description: "Limited access for managers",
-                type: :policy,
-                condition: "actor.role == 'manager'",
-                children: []
-              }
-            ]
-          },
-          %{
-            name: "Resource Ownership",
-            description: "Check if user owns the resource",
-            type: :policy,
-            condition: "resource.owner_id == actor.id",
-            children: []
-          }
-        ]
-      }
-
-      assign(socket, :policy_tree, tree)
-    end
-
-    defp maybe_evaluate_policies(socket) do
-      if socket.assigns.test_actor && socket.assigns.selected_resource && socket.assigns.selected_action do
-        evaluate_policies_with_trace(socket)
-      else
-        socket
-      end
-    end
-
-    defp evaluate_policies_with_trace(socket) do
-      # Simulate policy evaluation with trace
-      trace = [
-        %{
-          policy_name: "Authentication Check",
-          result: :authorized,
-          condition: "actor != nil",
-          reason: "User is authenticated",
-          duration: 2
-        },
-        %{
-          policy_name: "Role-Based Access",
-          result: case socket.assigns.test_actor.role do
-            role when role in ["admin", "manager"] -> :authorized
-            _ -> :forbidden
-          end,
-          condition: "actor.role in allowed_roles",
-          reason: "User role: #{socket.assigns.test_actor.role}",
-          duration: 5
-        },
-        %{
-          policy_name: "Resource Ownership",
-          result: :unknown,
-          condition: "resource.owner_id == actor.id",
-          reason: "No resource instance provided",
-          duration: 1
-        }
-      ]
-
-      final_result = if Enum.any?(trace, &(&1.result == :forbidden)) do
-        :forbidden
-      else
-        :authorized
-      end
-
-      evaluation_result = %{
-        decision: final_result,
-        performance: %{
-          total_time: Enum.sum(Enum.map(trace, & &1.duration)),
-          policies_evaluated: length(trace),
-          cache_hits: 0
-        }
-      }
-
-      socket
-      |> assign(:policy_trace, trace)
-      |> assign(:evaluation_result, evaluation_result)
-    end
-
-    defp get_trace_result(policy_name, trace) do
-      case Enum.find(trace, &(&1.policy_name == policy_name)) do
-        nil -> nil
-        step -> step.result
-      end
-    end
-
-    defp generate_policy_mermaid(tree, trace) do
-      """
-      graph TD
-          A[Authentication Check] --> B{User Authenticated?}
-          B -->|Yes| C[Role-Based Access]
-          B -->|No| D[FORBIDDEN]
-          
-          C --> E{Admin Role?}
-          C --> F{Manager Role?}
-          C --> G{Staff Role?}
-          
-          E -->|Yes| H[AUTHORIZED - Full Access]
-          F -->|Yes| I[AUTHORIZED - Limited Access]
-          G -->|Yes| J[Resource Ownership Check]
-          
-          J --> K{Owns Resource?}
-          K -->|Yes| L[AUTHORIZED]
-          K -->|No| M[FORBIDDEN]
-          
-          classDef authorized fill:#d1fae5,stroke:#10b981,stroke-width:2px
-          classDef forbidden fill:#fee2e2,stroke:#ef4444,stroke-width:2px
-          classDef unknown fill:#fef3c7,stroke:#f59e0b,stroke-width:2px
-          
-      """ <> generate_trace_styling(trace)
-    end
-
-    defp generate_trace_styling(trace) do
-      trace
-      |> Enum.with_index()
-      |> Enum.map(fn {step, _index} ->
-        class = case step.result do
-          :authorized -> "authorized"
-          :forbidden -> "forbidden"
-          _ -> "unknown"
-        end
-        
-        node_id = step.policy_name |> String.replace(" ", "") |> String.replace("-", "")
-        "class #{node_id} #{class}"
-      end)
-      |> Enum.join("\n")
-    end
+    # Helper functions
+    defp get_page_title, do: Application.get_env(:riva_ash, __MODULE__, [])[:page_title] || "Policy Decision Tree Visualizer"
   end
 end

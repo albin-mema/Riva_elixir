@@ -1,6 +1,16 @@
 defmodule RivaAsh.PropertyTestingSystemTest do
+  @moduledoc """
+  System integration tests for property-based browser testing functionality.
+  Tests the complete property testing system including state machine, route enumeration,
+  flow generation, and data management components.
+  """
+
   use ExUnit.Case
 
+  @doc """
+  Tests property-based browser testing system integration.
+  """
+  @spec test_property_based_browser_testing_system_integration :: :ok
   @tag :unit
   test "property-based browser testing system integration" do
     IO.puts("\n🧪 Property-Based Browser Testing System")

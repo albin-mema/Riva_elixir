@@ -16,13 +16,24 @@ defmodule RivaAshWeb.Components.Navigation.QuickActions do
   attr(:class, :string, default: "")
   attr(:rest, :global)
 
+  @spec quick_actions(assigns :: map()) :: Phoenix.LiveView.Rendered.t()
   def quick_actions(assigns) do
-    assigns = assign(assigns, :default_actions, get_default_actions())
+    # Render quick actions using functional composition
+    assigns
+    |> Map.put_new(:default_actions, get_default_actions())
+    |> Map.put_new(:container_class, build_container_class(assigns.class, assigns.layout))
+    |> Map.put_new(:default_actions_class, build_default_actions_class(assigns.actions))
+    |> Map.put_new(:custom_actions_class, build_custom_actions_class(assigns.actions))
+    |> render_quick_actions_component()
+  end
 
+  # Private helper for quick actions rendering
+  @spec render_quick_actions_component(assigns :: map()) :: Phoenix.LiveView.Rendered.t()
+  defp render_quick_actions_component(assigns) do
     ~H"""
     <!-- Quick actions implementation will go here -->
-    <div {@rest} class={["quick-actions", "layout-#{@layout}", @class]}>
-      <div :if={@actions == []} class="default-actions">
+    <div {@rest} class={@container_class}>
+      <div :if={@actions == []} class={@default_actions_class}>
         <.action_button
           :for={action <- @default_actions}
           action={action}
@@ -31,7 +42,7 @@ defmodule RivaAshWeb.Components.Navigation.QuickActions do
         />
       </div>
       
-      <div :if={@actions != []} class="custom-actions">
+      <div :if={@actions != []} class={@custom_actions_class}>
         <.action_button
           :for={action <- @actions}
           action={action}
@@ -41,6 +52,26 @@ defmodule RivaAshWeb.Components.Navigation.QuickActions do
       </div>
     </div>
     """
+  end
+
+  # Helper function to build container classes
+  @spec build_container_class(String.t(), String.t()) :: String.t()
+  defp build_container_class(class, layout) do
+    ["quick-actions", "layout-#{layout}", class]
+    |> Enum.filter(& &1 != "")
+    |> Enum.join(" ")
+  end
+
+  # Helper function to build default actions classes
+  @spec build_default_actions_class(list()) :: String.t()
+  defp build_default_actions_class(actions) do
+    if actions == [], do: "default-actions", else: "hidden"
+  end
+
+  # Helper function to build custom actions classes
+  @spec build_custom_actions_class(list()) :: String.t()
+  defp build_custom_actions_class(actions) do
+    if actions != [], do: "custom-actions", else: "hidden"
   end
 
   defp action_button(assigns) do

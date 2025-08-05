@@ -1,17 +1,24 @@
 defmodule RivaAshWeb.Auth.SignInLive do
+  @moduledoc """
+  User sign-in LiveView.
+  
+  This LiveView follows Phoenix/Ash/Elixir patterns:
+  - Keeps business logic out of the LiveView module
+  - Delegates to Accounts.Authentication for business logic
+  - Handles UI state and form validation
+  - Uses proper Ash error handling
+  - Implements rate limiting through business logic
+  """
+
   use RivaAshWeb, :live_view
-
   alias RivaAsh.Accounts
+  alias RivaAsh.Accounts.Authentication
+  alias RivaAsh.ErrorHelpers
 
-  # Helper function to get client IP address
-  defp get_client_ip(socket) do
-    case Phoenix.LiveView.get_connect_info(socket, :peer_data) do
-      %{address: ip_address} -> ip_address
-      # Default to localhost if not available
-      _ -> {127, 0, 0, 1}
-    end
-  end
+  # Use application configuration for rate limiting
+  @rate_limiter Application.get_env(:riva_ash, :rate_limiter, RivaAsh.Accounts.RateLimiter)
 
+  @impl true
   def mount(_params, _session, socket) do
     client_ip = get_client_ip(socket)
     form = to_form(%{"email" => "", "password" => ""})
@@ -23,6 +30,7 @@ defmodule RivaAshWeb.Auth.SignInLive do
     )}
   end
 
+  @impl true
   def render(assigns) do
     ~H"""
     <div class="flex justify-center items-center bg-gray-50 px-4 sm:px-6 lg:px-8 py-12 min-h-screen">
@@ -33,7 +41,7 @@ defmodule RivaAshWeb.Auth.SignInLive do
           </h2>
           <p class="mt-2 text-gray-600 text-sm text-center">
             Or
-            <.link navigate="/register" class="font-medium text-indigo-600 hover:text-indigo-500">
+            <.link navigate={~p"/register"} class="font-medium text-indigo-600 hover:text-indigo-500">
               create a new account
             </.link>
           </p>
@@ -42,9 +50,9 @@ defmodule RivaAshWeb.Auth.SignInLive do
         <.form for={@form} phx-submit="sign_in" class="space-y-6 mt-8">
           <div class="-space-y-px shadow-sm rounded-md">
             <div>
-              <label for="email-address" class="sr-only">Email address</label>
+              <label for="email" class="sr-only">Email address</label>
               <input
-                id="email-address"
+                id="email"
                 name="email"
                 type="email"
                 autocomplete="email"
@@ -57,7 +65,7 @@ defmodule RivaAshWeb.Auth.SignInLive do
               <%= if @form[:email].errors != [] do %>
                 <p class="mt-2 text-red-600 text-sm" id="email-error">
                   <%= for error <- @form[:email].errors do %>
-                    <%= error %><br>
+                    <%= render_error_message(error) %><br>
                   <% end %>
                 </p>
               <% end %>
@@ -77,7 +85,7 @@ defmodule RivaAshWeb.Auth.SignInLive do
               <%= if @form[:password].errors != [] do %>
                 <p class="mt-2 text-red-600 text-sm" id="password-error">
                   <%= for error <- @form[:password].errors do %>
-                    <%= error %><br>
+                    <%= render_error_message(error) %><br>
                   <% end %>
                 </p>
               <% end %>
@@ -88,7 +96,7 @@ defmodule RivaAshWeb.Auth.SignInLive do
             <div class="flex items-center">
               <input
                 id="remember-me"
-                name="remember-me"
+                name="remember_me"
                 type="checkbox"
                 class="border-gray-300 rounded focus:ring-indigo-500 w-4 h-4 text-indigo-600"
               />
@@ -98,9 +106,9 @@ defmodule RivaAshWeb.Auth.SignInLive do
             </div>
 
             <div class="text-sm">
-              <a href="#" class="font-medium text-indigo-600 hover:text-indigo-500">
+              <.link href={~p"/auth/forgot-password"} class="font-medium text-indigo-600 hover:text-indigo-500">
                 Forgot your password?
-              </a>
+              </.link>
             </div>
           </div>
 
@@ -144,58 +152,75 @@ defmodule RivaAshWeb.Auth.SignInLive do
     """
   end
 
-  def handle_event("sign_in", %{"email" => email, "password" => password}, socket) do
-    # Set loading state
+  @impl true
+  def handle_event("sign_in", %{"email" => email, "password" => password} = params, socket) do
     socket = assign(socket, loading: true, error_message: nil)
-
-    # Get client IP address for rate limiting (stored during mount)
     ip_address = socket.assigns.client_ip
 
-    # Check rate limiting
-    case RivaAsh.Accounts.RateLimiter.check_rate(ip_address) do
+    # Use Authentication context for business logic
+    case Authentication.authenticate(email, password, ip_address, params) do
+      {:ok, %{user: user, token: token}} ->
+        {:noreply,
+         socket
+         |> put_flash(:info, "Successfully signed in!")
+         |> redirect(to: ~p"/dashboard")}
+
+      {:ok, user} when is_struct(user) ->
+        # Handle case where AshAuthentication returns user without token wrapper
+        token = Phoenix.Token.sign(RivaAshWeb.Endpoint, "user_auth", user.id)
+
+        {:noreply,
+         socket
+         |> put_flash(:info, "Successfully signed in!")
+         |> redirect(to: ~p"/dashboard")}
+
       {:error, :rate_limited} ->
         error_message = "Too many sign-in attempts. Please try again later."
         {:noreply, assign(socket, loading: false, error_message: error_message)}
 
-      {:ok, :allowed} ->
-        # Record the attempt before processing
-        RivaAsh.Accounts.RateLimiter.record_attempt(ip_address)
+      {:error, :invalid_credentials} ->
+        error_message = "Invalid email or password"
+        {:noreply, assign(socket, loading: false, error_message: error_message)}
 
-        case Accounts.sign_in(email, password) do
-          {:ok, %{resource: user, token: token}} ->
-            # Reset rate limit on successful sign-in
-            RivaAsh.Accounts.RateLimiter.reset_rate(ip_address)
+      {:error, %Ash.Error.Invalid{errors: [%{message: message} | _]}} ->
+        error_message = message
+        {:noreply, assign(socket, loading: false, error_message: error_message)}
 
-            # Redirect to a controller action that will set the session
-            {:noreply,
-             socket
-             |> put_flash(:info, "Successfully signed in!")
-             |> redirect(external: "/auth/complete-sign-in?token=#{token}&user_id=#{user.id}")}
+      {:error, reason} when is_binary(reason) ->
+        error_message = reason
+        {:noreply, assign(socket, loading: false, error_message: error_message)}
 
-          {:ok, user} when is_struct(user) ->
-            # Reset rate limit on successful sign-in
-            RivaAsh.Accounts.RateLimiter.reset_rate(ip_address)
-
-            # Handle case where AshAuthentication returns user without token wrapper
-            token = Phoenix.Token.sign(RivaAshWeb.Endpoint, "user_auth", user.id)
-
-            {:noreply,
-             socket
-             |> put_flash(:info, "Successfully signed in!")
-             |> redirect(external: "/auth/complete-sign-in?token=#{token}&user_id=#{user.id}")}
-
-          {:error, reason} when is_binary(reason) ->
-            error_message = reason
-            {:noreply, assign(socket, loading: false, error_message: error_message)}
-
-          {:error, %Ash.Error.Invalid{errors: [%{message: message} | _]}} ->
-            error_message = message
-            {:noreply, assign(socket, loading: false, error_message: error_message)}
-
-          {:error, _reason} ->
-            error_message = "Invalid email or password"
-            {:noreply, assign(socket, loading: false, error_message: error_message)}
-        end
+      {:error, reason} ->
+        error_message = "Sign-in failed: #{inspect(reason)}"
+        {:noreply, assign(socket, loading: false, error_message: error_message)}
     end
+  end
+
+  # Private helper functions
+
+  @doc """
+  Gets the client IP address from the socket connection info.
+  """
+  defp get_client_ip(socket) do
+    case Phoenix.LiveView.get_connect_info(socket, :peer_data) do
+      %{address: ip_address} -> ip_address
+      # Default to localhost if not available
+      _ -> {127, 0, 0, 1}
+    end
+  end
+
+  @doc """
+  Renders Ash error messages in a user-friendly format.
+  """
+  defp render_error_message(%{message: message, field: field}) do
+    "#{String.capitalize(to_string(field))}: #{message}"
+  end
+
+  defp render_error_message(%{message: message}) do
+    message
+  end
+
+  defp render_error_message(error) do
+    inspect(error)
   end
 end

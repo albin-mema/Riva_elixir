@@ -16,13 +16,13 @@ defmodule RivaAshWeb.DevTools.ReactorVisualizerLive do
       {:ok, redirect(socket, to: "/")}
     end
   else
-    alias RivaAsh.Reactors.{BusinessSetupFlow, ReservationReactor}
+    alias RivaAsh.DevTools.ReactorService
 
     @impl true
     def mount(_params, _session, socket) do
       socket =
         socket
-        |> assign(:page_title, "Reactor Flow Visualizer")
+        |> assign(:page_title, get_page_title())
         |> assign(:selected_reactor, nil)
         |> assign(:reactor_state, :idle)
         |> assign(:execution_steps, [])
@@ -31,80 +31,42 @@ defmodule RivaAshWeb.DevTools.ReactorVisualizerLive do
         |> assign(:outputs, %{})
         |> assign(:errors, [])
         |> assign(:performance_metrics, %{})
-        |> load_available_reactors()
+        |> ReactorService.load_initial_data()
 
       {:ok, socket}
     end
 
     @impl true
     def handle_event("select_reactor", %{"reactor" => reactor_name}, socket) do
-      reactor_module = String.to_existing_atom("Elixir.RivaAsh.Reactors.#{reactor_name}")
-
-      socket =
-        socket
-        |> assign(:selected_reactor, reactor_module)
-        |> assign(:reactor_state, :ready)
-        |> assign(:execution_steps, [])
-        |> assign(:current_step, 0)
-        |> assign(:inputs, get_default_inputs(reactor_module))
-        |> assign(:outputs, %{})
-        |> assign(:errors, [])
-
-      {:noreply, socket}
+      ReactorService.select_reactor(socket, reactor_name)
     end
 
     def handle_event("update_input", %{"field" => field, "value" => value}, socket) do
-      inputs = Map.put(socket.assigns.inputs, String.to_atom(field), value)
-      {:noreply, assign(socket, :inputs, inputs)}
+      ReactorService.update_input(socket, field, value)
     end
 
     def handle_event("execute_reactor", _params, socket) do
-      if socket.assigns.selected_reactor do
-        send(self(), :start_execution)
-        {:noreply, assign(socket, :reactor_state, :executing)}
-      else
-        {:noreply, socket}
-      end
+      ReactorService.execute_reactor(socket)
     end
 
     def handle_event("step_execution", _params, socket) do
-      if socket.assigns.reactor_state == :paused do
-        send(self(), :continue_execution)
-        {:noreply, assign(socket, :reactor_state, :executing)}
-      else
-        {:noreply, socket}
-      end
+      ReactorService.step_execution(socket)
     end
 
     def handle_event("reset_execution", _params, socket) do
-      socket =
-        socket
-        |> assign(:reactor_state, :ready)
-        |> assign(:execution_steps, [])
-        |> assign(:current_step, 0)
-        |> assign(:outputs, %{})
-        |> assign(:errors, [])
-
-      {:noreply, socket}
+      ReactorService.reset_execution(socket)
     end
 
     def handle_event("generate_mermaid", _params, socket) do
-      if socket.assigns.selected_reactor do
-        mermaid_diagram = generate_reactor_mermaid(socket.assigns.selected_reactor)
-        send(self(), {:show_mermaid, mermaid_diagram})
-      end
-      {:noreply, socket}
+      ReactorService.generate_mermaid(socket)
     end
 
     def handle_event("toggle_diagram_view", _params, socket) do
-      current_state = Map.get(socket.assigns, :show_diagram_code, false)
-      {:noreply, assign(socket, :show_diagram_code, !current_state)}
+      ReactorService.toggle_diagram_view(socket)
     end
 
     def handle_event("copy_diagram_code", _params, socket) do
-      # Show a flash message since we can't directly copy to clipboard from server
-      socket = put_flash(socket, :info, "Diagram code is displayed above - select and copy it manually, or use the mermaid.live link!")
-      {:noreply, socket}
+      ReactorService.copy_diagram_code(socket)
     end
 
     @impl true
@@ -466,217 +428,6 @@ defmodule RivaAshWeb.DevTools.ReactorVisualizerLive do
     end
 
     # Helper functions
-    defp load_available_reactors(socket) do
-      reactors = [
-        %{
-          name: "BusinessSetupFlow",
-          module: RivaAsh.Reactors.BusinessSetupFlow,
-          description: "Complete business onboarding with plots, layouts, and pricing",
-          step_count: 6
-        },
-        %{
-          name: "ReservationReactor",
-          module: RivaAsh.Reactors.ReservationReactor,
-          description: "Create reservations with validation and conflict resolution",
-          step_count: 8
-        }
-      ]
-
-      assign(socket, :available_reactors, reactors)
-    end
-
-    defp get_default_inputs(RivaAsh.Reactors.BusinessSetupFlow) do
-      %{
-        business_info: %{
-          name: "Test Business",
-          description: "A test business for development"
-        },
-        plot_details: %{
-          name: "Main Plot",
-          description: "Primary business plot",
-          total_area: 1000.0,
-          location: "Test Location"
-        },
-        owner_id: "user-id-here"
-      }
-    end
-
-    defp get_default_inputs(RivaAsh.Reactors.ReservationReactor) do
-      %{
-        client_id: "client-id-here",
-        employee_id: "employee-id-here",
-        item_id: "item-id-here",
-        start_datetime: DateTime.utc_now(),
-        end_datetime: DateTime.add(DateTime.utc_now(), 3600),
-        notes: "Test reservation"
-      }
-    end
-
-    defp get_default_inputs(_), do: %{}
-
-    defp execute_reactor_with_tracking(reactor, inputs) do
-      # This would be enhanced to actually track reactor execution
-      # For now, simulate step-by-step execution
-      try do
-        # Simulate reactor execution with step tracking
-        steps = [
-          %{name: "validate_inputs", input: inputs, output: :ok, duration: 10},
-          %{name: "check_permissions", input: inputs, output: :authorized, duration: 15},
-          %{name: "execute_business_logic", input: inputs, output: :success, duration: 150}
-        ]
-
-        # Send each step
-        for step <- steps do
-          send(self(), {:execution_step, step})
-          Process.sleep(500) # Simulate processing time
-        end
-
-        {:ok, %{result: "Reactor completed successfully", steps: length(steps)}}
-      rescue
-        error ->
-          {:error, Exception.message(error)}
-      end
-    end
-
-    defp generate_reactor_mermaid(RivaAsh.Reactors.BusinessSetupFlow) do
-      """
-      graph TD
-          A[Start Business Setup] --> B[Validate Input]
-          B --> C{Input Valid?}
-          C -->|Yes| D[Create Business]
-          C -->|No| E[Return Error]
-
-          D --> F[Create Plot]
-          F --> G[Create Layout]
-          G --> H[Create Sections]
-          H --> I[Create Item Types]
-          I --> J[Set Pricing Rules]
-          J --> K[Complete Setup]
-
-          %% Compensation flows
-          D -.-> D1[Compensate: Delete Business]
-          F -.-> F1[Compensate: Delete Plot]
-          G -.-> G1[Compensate: Delete Layout]
-          H -.-> H1[Compensate: Delete Sections]
-          I -.-> I1[Compensate: Delete Item Types]
-          J -.-> J1[Compensate: Delete Pricing]
-
-          %% Styling
-          classDef success fill:#d4edda,stroke:#155724,stroke-width:2px
-          classDef error fill:#f8d7da,stroke:#721c24,stroke-width:2px
-          classDef compensate fill:#fff3cd,stroke:#856404,stroke-width:2px
-
-          class A,K success
-          class E error
-          class D1,F1,G1,H1,I1,J1 compensate
-      """
-    end
-
-    defp generate_reactor_mermaid(RivaAsh.Reactors.ReservationReactor) do
-      """
-      graph TD
-          A[Start Reservation] --> B[Validate Input]
-          B --> C{Input Valid?}
-          C -->|Yes| D[Validate Client]
-          C -->|No| E[Return Error]
-
-          D --> F{Client Valid?}
-          F -->|Yes| G[Validate Item]
-          F -->|No| H[Error: Invalid Client]
-
-          G --> I{Item Valid?}
-          I -->|Yes| J[Check Availability]
-          I -->|No| K[Error: Invalid Item]
-
-          J --> L{Available?}
-          L -->|Yes| M[Validate Employee]
-          L -->|No| N[Error: Not Available]
-
-          M --> O{Employee Valid?}
-          O -->|Yes| P[Calculate Pricing]
-          O -->|No| Q[Error: Invalid Employee]
-
-          P --> R[Create Reservation]
-          R --> S[Complete]
-
-          %% Styling
-          classDef success fill:#d4edda,stroke:#155724,stroke-width:2px
-          classDef error fill:#f8d7da,stroke:#721c24,stroke-width:2px
-          classDef decision fill:#fff3cd,stroke:#856404,stroke-width:2px
-
-          class A,S success
-          class E,H,K,N,Q error
-          class C,F,I,L,O decision
-      """
-    end
-
-    defp generate_reactor_mermaid(_), do: "graph TD\n    A[Unknown Reactor] --> B[No Diagram Available]"
-
-    defp render_text_flow(assigns) do
-      ~H"""
-      <div class="space-y-3">
-        <%= case @reactor do %>
-          <% RivaAsh.Reactors.BusinessSetupFlow -> %>
-            <div class="text-sm space-y-2">
-              <div class="flex items-center">
-                <div class="w-3 h-3 bg-blue-500 rounded-full mr-3"></div>
-                <span class="font-medium">1. Create Business</span>
-              </div>
-              <div class="flex items-center">
-                <div class="w-3 h-3 bg-blue-500 rounded-full mr-3"></div>
-                <span class="font-medium">2. Create Plot</span>
-              </div>
-              <div class="flex items-center">
-                <div class="w-3 h-3 bg-blue-500 rounded-full mr-3"></div>
-                <span class="font-medium">3. Create Layout</span>
-              </div>
-              <div class="flex items-center">
-                <div class="w-3 h-3 bg-blue-500 rounded-full mr-3"></div>
-                <span class="font-medium">4. Create Sections</span>
-              </div>
-              <div class="flex items-center">
-                <div class="w-3 h-3 bg-blue-500 rounded-full mr-3"></div>
-                <span class="font-medium">5. Create Item Types</span>
-              </div>
-              <div class="flex items-center">
-                <div class="w-3 h-3 bg-green-500 rounded-full mr-3"></div>
-                <span class="font-medium">6. Set Pricing Rules</span>
-              </div>
-            </div>
-          <% RivaAsh.Reactors.ReservationReactor -> %>
-            <div class="text-sm space-y-2">
-              <div class="flex items-center">
-                <div class="w-3 h-3 bg-blue-500 rounded-full mr-3"></div>
-                <span class="font-medium">1. Validate Client</span>
-              </div>
-              <div class="flex items-center">
-                <div class="w-3 h-3 bg-blue-500 rounded-full mr-3"></div>
-                <span class="font-medium">2. Validate Item</span>
-              </div>
-              <div class="flex items-center">
-                <div class="w-3 h-3 bg-blue-500 rounded-full mr-3"></div>
-                <span class="font-medium">3. Check Availability</span>
-              </div>
-              <div class="flex items-center">
-                <div class="w-3 h-3 bg-blue-500 rounded-full mr-3"></div>
-                <span class="font-medium">4. Validate Employee</span>
-              </div>
-              <div class="flex items-center">
-                <div class="w-3 h-3 bg-blue-500 rounded-full mr-3"></div>
-                <span class="font-medium">5. Calculate Pricing</span>
-              </div>
-              <div class="flex items-center">
-                <div class="w-3 h-3 bg-green-500 rounded-full mr-3"></div>
-                <span class="font-medium">6. Create Reservation</span>
-              </div>
-            </div>
-          <% _ -> %>
-            <div class="text-center text-gray-500">
-              <p>Select a reactor to see its flow</p>
-            </div>
-        <% end %>
-      </div>
-      """
-    end
+    defp get_page_title, do: Application.get_env(:riva_ash, __MODULE__, [])[:page_title] || "Reactor Flow Visualizer"
   end
 end

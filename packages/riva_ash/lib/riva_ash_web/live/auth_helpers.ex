@@ -1,29 +1,50 @@
 defmodule RivaAshWeb.Live.AuthHelpers do
   @moduledoc """
   Authentication helpers for LiveViews.
+  
+  This module provides authentication and authorization helpers that follow
+  the Phoenix/Ash/Elixir patterns from the styleguide:
+  - Separates authentication logic from business logic
+  - Uses proper Ash error handling
+  - Provides reusable patterns for LiveViews
   """
 
   import Phoenix.Component, only: [assign: 3]
   import Phoenix.LiveView, only: [redirect: 2, put_flash: 3]
   alias RivaAsh.ErrorHelpers
   alias RivaAsh.Resources.Business
+  alias RivaAsh.Accounts.User
+
+  # Use application configuration for token max age
+  @token_max_age Application.get_env(:riva_ash, :auth_token_max_age, 86_400)
 
   @doc """
   Gets the current user from the LiveView session.
   Returns {:ok, user} if authenticated, {:error, reason} otherwise.
+  
+  ## Error Handling
+  
+  Handles various error scenarios with proper pattern matching:
+  - Invalid tokens
+  - Expired tokens
+  - User not found
+  - Ash authorization errors
   """
   def get_current_user_from_session(session) do
     user_token = session["user_token"]
 
     if user_token do
       with {:ok, user_id} <-
-             Phoenix.Token.verify(RivaAshWeb.Endpoint, "user_auth", user_token, max_age: 86_400)
+             Phoenix.Token.verify(RivaAshWeb.Endpoint, "user_auth", user_token, max_age: @token_max_age)
              |> ErrorHelpers.to_result(),
            {:ok, user} <-
-             Ash.get(RivaAsh.Accounts.User, user_id, action: :seed_read, domain: RivaAsh.Accounts)
+             Ash.get(User, user_id, action: :seed_read, domain: RivaAsh.Accounts)
              |> ErrorHelpers.to_result() do
         ErrorHelpers.success(user)
       else
+        {:error, :invalid} -> ErrorHelpers.failure(:invalid_token)
+        {:error, :expired} -> ErrorHelpers.failure(:token_expired)
+        {:error, :not_found} -> ErrorHelpers.failure(:user_not_found)
         _ -> ErrorHelpers.failure(:not_authenticated)
       end
     else
@@ -34,18 +55,46 @@ defmodule RivaAshWeb.Live.AuthHelpers do
   @doc """
   Handles Ash authorization errors and redirects appropriately.
   Returns {:ok, redirect_socket} for authorization failures.
+  
+  ## Error Pattern Matching
+  
+  Handles specific Ash error types with appropriate user-friendly responses:
+  - Forbidden errors redirect to access denied
+  - Invalid errors redirect to access denied
+  - Other errors redirect to 404
   """
   def handle_ash_error(socket, error) do
     case error do
+      %Ash.Error.Forbidden{errors: [%{message: message} | _]} ->
+        {:ok,
+         socket
+         |> put_flash(:error, message)
+         |> redirect(to: "/access-denied")}
+
+      %Ash.Error.Invalid{errors: [%{message: message} | _]} ->
+        {:ok,
+         socket
+         |> put_flash(:error, message)
+         |> redirect(to: "/access-denied")}
+
       %Ash.Error.Forbidden{} ->
-        {:ok, Phoenix.LiveView.redirect(socket, to: "/access-denied")}
+        {:ok,
+         socket
+         |> put_flash(:error, "You don't have permission to access this resource")
+         |> redirect(to: "/access-denied")}
 
       %Ash.Error.Invalid{} ->
-        {:ok, Phoenix.LiveView.redirect(socket, to: "/access-denied")}
+        {:ok,
+         socket
+         |> put_flash(:error, "Invalid request parameters")
+         |> redirect(to: "/access-denied")}
 
       _ ->
         # For other errors, redirect to 404
-        {:ok, Phoenix.LiveView.redirect(socket, to: "/404")}
+        {:ok,
+         socket
+         |> put_flash(:error, "Resource not found")
+         |> redirect(to: "/404")}
     end
   end
 
@@ -64,9 +113,17 @@ defmodule RivaAshWeb.Live.AuthHelpers do
         socket_with_user = socket |> Phoenix.Component.assign(:current_user, user)
         ErrorHelpers.success(socket_with_user)
 
-      {:error, _} ->
+      {:error, :not_authenticated} ->
         # Use Phoenix.LiveView.push_redirect instead
         redirect_socket = socket |> Phoenix.LiveView.push_navigate(to: redirect_to)
+        ErrorHelpers.success(redirect_socket)
+
+      {:error, reason} ->
+        # Handle other authentication errors
+        redirect_socket =
+          socket
+          |> put_flash(:error, auth_error_message(reason))
+          |> Phoenix.LiveView.push_navigate(to: redirect_to)
         ErrorHelpers.success(redirect_socket)
     end
   end
@@ -122,6 +179,10 @@ defmodule RivaAshWeb.Live.AuthHelpers do
 
       # For resources with nested business relationship
       load_business_scoped_resources(user, Item, [:section, :plot, :business_id])
+      
+  ## Error Handling
+  
+  Properly handles Ash errors and provides meaningful error messages.
   """
   def load_business_scoped_resources(user, resource_module, business_path) do
     try do
@@ -167,8 +228,8 @@ defmodule RivaAshWeb.Live.AuthHelpers do
 
           {:ok, socket}
         rescue
-          _error in [Ash.Error.Forbidden, Ash.Error.Invalid] ->
-            {:ok, Phoenix.LiveView.redirect(socket, to: "/access-denied")}
+          error in [Ash.Error.Forbidden, Ash.Error.Invalid] ->
+            {:ok, handle_ash_error(socket, error)}
         end
 
       {:error, _} ->
@@ -235,4 +296,15 @@ defmodule RivaAshWeb.Live.AuthHelpers do
          |> redirect(to: "/dashboard")}
     end
   end
+
+  # Private helper functions
+
+  @doc """
+  Converts authentication error codes to user-friendly messages.
+  """
+  defp auth_error_message(:invalid_token), do: "Invalid authentication token"
+  defp auth_error_message(:token_expired), do: "Authentication token has expired"
+  defp auth_error_message(:user_not_found), do: "User not found"
+  defp auth_error_message(:not_authenticated), do: "Please sign in to continue"
+  defp auth_error_message(_), do: "Authentication failed"
 end

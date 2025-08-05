@@ -17,40 +17,36 @@ defmodule RivaAshWeb.ReservationLive do
   alias RivaAsh.Resources.Client
   alias RivaAsh.Resources.Item
   alias RivaAsh.Resources.Employee
+  alias RivaAsh.Reservation.ReservationService
+  alias RivaAsh.ErrorHelpers
 
   @impl true
   def mount(_params, session, socket) do
     case get_current_user_from_session(session) do
       {:ok, user} ->
-        try do
-          # Get user's businesses first
-          businesses = RivaAsh.Resources.Business.read!(actor: user)
-          business_ids = Enum.map(businesses, & &1.id)
+        case ReservationService.get_user_businesses(user) do
+          {:ok, business_ids} ->
+            socket =
+              socket
+              |> assign(:current_user, user)
+              |> assign(:page_title, get_page_title())
+              |> assign(:business_ids, business_ids)
+              |> assign(:form, nil)
+              |> assign(:show_form, false)
+              |> assign(:editing_reservation, nil)
+              |> assign(:loading, false)
+              |> assign(:error_message, nil)
+              |> assign(:success_message, nil)
+              |> assign(:confirm_delete_id, nil)
+              |> assign(:clients, [])
+              |> assign(:items, [])
+              |> assign(:employees, [])
 
-          socket =
-            socket
-            |> assign(:current_user, user)
-            |> assign(:page_title, "Reservations")
-            |> assign(:business_ids, business_ids)
-            |> assign(:form, nil)
-            |> assign(:show_form, false)
-            |> assign(:editing_reservation, nil)
-            |> assign(:loading, false)
-            |> assign(:error_message, nil)
-            |> assign(:success_message, nil)
-            |> assign(:confirm_delete_id, nil)
-            |> assign(:clients, [])
-            |> assign(:items, [])
-            |> assign(:employees, [])
+            {:ok, socket}
 
-          {:ok, socket}
-        rescue
-          error in [Ash.Error.Forbidden, Ash.Error.Invalid] ->
+          {:error, error} ->
+            error_message = ErrorHelpers.format_error(error)
             {:ok, redirect(socket, to: "/access-denied")}
-
-          error ->
-            {:ok,
-             socket |> assign(:error_message, "Failed to load data: #{Exception.message(error)}")}
         end
 
       {:error, :not_authenticated} ->
@@ -64,19 +60,20 @@ defmodule RivaAshWeb.ReservationLive do
     business_ids = socket.assigns.business_ids
 
     # Use Flop to handle pagination, sorting, and filtering
-    case list_reservations_with_flop(user, business_ids, params) do
+    case ReservationService.list_reservations_with_flop(user, business_ids, params) do
       {reservations, meta} ->
         socket
         |> assign(:reservations, reservations)
         |> assign(:meta, meta)
         |> then(&{:noreply, &1})
 
-      _ ->
+      {:error, error} ->
+        error_message = ErrorHelpers.format_error(error)
         socket =
           socket
           |> assign(:reservations, [])
           |> assign(:meta, %{})
-          |> assign(:error_message, "Failed to load reservations")
+          |> assign(:error_message, "Failed to load reservations: #{error_message}")
 
         {:noreply, socket}
     end
@@ -245,37 +242,39 @@ defmodule RivaAshWeb.ReservationLive do
   def handle_event("new_reservation", _params, socket) do
     user = socket.assigns.current_user
 
-    # Load related data
-    clients = load_clients(user, socket.assigns.business_ids)
-    items = load_items(user, socket.assigns.business_ids)
-    employees = load_employees(user, socket.assigns.business_ids)
+    case ReservationService.load_reservation_form_data(user, socket.assigns.business_ids) do
+      {:ok, %{clients: clients, items: items, employees: employees}} ->
+        form =
+          AshPhoenix.Form.for_create(Reservation, :create, actor: user)
+          |> to_form()
 
-    form =
-      AshPhoenix.Form.for_create(Reservation, :create, actor: user)
-      |> to_form()
+        socket =
+          socket
+          |> assign(:show_form, true)
+          |> assign(:editing_reservation, nil)
+          |> assign(:form, form)
+          |> assign(:clients, clients)
+          |> assign(:items, items)
+          |> assign(:employees, employees)
 
-    socket =
-      socket
-      |> assign(:show_form, true)
-      |> assign(:editing_reservation, nil)
-      |> assign(:form, form)
-      |> assign(:clients, clients)
-      |> assign(:items, items)
-      |> assign(:employees, employees)
+        {:noreply, socket}
 
-    {:noreply, socket}
+      {:error, error} ->
+        error_message = ErrorHelpers.format_error(error)
+        socket =
+          socket
+          |> assign(:error_message, "Failed to load form data: #{error_message}")
+          |> assign(:show_form, false)
+
+        {:noreply, socket}
+    end
   end
 
   def handle_event("edit_reservation", %{"id" => id}, socket) do
     user = socket.assigns.current_user
 
-    case Reservation.by_id(id, actor: user) do
-      {:ok, reservation} ->
-        # Load related data
-        clients = load_clients(user, socket.assigns.business_ids)
-        items = load_items(user, socket.assigns.business_ids)
-        employees = load_employees(user, socket.assigns.business_ids)
-
+    case ReservationService.get_reservation_for_edit(id, user, socket.assigns.business_ids) do
+      {:ok, %{reservation: reservation, clients: clients, items: items, employees: employees}} ->
         form =
           AshPhoenix.Form.for_update(reservation, :update, actor: user)
           |> to_form()
@@ -291,10 +290,11 @@ defmodule RivaAshWeb.ReservationLive do
 
         {:noreply, socket}
 
-      {:error, _reason} ->
+      {:error, error} ->
+        error_message = ErrorHelpers.format_error(error)
         socket =
           socket
-          |> assign(:error_message, "Reservation not found.")
+          |> assign(:error_message, "Failed to load reservation: #{error_message}")
           |> assign(:show_form, false)
 
         {:noreply, socket}
@@ -315,35 +315,22 @@ defmodule RivaAshWeb.ReservationLive do
       |> assign(:loading, true)
       |> assign(:confirm_delete_id, nil)
 
-    case Reservation.by_id(reservation_id, actor: user) do
-      {:ok, reservation} ->
-        case Ash.destroy(reservation, actor: user) do
-          :ok ->
-            socket =
-              socket
-              |> assign(:loading, false)
-              |> assign(:success_message, "Reservation deleted successfully!")
+    case ReservationService.delete_reservation(reservation_id, user) do
+      {:ok, _reservation} ->
+        socket =
+          socket
+          |> assign(:loading, false)
+          |> assign(:success_message, "Reservation deleted successfully!")
 
-            {:noreply, push_patch(socket, to: ~p"/reservations")}
-
-          {:error, error} ->
-            error_message = format_error_message(error)
-
-            socket =
-              socket
-              |> assign(:loading, false)
-              |> assign(:error_message, "Failed to delete reservation: #{error_message}")
-
-            {:noreply, socket}
-        end
+        {:noreply, push_patch(socket, to: ~p"/reservations")}
 
       {:error, error} ->
-        error_message = format_error_message(error)
+        error_message = ErrorHelpers.format_error(error)
 
         socket =
           socket
           |> assign(:loading, false)
-          |> assign(:error_message, "Failed to find reservation: #{error_message}")
+          |> assign(:error_message, "Failed to delete reservation: #{error_message}")
 
         {:noreply, socket}
     end
@@ -383,10 +370,7 @@ defmodule RivaAshWeb.ReservationLive do
 
     socket = assign(socket, :loading, true)
 
-    # Submit the form with the correct parameters
-    result = AshPhoenix.Form.submit(socket.assigns.form, params: params, actor: user)
-
-    case result do
+    case ReservationService.save_reservation(socket.assigns.form, params, user) do
       {:ok, reservation} ->
         action_text = if socket.assigns.editing_reservation, do: "updated", else: "created"
 
@@ -400,7 +384,8 @@ defmodule RivaAshWeb.ReservationLive do
 
         {:noreply, push_patch(socket, to: ~p"/reservations")}
 
-      {:error, form} ->
+      {:error, form, error} ->
+        error_message = ErrorHelpers.format_error(error)
         error_messages =
           form
           |> AshPhoenix.Form.errors()
@@ -411,7 +396,7 @@ defmodule RivaAshWeb.ReservationLive do
           socket
           |> assign(:loading, false)
           |> assign(:form, to_form(form))
-          |> assign(:error_message, "Failed to save reservation. #{error_messages}")
+          |> assign(:error_message, "Failed to save reservation. #{error_messages} #{error_message}")
 
         {:noreply, socket}
     end
@@ -435,251 +420,5 @@ defmodule RivaAshWeb.ReservationLive do
 
   # Private helper functions
 
-  defp list_reservations_with_flop(user, business_ids, params) do
-    # Get reservations as a list
-    reservations = load_reservations_simple(user, business_ids)
-
-    # Validate Flop parameters first
-    case Flop.validate(params, for: Reservation) do
-      {:ok, flop} ->
-        # Apply manual sorting and pagination to the list
-        {paginated_reservations, meta} = apply_flop_to_list(reservations, flop)
-        {paginated_reservations, meta}
-
-      {:error, meta} ->
-        # Return empty results with error meta
-        {[], meta}
-    end
-  end
-
-  defp apply_flop_to_list(reservations, flop) do
-    # Apply sorting
-    sorted_reservations = apply_sorting(reservations, flop)
-
-    # Apply pagination
-    total_count = length(sorted_reservations)
-    {paginated_reservations, pagination_info} = apply_pagination(sorted_reservations, flop)
-
-    # Build meta information
-    meta = build_meta(flop, total_count, pagination_info)
-
-    {paginated_reservations, meta}
-  end
-
-  defp apply_sorting(reservations, %Flop{order_by: nil}), do: reservations
-  defp apply_sorting(reservations, %Flop{order_by: []}), do: reservations
-
-  defp apply_sorting(reservations, %Flop{order_by: order_by, order_directions: order_directions}) do
-    # Default to :asc if no directions provided
-    directions = order_directions || Enum.map(order_by, fn _ -> :asc end)
-
-    # Zip order_by and directions, pad directions with :asc if needed
-    order_specs =
-      Enum.zip_with([order_by, directions], fn [field, direction] -> {field, direction} end)
-
-    Enum.sort(reservations, fn res1, res2 ->
-      compare_reservations(res1, res2, order_specs)
-    end)
-  end
-
-  defp compare_reservations(_res1, _res2, []), do: true
-
-  defp compare_reservations(res1, res2, [{field, direction} | rest]) do
-    val1 = get_field_value(res1, field)
-    val2 = get_field_value(res2, field)
-
-    case {val1, val2} do
-      {same, same} -> compare_reservations(res1, res2, rest)
-      {nil, _} -> direction == :desc
-      {_, nil} -> direction == :asc
-      {v1, v2} when direction == :asc -> v1 <= v2
-      {v1, v2} when direction == :desc -> v1 >= v2
-    end
-  end
-
-  defp get_field_value(reservation, field) do
-    case field do
-      :client_id -> reservation.client_id
-      :item_id -> reservation.item_id
-      :reserved_from -> reservation.reserved_from
-      :reserved_until -> reservation.reserved_until
-      :status -> reservation.status
-      :inserted_at -> reservation.inserted_at
-      :updated_at -> reservation.updated_at
-      _ -> nil
-    end
-  end
-
-  defp apply_pagination(reservations, flop) do
-    total_count = length(reservations)
-
-    cond do
-      # Page-based pagination
-      flop.page && flop.page_size ->
-        page = max(flop.page, 1)
-        page_size = flop.page_size
-        offset = (page - 1) * page_size
-
-        paginated = reservations |> Enum.drop(offset) |> Enum.take(page_size)
-
-        pagination_info = %{
-          type: :page,
-          page: page,
-          page_size: page_size,
-          offset: offset,
-          total_count: total_count
-        }
-
-        {paginated, pagination_info}
-
-      # Offset-based pagination
-      flop.offset && flop.limit ->
-        offset = max(flop.offset, 0)
-        limit = flop.limit
-
-        paginated = reservations |> Enum.drop(offset) |> Enum.take(limit)
-
-        pagination_info = %{
-          type: :offset,
-          offset: offset,
-          limit: limit,
-          total_count: total_count
-        }
-
-        {paginated, pagination_info}
-
-      # Limit only
-      flop.limit ->
-        limit = flop.limit
-        paginated = Enum.take(reservations, limit)
-
-        pagination_info = %{
-          type: :limit,
-          limit: limit,
-          total_count: total_count
-        }
-
-        {paginated, pagination_info}
-
-      # No pagination
-      true ->
-        pagination_info = %{
-          type: :none,
-          total_count: total_count
-        }
-
-        {reservations, pagination_info}
-    end
-  end
-
-  defp build_meta(flop, total_count, pagination_info) do
-    case pagination_info.type do
-      :page ->
-        page = pagination_info.page
-        page_size = pagination_info.page_size
-        total_pages = ceil(total_count / page_size)
-
-        %Flop.Meta{
-          current_page: page,
-          current_offset: pagination_info.offset,
-          flop: flop,
-          has_next_page?: page < total_pages,
-          has_previous_page?: page > 1,
-          next_page: if(page < total_pages, do: page + 1, else: nil),
-          previous_page: if(page > 1, do: page - 1, else: nil),
-          page_size: page_size,
-          total_count: total_count,
-          total_pages: total_pages,
-          opts: []
-        }
-
-      :offset ->
-        offset = pagination_info.offset
-        limit = pagination_info.limit
-        current_page = div(offset, limit) + 1
-        total_pages = ceil(total_count / limit)
-
-        %Flop.Meta{
-          current_page: current_page,
-          current_offset: offset,
-          flop: flop,
-          has_next_page?: offset + limit < total_count,
-          has_previous_page?: offset > 0,
-          next_offset: if(offset + limit < total_count, do: offset + limit, else: nil),
-          previous_offset: if(offset > 0, do: max(0, offset - limit), else: nil),
-          page_size: limit,
-          total_count: total_count,
-          total_pages: total_pages,
-          opts: []
-        }
-
-      _ ->
-        %Flop.Meta{
-          current_page: 1,
-          current_offset: 0,
-          flop: flop,
-          has_next_page?: false,
-          has_previous_page?: false,
-          page_size: total_count,
-          total_count: total_count,
-          total_pages: 1,
-          opts: []
-        }
-    end
-  end
-
-  defp load_reservations_simple(user, business_ids) do
-    try do
-      # Get reservations for user's businesses
-      case Reservation.read(
-             actor: user,
-             filter: [item: [section: [plot: [business_id: [in: business_ids]]]]]
-           ) do
-        {:ok, reservations} -> reservations
-        _ -> []
-      end
-    rescue
-      _ -> []
-    end
-  end
-
-  defp load_clients(user, business_ids) do
-    try do
-      case Client.read(actor: user, filter: [business_id: [in: business_ids]]) do
-        {:ok, clients} -> clients
-        _ -> []
-      end
-    rescue
-      _ -> []
-    end
-  end
-
-  defp load_items(user, business_ids) do
-    try do
-      case Item.read(actor: user, filter: [section: [plot: [business_id: [in: business_ids]]]]) do
-        {:ok, items} -> items
-        _ -> []
-      end
-    rescue
-      _ -> []
-    end
-  end
-
-  defp load_employees(user, business_ids) do
-    try do
-      case Employee.read(actor: user, filter: [business_id: [in: business_ids]]) do
-        {:ok, employees} -> employees
-        _ -> []
-      end
-    rescue
-      _ -> []
-    end
-  end
-
-  defp format_error_message(error) do
-    case RivaAsh.ErrorHelpers.format_error(error) do
-      %{message: message} -> message
-      _ -> "An unexpected error occurred"
-    end
-  end
+  defp get_page_title, do: Application.get_env(:riva_ash, __MODULE__, [])[:page_title] || "Reservations"
 end

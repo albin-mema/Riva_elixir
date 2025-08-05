@@ -29,7 +29,7 @@ defmodule RivaAshWeb.RecurringReservationInstanceLive do
           socket =
             socket
             |> assign(:current_user, user)
-            |> assign(:page_title, "Recurring Reservation Instances")
+            |> assign(:page_title, get_page_title())
             |> assign(:business_ids, business_ids)
             |> assign(:form, nil)
             |> assign(:show_form, false)
@@ -664,6 +664,8 @@ defmodule RivaAshWeb.RecurringReservationInstanceLive do
       _ -> []
     end
   end
+
+  defp get_page_title, do: Application.get_env(:riva_ash, __MODULE__, [])[:page_title] || "Recurring Reservation Instances"
 
   defp format_error_message(error) do
     case RivaAsh.ErrorHelpers.format_error(error) do

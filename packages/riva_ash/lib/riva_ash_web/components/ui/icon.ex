@@ -18,16 +18,50 @@ defmodule RivaAshWeb.Components.UI.Icon do
   attr :class, :string, default: "", doc: "Additional CSS classes"
   attr :rest, :global, doc: "Any additional HTML attributes"
 
+  @spec icon(assigns :: map()) :: Phoenix.LiveView.Rendered.t()
   def icon(assigns) do
-    assigns = assign(assigns, :icon_class, icon_class(assigns))
+    # Render icon using functional composition
+    assigns
+    |> Map.put_new(:icon_class, icon_class(assigns))
+    |> Map.put_new(:svg_class, build_svg_class(assigns.size))
+    |> Map.put_new(:container_class, build_container_class(assigns.size))
+    |> render_icon_component()
+  end
 
+  # Private helper for icon rendering
+  @spec render_icon_component(assigns :: map()) :: Phoenix.LiveView.Rendered.t()
+  defp render_icon_component(assigns) do
     ~H"""
     <span class={@icon_class} {@rest}>
-      <svg class="w-full h-full" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <svg class={@svg_class} fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <%= render_icon_path(@name) %>
       </svg>
     </span>
     """
+  end
+
+  # Helper function to build SVG classes
+  @spec build_svg_class(String.t()) :: String.t()
+  defp build_svg_class(size) do
+    case size do
+      "xs" -> "w-3 h-3"
+      "sm" -> "w-4 h-4"
+      "lg" -> "w-6 h-6"
+      "xl" -> "w-8 h-8"
+      _ -> "w-5 h-5"
+    end
+  end
+
+  # Helper function to build container classes
+  @spec build_container_class(String.t()) :: String.t()
+  defp build_container_class(size) do
+    case size do
+      "xs" -> "inline-block align-middle"
+      "sm" -> "inline-block align-middle"
+      "lg" -> "inline-block align-middle"
+      "xl" -> "inline-block align-middle"
+      _ -> "inline-block align-middle"
+    end
   end
 
   defp render_icon_path(name) do

@@ -14,21 +14,43 @@ defmodule RivaAshWeb.Components.UI.Alert do
 
   slot :inner_block, required: true
 
+  @spec alert(assigns :: map()) :: Phoenix.LiveView.Rendered.t()
   def alert(assigns) do
-    assigns = assign(assigns, :alert_class, alert_class(assigns))
+    # Render alert using functional composition
+    assigns
+    |> Map.put_new(:alert_class, alert_class(assigns))
+    |> Map.put_new(:title_class, build_title_class(assigns.title))
+    |> Map.put_new(:content_class, build_content_class(assigns.title))
+    |> render_alert_component()
+  end
 
+  # Private helper for alert rendering
+  @spec render_alert_component(assigns :: map()) :: Phoenix.LiveView.Rendered.t()
+  defp render_alert_component(assigns) do
     ~H"""
     <div class={@alert_class} {@rest}>
       <%= if @title do %>
-        <h5 class="mb-1 font-medium leading-none tracking-tight">
+        <h5 class={@title_class}>
           <%= @title %>
         </h5>
       <% end %>
-      <div class="text-sm [&_p]:leading-relaxed">
+      <div class={@content_class}>
         <%= render_slot(@inner_block) %>
       </div>
     </div>
     """
+  end
+
+  # Helper function to build title classes
+  @spec build_title_class(String.t() | nil) :: String.t()
+  defp build_title_class(title) do
+    if title, do: "mb-1 font-medium leading-none tracking-tight", else: "hidden"
+  end
+
+  # Helper function to build content classes
+  @spec build_content_class(String.t() | nil) :: String.t()
+  defp build_content_class(title) do
+    if title, do: "text-sm [&_p]:leading-relaxed", else: "text-sm [&_p]:leading-relaxed"
   end
 
   defp alert_class(assigns) do

@@ -5,7 +5,17 @@ defmodule RivaAsh.ErrorHelpers do
   This module defines standard error structures and formatting for consistent
   error responses across the application.
   """
+
+  @doc """
+  Wraps a value in an {:ok, value} tuple.
+  """
+  @spec success(any()) :: {:ok, any()}
   def success(value), do: {:ok, value}
+
+  @doc """
+  Wraps a reason in an {:error, reason} tuple.
+  """
+  @spec failure(any()) :: {:error, any()}
   def failure(reason), do: {:error, reason}
 
   @doc """
@@ -13,12 +23,13 @@ defmodule RivaAsh.ErrorHelpers do
 
   ## Examples
 
-      iex> ErrorHelpers.format_error(%{errors: ["Invalid email format"]})
+      iex> RivaAsh.ErrorHelpers.format_error(%{errors: ["Invalid email format"]})
       %{code: :validation_failed, message: "Invalid email format"}
 
-      iex> ErrorHelpers.format_error(%Ash.Error.Invalid{errors: [%{field: :email, message: "has invalid format"}]})
+      iex> RivaAsh.ErrorHelpers.format_error(%Ash.Error.Invalid{errors: [%{field: :email, message: "has invalid format"}]})
       %{code: :validation_failed, message: "email has invalid format"}
   """
+  @spec format_error(map() | Ash.Error.t() | String.t()) :: map() | String.t()
   def format_error(%{errors: errors}) when is_list(errors) do
     %{
       code: :validation_failed,
@@ -66,16 +77,32 @@ defmodule RivaAsh.ErrorHelpers do
     }
   end
 
+  @spec format_validation_errors(list(any())) :: String.t()
+  defp format_validation_errors(errors) do
+    Enum.map_join(errors, ", ", &format_error/1)
+  end
+
+  @spec format_validation_error_details(list(any())) :: list(map())
+  defp format_validation_error_details(errors) do
+    Enum.map(errors, &format_error/1)
+  end
+
   @doc """
   Handles errors in a consistent way, logging them and returning a standardized error map.
   """
+  @spec handle_error(any()) :: map()
   def handle_error(error) do
     # Log the full error for debugging
     require Logger
-    Logger.error("Error in RivaAsh: #{inspect(error, pretty: true)}")
+    log_error(error)
 
     # Format the error for the client
     format_error(error)
+  end
+
+  @spec log_error(any()) :: :ok
+  defp log_error(error) do
+    Logger.error("Error in RivaAsh: #{inspect(error, pretty: true)}")
   end
 
   @doc """
@@ -83,13 +110,14 @@ defmodule RivaAsh.ErrorHelpers do
 
   ## Examples
 
-      iex> ErrorHelpers.with_error_handling(fn -> {:ok, :success} end)
+      iex> RivaAsh.ErrorHelpers.with_error_handling(fn -> {:ok, :success} end)
       {:ok, :success}
 
-      iex> ErrorHelpers.with_error_handling(fn -> {:error, "Something went wrong"} end)
+      iex> RivaAsh.ErrorHelpers.with_error_handling(fn -> {:error, "Something went wrong"} end)
       {:error, %{code: :error, message: "Something went wrong"}}
   """
-  def with_error_handling(fun) do
+  @spec with_error_handling((() :: any())) :: {:ok, any()} | {:error, map()}
+  def with_error_handling(fun) when is_function(fun, 0) do
     try do
       case fun.() do
         {:ok, result} ->
@@ -99,7 +127,7 @@ defmodule RivaAsh.ErrorHelpers do
           failure(handle_error(error))
 
         other ->
-          failure(handle_error("Unexpected result: #{inspect(other)}"))
+          handle_unexpected_result(other)
       end
     rescue
       e ->
@@ -107,10 +135,17 @@ defmodule RivaAsh.ErrorHelpers do
     end
   end
 
+  @spec handle_unexpected_result(any()) :: {:error, map()}
+  defp handle_unexpected_result(other) do
+    error_message = "Unexpected result: #{inspect(other)}"
+    failure(handle_error(error_message))
+  end
+
   @doc """
   Similar to `with_error_handling/1` but raises on error instead of returning a tuple.
   """
-  def with_error_handling!(fun) do
+  @spec with_error_handling!((() :: any())) :: any()
+  def with_error_handling!(fun) when is_function(fun, 0) do
     case with_error_handling(fun) do
       {:ok, result} -> result
       {:error, error} -> raise "Operation failed: #{error.message}"
@@ -120,6 +155,7 @@ defmodule RivaAsh.ErrorHelpers do
   @doc """
   Converts any value into an {:ok, value} tuple, or {:error, value} if it's already an error tuple.
   """
+  @spec to_result({:ok, any()} | {:error, any()} | any()) :: {:ok, any()} | {:error, any()}
   def to_result({:ok, value}), do: {:ok, value}
   def to_result({:error, error}), do: {:error, error}
   def to_result(value), do: {:ok, value}
@@ -127,11 +163,19 @@ defmodule RivaAsh.ErrorHelpers do
   @doc """
   Ensures a value is present, returning {:ok, value} or {:error, reason}.
   """
+  @spec required(any(), any()) :: {:ok, any()} | {:error, any()}
   def required(value, error_reason) do
-    if is_nil(value) do
-      failure(error_reason)
-    else
-      success(value)
+    case is_nil(value) do
+      true -> failure(error_reason)
+      false -> success(value)
+    end
+  end
+
+  @spec validate_presence(any(), any()) :: {:ok, any()} | {:error, any()}
+  defp validate_presence(value, error_reason) do
+    case is_nil(value) do
+      true -> failure(error_reason)
+      false -> success(value)
     end
   end
 end

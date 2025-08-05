@@ -23,16 +23,28 @@ defmodule RivaAshWeb.Components.UI.Text do
 
   slot :inner_block, required: true
 
+  @spec text(assigns :: map()) :: Phoenix.LiveView.Rendered.t()
   def text(assigns) do
-    assigns = assign(assigns, :text_class, text_class(assigns))
+    # Render text using functional composition
+    assigns
+    |> Map.put_new(:text_class, text_class(assigns))
+    |> Map.put_new(:required_class, build_required_class(assigns.required))
+    |> Map.put_new(:wrapper_class, build_wrapper_class(assigns.variant))
+    |> render_text_component(assigns.variant)
+  end
 
-    case assigns.variant do
+  # Private helper for text rendering
+  @spec render_text_component(assigns :: map(), String.t()) :: Phoenix.LiveView.Rendered.t()
+  defp render_text_component(assigns, variant) do
+    assigns = Map.put(assigns, :variant, variant)
+    
+    case variant do
       "h1" ->
         ~H"""
         <h1 class={@text_class} {@rest}>
           <%= render_slot(@inner_block) %>
           <%= if @required do %>
-            <span class="text-destructive ml-1">*</span>
+            <span class={@required_class}>*</span>
           <% end %>
         </h1>
         """
@@ -42,7 +54,7 @@ defmodule RivaAshWeb.Components.UI.Text do
         <h2 class={@text_class} {@rest}>
           <%= render_slot(@inner_block) %>
           <%= if @required do %>
-            <span class="text-destructive ml-1">*</span>
+            <span class={@required_class}>*</span>
           <% end %>
         </h2>
         """
@@ -52,7 +64,7 @@ defmodule RivaAshWeb.Components.UI.Text do
         <h3 class={@text_class} {@rest}>
           <%= render_slot(@inner_block) %>
           <%= if @required do %>
-            <span class="text-destructive ml-1">*</span>
+            <span class={@required_class}>*</span>
           <% end %>
         </h3>
         """
@@ -62,7 +74,7 @@ defmodule RivaAshWeb.Components.UI.Text do
         <h4 class={@text_class} {@rest}>
           <%= render_slot(@inner_block) %>
           <%= if @required do %>
-            <span class="text-destructive ml-1">*</span>
+            <span class={@required_class}>*</span>
           <% end %>
         </h4>
         """
@@ -72,7 +84,7 @@ defmodule RivaAshWeb.Components.UI.Text do
         <h5 class={@text_class} {@rest}>
           <%= render_slot(@inner_block) %>
           <%= if @required do %>
-            <span class="text-destructive ml-1">*</span>
+            <span class={@required_class}>*</span>
           <% end %>
         </h5>
         """
@@ -82,7 +94,7 @@ defmodule RivaAshWeb.Components.UI.Text do
         <h6 class={@text_class} {@rest}>
           <%= render_slot(@inner_block) %>
           <%= if @required do %>
-            <span class="text-destructive ml-1">*</span>
+            <span class={@required_class}>*</span>
           <% end %>
         </h6>
         """
@@ -92,7 +104,7 @@ defmodule RivaAshWeb.Components.UI.Text do
         <p class={@text_class} {@rest}>
           <%= render_slot(@inner_block) %>
           <%= if @required do %>
-            <span class="text-destructive ml-1">*</span>
+            <span class={@required_class}>*</span>
           <% end %>
         </p>
         """
@@ -102,7 +114,7 @@ defmodule RivaAshWeb.Components.UI.Text do
         <p class={@text_class} {@rest}>
           <%= render_slot(@inner_block) %>
           <%= if @required do %>
-            <span class="text-destructive ml-1">*</span>
+            <span class={@required_class}>*</span>
           <% end %>
         </p>
         """
@@ -112,7 +124,7 @@ defmodule RivaAshWeb.Components.UI.Text do
         <small class={@text_class} {@rest}>
           <%= render_slot(@inner_block) %>
           <%= if @required do %>
-            <span class="text-destructive ml-1">*</span>
+            <span class={@required_class}>*</span>
           <% end %>
         </small>
         """
@@ -122,7 +134,7 @@ defmodule RivaAshWeb.Components.UI.Text do
         <label class={@text_class} {@rest}>
           <%= render_slot(@inner_block) %>
           <%= if @required do %>
-            <span class="text-destructive ml-1">*</span>
+            <span class={@required_class}>*</span>
           <% end %>
         </label>
         """
@@ -132,7 +144,7 @@ defmodule RivaAshWeb.Components.UI.Text do
         <caption class={@text_class} {@rest}>
           <%= render_slot(@inner_block) %>
           <%= if @required do %>
-            <span class="text-destructive ml-1">*</span>
+            <span class={@required_class}>*</span>
           <% end %>
         </caption>
         """
@@ -142,7 +154,7 @@ defmodule RivaAshWeb.Components.UI.Text do
         <code class={@text_class} {@rest}>
           <%= render_slot(@inner_block) %>
           <%= if @required do %>
-            <span class="text-destructive ml-1">*</span>
+            <span class={@required_class}>*</span>
           <% end %>
         </code>
         """
@@ -152,10 +164,36 @@ defmodule RivaAshWeb.Components.UI.Text do
         <span class={@text_class} {@rest}>
           <%= render_slot(@inner_block) %>
           <%= if @required do %>
-            <span class="text-destructive ml-1">*</span>
+            <span class={@required_class}>*</span>
           <% end %>
         </span>
         """
+    end
+  end
+
+  # Helper function to build required classes
+  @spec build_required_class(boolean()) :: String.t()
+  defp build_required_class(required) do
+    if required, do: "text-destructive ml-1", else: "hidden"
+  end
+
+  # Helper function to build wrapper classes
+  @spec build_wrapper_class(String.t()) :: String.t()
+  defp build_wrapper_class(variant) do
+    case variant do
+      "h1" -> "scroll-m-20 text-4xl font-extrabold tracking-tight lg:text-5xl"
+      "h2" -> "scroll-m-20 border-b pb-2 text-3xl font-semibold tracking-tight first:mt-0"
+      "h3" -> "scroll-m-20 text-2xl font-semibold tracking-tight"
+      "h4" -> "scroll-m-20 text-xl font-semibold tracking-tight"
+      "h5" -> "scroll-m-20 text-lg font-semibold tracking-tight"
+      "h6" -> "scroll-m-20 text-base font-semibold tracking-tight"
+      "p" -> "leading-7 [&:not(:first-child)]:mt-6"
+      "lead" -> "text-xl text-muted-foreground"
+      "small" -> "text-sm font-medium leading-none"
+      "label" -> "text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+      "caption" -> "mt-4 text-sm text-muted-foreground"
+      "code" -> "relative rounded bg-muted px-[0.3rem] py-[0.2rem] font-mono text-sm font-semibold"
+      _ -> ""
     end
   end
 

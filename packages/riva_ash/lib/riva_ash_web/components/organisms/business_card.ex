@@ -30,12 +30,25 @@ defmodule RivaAshWeb.Components.Organisms.BusinessCard do
   attr(:on_delete, :string, required: true)
   attr(:class, :string, default: "")
 
+  @spec business_card(assigns :: map()) :: Phoenix.LiveView.Rendered.t()
   def business_card(assigns) do
+    # Render business card using functional composition
+    assigns
+    |> Map.put_new(:container_class, build_container_class(assigns.class))
+    |> Map.put_new(:body_class, build_body_class())
+    |> Map.put_new(:content_class, build_content_class())
+    |> Map.put_new(:actions_class, build_actions_class())
+    |> render_business_card_component()
+  end
+
+  # Private helper for business card rendering
+  @spec render_business_card_component(assigns :: map()) :: Phoenix.LiveView.Rendered.t()
+  defp render_business_card_component(assigns) do
     ~H"""
-    <.card variant="bordered" class={["hover:shadow-md transition-shadow", @class]}>
+    <.card variant="bordered" class={@container_class}>
       <:body>
-        <div class="flex justify-between items-start">
-          <div class="flex-1 min-w-0">
+        <div class={@body_class}>
+          <div class={@content_class}>
             <.business_header business={@business} current_user={@current_user} is_admin={@is_admin} />
             <.business_content business={@business} />
             <.business_metadata business={@business} />
@@ -45,11 +58,38 @@ defmodule RivaAshWeb.Components.Organisms.BusinessCard do
             business_id={@business.id}
             on_edit={@on_edit}
             on_delete={@on_delete}
+            class={@actions_class}
           />
         </div>
       </:body>
     </.card>
     """
+  end
+
+  # Helper function to build container classes
+  @spec build_container_class(String.t()) :: String.t()
+  defp build_container_class(class) do
+    ["hover:shadow-md transition-shadow", class]
+    |> Enum.filter(& &1 != "")
+    |> Enum.join(" ")
+  end
+
+  # Helper function to build body classes
+  @spec build_body_class() :: String.t()
+  defp build_body_class() do
+    "flex justify-between items-start"
+  end
+
+  # Helper function to build content classes
+  @spec build_content_class() :: String.t()
+  defp build_content_class() do
+    "flex-1 min-w-0"
+  end
+
+  # Helper function to build actions classes
+  @spec build_actions_class() :: String.t()
+  defp build_actions_class() do
+    "flex flex-shrink-0 items-center gap-2 ml-4"
   end
 
   defp business_header(assigns) do

@@ -6,6 +6,7 @@ defmodule RivaAshWeb.Components.Atoms.ButtonCompatibilityTest do
   import RivaAshWeb.Components.Atoms.Button
 
   describe "button/1 compatibility wrapper" do
+    @spec test_renders_basic_button_through_compatibility_wrapper :: :ok
     test "renders basic button through compatibility wrapper" do
       assigns = %{}
 
@@ -19,6 +20,7 @@ defmodule RivaAshWeb.Components.Atoms.ButtonCompatibilityTest do
       assert html =~ "inline-flex items-center justify-center"
     end
 
+    @spec test_maps_legacy_sizes_to_ui_sizes_correctly :: :ok
     test "maps legacy sizes to UI sizes correctly" do
       # Test sm -> sm mapping
       assigns = %{}
@@ -50,6 +52,7 @@ defmodule RivaAshWeb.Components.Atoms.ButtonCompatibilityTest do
       assert html =~ "button"
     end
 
+    @spec test_passes_through_all_supported_variants :: :ok
     test "passes through all supported variants" do
       variants = ~w(default destructive outline secondary ghost link)
 
@@ -66,6 +69,7 @@ defmodule RivaAshWeb.Components.Atoms.ButtonCompatibilityTest do
       end
     end
 
+    @spec test_handles_disabled_state :: :ok
     test "handles disabled state" do
       assigns = %{}
 
@@ -78,6 +82,7 @@ defmodule RivaAshWeb.Components.Atoms.ButtonCompatibilityTest do
       assert html =~ "disabled"
     end
 
+    @spec test_handles_loading_state :: :ok
     test "handles loading state" do
       assigns = %{}
 
@@ -90,6 +95,7 @@ defmodule RivaAshWeb.Components.Atoms.ButtonCompatibilityTest do
       assert html =~ "disabled"
     end
 
+    @spec test_passes_through_custom_classes :: :ok
     test "passes through custom classes" do
       assigns = %{}
 
@@ -102,6 +108,7 @@ defmodule RivaAshWeb.Components.Atoms.ButtonCompatibilityTest do
       assert html =~ "custom-class"
     end
 
+    @spec test_passes_through_global_attributes :: :ok
     test "passes through global attributes" do
       assigns = %{}
 
@@ -115,6 +122,7 @@ defmodule RivaAshWeb.Components.Atoms.ButtonCompatibilityTest do
       assert html =~ ~s(data-testid="button")
     end
 
+    @spec test_handles_link_navigation_attributes :: :ok
     test "handles link navigation attributes" do
       assigns = %{}
 
@@ -143,6 +151,7 @@ defmodule RivaAshWeb.Components.Atoms.ButtonCompatibilityTest do
       assert html =~ ~s(data-phx-link="redirect")
     end
 
+    @spec test_delegates_to_ui_button_correctly :: :ok
     test "delegates to UI.Button correctly" do
       # This test ensures the wrapper is actually calling the UI component
       assigns = %{}

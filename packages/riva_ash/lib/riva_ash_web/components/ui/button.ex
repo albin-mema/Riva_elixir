@@ -22,26 +22,57 @@ defmodule RivaAshWeb.Components.UI.Button do
 
   slot :inner_block, required: true, doc: "The content to display inside the button"
 
+  @spec button(assigns :: map()) :: Phoenix.LiveView.Rendered.t()
   def button(assigns) do
-    assigns = assign(assigns, :button_class, button_class(assigns))
+    # Render button using functional composition
+    assigns
+    |> Map.put_new(:button_class, button_class(assigns))
+    |> Map.put_new(:spinner_class, build_spinner_class(assigns.loading))
+    |> Map.put_new(:content_class, build_content_class(assigns.loading))
+    |> Map.put_new(:disabled_state, build_disabled_state(assigns.disabled, assigns.loading))
+    |> render_button_component()
+  end
 
+  # Private helper for button rendering
+  @spec render_button_component(assigns :: map()) :: Phoenix.LiveView.Rendered.t()
+  defp render_button_component(assigns) do
     ~H"""
     <button
       type={@type}
       class={@button_class}
-      disabled={@disabled || @loading}
+      disabled={@disabled_state}
       {@rest}
     >
       <%= if @loading do %>
         <!-- Loading spinner -->
-        <svg class="mr-2 h-4 w-4 animate-spin" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+        <svg class={@spinner_class} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
           <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
           <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
         </svg>
       <% end %>
-      <%= render_slot(@inner_block) %>
+      <span class={@content_class}>
+        <%= render_slot(@inner_block) %>
+      </span>
     </button>
     """
+  end
+
+  # Helper function to build spinner classes
+  @spec build_spinner_class(boolean()) :: String.t()
+  defp build_spinner_class(loading) do
+    if loading, do: "mr-2 h-4 w-4 animate-spin", else: "hidden"
+  end
+
+  # Helper function to build content classes
+  @spec build_content_class(boolean()) :: String.t()
+  defp build_content_class(loading) do
+    if loading, do: "inline-block", else: ""
+  end
+
+  # Helper function to build disabled state
+  @spec build_disabled_state(boolean(), boolean()) :: boolean()
+  defp build_disabled_state(disabled, loading) do
+    disabled or loading
   end
 
   defp button_class(assigns) do

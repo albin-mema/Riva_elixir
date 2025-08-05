@@ -116,10 +116,7 @@ defmodule RivaAsh.Resources.Pricing do
       primary?(true)
       require_atomic?(false)
 
-      # Validate pricing constraints
-      validate(&RivaAsh.Validations.validate_pricing_date_overlap/2)
-      validate(&RivaAsh.Validations.validate_single_active_base_pricing/2)
-      validate(&RivaAsh.Validations.validate_day_type_pricing/2)
+      |> apply_pricing_validations()
     end
 
     create :create do
@@ -141,13 +138,8 @@ defmodule RivaAsh.Resources.Pricing do
 
       primary?(true)
 
-      # Validate cross-business relationships
-      validate(&RivaAsh.Validations.validate_item_type_business_match/2)
-
-      # Validate pricing constraints
-      validate(&RivaAsh.Validations.validate_pricing_date_overlap/2)
-      validate(&RivaAsh.Validations.validate_single_active_base_pricing/2)
-      validate(&RivaAsh.Validations.validate_day_type_pricing/2)
+      |> validate_cross_business_relationship()
+      |> apply_pricing_validations()
     end
 
     read :by_id do
@@ -181,14 +173,7 @@ defmodule RivaAsh.Resources.Pricing do
     read :for_date do
       argument(:date, :date, allow_nil?: false)
 
-      filter(
-        expr(
-          is_active == true and
-            is_nil(archived_at) and
-            (is_nil(effective_from) or effective_from <= ^arg(:date)) and
-            (is_nil(effective_until) or effective_until >= ^arg(:date))
-        )
-      )
+      |> build_active_date_filter()
     end
 
     # Action to get effective pricing for a specific item type and date
@@ -197,16 +182,7 @@ defmodule RivaAsh.Resources.Pricing do
       argument(:item_type_id, :uuid, allow_nil?: false)
       argument(:date, :date, allow_nil?: false)
 
-      filter(
-        expr(
-          business_id == ^arg(:business_id) and
-            item_type_id == ^arg(:item_type_id) and
-            is_active == true and
-            is_nil(archived_at) and
-            (is_nil(effective_from) or effective_from <= ^arg(:date)) and
-            (is_nil(effective_until) or effective_until >= ^arg(:date))
-        )
-      )
+      |> build_effective_pricing_filter()
     end
   end
 
@@ -316,38 +292,21 @@ defmodule RivaAsh.Resources.Pricing do
   calculations do
     calculate :effective_weekday_price,
               :decimal,
-              expr(
-                if(
-                  has_day_type_pricing and not is_nil(weekday_price),
-                  weekday_price,
-                  price_per_day
-                )
-              ) do
+              calculate_effective_weekday_price() do
       public?(true)
       description("The effective price for weekday reservations")
     end
 
     calculate :effective_weekend_price,
               :decimal,
-              expr(
-                if(
-                  has_day_type_pricing and not is_nil(weekend_price),
-                  weekend_price,
-                  price_per_day
-                )
-              ) do
+              calculate_effective_weekend_price() do
       public?(true)
       description("The effective price for weekend reservations")
     end
 
     calculate :has_different_day_pricing,
               :boolean,
-              expr(
-                has_day_type_pricing and
-                  not is_nil(weekday_price) and
-                  not is_nil(weekend_price) and
-                  weekday_price != weekend_price
-              ) do
+              check_different_day_pricing() do
       public?(true)
       description("Whether this pricing has different rates for weekdays vs weekends")
     end
@@ -387,13 +346,82 @@ defmodule RivaAsh.Resources.Pricing do
   calculations do
     calculate :is_currently_effective,
               :boolean,
-              expr(
-                is_active == true and
-                  (is_nil(effective_from) or effective_from <= fragment("NOW()::date")) and
-                  (is_nil(effective_until) or effective_until >= fragment("NOW()::date"))
-              ) do
+              check_current_effectiveness() do
       public?(true)
       description("Whether this pricing is currently effective based on dates and active status")
     end
+  end
+
+  # Private helper functions for Single Level of Abstraction
+  defp apply_pricing_validations(changeset) do
+    changeset
+    |> validate_pricing_date_overlap()
+    |> validate_single_active_base_pricing()
+    |> validate_day_type_pricing()
+  end
+
+  defp validate_cross_business_relationship(changeset) do
+    validate(changeset, &RivaAsh.Validations.validate_item_type_business_match/2)
+  end
+
+  defp build_active_date_filter(changeset) do
+    filter(changeset,
+      expr(
+        is_active == true and
+          is_nil(archived_at) and
+          (is_nil(effective_from) or effective_from <= ^arg(:date)) and
+          (is_nil(effective_until) or effective_until >= ^arg(:date))
+      )
+    )
+  end
+
+  defp build_effective_pricing_filter(changeset) do
+    filter(changeset,
+      expr(
+        business_id == ^arg(:business_id) and
+          item_type_id == ^arg(:item_type_id) and
+          is_active == true and
+          is_nil(archived_at) and
+          (is_nil(effective_from) or effective_from <= ^arg(:date)) and
+          (is_nil(effective_until) or effective_until >= ^arg(:date))
+      )
+    )
+  end
+
+  defp calculate_effective_weekday_price() do
+    expr(
+      if(
+        has_day_type_pricing and not is_nil(weekday_price),
+        weekday_price,
+        price_per_day
+      )
+    )
+  end
+
+  defp calculate_effective_weekend_price() do
+    expr(
+      if(
+        has_day_type_pricing and not is_nil(weekend_price),
+        weekend_price,
+        price_per_day
+      )
+    )
+  end
+
+  defp check_different_day_pricing() do
+    expr(
+      has_day_type_pricing and
+        not is_nil(weekday_price) and
+        not is_nil(weekend_price) and
+        weekday_price != weekend_price
+    )
+  end
+
+  defp check_current_effectiveness() do
+    expr(
+      is_active == true and
+        (is_nil(effective_from) or effective_from <= fragment("NOW()::date")) and
+        (is_nil(effective_until) or effective_until >= fragment("NOW()::date"))
+    )
   end
 end

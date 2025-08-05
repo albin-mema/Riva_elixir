@@ -17,11 +17,20 @@ defmodule RivaAshWeb.DevTools.AshInspectorLive do
       {:ok, redirect(socket, to: "/")}
     end
   else
-    alias RivaAsh.Domain
-    alias RivaAsh.Resources.{Business, Item, Reservation, Client}
+    alias RivaAsh.DevTools.AshInspectorService
 
     @impl true
     def mount(_params, _session, socket) do
+      socket =
+        socket
+        |> assign(:page_title, get_page_title())
+        |> assign(:queries, [])
+        |> assign(:policies, [])
+        |> assign(:actions, [])
+        |> assign(:selected_tab, "queries")
+        |> assign(:filter_resource, "all")
+        |> assign(:filter_action, "all")
+
       if connected?(socket) do
         # Subscribe to Ash telemetry events
         :telemetry.attach_many(
@@ -37,16 +46,6 @@ defmodule RivaAshWeb.DevTools.AshInspectorLive do
           %{pid: self()}
         )
       end
-
-      socket =
-        socket
-        |> assign(:page_title, "Ash Inspector")
-        |> assign(:queries, [])
-        |> assign(:policies, [])
-        |> assign(:actions, [])
-        |> assign(:selected_tab, "queries")
-        |> assign(:filter_resource, "all")
-        |> assign(:filter_action, "all")
 
       {:ok, socket}
     end
@@ -98,13 +97,7 @@ defmodule RivaAshWeb.DevTools.AshInspectorLive do
     end
 
     def handle_event("clear_logs", _params, socket) do
-      socket =
-        socket
-        |> assign(:queries, [])
-        |> assign(:policies, [])
-        |> assign(:actions, [])
-
-      {:noreply, socket}
+      AshInspectorService.clear_logs(socket)
     end
 
     @impl true
@@ -348,126 +341,7 @@ defmodule RivaAshWeb.DevTools.AshInspectorLive do
       """
     end
 
-    # Helper functions for telemetry event handling
-    defp handle_telemetry_event(event, measurements, metadata, %{pid: pid}) do
-      send(pid, {:telemetry_event, event, measurements, metadata})
-    end
-
-    defp add_query_start(socket, measurements, metadata) do
-      query = %{
-        id: make_ref(),
-        resource: get_resource_name(metadata),
-        action: metadata[:action] || "unknown",
-        timestamp: format_timestamp(measurements[:system_time]),
-        filter: metadata[:filter],
-        duration: nil,
-        error: nil
-      }
-
-      update(socket, :queries, fn queries -> [query | Enum.take(queries, 49)] end)
-    end
-
-    defp update_query_stop(socket, measurements, metadata) do
-      duration = measurements[:duration] && System.convert_time_unit(measurements[:duration], :native, :millisecond)
-      
-      update(socket, :queries, fn queries ->
-        case queries do
-          [latest | rest] ->
-            updated = %{latest | 
-              duration: duration,
-              error: format_error(metadata[:error])
-            }
-            [updated | rest]
-          [] -> []
-        end
-      end)
-    end
-
-    defp add_policy_evaluation(socket, _measurements, metadata) do
-      policy = %{
-        id: make_ref(),
-        resource: get_resource_name(metadata),
-        result: metadata[:result] || :unknown,
-        actor: metadata[:actor],
-        policies: metadata[:policy_breakdown],
-        timestamp: format_timestamp(System.system_time())
-      }
-
-      update(socket, :policies, fn policies -> [policy | Enum.take(policies, 49)] end)
-    end
-
-    defp add_action_start(socket, measurements, metadata) do
-      action = %{
-        id: make_ref(),
-        resource: get_resource_name(metadata),
-        action: metadata[:action] || "unknown",
-        type: metadata[:type] || "unknown",
-        timestamp: format_timestamp(measurements[:system_time]),
-        input: metadata[:input],
-        duration: nil,
-        error: nil
-      }
-
-      update(socket, :actions, fn actions -> [action | Enum.take(actions, 49)] end)
-    end
-
-    defp update_action_stop(socket, measurements, metadata) do
-      duration = measurements[:duration] && System.convert_time_unit(measurements[:duration], :native, :millisecond)
-      
-      update(socket, :actions, fn actions ->
-        case actions do
-          [latest | rest] ->
-            updated = %{latest | 
-              duration: duration,
-              error: format_error(metadata[:error])
-            }
-            [updated | rest]
-          [] -> []
-        end
-      end)
-    end
-
     # Helper functions
-    defp get_resource_name(metadata) do
-      case metadata[:resource] do
-        module when is_atom(module) -> 
-          module |> Module.split() |> List.last()
-        other -> 
-          inspect(other)
-      end
-    end
-
-    defp format_timestamp(system_time) do
-      system_time
-      |> System.convert_time_unit(:native, :microsecond)
-      |> DateTime.from_unix!(:microsecond)
-      |> DateTime.to_time()
-      |> Time.to_string()
-    end
-
-    defp format_error(nil), do: nil
-    defp format_error(error), do: Exception.message(error)
-
-    defp filter_queries(queries, "all", "all"), do: queries
-    defp filter_queries(queries, resource, "all") when resource != "all" do
-      Enum.filter(queries, &(&1.resource == resource))
-    end
-    defp filter_queries(queries, "all", action) when action != "all" do
-      Enum.filter(queries, &(&1.action == action))
-    end
-    defp filter_queries(queries, resource, action) do
-      Enum.filter(queries, &(&1.resource == resource && &1.action == action))
-    end
-
-    defp filter_actions(actions, "all", "all"), do: actions
-    defp filter_actions(actions, resource, "all") when resource != "all" do
-      Enum.filter(actions, &(&1.resource == resource))
-    end
-    defp filter_actions(actions, "all", action) when action != "all" do
-      Enum.filter(actions, &(&1.action == action))
-    end
-    defp filter_actions(actions, resource, action) do
-      Enum.filter(actions, &(&1.resource == resource && &1.action == action))
-    end
+    defp get_page_title, do: Application.get_env(:riva_ash, __MODULE__, [])[:page_title] || "Ash Inspector"
   end
 end

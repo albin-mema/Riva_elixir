@@ -2,8 +2,15 @@ defmodule RivaAshWeb.Components.Atoms.Icon do
   @moduledoc """
   Icon component that provides a consistent interface for rendering icons.
   Uses the heroicons library for Phoenix LiveView.
+  
+  Follows functional core, imperative shell pattern with comprehensive type safety.
   """
   use Phoenix.Component
+
+  @type assigns :: map()
+  @type name :: :building_office_2 | :plus | :x_mark | :check | :home | :cog | :magnifying_glass | :user | atom()
+  @type variant :: :outline | :solid | :mini | :micro
+  @type size :: :xs | :sm | :md | :lg | :xl
 
   @doc """
   Renders an icon with consistent styling.
@@ -14,6 +21,7 @@ defmodule RivaAshWeb.Components.Atoms.Icon do
       <.icon name={:home} variant="solid" size="lg" class="text-primary" />
       <.icon name={:cog} variant="outline" size="sm" />
   """
+  @spec icon(assigns :: assigns()) :: Phoenix.LiveView.Rendered.t()
   attr(:name, :atom, required: true)
   attr(:variant, :string, default: "outline", values: ~w(outline solid mini micro))
   attr(:size, :string, default: "md", values: ~w(xs sm md lg xl))
@@ -21,17 +29,88 @@ defmodule RivaAshWeb.Components.Atoms.Icon do
   attr(:rest, :global)
 
   def icon(assigns) do
-    assigns = assign(assigns, :icon_class, icon_class(assigns))
-
-    ~H"""
-    <span class={@icon_class} {@rest}>
-      <svg class="w-full h-full" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <%= render_icon_path(@name) %>
-      </svg>
-    </span>
-    """
+    with {:ok, validated_assigns} <- validate_assigns(assigns),
+         icon_class <- build_icon_class(validated_assigns) do
+      assigns = validated_assigns |> assign(:icon_class, icon_class)
+      render_icon(assigns)
+    else
+      {:error, reason} -> render_error(reason)
+    end
   end
 
+  # Functional Core: Pure validation functions
+  @spec validate_assigns(assigns :: assigns()) :: {:ok, assigns()} | {:error, String.t()}
+  defp validate_assigns(assigns) do
+    with :ok <- validate_name(assigns.name),
+         :ok <- validate_variant(assigns.variant),
+         :ok <- validate_size(assigns.size) do
+      {:ok, assigns}
+    end
+  end
+
+  @spec validate_name(name :: atom()) :: :ok | {:error, String.t()}
+  defp validate_name(name) do
+    if is_atom(name) do
+      :ok
+    else
+      {:error, "Icon name must be an atom"}
+    end
+  end
+
+  @spec validate_variant(variant :: String.t()) :: :ok | {:error, String.t()}
+  defp validate_variant(variant) do
+    if variant in ~w(outline solid mini micro) do
+      :ok
+    else
+      {:error, "Invalid variant. Must be one of: outline, solid, mini, micro"}
+    end
+  end
+
+  @spec validate_size(size :: String.t()) :: :ok | {:error, String.t()}
+  defp validate_size(size) do
+    if size in ~w(xs sm md lg xl) do
+      :ok
+    else
+      {:error, "Invalid size. Must be one of: xs, sm, md, lg, xl"}
+    end
+  end
+
+  # Functional Core: Pure class building functions
+  @spec build_icon_class(assigns :: assigns()) :: String.t()
+  defp build_icon_class(assigns) do
+    size_classes = size_class(assigns.size)
+    variant_classes = variant_class(assigns.variant)
+    
+    [size_classes, variant_classes, assigns.class]
+    |> Enum.reject(&(&1 == ""))
+    |> Enum.join(" ")
+  end
+
+  @spec size_class(size :: String.t()) :: String.t()
+  defp size_class(size) do
+    case size do
+      "xs" -> "[&>svg]:h-3 [&>svg]:w-3"
+      "sm" -> "[&>svg]:h-4 [&>svg]:w-4"
+      "md" -> "[&>svg]:h-5 [&>svg]:w-5"
+      "lg" -> "[&>svg]:h-6 [&>svg]:w-6"
+      "xl" -> "[&>svg]:h-8 [&>svg]:w-8"
+      _ -> "[&>svg]:h-5 [&>svg]:w-5"
+    end
+  end
+
+  @spec variant_class(variant :: String.t()) :: String.t()
+  defp variant_class(variant) do
+    case variant do
+      "outline" -> "stroke-current"
+      "solid" -> "fill-current stroke-none"
+      "mini" -> "stroke-current"
+      "micro" -> "stroke-current"
+      _ -> "stroke-current"
+    end
+  end
+
+  # Functional Core: Pure icon path rendering functions
+  @spec render_icon_path(name :: atom()) :: Phoenix.HTML.raw()
   defp render_icon_path(name) do
     case name do
       :building_office_2 ->
@@ -81,19 +160,25 @@ defmodule RivaAshWeb.Components.Atoms.Icon do
     end
   end
 
-  defp icon_class(assigns) do
-    size_classes = size_class(assigns.size)
-    "inline-block #{size_classes} #{assigns.class}"
+  # Imperative Shell: Rendering functions
+  defp render_icon(assigns) do
+    ~H"""
+    <span class={@icon_class} {@rest}>
+      <svg class="w-full h-full" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <%= render_icon_path(@name) %>
+      </svg>
+    </span>
+    """
   end
 
-  defp size_class(size) do
-    case size do
-      "xs" -> "[&>svg]:h-3 [&>svg]:w-3"
-      "sm" -> "[&>svg]:h-4 [&>svg]:w-4"
-      "md" -> "[&>svg]:h-5 [&>svg]:w-5"
-      "lg" -> "[&>svg]:h-6 [&>svg]:w-6"
-      "xl" -> "[&>svg]:h-8 [&>svg]:w-8"
-      _ -> "[&>svg]:h-5 [&>svg]:w-5"
-    end
+  defp render_error(reason) do
+    # In a real implementation, you might want to log this error
+    # and render a fallback icon or error state
+    IO.puts("Icon error: #{reason}")
+    ~H"""
+    <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative">
+      <span class="block sm:inline">Error: <%= reason %></span>
+    </div>
+    """
   end
 end

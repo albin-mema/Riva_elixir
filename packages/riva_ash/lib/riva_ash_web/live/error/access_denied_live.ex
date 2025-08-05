@@ -9,12 +9,12 @@ defmodule RivaAshWeb.Error.AccessDeniedLive do
   @impl true
   def mount(_params, session, socket) do
     # Check if user is authenticated to show appropriate message
-    case get_current_user_from_session(session) do
+    case RivaAsh.ErrorService.get_current_user_from_session(session) do
       {:ok, user} ->
         socket =
           socket
           |> assign(:current_user, user)
-          |> assign(:page_title, "Access Denied")
+          |> assign(:page_title, get_page_title())
           |> assign(:authenticated, true)
 
         {:ok, socket}
@@ -23,7 +23,7 @@ defmodule RivaAshWeb.Error.AccessDeniedLive do
         socket =
           socket
           |> assign(:current_user, nil)
-          |> assign(:page_title, "Access Denied")
+          |> assign(:page_title, get_page_title())
           |> assign(:authenticated, false)
 
         {:ok, socket}
@@ -184,22 +184,5 @@ defmodule RivaAshWeb.Error.AccessDeniedLive do
   end
 
   # Private helper functions
-  defp get_current_user_from_session(session) do
-    user_token = session["user_token"]
-
-    if user_token do
-      with {:ok, user_id} <-
-             Phoenix.Token.verify(RivaAshWeb.Endpoint, "user_auth", user_token, max_age: 86_400)
-             |> RivaAsh.ErrorHelpers.to_result(),
-           {:ok, user} <-
-             Ash.get(RivaAsh.Accounts.User, user_id, domain: RivaAsh.Accounts)
-             |> RivaAsh.ErrorHelpers.to_result() do
-        RivaAsh.ErrorHelpers.success(user)
-      else
-        _ -> RivaAsh.ErrorHelpers.failure(:not_authenticated)
-      end
-    else
-      RivaAsh.ErrorHelpers.failure(:not_authenticated)
-    end
-  end
+  defp get_page_title, do: Application.get_env(:riva_ash, __MODULE__, [])[:page_title] || "Access Denied"
 end

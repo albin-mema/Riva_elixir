@@ -21,6 +21,25 @@ defmodule RivaAsh.Resources.Item do
 
   import RivaAsh.ResourceHelpers
 
+  @type t :: %__MODULE__{
+          id: String.t(),
+          name: String.t(),
+          description: String.t() | nil,
+          business_id: String.t(),
+          section_id: String.t() | nil,
+          item_type_id: String.t() | nil,
+          is_active: boolean(),
+          is_always_available: boolean(),
+          capacity: integer(),
+          minimum_duration_minutes: integer() | nil,
+          maximum_duration_minutes: integer() | nil,
+          is_public_searchable: boolean(),
+          public_description: String.t() | nil,
+          inserted_at: DateTime.t(),
+          updated_at: DateTime.t(),
+          archived_at: DateTime.t() | nil
+        }
+
   standard_postgres("items")
   standard_archive()
   standard_admin([:name, :section, :item_type, :is_active, :is_always_available])
@@ -225,21 +244,9 @@ defmodule RivaAsh.Resources.Item do
     read :available_for_date do
       argument(:date, :date, allow_nil?: false)
 
-      filter(
-        expr(
-          is_active == true and
-            is_nil(archived_at) and
-            not exists(
-              reservations,
-              status in [:confirmed, :pending] and
-                fragment(
-                  "DATE(reserved_from) <= ? AND DATE(reserved_until) >= ?",
-                  ^arg(:date),
-                  ^arg(:date)
-                )
-            )
-        )
-      )
+      query
+      |> apply_availability_filter(arg(:date))
+      |> apply_active_filter()
     end
 
     read :public_search do
@@ -260,30 +267,10 @@ defmodule RivaAsh.Resources.Item do
       argument(:business_id, :uuid, allow_nil?: true)
 
       prepare(fn query, _context ->
-        query =
-          case Ash.Query.get_argument(query, :business_id) do
-            nil -> query
-            business_id -> Ash.Query.filter(query, expr(business_id == ^business_id))
-          end
-
-        case Ash.Query.get_argument(query, :search_term) do
-          nil ->
-            query
-
-          "" ->
-            query
-
-          search_term ->
-            Ash.Query.filter(
-              query,
-              expr(
-                ilike(name, ^"%#{search_term}%") or
-                  ilike(public_description, ^"%#{search_term}%") or
-                  ilike(business.name, ^"%#{search_term}%") or
-                  ilike(business.public_description, ^"%#{search_term}%")
-              )
-            )
-        end
+        query
+        |> apply_business_filter(Ash.Query.get_argument(query, :business_id))
+        |> apply_search_filter(Ash.Query.get_argument(query, :search_term))
+        |> apply_active_filter()
       end)
     end
 
@@ -470,8 +457,356 @@ defmodule RivaAsh.Resources.Item do
     identity(:unique_name_per_business, [:name, :business_id])
   end
 
-  # Helper function for admin dropdowns
-  def choices_for_select do
-    RivaAsh.ResourceHelpers.choices_for_select(__MODULE__)
+  # Helper functions for business logic and data validation
+
+  @doc """
+  Checks if the item is currently active (not archived).
+  
+  ## Parameters
+  - item: The item record to check
+  
+  ## Returns
+  - `true` if the item is active, `false` otherwise
+  """
+  @spec is_active?(t()) :: boolean()
+  def is_active?(item) do
+    with %{archived_at: nil} <- item do
+      true
+    else
+      _ -> false
+    end
+  end
+
+  @doc """
+  Checks if the item is available for reservation right now.
+  
+  ## Parameters
+  - item: The item record to check
+  
+  ## Returns
+  - `true` if the item is available now, `false` otherwise
+  """
+  @spec is_available_now?(t()) :: boolean()
+  def is_available_now?(item) do
+    with %{is_active: true, archived_at: nil} <- item do
+      # Check if there are any active reservations
+      case item.reservations do
+        [] -> true
+        reservations ->
+          Enum.all?(reservations, fn reservation ->
+            reservation.status not in [:confirmed, :pending] or
+              DateTime.compare(reservation.reserved_until, DateTime.utc_now()) == :lt
+          end)
+      end
+    else
+      _ -> false
+    end
+  end
+
+  @doc """
+  Gets the display name of the item with section information if available.
+  
+  ## Parameters
+  - item: The item record
+  
+  ## Returns
+  - String with the item name and section if available
+  """
+  @spec display_name(t()) :: String.t()
+  def display_name(item) do
+    case item.section do
+      %{name: section_name} when is_binary(section_name) and section_name != "" ->
+        "#{item.name} (#{section_name})"
+      _ ->
+        item.name
+    end
+  end
+
+  @doc """
+  Gets the formatted capacity information for the item.
+  
+  ## Parameters
+  - item: The item record
+  
+  ## Returns
+  - String with capacity information
+  """
+  @spec capacity_info(t()) :: String.t()
+  def capacity_info(item) do
+    "Capacity: #{item.capacity}"
+  end
+
+  @doc """
+  Gets the duration range for the item in a human-readable format.
+  
+  ## Parameters
+  - item: The item record
+  
+  ## Returns
+  - String with duration information or "No duration limits"
+  """
+  @spec duration_range(t()) :: String.t()
+  def duration_range(item) do
+    cond do
+      is_nil(item.minimum_duration_minutes) and is_nil(item.maximum_duration_minutes) ->
+        "No duration limits"
+      
+      is_nil(item.minimum_duration_minutes) ->
+        "Up to #{format_duration(item.maximum_duration_minutes)}"
+      
+      is_nil(item.maximum_duration_minutes) ->
+        "From #{format_duration(item.minimum_duration_minutes)}"
+      
+      true ->
+        "#{format_duration(item.minimum_duration_minutes)} - #{format_duration(item.maximum_duration_minutes)}"
+    end
+  end
+
+  @doc """
+  Formats minutes into a human-readable duration string.
+  
+  ## Parameters
+  - minutes: Number of minutes to format
+  
+  ## Returns
+  - String with formatted duration
+  """
+  @spec format_duration(integer() | nil) :: String.t()
+  def format_duration(nil), do: "No limit"
+  def format_duration(minutes) when minutes < 60, do: "#{minutes} minutes"
+  def format_duration(minutes) when minutes == 60, do: "1 hour"
+  def format_duration(minutes) when minutes < 1440, do: "#{div(minutes, 60)} hours"
+  def format_duration(minutes), do: "#{div(minutes, 1440)} days"
+
+  @doc """
+  Checks if the item has duration constraints.
+  
+  ## Parameters
+  - item: The item record to check
+  
+  ## Returns
+  - `true` if the item has duration constraints, `false` otherwise
+  """
+  @spec has_duration_constraints?(t()) :: boolean()
+  def has_duration_constraints?(item) do
+    not (is_nil(item.minimum_duration_minutes) and is_nil(item.maximum_duration_minutes))
+  end
+
+  @doc """
+  Validates that the duration constraints are valid.
+  
+  ## Parameters
+  - item: The item record to validate
+  
+  ## Returns
+  - `{:ok, item}` if valid
+  - `{:error, reason}` if invalid
+  """
+  @spec validate_duration_constraints(t()) :: {:ok, t()} | {:error, String.t()}
+  def validate_duration_constraints(item) do
+    cond do
+      not is_nil(item.minimum_duration_minutes) and not is_nil(item.maximum_duration_minutes) ->
+        if item.minimum_duration_minutes >= item.maximum_duration_minutes do
+          {:error, "Minimum duration must be less than maximum duration"}
+        else
+          {:ok, item}
+        end
+      
+      true ->
+        {:ok, item}
+    end
+  end
+
+  @doc """
+  Checks if the item is always available or follows a schedule.
+  
+  ## Parameters
+  - item: The item record to check
+  
+  ## Returns
+  - `true` if always available, `false` if scheduled
+  """
+  @spec is_always_available?(t()) :: boolean()
+  def is_always_available?(item), do: item.is_always_available
+
+  @doc """
+  Checks if the item appears in public search results.
+  
+  ## Parameters
+  - item: The item record to check
+  
+  ## Returns
+  - `true` if publicly searchable, `false` otherwise
+  """
+  @spec is_public_searchable?(t()) :: boolean()
+  def is_public_searchable?(item), do: item.is_public_searchable
+
+  @doc """
+  Gets the public-facing description of the item.
+  
+  ## Parameters
+  - item: The item record
+  
+  ## Returns
+  - String with public description or regular description if no public description
+  """
+  @spec public_description(t()) :: String.t()
+  def public_description(item) do
+    case item.public_description do
+      desc when is_binary(desc) and desc != "" -> desc
+      _ -> item.description || "No description available"
+    end
+  end
+
+  @doc """
+  Formats the item information for display in search results.
+  
+  ## Parameters
+  - item: The item record
+  
+  ## Returns
+  - String with formatted item information
+  """
+  @spec formatted_search_result(t()) :: String.t()
+  def formatted_search_result(item) do
+    with true <- is_active?(item),
+         business_name <- item.business.name do
+      "#{display_name(item)} - #{business_name} #{capacity_info(item)}"
+    else
+      false ->
+        "#{display_name(item)} - Inactive"
+    end
+  end
+
+  @doc """
+  Calculates the current reservation count for the item.
+  
+  ## Parameters
+  - item: The item record
+  
+  ## Returns
+  - Integer with current reservation count
+  """
+  @spec current_reservation_count(t()) :: integer()
+  def current_reservation_count(item) do
+    Enum.filter(item.reservations || [], fn reservation ->
+      reservation.status in [:confirmed, :pending] and
+        DateTime.compare(reservation.reserved_until, DateTime.utc_now()) == :gt
+    end)
+    |> length()
+  end
+
+  @doc """
+  Checks if the item has available capacity for new reservations.
+  
+  ## Parameters
+  - item: The item record
+  
+  ## Returns
+  - `true` if capacity is available, `false` otherwise
+  """
+  @spec has_available_capacity?(t()) :: boolean()
+  def has_available_capacity?(item) do
+    current_count = current_reservation_count(item)
+    current_count < item.capacity
+  end
+
+  @doc """
+  Gets the available capacity for the item.
+  
+  ## Parameters
+  - item: The item record
+  
+  ## Returns
+  - Integer with available capacity
+  """
+  @spec available_capacity(t()) :: integer()
+  def available_capacity(item) do
+    max(0, item.capacity - current_reservation_count(item))
+  end
+
+  @doc """
+  Validates that the item has all required relationships.
+  
+  ## Parameters
+  - item: The item record to validate
+  
+  ## Returns
+  - `{:ok, item}` if valid
+  - `{:error, reason}` if invalid
+  """
+  @spec validate_relationships(t()) :: {:ok, t()} | {:error, String.t()}
+  def validate_relationships(item) do
+    cond do
+      is_nil(item.business) ->
+        {:error, "Business relationship is missing"}
+      
+      not is_nil(item.section) and is_nil(item.section.plot) ->
+        {:error, "Section plot relationship is missing"}
+      
+      true ->
+        {:ok, item}
+    end
+  end
+
+  # Private helper functions
+
+  defp format_minutes(minutes) when minutes < 60, do: "#{minutes} minutes"
+  defp format_minutes(minutes) when minutes == 60, do: "1 hour"
+  defp format_minutes(minutes) when minutes < 1440, do: "#{div(minutes, 60)} hours"
+  defp format_minutes(minutes), do: "#{div(minutes, 1440)} days"
+
+  # Private helper functions for search filtering
+  @spec apply_search_filter(Ash.Query.t(), String.t() | nil) :: Ash.Query.t()
+  defp apply_search_filter(query, nil), do: query
+
+  defp apply_search_filter(query, "") do
+    query
+  end
+
+  defp apply_search_filter(query, search_term) do
+    Ash.Query.filter(
+      query,
+      expr(
+        ilike(name, ^"%#{search_term}%") or
+          ilike(public_description, ^"%#{search_term}%") or
+          ilike(business.name, ^"%#{search_term}%") or
+          ilike(business.public_description, ^"%#{search_term}%")
+      )
+    )
+  end
+
+  @spec apply_business_filter(Ash.Query.t(), String.t() | nil) :: Ash.Query.t()
+  defp apply_business_filter(query, nil), do: query
+
+  defp apply_business_filter(query, business_id) do
+    Ash.Query.filter(query, expr(business_id == ^business_id))
+  end
+
+  @spec apply_active_filter(Ash.Query.t()) :: Ash.Query.t()
+  defp apply_active_filter(query) do
+    Ash.Query.filter(query, expr(is_active == true and is_nil(archived_at)))
+  end
+
+  @spec apply_availability_filter(Ash.Query.t(), Date.t() | nil) :: Ash.Query.t()
+  defp apply_availability_filter(query, nil), do: query
+
+  defp apply_availability_filter(query, date) do
+    Ash.Query.filter(
+      query,
+      expr(
+        is_active == true and
+          is_nil(archived_at) and
+          not exists(
+            reservations,
+            status in [:confirmed, :pending] and
+              fragment(
+                "DATE(reserved_from) <= ? AND DATE(reserved_until) >= ?",
+                ^date,
+                ^date
+              )
+          )
+      )
+    )
   end
 end

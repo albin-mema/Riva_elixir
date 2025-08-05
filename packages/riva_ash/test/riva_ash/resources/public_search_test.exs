@@ -56,6 +56,7 @@ defmodule RivaAsh.Resources.PublicSearchTest do
       }
     end
 
+    @spec test_public_search_returns_only_public_businesses :: :ok
     test "public_search returns only public businesses", %{
       public_business1: pb1,
       public_business2: pb2,
@@ -73,6 +74,7 @@ defmodule RivaAsh.Resources.PublicSearchTest do
       refute priv.id in business_ids
     end
 
+    @spec test_public_search_filters_by_search_term_in_name :: :ok
     test "public_search filters by search term in name", %{
       public_business1: pb1,
       public_business2: pb2
@@ -88,6 +90,7 @@ defmodule RivaAsh.Resources.PublicSearchTest do
       refute pb2.id in business_ids
     end
 
+    @spec test_public_search_filters_by_search_term_in_public_description :: :ok
     test "public_search filters by search term in public description", %{
       public_business1: pb1,
       public_business2: pb2
@@ -103,6 +106,8 @@ defmodule RivaAsh.Resources.PublicSearchTest do
       refute pb2.id in business_ids
     end
 
+    @spec test_public_search_works_without_authentication :: :ok
+    @spec test_public_search_works_without_authentication :: :ok
     test "public_search works without authentication" do
       # This should not require an actor
       {:ok, results} =
@@ -212,6 +217,7 @@ defmodule RivaAsh.Resources.PublicSearchTest do
       }
     end
 
+    @spec test_public_search_returns_only_public_items_from_public_businesses :: :ok
     test "public_search returns only public items from public businesses", %{
       public_item: pub_item,
       private_item: priv_item
@@ -227,6 +233,7 @@ defmodule RivaAsh.Resources.PublicSearchTest do
       refute priv_item.id in item_ids
     end
 
+    @spec test_public_search_filters_by_search_term :: :ok
     test "public_search filters by search term", %{public_item: pub_item} do
       {:ok, results} =
         Item

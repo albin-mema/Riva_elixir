@@ -13,31 +13,18 @@ defmodule RivaAshWeb.ItemLive do
 
   alias RivaAsh.Resources.Item
   alias RivaAsh.Resources.Business
+  alias RivaAsh.Item.ItemService
+  alias RivaAsh.Live.AuthHelpers
 
   @impl true
   def mount(_params, session, socket) do
-    case get_current_user_from_session(session) do
+    case AuthHelpers.get_current_user_from_session(session) do
       {:ok, user} ->
-        try do
-          # Get user's businesses first
-          businesses = Business.read!(actor: user)
-          business_ids = Enum.map(businesses, & &1.id)
-
-          # Get items for user's businesses (through section -> plot -> business relationship)
-          items =
-            Item.read!(actor: user, filter: [section: [plot: [business_id: [in: business_ids]]]])
-
-          socket =
-            socket
-            |> assign(:current_user, user)
-            |> assign(:page_title, "Items")
-            |> assign(:items, items)
-            # Placeholder for pagination/metadata
-            |> assign(:meta, %{})
-
-          {:ok, socket}
-        rescue
-          error in [Ash.Error.Forbidden, Ash.Error.Invalid] ->
+        case load_items_data(socket, user) do
+          {:ok, socket} ->
+            {:ok, socket}
+          {:error, reason} ->
+            Logger.error("Failed to load items: #{inspect(reason)}")
             {:ok, redirect(socket, to: "/access-denied")}
         end
 
@@ -66,13 +53,33 @@ defmodule RivaAshWeb.ItemLive do
           <%= item.name %>
         </:col>
         <:col :let={item} label="Description">
-          <%= item.description %>
+          <%= truncate_text(item.description, 100) %>
+        </:col>
+        <:col :let={item} label="Type">
+          <%= item.item_type.name %>
+        </:col>
+        <:col :let={item} label="Status">
+          <span class={[
+            "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium",
+            case ItemService.get_item_status(item) do
+              :available -> "bg-green-100 text-green-800"
+              :occupied -> "bg-yellow-100 text-yellow-800"
+              :maintenance -> "bg-red-100 text-red-800"
+              _ -> "bg-gray-100 text-gray-800"
+            end
+          ]}>
+            <%= String.capitalize(to_string(ItemService.get_item_status(item))) %>
+          </span>
         </:col>
         <:col :let={item} label="Price">
-          <%= item.price %>
+          <%= format_price(item.price) %>
+        </:col>
+        <:col :let={item} label="Capacity">
+          <%= item.capacity || "N/A" %>
         </:col>
         <:col :let={item} label="Actions">
           <.button phx-click="edit_item" phx-value-id={item.id} class="bg-green-600 hover:bg-green-700">Edit</.button>
+          <.button phx-click="view_item" phx-value-id={item.id} variant="secondary">View</.button>
           <.button phx-click="delete_item" phx-value-id={item.id} class="bg-red-600 hover:bg-red-700">Delete</.button>
         </:col>
       </.data_table>
@@ -89,33 +96,93 @@ defmodule RivaAshWeb.ItemLive do
     {:noreply, push_patch(socket, to: "/items/#{id}/edit")}
   end
 
+  def handle_event("view_item", %{"id" => id}, socket) do
+    {:noreply, push_patch(socket, to: "/items/#{id}")}
+  end
+
   def handle_event("delete_item", %{"id" => id}, socket) do
-    # Placeholder for delete logic
-    IO.puts("Deleting item with ID: #{id}")
-    {:noreply, socket}
+    case ItemService.delete_item(id, socket.assigns.current_user) do
+      {:ok, _item} ->
+        {:noreply, 
+         socket
+         |> put_flash(:info, "Item deleted successfully")
+         |> reload_items()}
+      
+      {:error, reason} ->
+        {:noreply, 
+         socket
+         |> put_flash(:error, "Failed to delete item: #{format_error(reason)}")}
+    end
   end
 
   def handle_event(_event, _params, socket) do
     {:noreply, socket}
   end
 
-  # Private helper functions
-  defp get_current_user_from_session(session) do
-    user_token = session["user_token"]
+  # Helper functions
+  defp load_items_data(socket, user) do
+    case ItemService.get_user_items(user) do
+      {:ok, {items, meta}} ->
+        socket =
+          socket
+          |> assign(:current_user, user)
+          |> assign(:page_title, get_page_title())
+          |> assign(:items, items)
+          |> assign(:meta, meta)
+          |> assign(:loading, false)
+        
+        {:ok, socket}
+      
+      {:error, reason} ->
+        {:error, reason}
+    end
+  end
 
-    if user_token do
-      with {:ok, user_id} <-
-             Phoenix.Token.verify(RivaAshWeb.Endpoint, "user_auth", user_token, max_age: 86_400)
-             |> RivaAsh.ErrorHelpers.to_result(),
-           {:ok, user} <-
-             Ash.get(RivaAsh.Accounts.User, user_id, domain: RivaAsh.Accounts)
-             |> RivaAsh.ErrorHelpers.to_result() do
-        RivaAsh.ErrorHelpers.success(user)
-      else
-        _ -> RivaAsh.ErrorHelpers.failure(:not_authenticated)
-      end
-    else
-      RivaAsh.ErrorHelpers.failure(:not_authenticated)
+  defp reload_items(socket) do
+    case ItemService.get_user_items(socket.assigns.current_user) do
+      {:ok, {items, meta}} ->
+        assign(socket, :items, items)
+        |> assign(:meta, meta)
+      
+      {:error, _reason} ->
+        socket
+    end
+  end
+
+  defp get_page_title do
+    Application.get_env(:riva_ash, :items_page_title, "Items")
+  end
+
+  defp truncate_text(nil, _length), do: "N/A"
+  defp truncate_text(text, length) when byte_size(text) <= length, do: text
+  defp truncate_text(text, length) do
+    String.slice(text, 0, length) <> "..."
+  end
+
+  defp format_price(nil), do: "N/A"
+  defp format_price(price) when is_number(price) do
+    case Money.new(price, :USD) do
+      {:ok, money} -> Money.to_string(money)
+      {:error, _} -> "$#{:erlang.float_to_binary(price, decimals: 2)}"
+    end
+  end
+  defp format_price(_price), do: "N/A"
+
+  defp format_error(reason) do
+    case reason do
+      %Ash.Error.Invalid{errors: errors} -> 
+        errors |> Enum.map(&format_validation_error/1) |> Enum.join(", ")
+      %Ash.Error.Forbidden{} -> "You don't have permission to perform this action"
+      %Ash.Error.NotFound{} -> "Item not found"
+      _ -> "An unexpected error occurred"
+    end
+  end
+
+  defp format_validation_error(error) do
+    case error do
+      {message, _} -> message
+      message when is_binary(message) -> message
+      _ -> "Invalid input"
     end
   end
 end

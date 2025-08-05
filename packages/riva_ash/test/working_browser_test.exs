@@ -1,6 +1,7 @@
 defmodule WorkingBrowserTest do
   use ExUnit.Case, async: false
 
+  @spec test_open_browser_and_show_automation :: :ok
   test "open browser and show automation" do
     # Start Phoenix server
     {:ok, _} = Application.ensure_all_started(:riva_ash)

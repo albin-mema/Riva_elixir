@@ -4,6 +4,7 @@ defmodule RivaAsh.Resources.ClientTest do
 
   describe "create/1 - property-based tests" do
     @tag property: true
+    @spec test_creates_clients_with_valid_randomized_attributes :: :ok
     property "creates clients with valid randomized attributes" do
       File.write!("/tmp/property_test_running.txt", "🚀 Property test is running!\n", [:append])
       IO.puts("🚀 Property test is running!")
@@ -37,6 +38,7 @@ defmodule RivaAsh.Resources.ClientTest do
     end
 
     @tag property: true
+    @spec test_validates_required_name_field :: :ok
     property "validates required name field" do
       check all(attrs <- client_attrs(%{name: nil})) do
         assert {:error, %{errors: errors}} = Client.create(attrs)
@@ -45,6 +47,7 @@ defmodule RivaAsh.Resources.ClientTest do
     end
 
     @tag property: true
+    @spec test_validates_email_format_for_registered_clients :: :ok
     property "validates email format for registered clients" do
       check all(attrs <- client_attrs(%{is_registered: true})) do
         # Override with invalid email format
@@ -64,6 +67,7 @@ defmodule RivaAsh.Resources.ClientTest do
     end
 
     @tag property: true
+    @spec test_allows_unregistered_clients_without_email :: :ok
     property "allows unregistered clients without email" do
       check all(attrs <- client_attrs(%{is_registered: false, email: nil})) do
         assert {:ok, client} = Client.create(attrs)
@@ -75,6 +79,7 @@ defmodule RivaAsh.Resources.ClientTest do
 
   describe "by_email/1 - property-based tests" do
     @tag property: true
+    @spec test_finds_client_by_email_case_insensitive :: :ok
     property "finds client by email (case insensitive)" do
       check all(attrs <- client_attrs(%{is_registered: true})) do
         # Create client with valid email
@@ -107,6 +112,7 @@ defmodule RivaAsh.Resources.ClientTest do
 
   describe "registered/0 - property-based tests" do
     @tag property: true
+    @spec test_returns_only_registered_clients :: :ok
     property "returns only registered clients" do
       check all(
               registered_attrs_list <-
@@ -158,6 +164,7 @@ defmodule RivaAsh.Resources.ClientTest do
 
   describe "unregistered/0 - property-based tests" do
     @tag property: true
+    @spec test_returns_only_unregistered_clients :: :ok
     property "returns only unregistered clients" do
       check all(
               registered_attrs_list <-

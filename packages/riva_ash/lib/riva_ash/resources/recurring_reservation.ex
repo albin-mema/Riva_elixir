@@ -90,9 +90,7 @@ defmodule RivaAsh.Resources.RecurringReservation do
       primary?(true)
       require_atomic?(false)
 
-      # Validate cross-business relationships
-      validate(&RivaAsh.Validations.validate_client_item_business_match/2)
-      validate(&RivaAsh.Validations.validate_employee_item_business_match/2)
+      |> apply_recurring_reservation_validations()
     end
 
     create :create do
@@ -111,9 +109,7 @@ defmodule RivaAsh.Resources.RecurringReservation do
 
       primary?(true)
 
-      # Validate cross-business relationships
-      validate(&RivaAsh.Validations.validate_client_item_business_match/2)
-      validate(&RivaAsh.Validations.validate_employee_item_business_match/2)
+      |> apply_recurring_reservation_validations()
     end
 
     read :by_id do
@@ -142,14 +138,7 @@ defmodule RivaAsh.Resources.RecurringReservation do
     end
 
     read :upcoming do
-      today = Date.utc_today()
-
-      filter(
-        expr(
-          start_date >= ^today and
-            status in ["active", "pending"]
-        )
-      )
+      build_upcoming_filter()
     end
 
     update :pause do
@@ -282,21 +271,50 @@ defmodule RivaAsh.Resources.RecurringReservation do
   end
 
   calculations do
-    calculate :total_instances, :integer, expr(count(instances)) do
+    calculate :total_instances, :integer, count_instances() do
       public?(true)
       description("Total number of instances generated from this pattern")
     end
 
     calculate :confirmed_instances,
               :integer,
-              expr(count(instances, query: [filter: expr(status == "confirmed")])) do
+              count_confirmed_instances() do
       public?(true)
       description("Number of confirmed instances")
     end
 
-    calculate :end_date, :date, expr(date_add(start_date, consecutive_days - 1, "day")) do
+    calculate :end_date, :date, calculate_end_date() do
       public?(true)
       description("The calculated end date of the recurring pattern")
     end
+  end
+
+  # Private helper functions for Single Level of Abstraction
+  defp apply_recurring_reservation_validations(changeset) do
+    changeset
+    |> validate_client_item_business_match()
+    |> validate_employee_item_business_match()
+  end
+
+  defp build_upcoming_filter(changeset) do
+    today = Date.utc_today()
+    filter(changeset,
+      expr(
+        start_date >= ^today and
+          status in ["active", "pending"]
+      )
+    )
+  end
+
+  defp count_instances() do
+    expr(count(instances))
+  end
+
+  defp count_confirmed_instances() do
+    expr(count(instances, query: [filter: expr(status == "confirmed")]))
+  end
+
+  defp calculate_end_date() do
+    expr(date_add(start_date, consecutive_days - 1, "day"))
   end
 end

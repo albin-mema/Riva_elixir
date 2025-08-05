@@ -24,6 +24,7 @@ defmodule RivaAsh.Resources.PaymentResourceTest do
     |> Ash.create!()
   end
 
+  @spec test_create_valid_payment_updates_reservation_balance :: :ok
   test "create valid payment updates reservation balance" do
     reservation = create_reservation!()
 
@@ -54,6 +55,7 @@ defmodule RivaAsh.Resources.PaymentResourceTest do
     refute Decimal.compare(payment.balance_remaining, Decimal.new("0")) == :gt
   end
 
+  @spec test_reject_negative_amount :: :ok
   test "reject negative amount" do
     reservation = create_reservation!()
 
@@ -68,6 +70,7 @@ defmodule RivaAsh.Resources.PaymentResourceTest do
              |> Ash.create()
   end
 
+  @spec test_currency_validation_fails_for_unsupported_currency :: :ok
   test "currency validation fails for unsupported currency" do
     reservation = create_reservation!()
 

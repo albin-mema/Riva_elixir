@@ -31,7 +31,11 @@ defmodule RivaAshWeb.Components.AtomicComponents do
   - 🔄 Organism Components: Being updated to use UI components
   """
 
-  defmacro __using__(_opts) do
+  @spec __using__(opts :: keyword()) :: Macro.t()
+  defmacro __using__(opts) do
+    # Validate options using pattern matching
+    validate_opts!(opts)
+
     quote do
       import RivaAshWeb.Components.AtomicComponents
       # Import UI components for new functionality
@@ -51,6 +55,33 @@ defmodule RivaAshWeb.Components.AtomicComponents do
       interactive()
       navigation()
     end
+  end
+
+  # Private helper functions with type specifications
+
+  @doc """
+  Validates macro options with early return pattern.
+  
+  ## Parameters
+  - opts: Keyword list of options
+  
+  ## Returns
+  - :ok if valid
+  
+  ## Raises
+  - ArgumentError for invalid options
+  """
+  @spec validate_opts!(keyword()) :: :ok
+  defp validate_opts!(opts) do
+    opts
+    |> Keyword.keys()
+    |> Enum.each(fn key ->
+      case key do
+        :only -> :ok
+        :except -> :ok
+        _ -> raise ArgumentError, "Invalid option #{inspect(key)} for AtomicComponents"
+      end
+    end)
   end
 
   @doc """

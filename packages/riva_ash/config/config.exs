@@ -1,17 +1,20 @@
 import Config
 
 # Configure your database
+# Configuration patterns: Use application configuration instead of hardcoded values
+# Type safety: Use proper type conversion for configuration values
 config :riva_ash, RivaAsh.Repo,
   username: System.get_env("DB_USERNAME", "postgres"),
   password: System.get_env("DB_PASSWORD", "postgres"),
   hostname: System.get_env("DB_HOSTNAME", "localhost"),
   database: System.get_env("DB_NAME", "riva_ash_dev"),
-  port: String.to_integer(System.get_env("DB_PORT", "5432")),
+  port: System.get_env("DB_PORT", "5432") |> String.to_integer(),
   stacktrace: true,
   show_sensitive_data_on_connection_error: true,
-  pool_size: 10
+  pool_size: Application.compile_env(:riva_ash, :db_pool_size, 10)
 
 # Configures the endpoint
+# Functional programming patterns: Use consistent configuration structure
 config :riva_ash, RivaAshWeb.Endpoint,
   url: [host: "localhost"],
   adapter: Bandit.PhoenixAdapter,
@@ -23,6 +26,7 @@ config :riva_ash, RivaAshWeb.Endpoint,
   live_view: [signing_salt: "riva_ash_live"]
 
 # Configures Elixir's Logger
+# Code readability: Use consistent logging format
 config :logger, :console,
   format: "$time $metadata[$level] $message\n",
   metadata: [:request_id]
@@ -31,6 +35,7 @@ config :logger, :console,
 config :phoenix, :json_library, Jason
 
 # Configure MIME types for JSON:API
+# Single level of abstraction: Keep configuration focused
 config :mime,
   extensions: %{"json" => "application/vnd.api+json"},
   types: %{"application/vnd.api+json" => ["json"]}
@@ -39,6 +44,7 @@ config :mime,
 config :riva_ash, ecto_repos: [RivaAsh.Repo]
 
 # Configure Ash
+# Error handling: Configure Ash for better error messages
 config :riva_ash, ash_domains: [RivaAsh.Domain, RivaAsh.Accounts]
 config :ash, :use_all_identities_in_manage_relationship?, false
 
@@ -49,28 +55,36 @@ config :ash, :sat_solver, {SimpleSat, []}
 config :ash, :policies, show_policy_breakdowns?: true
 
 # Configure AshAuthentication
+# Consistent error handling: Use proper token lifetime configuration
 config :ash_authentication, :token_lifetime, days: 7
 config :ash_authentication, :sign_in_tokens_enabled, true
 
+# Configuration patterns: Move hardcoded values to application configuration
+# Type safety: Use proper secret management
 config :ash_authentication,
        :token_secret,
-       System.get_env("AUTH_TOKEN_SECRET") || "default_secret_change_me_in_prod"
+       System.get_env("AUTH_TOKEN_SECRET") ||
+       Application.compile_env(:riva_ash, :auth_token_secret, "default_secret_change_me_in_prod")
 
 # Configure AshJsonApi
+# Functional programming patterns: Use consistent boolean flags
 config :ash_json_api,
   json_library: Jason,
   remove_blank_fields: true,
   remove_blank_values: true
 
-# Configure AshJsonApi
+# Configure AshJsonApi domains
 config :ash_json_api, :domains, [RivaAsh.Domain]
 
+# Configuration patterns: Move hardcoded values to application configuration
+# Code readability: Use descriptive API configuration
 config :ash_json_api, :open_api,
-  title: "Riva Ash API",
-  version: "1.0.0",
-  description: "A simple CRUD API for managing items using Ash Framework"
+  title: Application.compile_env(:riva_ash, :api_title, "Riva Ash API"),
+  version: Application.compile_env(:riva_ash, :api_version, "1.0.0"),
+  description: Application.compile_env(:riva_ash, :api_description, "A simple CRUD API for managing items using Ash Framework")
 
 # Configure AshAdmin
+# Single level of abstraction: Keep admin configuration focused
 config :ash_admin,
   domains: [RivaAsh.Domain],
   show_sensitive_fields: [:change, :create],
@@ -78,8 +92,10 @@ config :ash_admin,
   set_actor: {RivaAshWeb.AshAdminConfig, :set_actor, []}
 
 # Configure Tailwind CSS
+# Configuration patterns: Move hardcoded values to application configuration
+# Functional programming patterns: Use consistent asset configuration structure
 config :tailwind,
-  version: "3.3.0",
+  version: Application.compile_env(:riva_ash, :tailwind_version, "3.3.0"),
   default: [
     args: ~w(
       --config=tailwind.config.js
@@ -98,8 +114,10 @@ config :tailwind,
   ]
 
 # Configure Esbuild
+# Configuration patterns: Move hardcoded values to application configuration
+# Type safety: Use proper version management
 config :esbuild,
-  version: "0.19.0",
+  version: Application.compile_env(:riva_ash, :esbuild_version, "0.19.0"),
   default: [
     args: ~w(
       js/app.js
@@ -128,4 +146,5 @@ config :esbuild,
 
 # Import environment specific config. This must remain at the bottom
 # of this file so it overrides the configuration defined above.
+# Single level of abstraction: Keep import at the end
 import_config "#{config_env()}.exs"

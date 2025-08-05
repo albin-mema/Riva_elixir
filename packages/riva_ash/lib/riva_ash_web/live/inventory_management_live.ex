@@ -8,50 +8,36 @@ defmodule RivaAshWeb.InventoryManagementLive do
   # Explicitly set the authenticated layout
 
   alias RivaAsh.Resources.{Business, Item, ItemType}
+  alias RivaAsh.Inventory.InventoryService
+  alias RivaAsh.Live.AuthHelpers
 
   import RivaAshWeb.Components.Organisms.PageHeader
   import RivaAshWeb.Components.Molecules.Card
   import RivaAshWeb.Components.Atoms.Button
-  import RivaAshWeb.Live.AuthHelpers
 
   @impl true
   def mount(_params, session, socket) do
-    case get_current_user_from_session(session) do
+    case AuthHelpers.get_current_user_from_session(session) do
       {:ok, user} ->
-        try do
-          # Load user's businesses
-          businesses = Business.read!(actor: user)
-          business_ids = Enum.map(businesses, & &1.id)
+        case load_inventory_data(user) do
+          {:ok, data} ->
+            socket =
+              socket
+              |> assign(:current_user, user)
+              |> assign(:page_title, get_page_title())
+              |> assign(:businesses, data.businesses)
+              |> assign(:items, data.items)
+              |> assign(:item_types, data.item_types)
+              |> assign(:view_mode, "grid")
+              |> assign(:selected_item, nil)
+              |> assign(:show_item_form, false)
+              |> assign(:filters, %{})
+              |> assign(:loading, false)
 
-          # Load inventory data
-          items =
-            Item.read!(
-              actor: user,
-              filter: [section: [plot: [business_id: [in: business_ids]]]]
-            )
-
-          item_types =
-            ItemType.read!(
-              actor: user,
-              filter: [business_id: [in: business_ids]]
-            )
-
-          socket =
-            socket
-            |> assign(:current_user, user)
-            |> assign(:page_title, "Inventory Management")
-            |> assign(:businesses, businesses)
-            |> assign(:items, items)
-            |> assign(:item_types, item_types)
-            |> assign(:view_mode, "grid")
-            |> assign(:selected_item, nil)
-            |> assign(:show_item_form, false)
-            |> assign(:filters, %{})
-            |> assign(:loading, false)
-
-          {:ok, socket}
-        rescue
-          _error in [Ash.Error.Forbidden, Ash.Error.Invalid] ->
+            {:ok, socket}
+          
+          {:error, reason} ->
+            Logger.error("Failed to load inventory data: #{inspect(reason)}")
             {:ok, redirect(socket, to: "/access-denied")}
         end
 
@@ -187,15 +173,15 @@ defmodule RivaAshWeb.InventoryManagementLive do
                 </div>
                 <div class="flex justify-between items-center">
                   <span class="text-sm text-gray-600">Available</span>
-                  <span class="text-sm font-medium text-green-600"><%= count_available_items(@items) %></span>
+                  <span class="text-sm font-medium text-green-600"><%= InventoryService.count_items_by_status(@items, :available) %></span>
                 </div>
                 <div class="flex justify-between items-center">
                   <span class="text-sm text-gray-600">Occupied</span>
-                  <span class="text-sm font-medium text-yellow-600"><%= count_occupied_items(@items) %></span>
+                  <span class="text-sm font-medium text-yellow-600"><%= InventoryService.count_items_by_status(@items, :occupied) %></span>
                 </div>
                 <div class="flex justify-between items-center">
                   <span class="text-sm text-gray-600">Maintenance</span>
-                  <span class="text-sm font-medium text-red-600"><%= count_maintenance_items(@items) %></span>
+                  <span class="text-sm font-medium text-red-600"><%= InventoryService.count_items_by_status(@items, :maintenance) %></span>
                 </div>
               </div>
             </div>
@@ -263,14 +249,14 @@ defmodule RivaAshWeb.InventoryManagementLive do
                     <span class="text-sm text-gray-600">Status:</span>
                     <span class={[
                       "text-sm font-medium ml-2",
-                      case get_item_status(@selected_item) do
-                        "available" -> "text-green-600"
-                        "occupied" -> "text-yellow-600"
-                        "maintenance" -> "text-red-600"
+                      case InventoryService.get_item_status(@selected_item) do
+                        :available -> "text-green-600"
+                        :occupied -> "text-yellow-600"
+                        :maintenance -> "text-red-600"
                         _ -> "text-gray-600"
                       end
                     ]}>
-                      <%= String.capitalize(get_item_status(@selected_item)) %>
+                      <%= String.capitalize(to_string(InventoryService.get_item_status(@selected_item))) %>
                     </span>
                   </div>
                   <div class="pt-3 border-t">
@@ -303,14 +289,14 @@ defmodule RivaAshWeb.InventoryManagementLive do
               <h3 class="text-lg font-medium text-gray-900"><%= item.name %></h3>
               <span class={[
                 "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium",
-                case get_item_status(item) do
-                  "available" -> "bg-green-100 text-green-800"
-                  "occupied" -> "bg-yellow-100 text-yellow-800"
-                  "maintenance" -> "bg-red-100 text-red-800"
+                case InventoryService.get_item_status(item) do
+                  :available -> "bg-green-100 text-green-800"
+                  :occupied -> "bg-yellow-100 text-yellow-800"
+                  :maintenance -> "bg-red-100 text-red-800"
                   _ -> "bg-gray-100 text-gray-800"
                 end
               ]}>
-                <%= String.capitalize(get_item_status(item)) %>
+                <%= String.capitalize(to_string(InventoryService.get_item_status(item))) %>
               </span>
             </div>
 
@@ -388,14 +374,14 @@ defmodule RivaAshWeb.InventoryManagementLive do
                 <td class="px-6 py-4 whitespace-nowrap">
                   <span class={[
                     "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium",
-                    case get_item_status(item) do
-                      "available" -> "bg-green-100 text-green-800"
-                      "occupied" -> "bg-yellow-100 text-yellow-800"
-                      "maintenance" -> "bg-red-100 text-red-800"
+                    case InventoryService.get_item_status(item) do
+                      :available -> "bg-green-100 text-green-800"
+                      :occupied -> "bg-yellow-100 text-yellow-800"
+                      :maintenance -> "bg-red-100 text-red-800"
                       _ -> "bg-gray-100 text-gray-800"
                     end
                   ]}>
-                    <%= String.capitalize(get_item_status(item)) %>
+                    <%= String.capitalize(to_string(InventoryService.get_item_status(item))) %>
                   </span>
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
@@ -452,20 +438,16 @@ defmodule RivaAshWeb.InventoryManagementLive do
   end
 
   # Helper functions
-  defp get_item_status(_item) do
-    # Placeholder logic - would check current reservations, holds, etc.
-    "available"
+  defp load_inventory_data(user) do
+    with {:ok, businesses} <- InventoryService.get_user_businesses(user),
+         business_ids <- Enum.map(businesses, & &1.id),
+         {:ok, items} <- InventoryService.get_user_items(user, business_ids),
+         {:ok, item_types} <- InventoryService.get_user_item_types(user, business_ids) do
+      {:ok, %{businesses: businesses, items: items, item_types: item_types}}
+    end
   end
 
-  defp count_available_items(items) do
-    Enum.count(items, &(get_item_status(&1) == "available"))
-  end
-
-  defp count_occupied_items(items) do
-    Enum.count(items, &(get_item_status(&1) == "occupied"))
-  end
-
-  defp count_maintenance_items(items) do
-    Enum.count(items, &(get_item_status(&1) == "maintenance"))
+  defp get_page_title do
+    Application.get_env(:riva_ash, :inventory_page_title, "Inventory Management")
   end
 end

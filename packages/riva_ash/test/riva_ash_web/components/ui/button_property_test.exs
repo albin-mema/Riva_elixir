@@ -8,6 +8,7 @@ defmodule RivaAshWeb.Components.UI.ButtonPropertyTest do
   import RivaAshWeb.Components.UI.Button
 
   describe "button/1 property-based tests" do
+    @spec test_renders_button_with_any_valid_variant_and_size_combination :: :ok
     property "renders button with any valid variant and size combination" do
       check all(
               variant <- member_of(~w(default destructive outline secondary ghost link)),
@@ -49,6 +50,7 @@ defmodule RivaAshWeb.Components.UI.ButtonPropertyTest do
       end
     end
 
+    @spec test_renders_link_button_with_valid_navigation_attributes :: :ok
     property "renders link button with valid navigation attributes" do
       check all(
               nav_type <- member_of([:href, :patch, :navigate]),
@@ -95,6 +97,7 @@ defmodule RivaAshWeb.Components.UI.ButtonPropertyTest do
       end
     end
 
+    @spec test_handles_custom_classes_and_attributes_correctly :: :ok
     property "handles custom classes and attributes correctly" do
       check all(
               custom_class <- string(:alphanumeric, min_length: 1, max_length: 20),
@@ -123,6 +126,7 @@ defmodule RivaAshWeb.Components.UI.ButtonPropertyTest do
       end
     end
 
+    @spec test_variant_classes_are_applied_correctly :: :ok
     property "variant classes are applied correctly" do
       check all(variant <- member_of(~w(default destructive outline secondary ghost link))) do
         assigns = %{variant: variant}
@@ -158,6 +162,7 @@ defmodule RivaAshWeb.Components.UI.ButtonPropertyTest do
       end
     end
 
+    @spec test_size_classes_are_applied_correctly :: :ok
     property "size classes are applied correctly" do
       check all(size <- member_of(~w(default sm lg icon))) do
         assigns = %{size: size}

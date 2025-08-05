@@ -9,6 +9,7 @@ defmodule RivaAshWeb.BookingControllerTest do
   @items_path "/api/booking/items"
   @client_bookings_path &("/api/booking/client/#{&1}")
 
+  @spec json_conn(Plug.Conn.t()) :: Plug.Conn.t()
   defp json_conn(conn) do
     conn
     |> put_req_header("accept", "application/json")
@@ -16,6 +17,7 @@ defmodule RivaAshWeb.BookingControllerTest do
   end
 
   describe "GET /api/booking/items (index-like listing)" do
+    @spec test_returns_items_list_for_booking_200 :: :ok
     test "returns items list for booking (200)", %{conn: conn} do
       %{item: _item} = Factory.sample_data()
 
@@ -31,6 +33,7 @@ defmodule RivaAshWeb.BookingControllerTest do
              end)
     end
 
+    @spec test_requires_auth_permission :: :ok
     test "requires auth/permission", %{conn: conn} do
       # Simulate unauthorized by not logging in / missing header
       conn =
@@ -44,6 +47,7 @@ defmodule RivaAshWeb.BookingControllerTest do
   end
 
   describe "GET /api/booking/availability/:item_id" do
+    @spec test_paginates_and_sorts_with_valid_params_mapped_to_availability_date_duration_window :: :ok
     test "paginates and sorts with valid params mapped to availability date/duration window", %{conn: conn} do
       %{item: item} = Factory.sample_data()
 
@@ -75,6 +79,7 @@ defmodule RivaAshWeb.BookingControllerTest do
              end)
     end
 
+    @spec test_with_invalid_date_returns_400 :: :ok
     test "with invalid date returns 400", %{conn: conn} do
       %{item: item} = Factory.sample_data()
 
@@ -93,6 +98,7 @@ defmodule RivaAshWeb.BookingControllerTest do
   end
 
   describe "POST /api/booking/create" do
+    @spec test_valid_params_create_booking_and_return_201_with_reservation_id :: :ok
     test "valid params create booking and return 201 with reservation id", %{conn: conn} do
       %{business: business, item: item, client: _client} = Factory.sample_data()
 
@@ -146,6 +152,7 @@ defmodule RivaAshWeb.BookingControllerTest do
       assert is_binary(msg)
     end
 
+    @spec test_invalid_params_render_error_via_fallback_422_like :: :ok
     test "invalid params render error via fallback (422-like)", %{conn: conn} do
       payload = %{
         "client" => %{"name" => ""},
@@ -166,6 +173,7 @@ defmodule RivaAshWeb.BookingControllerTest do
       assert Map.has_key?(body, "error") or Map.has_key?(body, "message") or Map.has_key?(body, "errors")
     end
 
+    @spec test_cross_business_client_returns_403 :: :ok
     test "cross-business client returns 403", %{conn: conn} do
       # Create two separate businesses
       %{business: business1, item: item, client: _client1} = Factory.sample_data()
@@ -198,6 +206,7 @@ defmodule RivaAshWeb.BookingControllerTest do
   end
 
   describe "GET /api/booking/client/:email (authorization-ish guard on data visibility)" do
+    @spec test_non_existent_email_returns_404_via_controller_handling :: :ok
     test "non-existent email returns 404 via controller handling", %{conn: conn} do
       email = "no-such-#{System.unique_integer([:positive])}@example.com"
 

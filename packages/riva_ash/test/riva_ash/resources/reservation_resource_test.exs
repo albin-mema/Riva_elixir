@@ -5,6 +5,7 @@ defmodule RivaAsh.Resources.ReservationResourceTest do
   alias RivaAsh.Factory
 
   describe "create via code interface" do
+    @spec test_create_valid_attrs_ok :: :ok
     test "create valid attrs ok" do
       %{business: business, item: item, client: client} = Factory.sample_data()
 
@@ -25,6 +26,7 @@ defmodule RivaAsh.Resources.ReservationResourceTest do
       assert res.client_id == client.id
     end
 
+    @spec test_duplicate_violates_unique_constraint_on_item_time_slot :: :ok
     test "duplicate violates unique constraint on item/time slot" do
       %{item: item, client: client} = Factory.sample_data()
 
@@ -54,6 +56,7 @@ defmodule RivaAsh.Resources.ReservationResourceTest do
   end
 
   describe "update validations" do
+    @spec test_update_range_validation_end_before_start :: :ok
     test "update range validation: end before start" do
       %{item: item, client: client} = Factory.sample_data()
 

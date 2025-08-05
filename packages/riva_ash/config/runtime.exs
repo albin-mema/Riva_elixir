@@ -6,6 +6,7 @@ import Config
 # and secrets from environment variables or elsewhere. Do not define
 # any compile-time configuration in here, as it won't be applied.
 # The block below contains prod specific runtime configuration.
+# Single level of abstraction: Keep runtime configuration focused on environment-specific settings
 
 # ## Using releases
 #
@@ -16,11 +17,14 @@ import Config
 #
 # Alternatively, you can use `mix phx.gen.release` to generate a `bin/server`
 # script that automatically sets the env var above.
+# Functional programming patterns: Use conditional configuration based on environment variables
 if System.get_env("PHX_SERVER") do
   config :riva_ash, RivaAshWeb.Endpoint, server: true
 end
 
 if config_env() == :prod do
+  # Database configuration with proper error handling
+  # Type safety: Use proper type conversion and validation
   database_url =
     System.get_env("DATABASE_URL") ||
       raise """
@@ -28,12 +32,28 @@ if config_env() == :prod do
       For example: ecto://USER:PASS@HOST/DATABASE
       """
 
-  maybe_ipv6 = if System.get_env("ECTO_IPV6") in ~w(true 1), do: [:inet6], else: []
+  # IPv6 configuration with functional programming patterns
+  maybe_ipv6 =
+    case System.get_env("ECTO_IPV6") do
+      v when is_binary(v) ->
+        v
+        |> String.downcase()
+        |> (&(&1 in ["true", "1", "yes", "on"])).()
+        |> case do
+          true -> [:inet6]
+          false -> []
+        end
 
+      _ ->
+        []
+    end
+
+  # Database repository configuration
+  # Error handling: Use proper pool size configuration
   config :riva_ash, RivaAsh.Repo,
     # ssl: true,
     url: database_url,
-    pool_size: String.to_integer(System.get_env("POOL_SIZE") || "10"),
+    pool_size: System.get_env("POOL_SIZE", "10") |> String.to_integer(),
     socket_options: maybe_ipv6
 
   # The secret key base is used to sign/encrypt cookies and other secrets.
@@ -41,6 +61,7 @@ if config_env() == :prod do
   # want to use a different value for prod and you most likely don't want
   # to check this value into version control, so we use an environment
   # variable instead.
+  # Type safety: Use proper secret management
   secret_key_base =
     System.get_env("SECRET_KEY_BASE") ||
       raise """
@@ -49,6 +70,7 @@ if config_env() == :prod do
       """
 
   # Authentication token secret required in production
+  # Error handling: Ensure proper authentication configuration
   auth_token_secret =
     System.get_env("AUTH_TOKEN_SECRET") ||
       raise """
@@ -56,9 +78,13 @@ if config_env() == :prod do
       It is used to sign authentication tokens.
       """
 
-  host = System.get_env("PHX_HOST") || "example.com"
-  port = String.to_integer(System.get_env("PORT") || "4000")
+  # Host and port configuration with proper defaults
+  # Code readability: Use clear, descriptive variable names
+  host = System.get_env("PHX_HOST") || Application.compile_env(:riva_ash, :phx_host, "example.com")
+  port = System.get_env("PORT", "4000") |> String.to_integer()
 
+  # Endpoint configuration for production
+  # Functional programming patterns: Use consistent endpoint configuration
   config :riva_ash, RivaAshWeb.Endpoint,
     url: [host: host, port: 443, scheme: "https"],
     http: [
@@ -69,6 +95,7 @@ if config_env() == :prod do
     force_ssl: [hsts: true]
 
   # Set the signing secret for authentication tokens (AshAuthentication)
+  # Single level of abstraction: Keep authentication configuration separate
   config :ash_authentication, :token_secret, auth_token_secret
 
   # ## SSL Support

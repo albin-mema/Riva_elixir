@@ -21,15 +21,29 @@ defmodule RivaAshWeb.Components.Navigation.NotificationCenter do
   attr(:class, :string, default: "")
   attr(:rest, :global)
 
+  @spec notification_center(assigns :: map()) :: Phoenix.LiveView.Rendered.t()
   def notification_center(assigns) do
+    # Render notification center using functional composition
+    assigns
+    |> Map.put_new(:container_class, build_container_class(assigns.class))
+    |> Map.put_new(:trigger_class, build_trigger_class(assigns.unread_count))
+    |> Map.put_new(:panel_class, build_panel_class(assigns.show_panel))
+    |> Map.put_new(:header_class, build_header_class(assigns.unread_count))
+    |> Map.put_new(:list_class, build_list_class(assigns.notifications))
+    |> render_notification_center_component()
+  end
+
+  # Private helper for notification center rendering
+  @spec render_notification_center_component(assigns :: map()) :: Phoenix.LiveView.Rendered.t()
+  defp render_notification_center_component(assigns) do
     ~H"""
     <!-- Notification center implementation will go here -->
-    <div {@rest} class={["notification-center", @class]}>
+    <div {@rest} class={@container_class}>
       <.button
         variant="ghost"
         size="sm"
         phx-click={@on_toggle}
-        class="notification-trigger"
+        class={@trigger_class}
       >
         <.icon name={:bell} />
         <.badge :if={@unread_count > 0} variant="destructive" size="sm">
@@ -37,8 +51,8 @@ defmodule RivaAshWeb.Components.Navigation.NotificationCenter do
         </.badge>
       </.button>
       
-      <div :if={@show_panel} class="notification-panel">
-        <div class="panel-header">
+      <div :if={@show_panel} class={@panel_class}>
+        <div class={@header_class}>
           <h3>Notifications</h3>
           <.button
             :if={@unread_count > 0}
@@ -55,7 +69,7 @@ defmodule RivaAshWeb.Components.Navigation.NotificationCenter do
           <p>No notifications</p>
         </div>
         
-        <div :if={@notifications != []} class="notifications-list">
+        <div :if={@notifications != []} class={@list_class}>
           <div
             :for={notification <- Enum.take(@notifications, @max_display)}
             class={[
@@ -67,7 +81,7 @@ defmodule RivaAshWeb.Components.Navigation.NotificationCenter do
               <.icon name={get_notification_icon(notification.type)} />
             </div>
             
-            <div 
+            <div
               class="notification-content"
               phx-click={@on_notification_click}
               phx-value-id={notification.id}
@@ -105,6 +119,38 @@ defmodule RivaAshWeb.Components.Navigation.NotificationCenter do
       </div>
     </div>
     """
+  end
+
+  # Helper function to build container classes
+  @spec build_container_class(String.t()) :: String.t()
+  defp build_container_class(class) do
+    ["notification-center", class]
+    |> Enum.filter(& &1 != "")
+    |> Enum.join(" ")
+  end
+
+  # Helper function to build trigger classes
+  @spec build_trigger_class(integer()) :: String.t()
+  defp build_trigger_class(unread_count) do
+    "notification-trigger"
+  end
+
+  # Helper function to build panel classes
+  @spec build_panel_class(boolean()) :: String.t()
+  defp build_panel_class(show_panel) do
+    if show_panel, do: "notification-panel", else: "hidden"
+  end
+
+  # Helper function to build header classes
+  @spec build_header_class(integer()) :: String.t()
+  defp build_header_class(unread_count) do
+    "panel-header"
+  end
+
+  # Helper function to build list classes
+  @spec build_list_class(list()) :: String.t()
+  defp build_list_class(notifications) do
+    "notifications-list"
   end
 
   defp get_notification_icon(type) do

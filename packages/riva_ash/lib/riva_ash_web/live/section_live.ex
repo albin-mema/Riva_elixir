@@ -12,42 +12,39 @@ defmodule RivaAshWeb.SectionLive do
   import RivaAshWeb.Components.Molecules.NotificationToast
   import RivaAshWeb.Components.Atoms.Spinner
   import RivaAshWeb.Components.Forms.SectionForm
+  import RivaAshWeb.Live.AuthHelpers
 
   alias RivaAsh.Resources.Section
   alias RivaAsh.Resources.Business
   alias RivaAsh.Resources.Plot
+  alias RivaAsh.Section.SectionService
+  alias RivaAsh.ErrorHelpers
 
   @impl true
   def mount(_params, session, socket) do
     case get_current_user_from_session(session) do
       {:ok, user} ->
-        try do
-          # Get user's businesses first
-          businesses = Business.read!(actor: user)
-          business_ids = Enum.map(businesses, & &1.id)
+        case SectionService.get_user_businesses(user) do
+          {:ok, business_ids} ->
+            socket =
+              socket
+              |> assign(:current_user, user)
+              |> assign(:page_title, get_page_title())
+              |> assign(:business_ids, business_ids)
+              |> assign(:form, nil)
+              |> assign(:show_form, false)
+              |> assign(:editing_section, nil)
+              |> assign(:loading, false)
+              |> assign(:error_message, nil)
+              |> assign(:success_message, nil)
+              |> assign(:confirm_delete_id, nil)
+              |> assign(:plots, [])
 
-          socket =
-            socket
-            |> assign(:current_user, user)
-            |> assign(:page_title, "Sections")
-            |> assign(:business_ids, business_ids)
-            |> assign(:form, nil)
-            |> assign(:show_form, false)
-            |> assign(:editing_section, nil)
-            |> assign(:loading, false)
-            |> assign(:error_message, nil)
-            |> assign(:success_message, nil)
-            |> assign(:confirm_delete_id, nil)
-            |> assign(:plots, [])
+            {:ok, socket}
 
-          {:ok, socket}
-        rescue
-          _error in [Ash.Error.Forbidden, Ash.Error.Invalid] ->
+          {:error, error} ->
+            error_message = ErrorHelpers.format_error(error)
             {:ok, redirect(socket, to: "/access-denied")}
-
-          error ->
-            {:ok,
-             socket |> assign(:error_message, "Failed to load data: #{Exception.message(error)}")}
         end
 
       {:error, :not_authenticated} ->
@@ -61,19 +58,20 @@ defmodule RivaAshWeb.SectionLive do
     business_ids = socket.assigns.business_ids
 
     # Use Flop to handle pagination, sorting, and filtering
-    case list_sections_with_flop(user, business_ids, params) do
+    case SectionService.list_sections_with_flop(user, business_ids, params) do
       {sections, meta} ->
         socket
         |> assign(:sections, sections)
         |> assign(:meta, meta)
         |> then(&{:noreply, &1})
 
-      _ ->
+      {:error, error} ->
+        error_message = ErrorHelpers.format_error(error)
         socket =
           socket
           |> assign(:sections, [])
           |> assign(:meta, %{})
-          |> assign(:error_message, "Failed to load sections")
+          |> assign(:error_message, "Failed to load sections: #{error_message}")
 
         {:noreply, socket}
     end
@@ -225,31 +223,37 @@ defmodule RivaAshWeb.SectionLive do
   def handle_event("new_section", _params, socket) do
     user = socket.assigns.current_user
 
-    # Load related data
-    plots = load_plots(user, socket.assigns.business_ids)
+    case SectionService.load_section_form_data(user, socket.assigns.business_ids) do
+      {:ok, %{plots: plots}} ->
+        form =
+          AshPhoenix.Form.for_create(Section, :create, actor: user)
+          |> to_form()
 
-    form =
-      AshPhoenix.Form.for_create(Section, :create, actor: user)
-      |> to_form()
+        socket =
+          socket
+          |> assign(:show_form, true)
+          |> assign(:editing_section, nil)
+          |> assign(:form, form)
+          |> assign(:plots, plots)
 
-    socket =
-      socket
-      |> assign(:show_form, true)
-      |> assign(:editing_section, nil)
-      |> assign(:form, form)
-      |> assign(:plots, plots)
+        {:noreply, socket}
 
-    {:noreply, socket}
+      {:error, error} ->
+        error_message = ErrorHelpers.format_error(error)
+        socket =
+          socket
+          |> assign(:error_message, "Failed to load form data: #{error_message}")
+          |> assign(:show_form, false)
+
+        {:noreply, socket}
+    end
   end
 
   def handle_event("edit_section", %{"id" => id}, socket) do
     user = socket.assigns.current_user
 
-    case Section.by_id(id, actor: user) do
-      {:ok, section} ->
-        # Load related data
-        plots = load_plots(user, socket.assigns.business_ids)
-
+    case SectionService.get_section_for_edit(id, user, socket.assigns.business_ids) do
+      {:ok, %{section: section, plots: plots}} ->
         form =
           AshPhoenix.Form.for_update(section, :update, actor: user)
           |> to_form()
@@ -263,10 +267,11 @@ defmodule RivaAshWeb.SectionLive do
 
         {:noreply, socket}
 
-      {:error, _reason} ->
+      {:error, error} ->
+        error_message = ErrorHelpers.format_error(error)
         socket =
           socket
-          |> assign(:error_message, "Section not found.")
+          |> assign(:error_message, "Failed to load section: #{error_message}")
           |> assign(:show_form, false)
 
         {:noreply, socket}
@@ -287,35 +292,22 @@ defmodule RivaAshWeb.SectionLive do
       |> assign(:loading, true)
       |> assign(:confirm_delete_id, nil)
 
-    case Section.by_id(section_id, actor: user) do
-      {:ok, section} ->
-        case Ash.destroy(section, actor: user) do
-          :ok ->
-            socket =
-              socket
-              |> assign(:loading, false)
-              |> assign(:success_message, "Section deleted successfully!")
+    case SectionService.delete_section(section_id, user) do
+      {:ok, _section} ->
+        socket =
+          socket
+          |> assign(:loading, false)
+          |> assign(:success_message, "Section deleted successfully!")
 
-            {:noreply, push_patch(socket, to: ~p"/sections")}
-
-          {:error, error} ->
-            error_message = format_error_message(error)
-
-            socket =
-              socket
-              |> assign(:loading, false)
-              |> assign(:error_message, "Failed to delete section: #{error_message}")
-
-            {:noreply, socket}
-        end
+        {:noreply, push_patch(socket, to: ~p"/sections")}
 
       {:error, error} ->
-        error_message = format_error_message(error)
+        error_message = ErrorHelpers.format_error(error)
 
         socket =
           socket
           |> assign(:loading, false)
-          |> assign(:error_message, "Failed to find section: #{error_message}")
+          |> assign(:error_message, "Failed to delete section: #{error_message}")
 
         {:noreply, socket}
     end
@@ -355,10 +347,7 @@ defmodule RivaAshWeb.SectionLive do
 
     socket = assign(socket, :loading, true)
 
-    # Submit the form with the correct parameters
-    result = AshPhoenix.Form.submit(socket.assigns.form, params: params, actor: user)
-
-    case result do
+    case SectionService.save_section(socket.assigns.form, params, user) do
       {:ok, _section} ->
         action_text = if socket.assigns.editing_section, do: "updated", else: "created"
 
@@ -372,7 +361,8 @@ defmodule RivaAshWeb.SectionLive do
 
         {:noreply, push_patch(socket, to: ~p"/sections")}
 
-      {:error, form} ->
+      {:error, form, error} ->
+        error_message = ErrorHelpers.format_error(error)
         error_messages =
           form
           |> AshPhoenix.Form.errors()
@@ -383,7 +373,7 @@ defmodule RivaAshWeb.SectionLive do
           socket
           |> assign(:loading, false)
           |> assign(:form, to_form(form))
-          |> assign(:error_message, "Failed to save section. #{error_messages}")
+          |> assign(:error_message, "Failed to save section. #{error_messages} #{error_message}")
 
         {:noreply, socket}
     end
@@ -406,242 +396,6 @@ defmodule RivaAshWeb.SectionLive do
   end
 
   # Private helper functions
-  defp get_current_user_from_session(session) do
-    user_token = session["user_token"]
 
-    if user_token do
-      with {:ok, user_id} <-
-             Phoenix.Token.verify(RivaAshWeb.Endpoint, "user_auth", user_token, max_age: 86_400)
-             |> RivaAsh.ErrorHelpers.to_result(),
-           {:ok, user} <-
-             Ash.get(RivaAsh.Accounts.User, user_id, domain: RivaAsh.Accounts)
-             |> RivaAsh.ErrorHelpers.to_result() do
-        RivaAsh.ErrorHelpers.success(user)
-      else
-        _ -> RivaAsh.ErrorHelpers.failure(:not_authenticated)
-      end
-    else
-      RivaAsh.ErrorHelpers.failure(:not_authenticated)
-    end
-  end
-
-  defp list_sections_with_flop(user, business_ids, params) do
-    # Get sections as a list
-    sections = load_sections_simple(user, business_ids)
-
-    # Validate Flop parameters first
-    case Flop.validate(params, for: Section) do
-      {:ok, flop} ->
-        # Apply manual sorting and pagination to the list
-        {paginated_sections, meta} = apply_flop_to_list(sections, flop)
-        {paginated_sections, meta}
-
-      {:error, meta} ->
-        # Return empty results with error meta
-        {[], meta}
-    end
-  end
-
-  defp apply_flop_to_list(sections, flop) do
-    # Apply sorting
-    sorted_sections = apply_sorting(sections, flop)
-
-    # Apply pagination
-    total_count = length(sorted_sections)
-    {paginated_sections, pagination_info} = apply_pagination(sorted_sections, flop)
-
-    # Build meta information
-    meta = build_meta(flop, total_count, pagination_info)
-
-    {paginated_sections, meta}
-  end
-
-  defp apply_sorting(sections, %Flop{order_by: nil}), do: sections
-  defp apply_sorting(sections, %Flop{order_by: []}), do: sections
-
-  defp apply_sorting(sections, %Flop{order_by: order_by, order_directions: order_directions}) do
-    # Default to :asc if no directions provided
-    directions = order_directions || Enum.map(order_by, fn _ -> :asc end)
-
-    # Zip order_by and directions, pad directions with :asc if needed
-    order_specs =
-      Enum.zip_with([order_by, directions], fn [field, direction] -> {field, direction} end)
-
-    Enum.sort(sections, fn sec1, sec2 ->
-      compare_sections(sec1, sec2, order_specs)
-    end)
-  end
-
-  defp compare_sections(_sec1, _sec2, []), do: true
-
-  defp compare_sections(sec1, sec2, [{field, direction} | rest]) do
-    val1 = get_field_value(sec1, field)
-    val2 = get_field_value(sec2, field)
-
-    case {val1, val2} do
-      {same, same} -> compare_sections(sec1, sec2, rest)
-      {nil, _} -> direction == :desc
-      {_, nil} -> direction == :asc
-      {v1, v2} when direction == :asc -> v1 <= v2
-      {v1, v2} when direction == :desc -> v1 >= v2
-    end
-  end
-
-  defp get_field_value(section, field) do
-    case field do
-      :name -> section.name
-      :description -> section.description
-      :inserted_at -> section.inserted_at
-      :updated_at -> section.updated_at
-      _ -> nil
-    end
-  end
-
-  defp apply_pagination(sections, flop) do
-    total_count = length(sections)
-
-    cond do
-      # Page-based pagination
-      flop.page && flop.page_size ->
-        page = max(flop.page, 1)
-        page_size = flop.page_size
-        offset = (page - 1) * page_size
-
-        paginated = sections |> Enum.drop(offset) |> Enum.take(page_size)
-
-        pagination_info = %{
-          type: :page,
-          page: page,
-          page_size: page_size,
-          offset: offset,
-          total_count: total_count
-        }
-
-        {paginated, pagination_info}
-
-      # Offset-based pagination
-      flop.offset && flop.limit ->
-        offset = max(flop.offset, 0)
-        limit = flop.limit
-
-        paginated = sections |> Enum.drop(offset) |> Enum.take(limit)
-
-        pagination_info = %{
-          type: :offset,
-          offset: offset,
-          limit: limit,
-          total_count: total_count
-        }
-
-        {paginated, pagination_info}
-
-      # Limit only
-      flop.limit ->
-        limit = flop.limit
-        paginated = Enum.take(sections, limit)
-
-        pagination_info = %{
-          type: :limit,
-          limit: limit,
-          total_count: total_count
-        }
-
-        {paginated, pagination_info}
-
-      # No pagination
-      true ->
-        pagination_info = %{
-          type: :none,
-          total_count: total_count
-        }
-
-        {sections, pagination_info}
-    end
-  end
-
-  defp build_meta(flop, total_count, pagination_info) do
-    case pagination_info.type do
-      :page ->
-        page = pagination_info.page
-        page_size = pagination_info.page_size
-        total_pages = ceil(total_count / page_size)
-
-        %Flop.Meta{
-          current_page: page,
-          current_offset: pagination_info.offset,
-          flop: flop,
-          has_next_page?: page < total_pages,
-          has_previous_page?: page > 1,
-          next_page: if(page < total_pages, do: page + 1, else: nil),
-          previous_page: if(page > 1, do: page - 1, else: nil),
-          page_size: page_size,
-          total_count: total_count,
-          total_pages: total_pages,
-          opts: []
-        }
-
-      :offset ->
-        offset = pagination_info.offset
-        limit = pagination_info.limit
-        current_page = div(offset, limit) + 1
-        total_pages = ceil(total_count / limit)
-
-        %Flop.Meta{
-          current_page: current_page,
-          current_offset: offset,
-          flop: flop,
-          has_next_page?: offset + limit < total_count,
-          has_previous_page?: offset > 0,
-          next_offset: if(offset + limit < total_count, do: offset + limit, else: nil),
-          previous_offset: if(offset > 0, do: max(0, offset - limit), else: nil),
-          page_size: limit,
-          total_count: total_count,
-          total_pages: total_pages,
-          opts: []
-        }
-
-      _ ->
-        %Flop.Meta{
-          current_page: 1,
-          current_offset: 0,
-          flop: flop,
-          has_next_page?: false,
-          has_previous_page?: false,
-          page_size: total_count,
-          total_count: total_count,
-          total_pages: 1,
-          opts: []
-        }
-    end
-  end
-
-  defp load_sections_simple(user, business_ids) do
-    try do
-      # Get sections for user's businesses
-      case Section.read(actor: user, filter: [plot: [business_id: [in: business_ids]]]) do
-        {:ok, sections} -> sections
-        _ -> []
-      end
-    rescue
-      _ -> []
-    end
-  end
-
-  defp load_plots(user, business_ids) do
-    try do
-      case Plot.read(actor: user, filter: [business_id: [in: business_ids]]) do
-        {:ok, plots} -> plots
-        _ -> []
-      end
-    rescue
-      _ -> []
-    end
-  end
-
-  defp format_error_message(error) do
-    case RivaAsh.ErrorHelpers.format_error(error) do
-      %{message: message} -> message
-      _ -> "An unexpected error occurred"
-    end
-  end
+  defp get_page_title, do: Application.get_env(:riva_ash, __MODULE__, [])[:page_title] || "Sections"
 end

@@ -12,9 +12,17 @@ defmodule RivaAshWeb.Components.UI.CardTitle do
 
   slot :inner_block, required: true
 
-  def card_title(assigns) do
-    assigns = assign(assigns, :title_class, title_class(assigns))
+  def card_title(assigns) when is_map(assigns) do
+    assigns
+    |> assign_title_class()
+    |> render_title()
+  end
 
+  defp assign_title_class(assigns) do
+    assign(assigns, :title_class, build_title_class(assigns))
+  end
+
+  defp render_title(assigns) do
     ~H"""
     <h3 class={@title_class} {@rest}>
       <%= render_slot(@inner_block) %>
@@ -22,9 +30,14 @@ defmodule RivaAshWeb.Components.UI.CardTitle do
     """
   end
 
-  defp title_class(assigns) do
-    base = "text-lg font-semibold leading-none tracking-tight"
+  defp build_title_class(assigns) when is_map(assigns) do
+    assigns
+    |> Map.get(:class, "")
+    |> prepend_base_class()
+  end
 
-    Enum.join([base, assigns.class], " ")
+  defp prepend_base_class(class) when is_binary(class) do
+    base = "text-lg font-semibold leading-none tracking-tight"
+    [base, class] |> Enum.reject(&(&1 == "")) |> Enum.join(" ")
   end
 end

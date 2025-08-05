@@ -11,33 +11,29 @@ defmodule RivaAshWeb.PermissionLive do
   import RivaAshWeb.Components.Atoms.Button
 
   alias RivaAsh.Resources.{Permission, Employee, EmployeePermission}
+  alias RivaAsh.Permission.PermissionService
+  alias RivaAsh.Live.AuthHelpers
 
   @impl true
   def mount(_params, session, socket) do
-    user = get_current_user_from_session(session)
+    case AuthHelpers.get_current_user_from_session(session) do
+      {:ok, user} ->
+        case load_permissions_data(socket, user) do
+          {:ok, socket} ->
+            {:ok, socket}
+          {:error, reason} ->
+            Logger.error("Failed to load permissions data: #{inspect(reason)}")
+            {:ok, redirect(socket, to: "/access-denied")}
+        end
 
-    if user do
-      socket =
-        socket
-        |> assign(:current_user, user)
-        |> assign(:page_title, "Permission Management")
-        |> assign(:active_tab, "employees")
-        |> assign(:employees, [])
-        |> assign(:permissions, [])
-        |> assign(:selected_employee, nil)
-        |> assign(:current_permissions, [])
-        |> assign(:meta, %{})
-
-      {:ok, socket}
-    else
-      {:ok, redirect(socket, to: "/sign-in")}
+      {:error, _} ->
+        {:ok, redirect(socket, to: "/sign-in")}
     end
   end
 
   @impl true
   def render(assigns) do
     ~H"""
-    <!-- Permission management implementation will go here -->
     <div>
       <.page_header title="Permission Management" description="Manage employee roles and permissions">
         <:action>
@@ -82,8 +78,22 @@ defmodule RivaAshWeb.PermissionLive do
           <:col :let={item} label="Permissions Count">
             <%= length(item.permissions || []) %>
           </:col>
+          <:col :let={item} label="Status">
+            <span class={[
+              "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium",
+              case item.status do
+                :active -> "bg-green-100 text-green-800"
+                :inactive -> "bg-gray-100 text-gray-800"
+                _ -> "bg-gray-100 text-gray-800"
+              end
+            ]}>
+              <%= String.capitalize(to_string(item.status)) %>
+            </span>
+          </:col>
           <:col :let={item} label="Actions">
             <.button phx-click="manage_permissions" phx-value-id={item.id} class="bg-indigo-600 hover:bg-indigo-700">Manage Permissions</.button>
+            <.button phx-click="edit_employee" phx-value-id={item.id} variant="secondary" size="sm">Edit</.button>
+            <.button phx-click="delete_employee" phx-value-id={item.id} variant="danger" size="sm">Delete</.button>
           </:col>
         </.data_table>
       </div>
@@ -99,7 +109,25 @@ defmodule RivaAshWeb.PermissionLive do
             <%= item.name %>
           </:col>
           <:col :let={item} label="Description">
-            <%= item.description %>
+            <%= truncate_text(item.description, 100) %>
+          </:col>
+          <:col :let={item} label="Module">
+            <%= item.module || "N/A" %>
+          </:col>
+          <:col :let={item} label="Action">
+            <%= item.action || "N/A" %>
+          </:col>
+          <:col :let={item} label="Status">
+            <span class={[
+              "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium",
+              case item.status do
+                :active -> "bg-green-100 text-green-800"
+                :inactive -> "bg-gray-100 text-gray-800"
+                _ -> "bg-gray-100 text-gray-800"
+              end
+            ]}>
+              <%= String.capitalize(to_string(item.status)) %>
+            </span>
           </:col>
           <:col :let={item} label="Actions">
             <.button phx-click="edit_permission" phx-value-id={item.id} class="bg-green-600 hover:bg-green-700">Edit</.button>
@@ -117,18 +145,52 @@ defmodule RivaAshWeb.PermissionLive do
   end
 
   def handle_event("manage_permissions", %{"id" => employee_id}, socket) do
-    # Implementation will go here
-    {:noreply, socket}
+    case PermissionService.get_employee_permissions(employee_id, socket.assigns.current_user) do
+      {:ok, {employee, permissions, current_permissions}} ->
+        {:noreply, 
+         socket
+         |> assign(:selected_employee, employee)
+         |> assign(:permissions, permissions)
+         |> assign(:current_permissions, current_permissions)}
+      
+      {:error, reason} ->
+        {:noreply, 
+         socket
+         |> put_flash(:error, "Failed to load employee permissions: #{format_error(reason)}")}
+    end
   end
 
   def handle_event("toggle_permission", %{"permission" => permission_id}, socket) do
-    # Implementation will go here
-    {:noreply, socket}
+    # Toggle permission in current_permissions list
+    current_permissions = socket.assigns.current_permissions
+    
+    if permission_id in current_permissions do
+      new_permissions = List.delete(current_permissions, permission_id)
+      {:noreply, assign(socket, :current_permissions, new_permissions)}
+    else
+      new_permissions = [permission_id | current_permissions]
+      {:noreply, assign(socket, :current_permissions, new_permissions)}
+    end
   end
 
   def handle_event("save_permissions", _params, socket) do
-    # Implementation will go here
-    {:noreply, assign(socket, :selected_employee, nil)}
+    case PermissionService.save_employee_permissions(
+      socket.assigns.selected_employee.id,
+      socket.assigns.current_permissions,
+      socket.assigns.current_user
+    ) do
+      {:ok, _employee} ->
+        {:noreply, 
+         socket
+         |> put_flash(:info, "Permissions saved successfully")
+         |> assign(:selected_employee, nil)
+         |> reload_permissions_data()}
+      
+      {:error, reason} ->
+        {:noreply, 
+         socket
+         |> put_flash(:error, "Failed to save permissions: #{format_error(reason)}")}
+    end
   end
 
   def handle_event("cancel_permission_edit", _params, socket) do
@@ -136,27 +198,112 @@ defmodule RivaAshWeb.PermissionLive do
   end
 
   def handle_event("create_permission", _params, socket) do
-    # Implementation will go here
-    {:noreply, socket}
+    {:noreply, push_patch(socket, to: "/permissions/new")}
   end
 
   def handle_event("edit_permission", %{"id" => id}, socket) do
-    # Implementation will go here
-    {:noreply, socket}
+    {:noreply, push_patch(socket, to: "/permissions/#{id}/edit")}
   end
 
-  def handle_event("delete_permission", %{"id" => _id}, socket) do
-    # Implementation will go here
-    {:noreply, socket}
+  def handle_event("delete_permission", %{"id" => id}, socket) do
+    case PermissionService.delete_permission(id, socket.assigns.current_user) do
+      {:ok, _permission} ->
+        {:noreply, 
+         socket
+         |> put_flash(:info, "Permission deleted successfully")
+         |> reload_permissions_data()}
+      
+      {:error, reason} ->
+        {:noreply, 
+         socket
+         |> put_flash(:error, "Failed to delete permission: #{format_error(reason)}")}
+    end
+  end
+
+  def handle_event("edit_employee", %{"id" => id}, socket) do
+    {:noreply, push_patch(socket, to: "/employees/#{id}/edit")}
+  end
+
+  def handle_event("delete_employee", %{"id" => id}, socket) do
+    case PermissionService.delete_employee(id, socket.assigns.current_user) do
+      {:ok, _employee} ->
+        {:noreply, 
+         socket
+         |> put_flash(:info, "Employee deleted successfully")
+         |> reload_permissions_data()}
+      
+      {:error, reason} ->
+        {:noreply, 
+         socket
+         |> put_flash(:error, "Failed to delete employee: #{format_error(reason)}")}
+    end
   end
 
   def handle_event(_event, _params, socket) do
     {:noreply, socket}
   end
 
-  # Private helper functions will go here
-  defp get_current_user_from_session(_session) do
-    # Implementation will go here
-    nil
+  # Helper functions
+  defp load_permissions_data(socket, user) do
+    case PermissionService.get_user_permissions_data(user) do
+      {:ok, {employees, permissions, meta}} ->
+        socket =
+          socket
+          |> assign(:current_user, user)
+          |> assign(:page_title, get_page_title())
+          |> assign(:employees, employees)
+          |> assign(:permissions, permissions)
+          |> assign(:active_tab, "employees")
+          |> assign(:selected_employee, nil)
+          |> assign(:current_permissions, [])
+          |> assign(:meta, meta)
+          |> assign(:loading, false)
+        
+        {:ok, socket}
+      
+      {:error, reason} ->
+        {:error, reason}
+    end
+  end
+
+  defp reload_permissions_data(socket) do
+    case PermissionService.get_user_permissions_data(socket.assigns.current_user) do
+      {:ok, {employees, permissions, meta}} ->
+        socket
+        |> assign(:employees, employees)
+        |> assign(:permissions, permissions)
+        |> assign(:meta, meta)
+      
+      {:error, _reason} ->
+        socket
+    end
+  end
+
+  defp get_page_title do
+    Application.get_env(:riva_ash, __MODULE__, [])[:page_title] || "Permission Management"
+  end
+
+  defp truncate_text(nil, _length), do: "N/A"
+  defp truncate_text(text, length) when byte_size(text) <= length, do: text
+  defp truncate_text(text, length) do
+    String.slice(text, 0, length) <> "..."
+  end
+
+  defp format_error(reason) do
+    case reason do
+      %Ash.Error.Invalid{errors: errors} -> 
+        errors |> Enum.map(&format_validation_error/1) |> Enum.join(", ")
+      %Ash.Error.Forbidden{} -> "You don't have permission to perform this action"
+      %Ash.Error.NotFound{} -> "Resource not found"
+      _ -> "An unexpected error occurred"
+    end
+  end
+
+  defp format_validation_error(error) do
+    case error do
+      {message, _} -> message
+      message when is_binary(message) -> message
+      _ -> "Invalid input"
+    end
   end
 end

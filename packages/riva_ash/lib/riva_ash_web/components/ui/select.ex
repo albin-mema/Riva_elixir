@@ -18,21 +18,76 @@ defmodule RivaAshWeb.Components.UI.Select do
   attr :class, :string, default: ""
   attr :rest, :global
 
+  @spec select(assigns :: map()) :: Phoenix.LiveView.Rendered.t()
   def select(assigns) do
-    assigns = assign(assigns, :select_class, select_class(assigns))
+    # Render select using functional composition
+    assigns
+    |> Map.put_new(:select_class, select_class(assigns))
+    |> Map.put_new(:wrapper_class, build_wrapper_class(assigns.field))
+    |> Map.put_new(:error_class, build_error_class(assigns.field))
+    |> Map.put_new(:required_class, build_required_class(assigns.required))
+    |> Map.put_new(:options_class, build_options_class(assigns.multiple))
+    |> render_select_component()
+  end
 
+  # Private helper for select rendering
+  @spec render_select_component(assigns :: map()) :: Phoenix.LiveView.Rendered.t()
+  defp render_select_component(assigns) do
     ~H"""
-    <select
-      class={@select_class}
-      disabled={@disabled}
-      required={@required}
-      multiple={@multiple}
-      {@rest}
-    >
-      <option :if={@prompt} value=""><%= @prompt %></option>
-      <option :for={{label, value} <- @options} value={value}><%= label %></option>
-    </select>
+    <div class={@wrapper_class}>
+      <select
+        class={@select_class}
+        disabled={@disabled}
+        required={@required}
+        multiple={@multiple}
+        {@rest}
+      >
+        <option :if={@prompt} value=""><%= @prompt %></option>
+        <option :for={{label, value} <- @options} value={value} class={@options_class}><%= label %></option>
+      </select>
+      <%= if has_error?(@field) do %>
+        <p class={@error_class}>
+          <%= error_message(@field) %>
+        </p>
+      <% end %>
+    </div>
     """
+  end
+
+  # Helper function to build wrapper classes
+  @spec build_wrapper_class(Phoenix.HTML.FormField.t() | nil) :: String.t()
+  defp build_wrapper_class(field) do
+    if field, do: "relative w-full", else: "w-full"
+  end
+
+  # Helper function to build error classes
+  @spec build_error_class(Phoenix.HTML.FormField.t() | nil) :: String.t()
+  defp build_error_class(field) do
+    if has_error?(field), do: "text-sm text-destructive mt-1", else: "hidden"
+  end
+
+  # Helper function to build required classes
+  @spec build_required_class(boolean()) :: String.t()
+  defp build_required_class(required) do
+    if required, do: "required", else: ""
+  end
+
+  # Helper function to build options classes
+  @spec build_options_class(boolean()) :: String.t()
+  defp build_options_class(multiple) do
+    if multiple, do: "py-1", else: ""
+  end
+
+  # Helper function to check if field has errors
+  @spec has_error?(Phoenix.HTML.FormField.t() | nil) :: boolean()
+  defp has_error?(field) do
+    field && field.errors && length(field.errors) > 0
+  end
+
+  # Helper function to get error message
+  @spec error_message(Phoenix.HTML.FormField.t()) :: String.t()
+  defp error_message(field) do
+    field.errors |> List.first() |> elem(1)
   end
 
   defp select_class(assigns) do

@@ -4,6 +4,7 @@ defmodule RivaAshWeb.Components.Navigation.SidebarNavTest do
   import Phoenix.LiveViewTest
   alias RivaAshWeb.Components.Navigation.ExpandedSidebar
 
+  @spec render_sidebar(map()) :: String.t()
   defp render_sidebar(assigns) do
     rendered =
       render_component(&ExpandedSidebar.expanded_sidebar/1, assigns)
@@ -13,6 +14,7 @@ defmodule RivaAshWeb.Components.Navigation.SidebarNavTest do
 
   describe "ExpandedSidebar - navigation highlight and a11y" do
     @describetag :component
+    @spec test_highlights_active_route_with_data_current :: :ok
     test "highlights active route with data-current" do
       # Build minimal user assign with nested business name expected by component
       user = %{id: "u", role: :admin, business: %{name: "Biz"}}
@@ -31,6 +33,7 @@ defmodule RivaAshWeb.Components.Navigation.SidebarNavTest do
       assert html =~ ~s(class="nav-item active")
     end
 
+    @spec test_has_accessible_roles_and_labels :: :ok
     test "has accessible roles and labels" do
       user = %{id: "u", role: :admin, business: %{name: "Biz"}}
 

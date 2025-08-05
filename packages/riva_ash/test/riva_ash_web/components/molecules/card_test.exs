@@ -7,6 +7,7 @@ defmodule RivaAshWeb.Components.Molecules.CardTest do
   import RivaAshWeb.Components.Molecules.Card
 
   describe "card/1" do
+    @spec test_renders_basic_card :: :ok
     test "renders basic card" do
       assigns = %{}
 
@@ -21,6 +22,7 @@ defmodule RivaAshWeb.Components.Molecules.CardTest do
       assert html =~ "rounded-lg border bg-card"
     end
 
+    @spec test_renders_card_with_header :: :ok
     test "renders card with header" do
       assigns = %{}
 
@@ -39,6 +41,7 @@ defmodule RivaAshWeb.Components.Molecules.CardTest do
       assert html =~ "flex flex-col space-y-1.5 p-6"
     end
 
+    @spec test_renders_card_with_footer :: :ok
     test "renders card with footer" do
       assigns = %{}
 
@@ -57,6 +60,7 @@ defmodule RivaAshWeb.Components.Molecules.CardTest do
       assert html =~ "flex items-center p-6 pt-0"
     end
 
+    @spec test_renders_card_with_header_and_footer :: :ok
     test "renders card with header and footer" do
       assigns = %{}
 
@@ -78,6 +82,7 @@ defmodule RivaAshWeb.Components.Molecules.CardTest do
       assert html =~ "Card Footer"
     end
 
+    @spec test_renders_with_custom_class :: :ok
     test "renders with custom class" do
       assigns = %{}
 
@@ -92,6 +97,7 @@ defmodule RivaAshWeb.Components.Molecules.CardTest do
       assert html =~ "custom-card"
     end
 
+    @spec test_renders_with_global_attributes :: :ok
     test "renders with global attributes" do
       assigns = %{}
 
@@ -109,6 +115,7 @@ defmodule RivaAshWeb.Components.Molecules.CardTest do
   end
 
   describe "card_title/1" do
+    @spec test_renders_card_title :: :ok
     test "renders card title" do
       assigns = %{}
 
@@ -124,6 +131,7 @@ defmodule RivaAshWeb.Components.Molecules.CardTest do
       assert html =~ "scroll-m-20 text-2xl font-semibold"
     end
 
+    @spec test_renders_card_title_with_custom_class :: :ok
     test "renders card title with custom class" do
       assigns = %{}
 
@@ -140,6 +148,7 @@ defmodule RivaAshWeb.Components.Molecules.CardTest do
   end
 
   describe "card_description/1" do
+    @spec test_renders_card_description :: :ok
     test "renders card description" do
       assigns = %{}
 
@@ -156,6 +165,7 @@ defmodule RivaAshWeb.Components.Molecules.CardTest do
       assert html =~ "text-muted-foreground"
     end
 
+    @spec test_renders_card_description_with_custom_class :: :ok
     test "renders card description with custom class" do
       assigns = %{}
 
@@ -172,6 +182,7 @@ defmodule RivaAshWeb.Components.Molecules.CardTest do
   end
 
   describe "card integration with UI components" do
+    @spec test_uses_ui_card_internally :: :ok
     test "uses UI.Card internally" do
       assigns = %{}
 

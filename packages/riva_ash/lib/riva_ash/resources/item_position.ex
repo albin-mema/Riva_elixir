@@ -7,7 +7,28 @@ defmodule RivaAsh.Resources.ItemPosition do
   - Grid-based: Uses row and column coordinates
   - Free-form: Uses x,y coordinates
   - Linear: Uses sequence/order position
+
+  This resource manages spatial positioning of items within layouts, supporting
+  multiple positioning systems and ensuring no overlaps between items.
   """
+
+  @type t :: %__MODULE__{
+          id: String.t(),
+          item_id: String.t(),
+          layout_id: String.t(),
+          grid_row: integer() | nil,
+          grid_column: integer() | nil,
+          x_coordinate: Decimal.t() | nil,
+          y_coordinate: Decimal.t() | nil,
+          width: Decimal.t() | nil,
+          height: Decimal.t() | nil,
+          rotation_degrees: Decimal.t(),
+          z_index: integer(),
+          is_visible: boolean(),
+          inserted_at: DateTime.t(),
+          updated_at: DateTime.t(),
+          archived_at: DateTime.t() | nil
+        }
 
   use Ash.Resource,
     domain: RivaAsh.Domain,
@@ -386,6 +407,328 @@ defmodule RivaAsh.Resources.ItemPosition do
         # If we can't check, allow the operation
         :ok
     end
+  
+    # Helper functions for business logic and data validation
+  
+    @doc """
+    Checks if the item position is currently active (not archived).
+    
+    ## Parameters
+    - item_position: The item position record to check
+    
+    ## Returns
+    - `true` if the position is active, `false` otherwise
+    """
+    @spec is_active?(t()) :: boolean()
+    def is_active?(item_position) do
+      with %{archived_at: nil} <- item_position do
+        true
+      else
+        _ -> false
+      end
+    end
+  
+    @doc """
+    Checks if the item position uses grid-based positioning.
+    
+    ## Parameters
+    - item_position: The item position record to check
+    
+    ## Returns
+    - `true` if using grid positioning, `false` otherwise
+    """
+    @spec is_grid_positioned?(t()) :: boolean()
+    def is_grid_positioned?(item_position) do
+      not (is_nil(item_position.grid_row) or is_nil(item_position.grid_column))
+    end
+  
+    @doc """
+    Checks if the item position uses free-form positioning.
+    
+    ## Parameters
+    - item_position: The item position record to check
+    
+    ## Returns
+    - `true` if using free-form positioning, `false` otherwise
+    """
+    @spec is_free_form_positioned?(t()) :: boolean()
+    def is_free_form_positioned?(item_position) do
+      not (is_nil(item_position.x_coordinate) or is_nil(item_position.y_coordinate))
+    end
+  
+    @doc """
+    Gets the position type as an atom.
+    
+    ## Parameters
+    - item_position: The item position record
+    
+    ## Returns
+    - `:grid`, `:free_form`, or `:none`
+    """
+    @spec position_type(t()) :: :grid | :free_form | :none
+    def position_type(item_position) do
+      cond do
+        is_grid_positioned?(item_position) -> :grid
+        is_free_form_positioned?(item_position) -> :free_form
+        true -> :none
+      end
+    end
+  
+    @doc """
+    Gets the formatted position information.
+    
+    ## Parameters
+    - item_position: The item position record
+    
+    ## Returns
+    - String with formatted position information
+    """
+    @spec formatted_position(t()) :: String.t()
+    def formatted_position(item_position) do
+      case position_type(item_position) do
+        :grid ->
+          "Grid position: Row #{item_position.grid_row}, Column #{item_position.grid_column}"
+        
+        :free_form ->
+          "Free-form position: X #{item_position.x_coordinate}, Y #{item_position.y_coordinate}"
+        
+        :none ->
+          "No position specified"
+      end
+    end
+  
+    @doc """
+    Gets the formatted dimensions information.
+    
+    ## Parameters
+    - item_position: The item position record
+    
+    ## Returns
+    - String with formatted dimensions information
+    """
+    @spec formatted_dimensions(t()) :: String.t()
+    def formatted_dimensions(item_position) do
+      cond do
+        not is_nil(item_position.width) and not is_nil(item_position.height) ->
+          "#{item_position.width} x #{item_position.height}"
+        
+        not is_nil(item_position.width) ->
+          "Width: #{item_position.width}"
+        
+        not is_nil(item_position.height) ->
+          "Height: #{item_position.height}"
+        
+        true ->
+          "No dimensions specified"
+      end
+    end
+  
+    @doc """
+    Gets the formatted rotation information.
+    
+    ## Parameters
+    - item_position: The item position record
+    
+    ## Returns
+    - String with formatted rotation information
+    """
+    @spec formatted_rotation(t()) :: String.t()
+    def formatted_rotation(item_position) do
+      case item_position.rotation_degrees do
+        0 -> "No rotation"
+        rotation -> "#{rotation}°"
+      end
+    end
+  
+    @doc """
+    Checks if the item is visible in the layout.
+    
+    ## Parameters
+    - item_position: The item position record to check
+    
+    ## Returns
+    - `true` if visible, `false` otherwise
+    """
+    @spec is_visible?(t()) :: boolean()
+    def is_visible?(item_position), do: item_position.is_visible
+  
+    @doc """
+    Gets the z-index information for layering.
+    
+    ## Parameters
+    - item_position: The item position record
+    
+    ## Returns
+    - String with z-index information
+    """
+    @spec z_index_info(t()) :: String.t()
+    def z_index_info(item_position) do
+      "Z-index: #{item_position.z_index}"
+    end
+  
+    @doc """
+    Checks if the item position overlaps with another position.
+    
+    ## Parameters
+    - item_position: The item position record to check
+    - other_position: Another item position record to compare against
+    
+    ## Returns
+    - `true` if overlapping, `false` otherwise
+    """
+    @spec overlaps_with?(t(), t()) :: boolean()
+    def overlaps_with?(item_position, other_position) do
+      # Only check if both positions use grid positioning
+      if is_grid_positioned?(item_position) and is_grid_positioned?(other_position) do
+        width1 = item_position.width || 1
+        height1 = item_position.height || 1
+        width2 = other_position.width || 1
+        height2 = other_position.height || 1
+  
+        # Check if rectangles overlap
+        not (item_position.grid_row + height1 - 1 < other_position.grid_row or
+               other_position.grid_row + height2 - 1 < item_position.grid_row or
+               item_position.grid_column + width1 - 1 < other_position.grid_column or
+               other_position.grid_column + width2 - 1 < item_position.grid_column)
+      else
+        false
+      end
+    end
+  
+    @doc """
+    Validates that the item position has all required relationships.
+    
+    ## Parameters
+    - item_position: The item position record to validate
+    
+    ## Returns
+    - `{:ok, item_position}` if valid
+    - `{:error, reason}` if invalid
+    """
+    @spec validate_relationships(t()) :: {:ok, t()} | {:error, String.t()}
+    def validate_relationships(item_position) do
+      cond do
+        is_nil(item_position.item) ->
+          {:error, "Item relationship is missing"}
+        
+        is_nil(item_position.layout) ->
+          {:error, "Layout relationship is missing"}
+        
+        true ->
+          {:ok, item_position}
+      end
+    end
+  
+    @doc """
+    Gets the item name associated with this position.
+    
+    ## Parameters
+    - item_position: The item position record
+    
+    ## Returns
+    - String with the item name
+    """
+    @spec item_name(t()) :: String.t()
+    def item_name(item_position) do
+      case item_position.item do
+        %{name: name} when is_binary(name) and name != "" -> name
+        _ -> "Unknown item"
+      end
+    end
+  
+    @doc """
+    Gets the layout name associated with this position.
+    
+    ## Parameters
+    - item_position: The item position record
+    
+    ## Returns
+    - String with the layout name
+    """
+    @spec layout_name(t()) :: String.t()
+    def layout_name(item_position) do
+      case item_position.layout do
+        %{name: name} when is_binary(name) and name != "" -> name
+        _ -> "Unknown layout"
+      end
+    end
+  
+    @doc """
+    Formats the complete item position information for display.
+    
+    ## Parameters
+    - item_position: The item position record
+    
+    ## Returns
+    - String with complete position information
+    """
+    @spec formatted_info(t()) :: String.t()
+    def formatted_info(item_position) do
+      with true <- is_active?(item_position),
+           item_name <- item_name(item_position),
+           layout_name <- layout_name(item_position),
+           position <- formatted_position(item_position),
+           dimensions <- formatted_dimensions(item_position),
+           rotation <- formatted_rotation(item_position) do
+        "#{item_name} in #{layout_name}: #{position}, #{dimensions}, #{rotation}"
+      else
+        false ->
+          "Archived position for #{item_name(item_position)}"
+      end
+    end
+  
+    @doc """
+    Calculates the total area occupied by the item in the layout.
+    
+    ## Parameters
+    - item_position: The item position record
+    
+    ## Returns
+    - Decimal with the total area, or 0 if no dimensions specified
+    """
+    @spec total_area(t()) :: Decimal.t()
+    def total_area(item_position) do
+      with width when not is_nil(width) <- item_position.width,
+           height when not is_nil(height) <- item_position.height do
+        Decimal.mult(width, height)
+      else
+        _ -> Decimal.new(0)
+      end
+    end
+  
+    @doc """
+    Checks if the item position has valid dimensions.
+    
+    ## Parameters
+    - item_position: The item position record to check
+    
+    ## Returns
+    - `true` if dimensions are valid, `false` otherwise
+    """
+    @spec has_valid_dimensions?(t()) :: boolean()
+    def has_valid_dimensions?(item_position) do
+      cond do
+        is_nil(item_position.width) and is_nil(item_position.height) ->
+          true
+        
+        not is_nil(item_position.width) and Decimal.compare(item_position.width, Decimal.new(0)) == :lt ->
+          false
+        
+        not is_nil(item_position.height) and Decimal.compare(item_position.height, Decimal.new(0)) == :lt ->
+          false
+        
+        true ->
+          true
+      end
+    end
+  
+    # Private helper functions
+  
+    defp format_decimal(nil), do: "N/A"
+    defp format_decimal(decimal), do: Decimal.to_string(decimal)
+  
+    defp format_rotation(0), do: "No rotation"
+    defp format_rotation(degrees), do: "#{Decimal.to_string(degrees)}°"
   end
 
   # Helper function to get layout dimensions

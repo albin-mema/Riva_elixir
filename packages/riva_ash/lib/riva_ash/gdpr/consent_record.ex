@@ -21,6 +21,9 @@ defmodule RivaAsh.GDPR.ConsentRecord do
 
   import RivaAsh.ResourceHelpers
 
+  @config Application.get_env(:riva_ash, :gdpr, %{})
+  @default_consent_method Application.get_env(:riva_ash, :gdpr_default_consent_method, :web_form)
+
   standard_postgres("consent_records")
   standard_paper_trail()
 
@@ -174,7 +177,7 @@ defmodule RivaAsh.GDPR.ConsentRecord do
 
     attribute :consent_method, :atom do
       allow_nil?(false)
-      default(:web_form)
+      default(@default_consent_method)
       public?(true)
       constraints(one_of: [:web_form, :api, :email, :phone, :in_person, :import])
       description("How the consent was collected")
@@ -235,7 +238,101 @@ defmodule RivaAsh.GDPR.ConsentRecord do
       order_by: [:consent_date],
       order_directions: [:desc]
     },
-    default_limit: 50,
-    max_limit: 200
+    default_limit: Map.get(@config, :default_limit, 50),
+    max_limit: Map.get(@config, :max_limit, 200)
   }
+
+  # Type specifications for public functions
+  @type t :: %__MODULE__{
+          id: String.t(),
+          user_id: String.t(),
+          business_id: String.t() | nil,
+          purpose: atom(),
+          consent_given: boolean(),
+          consent_date: DateTime.t(),
+          withdrawal_date: DateTime.t() | nil,
+          consent_version: String.t(),
+          ip_address: String.t() | nil,
+          user_agent: String.t() | nil,
+          consent_method: atom(),
+          inserted_at: DateTime.t(),
+          updated_at: DateTime.t()
+        }
+
+  @spec give_consent(map()) :: {:ok, t()} | {:error, term()}
+  def give_consent(params) when is_map(params) do
+    with :ok <- validate_consent_params(params),
+         params_with_defaults <- apply_consent_defaults(params) do
+      params_with_defaults
+      |> Map.put(:consent_method, Map.get(params_with_defaults, :consent_method, @default_consent_method))
+      |> Ash.create(action: :give_consent)
+    else
+      {:error, reason} -> {:error, reason}
+    end
+  end
+
+  def give_consent(_params) do
+    {:error, "Consent parameters must be a map"}
+  end
+
+  @spec withdraw_consent(map()) :: {:ok, t()} | {:error, term()}
+  def withdraw_consent(params) when is_map(params) do
+    with :ok <- validate_consent_params(params),
+         params_with_defaults <- apply_consent_defaults(params) do
+      params_with_defaults
+      |> Map.put(:consent_method, Map.get(params_with_defaults, :consent_method, @default_consent_method))
+      |> Ash.create(action: :withdraw_consent)
+    else
+      {:error, reason} -> {:error, reason}
+    end
+  end
+
+  def withdraw_consent(_params) do
+    {:error, "Consent parameters must be a map"}
+  end
+
+  @spec by_user(String.t()) :: {:ok, [t()]} | {:error, term()}
+  def by_user(user_id) when is_binary(user_id) do
+    Ash.read(action: :by_user, arguments: %{user_id: user_id})
+  end
+
+  def by_user(_user_id) do
+    {:error, "User ID must be a string"}
+  end
+
+  @spec by_purpose(atom()) :: {:ok, [t()]} | {:error, term()}
+  def by_purpose(purpose) when is_atom(purpose) do
+    Ash.read(action: :by_purpose, arguments: %{purpose: purpose})
+  end
+
+  def by_purpose(_purpose) do
+    {:error, "Purpose must be an atom"}
+  end
+
+  @spec active_consents() :: {:ok, [t()]} | {:error, term()}
+  def active_consents do
+    Ash.read(action: :active_consents)
+  end
+
+  # Private helper functions for data transformation
+  defp validate_consent_params(params) when is_map(params) do
+    required_fields = [:user_id, :purpose, :consent_version]
+    
+    if Enum.all?(required_fields, &Map.has_key?(params, &1)) do
+      :ok
+    else
+      {:error, "Missing required consent fields: #{inspect(required_fields)}"}
+    end
+  end
+
+  defp validate_consent_params(_params) do
+    {:error, "Consent parameters must be a map"}
+  end
+
+  defp apply_consent_defaults(params) do
+    params
+    |> Map.put_new(:consent_given, true)
+    |> Map.put_new(:consent_date, DateTime.utc_now())
+    |> Map.put_new(:consent_method, @default_consent_method)
+  end
 end

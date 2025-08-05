@@ -22,11 +22,25 @@ defmodule RivaAshWeb.Components.Navigation.SearchGlobal do
   attr(:class, :string, default: "")
   attr(:rest, :global)
 
+  @spec search_global(assigns :: map()) :: Phoenix.LiveView.Rendered.t()
   def search_global(assigns) do
+    # Render global search using functional composition
+    assigns
+    |> Map.put_new(:container_class, build_container_class(assigns.class))
+    |> Map.put_new(:input_container_class, build_input_container_class())
+    |> Map.put_new(:actions_class, build_actions_class(assigns.loading, assigns.query, assigns.on_clear))
+    |> Map.put_new(:results_class, build_results_class(assigns.show_results, assigns.results))
+    |> Map.put_new(:no_results_class, build_no_results_class(assigns.show_results, assigns.results, assigns.query, assigns.loading))
+    |> render_search_global_component()
+  end
+
+  # Private helper for global search rendering
+  @spec render_search_global_component(assigns :: map()) :: Phoenix.LiveView.Rendered.t()
+  defp render_search_global_component(assigns) do
     ~H"""
     <!-- Global search implementation will go here -->
-    <div {@rest} class={["global-search", @class]}>
-      <div class="search-input-container">
+    <div {@rest} class={@container_class}>
+      <div class={@input_container_class}>
         <.input
           type="text"
           value={@query}
@@ -36,7 +50,7 @@ defmodule RivaAshWeb.Components.Navigation.SearchGlobal do
           class="search-input"
         />
         
-        <div class="search-actions">
+        <div class={@actions_class}>
           <div :if={@loading} class="search-loading">
             <.icon name={:magnifying_glass} class="animate-spin" />
           </div>
@@ -53,7 +67,7 @@ defmodule RivaAshWeb.Components.Navigation.SearchGlobal do
         </div>
       </div>
       
-      <div :if={@show_results && @results != []} class="search-results">
+      <div :if={@show_results && @results != []} class={@results_class}>
         <div class="results-header">
           <span>Search Results (<%= length(@results) %>)</span>
         </div>
@@ -89,13 +103,45 @@ defmodule RivaAshWeb.Components.Navigation.SearchGlobal do
         </div>
       </div>
       
-      <div :if={@show_results && @results == [] && @query != "" && !@loading} class="no-results">
+      <div :if={@show_results && @results == [] && @query != "" && !@loading} class={@no_results_class}>
         <.icon name={:magnifying_glass} />
         <p>No results found for "<%= @query %>"</p>
         <p>Try searching for clients, items, or reservations</p>
       </div>
     </div>
     """
+  end
+
+  # Helper function to build container classes
+  @spec build_container_class(String.t()) :: String.t()
+  defp build_container_class(class) do
+    ["global-search", class]
+    |> Enum.filter(& &1 != "")
+    |> Enum.join(" ")
+  end
+
+  # Helper function to build input container classes
+  @spec build_input_container_class() :: String.t()
+  defp build_input_container_class() do
+    "search-input-container"
+  end
+
+  # Helper function to build actions classes
+  @spec build_actions_class(boolean(), String.t(), String.t() | nil) :: String.t()
+  defp build_actions_class(loading, query, on_clear) do
+    "search-actions"
+  end
+
+  # Helper function to build results classes
+  @spec build_results_class(boolean(), list()) :: String.t()
+  defp build_results_class(show_results, results) do
+    if show_results && results != [], do: "search-results", else: "hidden"
+  end
+
+  # Helper function to build no results classes
+  @spec build_no_results_class(boolean(), list(), String.t(), boolean()) :: String.t()
+  defp build_no_results_class(show_results, results, query, loading) do
+    if show_results && results == [] && query != "" && !loading, do: "no-results", else: "hidden"
   end
 
   defp get_result_icon(type) do

@@ -13,50 +13,57 @@ defmodule RivaAsh.Validations.ConsecutiveDays do
   alias Ash.Error.Changes.InvalidChanges
 
   @impl true
+  @spec validate(changeset, opts, context :: map()) :: :ok | {:error, map()}
   def validate(changeset, _opts, _context) do
-    reserved_from = Ash.Changeset.get_attribute(changeset, :reserved_from)
-    reserved_until = Ash.Changeset.get_attribute(changeset, :reserved_until)
-
-    cond do
-      is_nil(reserved_from) or is_nil(reserved_until) ->
-        :ok
-
-      not consecutive_days?(reserved_from, reserved_until) ->
-        {:error,
-         InvalidChanges.exception(
-           field: :reserved_from,
-           message: "Multi-day reservations must be for consecutive calendar days with no gaps."
-         )}
-
-      true ->
-        :ok
-    end
-  end
-
-  defp consecutive_days?(reserved_from, reserved_until) do
-    from_date = Timex.to_date(reserved_from)
-    until_date = Timex.to_date(reserved_until)
-
-    # Calculate the number of days between start and end
-    days_diff = Timex.diff(until_date, from_date, :days)
-
-    # For single day reservations (same day), always valid
-    if days_diff == 0 do
-      true
+    with {:ok, reserved_from} <- Ash.Changeset.get_attribute(changeset, :reserved_from),
+         {:ok, reserved_until} <- Ash.Changeset.get_attribute(changeset, :reserved_until) do
+      validate_consecutive_days(reserved_from, reserved_until)
     else
-      # For multi-day reservations, check if they are consecutive
-      # The difference should equal the number of days in the reservation
-      # For example: Jan 1 to Jan 3 should have diff of 2 (3 days total)
-      days_diff >= 1 and consecutive_date_range?(from_date, until_date)
+      {:error, :missing_attribute} -> :ok
+      {:error, reason} -> {:error, reason}
     end
   end
 
+  @type changeset :: Ash.Changeset.t()
+  @type opts :: Keyword.t()
+
+  @spec validate_consecutive_days(DateTime.t(), DateTime.t()) :: :ok | {:error, map()}
+  defp validate_consecutive_days(reserved_from, reserved_until) do
+    if consecutive_days?(reserved_from, reserved_until) do
+      :ok
+    else
+      {:error,
+       InvalidChanges.exception(
+         field: :reserved_from,
+         message: "Multi-day reservations must be for consecutive calendar days with no gaps."
+       )}
+    end
+  end
+
+  @spec consecutive_days?(DateTime.t(), DateTime.t()) :: boolean()
+  defp consecutive_days?(reserved_from, reserved_until) do
+    {from_date, until_date} = {Timex.to_date(reserved_from), Timex.to_date(reserved_until)}
+    
+    case Timex.diff(until_date, from_date, :days) do
+      0 -> true  # Single day reservations are always valid
+      days_diff when days_diff >= 1 -> consecutive_date_range?(from_date, until_date)
+      _ -> false
+    end
+  end
+
+  @spec consecutive_date_range?(Date.t(), Date.t()) :: boolean()
   defp consecutive_date_range?(start_date, end_date) do
-    # Generate all dates in the range and check if they are consecutive
     expected_dates = Timex.Interval.new(from: start_date, until: end_date) |> Enum.to_list()
     actual_days = Timex.diff(end_date, start_date, :days) + 1
-
-    # The number of expected dates should match the actual day difference + 1
+    
     length(expected_dates) == actual_days
+  end
+
+  @spec get_required_attribute(changeset, atom()) :: {:ok, any()} | {:error, :missing_attribute}
+  defp get_required_attribute(changeset, attribute) do
+    case Ash.Changeset.get_attribute(changeset, attribute) do
+      nil -> {:error, :missing_attribute}
+      value -> {:ok, value}
+    end
   end
 end

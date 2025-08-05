@@ -52,25 +52,41 @@ defmodule RivaAshWeb.Components.Organisms.PageHeader do
   slot(:action)
   slot(:extra)
 
+  @spec page_header(assigns :: map()) :: Phoenix.LiveView.Rendered.t()
   def page_header(assigns) do
-    assigns = assign(assigns, :header_class, header_class(assigns))
+    # Render page header using functional composition
+    assigns
+    |> Map.put_new(:header_class, build_header_class(assigns.class, assigns.variant))
+    |> Map.put_new(:breadcrumbs_class, build_breadcrumbs_class(assigns.breadcrumbs))
+    |> Map.put_new(:content_wrapper_class, build_content_wrapper_class(assigns.variant))
+    |> Map.put_new(:title_section_class, build_title_section_class(assigns.icon))
+    |> Map.put_new(:title_class, build_title_class(assigns.icon))
+    |> Map.put_new(:badges_class, build_badges_class(assigns.badge))
+    |> Map.put_new(:description_class, build_description_class(assigns.description))
+    |> Map.put_new(:extra_class, build_extra_class(assigns.extra))
+    |> Map.put_new(:actions_class, build_actions_class(assigns.action))
+    |> render_page_header_component()
+  end
 
+  # Private helper for page header rendering
+  @spec render_page_header_component(assigns :: map()) :: Phoenix.LiveView.Rendered.t()
+  defp render_page_header_component(assigns) do
     ~H"""
     <div class={@header_class} {@rest}>
       <%= if @breadcrumbs != [] do %>
-        <.breadcrumbs items={@breadcrumbs} class="mb-4" />
+        <.breadcrumbs items={@breadcrumbs} class={@breadcrumbs_class} />
       <% end %>
 
-      <div class={content_wrapper_class(@variant)}>
+      <div class={@content_wrapper_class}>
         <div class="flex-1 min-w-0">
-          <div class="flex items-center gap-3">
+          <div class={@title_section_class}>
             <%= if @icon do %>
               <div class="flex-shrink-0">
                 <UIIcon.icon name={@icon} size="lg" class="text-muted-foreground" />
               </div>
             <% end %>
 
-            <UIText.text variant="h1" class="truncate">
+            <UIText.text variant="h1" class={@title_class}>
               <%= @title %>
             </UIText.text>
 
@@ -82,26 +98,93 @@ defmodule RivaAshWeb.Components.Organisms.PageHeader do
           </div>
 
           <%= if @description do %>
-            <UIText.text variant="lead" color="muted" class="mt-2">
+            <UIText.text variant="lead" color="muted" class={@description_class}>
               <%= @description %>
             </UIText.text>
           <% end %>
 
           <%= if @extra != [] do %>
-            <div class="mt-4">
+            <div class={@extra_class}>
               <%= render_slot(@extra) %>
             </div>
           <% end %>
         </div>
 
         <%= if @action != [] do %>
-          <div class="mt-4 flex flex-shrink-0 gap-3 md:mt-0 md:ml-4">
+          <div class={@actions_class}>
             <%= render_slot(@action) %>
           </div>
         <% end %>
       </div>
     </div>
     """
+  end
+
+  # Helper function to build header classes
+  @spec build_header_class(String.t(), String.t()) :: String.t()
+  defp build_header_class(class, variant) do
+    base =
+      case variant do
+        "compact" -> "mb-6"
+        "card" -> "mb-8"
+        _ -> "mb-8"
+      end
+
+    Enum.join([base, class], " ")
+  end
+
+  # Helper function to build breadcrumbs classes
+  @spec build_breadcrumbs_class(list()) :: String.t()
+  defp build_breadcrumbs_class(breadcrumbs) do
+    if breadcrumbs != [], do: "mb-4", else: "hidden"
+  end
+
+  # Helper function to build content wrapper classes
+  @spec build_content_wrapper_class(String.t()) :: String.t()
+  defp build_content_wrapper_class(variant) do
+    case variant do
+      "card" ->
+        "bg-card rounded-lg p-6 shadow-sm flex flex-col md:flex-row md:items-center md:justify-between"
+
+      _ ->
+        "flex flex-col md:flex-row md:items-center md:justify-between"
+    end
+  end
+
+  # Helper function to build title section classes
+  @spec build_title_section_class(atom() | nil) :: String.t()
+  defp build_title_section_class(icon) do
+    "flex items-center gap-3"
+  end
+
+  # Helper function to build title classes
+  @spec build_title_class(atom() | nil) :: String.t()
+  defp build_title_class(icon) do
+    "truncate"
+  end
+
+  # Helper function to build badges classes
+  @spec build_badges_class(list()) :: String.t()
+  defp build_badges_class(badge) do
+    if badge != [], do: "flex-shrink-0", else: "hidden"
+  end
+
+  # Helper function to build description classes
+  @spec build_description_class(String.t() | nil) :: String.t()
+  defp build_description_class(description) do
+    if description, do: "mt-2", else: "hidden"
+  end
+
+  # Helper function to build extra classes
+  @spec build_extra_class(list()) :: String.t()
+  defp build_extra_class(extra) do
+    if extra != [], do: "mt-4", else: "hidden"
+  end
+
+  # Helper function to build actions classes
+  @spec build_actions_class(list()) :: String.t()
+  defp build_actions_class(action) do
+    if action != [], do: "mt-4 flex flex-shrink-0 gap-3 md:mt-0 md:ml-4", else: "hidden"
   end
 
   @doc """

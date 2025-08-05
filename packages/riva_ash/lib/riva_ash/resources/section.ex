@@ -19,6 +19,15 @@ defmodule RivaAsh.Resources.Section do
 
   import RivaAsh.ResourceHelpers
 
+  @type t :: %__MODULE__{
+    id: String.t(),
+    name: String.t(),
+    description: String.t() | nil,
+    plot_id: String.t(),
+    inserted_at: DateTime.t(),
+    updated_at: DateTime.t()
+  }
+
   standard_postgres("sections")
   standard_archive()
   standard_admin([:name, :plot, :description])
@@ -187,8 +196,9 @@ defmodule RivaAsh.Resources.Section do
   end
 
   # Helper function for admin dropdowns
+  @spec choices_for_select :: [{String.t(), String.t()}]
   def choices_for_select do
-    RivaAsh.Resources.Section
+    __MODULE__
     |> Ash.read!()
     |> Enum.map(fn section ->
       business_name =
@@ -200,5 +210,25 @@ defmodule RivaAsh.Resources.Section do
 
       {section.id, "#{section.name} (#{business_name})"}
     end)
+  end
+
+  # Private helper functions for filtering
+  @spec apply_plot_filter(Ash.Query.t(), String.t() | nil) :: Ash.Query.t()
+  defp apply_plot_filter(query, nil), do: query
+
+  defp apply_plot_filter(query, plot_id) do
+    Ash.Query.filter(query, expr(plot_id == ^plot_id))
+  end
+
+  @spec apply_business_filter(Ash.Query.t(), String.t() | nil) :: Ash.Query.t()
+  defp apply_business_filter(query, nil), do: query
+
+  defp apply_business_filter(query, business_id) do
+    Ash.Query.filter(query, expr(plot.business_id == ^business_id))
+  end
+
+  @spec apply_active_filter(Ash.Query.t()) :: Ash.Query.t()
+  defp apply_active_filter(query) do
+    Ash.Query.filter(query, expr(is_nil(archived_at)))
   end
 end

@@ -7,6 +7,27 @@ defmodule RivaAsh.Resources.Reservation do
   and require comprehensive validation and authorization.
   """
 
+  @type t :: %__MODULE__{
+    id: String.t(),
+    business_id: String.t(),
+    client_id: String.t(),
+    item_id: String.t(),
+    employee_id: String.t() | nil,
+    reserved_from: DateTime.t(),
+    reserved_until: DateTime.t(),
+    status: :pending | :provisional | :confirmed | :cancelled | :completed,
+    hold_expires_at: DateTime.t() | nil,
+    is_provisional: boolean(),
+    notes: String.t() | nil,
+    is_paid: boolean(),
+    total_amount: Decimal.t() | nil,
+    number_of_days: integer() | nil,
+    daily_rate: Decimal.t() | nil,
+    multi_day_discount: Decimal.t() | nil,
+    inserted_at: DateTime.t(),
+    updated_at: DateTime.t()
+  }
+
   use Ash.Resource,
     domain: RivaAsh.Domain,
     data_layer: AshPostgres.DataLayer,
@@ -511,8 +532,133 @@ defmodule RivaAsh.Resources.Reservation do
     identity(:unique_item_time_slot, [:item_id, :reserved_from, :reserved_until])
   end
 
-  # Helper function for admin dropdowns
+  # Public helper functions
+  @spec choices_for_select :: [{String.t(), String.t()}]
   def choices_for_select do
-    RivaAsh.ResourceHelpers.choices_for_select(__MODULE__)
+    __MODULE__
+    |> Ash.read!()
+    |> Enum.map(&{&1.id, reservation_display_name(&1)})
+  end
+
+  @spec get_client(String.t()) :: {:ok, RivaAsh.Resources.Client.t()} | {:error, String.t()}
+  def get_client(reservation_id) do
+    with {:ok, reservation} <- __MODULE__.by_id(reservation_id),
+         {:ok, client} <- Ash.load(reservation, :client) do
+      {:ok, client}
+    else
+      {:error, reason} -> {:error, reason}
+      error -> {:error, "Failed to load client: #{inspect(error)}"}
+    end
+  end
+
+  @spec get_item(String.t()) :: {:ok, RivaAsh.Resources.Item.t()} | {:error, String.t()}
+  def get_item(reservation_id) do
+    with {:ok, reservation} <- __MODULE__.by_id(reservation_id),
+         {:ok, item} <- Ash.load(reservation, :item) do
+      {:ok, item}
+    else
+      {:error, reason} -> {:error, reason}
+      error -> {:error, "Failed to load item: #{inspect(error)}"}
+    end
+  end
+
+  @spec get_business(String.t()) :: {:ok, RivaAsh.Resources.Business.t()} | {:error, String.t()}
+  def get_business(reservation_id) do
+    with {:ok, reservation} <- __MODULE__.by_id(reservation_id),
+         {:ok, business} <- Ash.load(reservation, :business) do
+      {:ok, business}
+    else
+      {:error, reason} -> {:error, reason}
+      error -> {:error, "Failed to load business: #{inspect(error)}"}
+    end
+  end
+
+  @spec get_business_by_reservation_id(String.t()) :: {:ok, RivaAsh.Resources.Business.t()} | {:error, String.t()}
+  def get_business_by_reservation_id(reservation_id) do
+    case __MODULE__.by_id(reservation_id) do
+      {:ok, reservation} -> get_business(reservation_id)
+      {:error, reason} -> {:error, reason}
+    end
+  end
+
+  # Private helper functions for filtering
+  @spec apply_client_filter(Ash.Query.t(), String.t() | nil) :: Ash.Query.t()
+  defp apply_client_filter(query, nil), do: query
+
+  defp apply_client_filter(query, client_id) do
+    Ash.Query.filter(query, expr(client_id == ^client_id))
+  end
+
+  @spec apply_item_filter(Ash.Query.t(), String.t() | nil) :: Ash.Query.t()
+  defp apply_item_filter(query, nil), do: query
+
+  defp apply_item_filter(query, item_id) do
+    Ash.Query.filter(query, expr(item_id == ^item_id))
+  end
+
+  @spec apply_business_filter(Ash.Query.t(), String.t() | nil) :: Ash.Query.t()
+  defp apply_business_filter(query, nil), do: query
+
+  defp apply_business_filter(query, business_id) do
+    Ash.Query.filter(query, expr(business_id == ^business_id))
+  end
+
+  @spec apply_status_filter(Ash.Query.t(), atom() | nil) :: Ash.Query.t()
+  defp apply_status_filter(query, nil), do: query
+
+  defp apply_status_filter(query, status) do
+    Ash.Query.filter(query, expr(status == ^status))
+  end
+
+  @spec apply_date_range_filter(Ash.Query.t(), DateTime.t() | nil, DateTime.t() | nil) :: Ash.Query.t()
+  defp apply_date_range_filter(query, nil, nil), do: query
+
+  defp apply_date_range_filter(query, start_date, nil) do
+    Ash.Query.filter(query, expr(reserved_from >= ^start_date))
+  end
+
+  defp apply_date_range_filter(query, nil, end_date) do
+    Ash.Query.filter(query, expr(reserved_until <= ^end_date))
+  end
+
+  defp apply_date_range_filter(query, start_date, end_date) do
+    Ash.Query.filter(query,
+      and: [
+        expr(reserved_from >= ^start_date),
+        expr(reserved_until <= ^end_date)
+      ]
+    )
+  end
+
+  @spec apply_paid_filter(Ash.Query.t(), boolean() | nil) :: Ash.Query.t()
+  defp apply_paid_filter(query, nil), do: query
+
+  defp apply_paid_filter(query, is_paid) do
+    Ash.Query.filter(query, expr(is_paid == ^is_paid))
+  end
+
+  @spec apply_provisional_filter(Ash.Query.t(), boolean() | nil) :: Ash.Query.t()
+  defp apply_provisional_filter(query, nil), do: query
+
+  defp apply_provisional_filter(query, is_provisional) do
+    Ash.Query.filter(query, expr(is_provisional == ^is_provisional))
+  end
+
+  # Private helper functions
+  @spec reservation_display_name(__MODULE__.t()) :: String.t()
+  defp reservation_display_name(reservation) do
+    with {:ok, item} <- Ash.load(reservation, :item),
+         {:ok, client} <- Ash.load(reservation, :client) do
+      "#{client.name} - #{item.name} (#{format_date_range(reservation.reserved_from, reservation.reserved_until)})"
+    else
+      _ -> "Reservation #{reservation.id}"
+    end
+  end
+
+  @spec format_date_range(DateTime.t(), DateTime.t()) :: String.t()
+  defp format_date_range(start_date, end_date) do
+    start_str = Timex.format!(start_date, "{Mshort} {D}, {YYYY} {h12}:{m} {AM}")
+    end_str = Timex.format!(end_date, "{Mshort} {D}, {YYYY} {h12}:{m} {AM}")
+    "#{start_str} - #{end_str}"
   end
 end

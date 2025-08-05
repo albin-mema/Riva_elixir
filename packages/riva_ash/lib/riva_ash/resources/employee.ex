@@ -4,6 +4,24 @@ defmodule RivaAsh.Resources.Employee do
   Employees belong to a business and have different roles and permissions.
   """
 
+  @type t :: %__MODULE__{
+          id: String.t(),
+          business_id: String.t(),
+          email: String.t(),
+          first_name: String.t(),
+          last_name: String.t(),
+          phone: String.t() | nil,
+          role: String.t(),
+          is_active: boolean(),
+          employee_number: String.t() | nil,
+          hire_date: Date.t() | nil,
+          last_login_at: DateTime.t() | nil,
+          notes: String.t() | nil,
+          inserted_at: DateTime.t(),
+          updated_at: DateTime.t(),
+          archived_at: DateTime.t() | nil
+        }
+
   use Ash.Resource,
     domain: RivaAsh.Domain,
     data_layer: AshPostgres.DataLayer,
@@ -343,5 +361,160 @@ defmodule RivaAsh.Resources.Employee do
       public?(true)
       description("Whether this employee is a manager or admin")
     end
+  end
+
+  @doc """
+  Returns a list of employees formatted for dropdown selection.
+  
+  ## Returns
+  A list of tuples `{id, full_name}` suitable for form dropdowns.
+  """
+  @spec choices_for_select :: [{String.t(), String.t()}]
+  def choices_for_select do
+    __MODULE__
+    |> Ash.read!()
+    |> Enum.map(&{&1.id, &1.full_name})
+  end
+
+  @doc """
+  Fetches the business associated with an employee.
+  
+  ## Parameters
+  - employee_id - The UUID of the employee
+  
+  ## Returns
+  `{:ok, business}` or `{:error, reason}`
+  """
+  @spec get_business(String.t()) :: {:ok, RivaAsh.Resources.Business.t()} | {:error, String.t()}
+  def get_business(employee_id) do
+    with {:ok, employee} <- __MODULE__.by_id(employee_id),
+         {:ok, business} <- Ash.load(employee, :business) do
+      {:ok, business}
+    else
+      {:error, reason} -> {:error, reason}
+      error -> {:error, "Failed to load business: #{inspect(error)}"}
+    end
+  end
+
+  @doc """
+  Fetches the business associated with an employee by employee ID.
+  
+  ## Parameters
+  - employee_id - The UUID of the employee
+  
+  ## Returns
+  `{:ok, business}` or `{:error, reason}`
+  """
+  @spec get_business_by_employee_id(String.t()) :: {:ok, RivaAsh.Resources.Business.t()} | {:error, String.t()}
+  def get_business_by_employee_id(employee_id) do
+    case __MODULE__.by_id(employee_id) do
+      {:ok, employee} -> get_business(employee_id)
+      {:error, reason} -> {:error, reason}
+    end
+  end
+
+  @doc """
+  Determines if an employee has management privileges.
+  
+  ## Parameters
+  - employee - An employee record
+  
+  ## Returns
+  `true` if the employee is a manager or admin, `false` otherwise
+  """
+  @spec is_manager?(t()) :: boolean()
+  def is_manager?(%__MODULE__{role: role}) when role in ["manager", "admin"], do: true
+  def is_manager?(%__MODULE__{}), do: false
+
+  @doc """
+  Determines if an employee has admin privileges.
+  
+  ## Parameters
+  - employee - An employee record
+  
+  ## Returns
+  `true` if the employee is an admin, `false` otherwise
+  """
+  @spec is_admin?(t()) :: boolean()
+  def is_admin?(%__MODULE__{role: "admin"}), do: true
+  def is_admin?(%__MODULE__{}), do: false
+
+  @doc """
+  Formats the employee's name for display.
+  
+  ## Parameters
+  - employee - An employee record
+  
+  ## Returns
+  A formatted display name string
+  """
+  @spec display_name(t()) :: String.t()
+  def display_name(%__MODULE__{first_name: first_name, last_name: last_name}) do
+    "#{first_name} #{last_name}"
+  end
+
+  @doc """
+  Determines if an employee can make reservations on behalf of clients.
+  
+  ## Parameters
+  - employee - An employee record
+  
+  ## Returns
+  `true` if the employee can make reservations, `false` otherwise
+  """
+  @spec can_make_reservations?(t()) :: boolean()
+  def can_make_reservations?(%__MODULE__{is_active: true, role: role})
+      when role in ["admin", "manager", "staff"], do: true
+  def can_make_reservations?(%__MODULE__{}), do: false
+
+  @doc """
+  Calculates the number of days since the employee was hired.
+  
+  ## Parameters
+  - employee - An employee record
+  
+  ## Returns
+  The number of days since hire, or `nil` if hire date is not set
+  """
+  @spec days_since_hired(t()) :: integer() | nil
+  def days_since_hired(%__MODULE__{hire_date: nil}), do: nil
+  def days_since_hired(%__MODULE__{hire_date: hire_date}) do
+    Date.diff(Date.utc_today(), hire_date)
+  end
+
+  # Private helper functions for filtering
+  @spec apply_business_filter(Ash.Query.t(), String.t() | nil) :: Ash.Query.t()
+  defp apply_business_filter(query, nil), do: query
+
+  defp apply_business_filter(query, business_id) do
+    Ash.Query.filter(query, expr(business_id == ^business_id))
+  end
+
+  @spec apply_role_filter(Ash.Query.t(), String.t() | nil) :: Ash.Query.t()
+  defp apply_role_filter(query, nil), do: query
+
+  defp apply_role_filter(query, role) do
+    Ash.Query.filter(query, expr(role == ^role))
+  end
+
+  @spec apply_active_filter(Ash.Query.t(), boolean() | nil) :: Ash.Query.t()
+  defp apply_active_filter(query, nil), do: query
+
+  defp apply_active_filter(query, is_active) do
+    Ash.Query.filter(query, expr(is_active == ^is_active))
+  end
+
+  @spec apply_search_filter(Ash.Query.t(), String.t() | nil) :: Ash.Query.t()
+  defp apply_search_filter(query, nil), do: query
+
+  defp apply_search_filter(query, search_term) do
+    search_term = "%#{search_term}%"
+    Ash.Query.filter(query,
+      or: [
+        expr(first_name like ^search_term),
+        expr(last_name like ^search_term),
+        expr(email like ^search_term)
+      ]
+    )
   end
 end

@@ -10,6 +10,7 @@ defmodule RivaAshWeb.SystemSettingsLive do
 
   alias RivaAsh.Resources.{Business, User, Token}
   alias RivaAsh.ErrorHelpers
+  alias RivaAsh.System.SystemSettingsService
 
   import RivaAshWeb.Components.Organisms.PageHeader
   import RivaAshWeb.Components.Molecules.Card
@@ -20,25 +21,21 @@ defmodule RivaAshWeb.SystemSettingsLive do
   def mount(_params, session, socket) do
     case get_current_user_from_session(session) do
       {:ok, user} ->
-        try do
-          # Load user's businesses
-          businesses = Business.read!(actor: user)
+        case SystemSettingsService.get_system_settings_data(user) do
+          {:ok, %{businesses: businesses, tokens: tokens}} ->
+            socket =
+              socket
+              |> assign(:current_user, user)
+              |> assign(:page_title, get_page_title())
+              |> assign(:businesses, businesses)
+              |> assign(:tokens, tokens)
+              |> assign(:view_mode, "general")
+              |> assign(:loading, false)
 
-          # Load tokens (if user has permission)
-          tokens = Token.read!(actor: user)
+            {:ok, socket}
 
-          socket =
-            socket
-            |> assign(:current_user, user)
-            |> assign(:page_title, "Settings & Configuration")
-            |> assign(:businesses, businesses)
-            |> assign(:tokens, tokens)
-            |> assign(:view_mode, "general")
-            |> assign(:loading, false)
-
-          {:ok, socket}
-        rescue
-          error in [Ash.Error.Forbidden, Ash.Error.Invalid] ->
+          {:error, error} ->
+            error_message = ErrorHelpers.format_error(error)
             {:ok, redirect(socket, to: "/access-denied")}
         end
 
@@ -350,11 +347,26 @@ defmodule RivaAshWeb.SystemSettingsLive do
   end
 
   def handle_event("create_token", _params, socket) do
-    # Placeholder for token creation
-    {:noreply, put_flash(socket, :info, "Token creation will be implemented")}
+    case SystemSettingsService.create_token(socket.assigns.current_user) do
+      {:ok, token} ->
+        socket =
+          socket
+          |> put_flash(:info, "Token created successfully!")
+          |> assign(:tokens, [token | socket.assigns.tokens])
+
+        {:noreply, socket}
+
+      {:error, error} ->
+        error_message = ErrorHelpers.format_error(error)
+        {:noreply, put_flash(socket, :error, "Failed to create token: #{error_message}")}
+    end
   end
 
   def handle_event(_event, _params, socket) do
     {:noreply, socket}
   end
+
+  # Private helper functions
+
+  defp get_page_title, do: Application.get_env(:riva_ash, :system_settings_page_title, "Settings & Configuration")
 end

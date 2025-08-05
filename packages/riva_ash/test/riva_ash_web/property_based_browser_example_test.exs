@@ -24,6 +24,7 @@ defmodule RivaAshWeb.PropertyBasedBrowserExampleTest do
 
   describe "Simple Property-Based Browser Tests" do
     @tag :basic
+    @spec test_simple_navigation_flows_work :: :ok
     property "simple navigation flows work", %{conn: conn} do
       # Generate simple navigation flows
       check all(
@@ -49,6 +50,7 @@ defmodule RivaAshWeb.PropertyBasedBrowserExampleTest do
     end
 
     @tag :route_enumeration_browser
+    @spec test_all_enumerated_routes_are_navigable_without_crashing :: :ok
     property "all enumerated routes are navigable without crashing", %{conn: conn} do
       alias RivaAsh.PropertyTesting.RouteEnumerator
 
@@ -92,6 +94,7 @@ defmodule RivaAshWeb.PropertyBasedBrowserExampleTest do
     end
 
     @tag :auth_simple
+    @spec test_registration_and_login_flows :: :ok
     property "registration and login flows", %{conn: conn} do
       check all(
               name <- string(:alphanumeric, min_length: 3, max_length: 20),
@@ -135,6 +138,7 @@ defmodule RivaAshWeb.PropertyBasedBrowserExampleTest do
     end
 
     @tag :authenticated_routes_browser
+    @spec test_authenticated_routes_are_navigable_after_login :: :ok
     property "authenticated routes are navigable after login", %{conn: conn} do
       alias RivaAsh.PropertyTesting.RouteEnumerator
 
@@ -201,6 +205,7 @@ defmodule RivaAshWeb.PropertyBasedBrowserExampleTest do
     end
 
     @tag :manual
+    @spec test_manual_happy_path_flow :: :ok
     test "manual happy path flow", %{conn: conn} do
       # A manually defined flow to ensure the system works
       flow = [
@@ -230,6 +235,7 @@ defmodule RivaAshWeb.PropertyBasedBrowserExampleTest do
     end
 
     @tag :route_check
+    @spec test_check_that_basic_routes_are_accessible :: :ok
     test "check that basic routes are accessible", %{conn: conn} do
       basic_routes = ["/", "/sign-in", "/register"]
 
@@ -247,6 +253,7 @@ defmodule RivaAshWeb.PropertyBasedBrowserExampleTest do
     end
 
     @tag :comprehensive_route_test
+    @spec test_comprehensive_route_navigation_test :: :ok
     test "comprehensive route navigation test", %{conn: conn} do
       alias RivaAsh.PropertyTesting.RouteEnumerator
 
@@ -321,6 +328,7 @@ defmodule RivaAshWeb.PropertyBasedBrowserExampleTest do
     end
 
     @tag :state_machine
+    @spec test_state_machine_transitions_work_correctly :: :ok
     test "state machine transitions work correctly" do
       alias RivaAsh.PropertyTesting.StateMachine
 
@@ -336,6 +344,7 @@ defmodule RivaAshWeb.PropertyBasedBrowserExampleTest do
     end
 
     @tag :route_enumeration
+    @spec test_route_enumeration_works :: :ok
     test "route enumeration works" do
       alias RivaAsh.PropertyTesting.RouteEnumerator
 
@@ -357,6 +366,7 @@ defmodule RivaAshWeb.PropertyBasedBrowserExampleTest do
     end
 
     @tag :flow_generation
+    @spec test_flow_generation_produces_valid_flows :: :ok
     test "flow generation produces valid flows" do
       # Generate a few flows and validate them
       for _i <- 1..3 do
@@ -383,6 +393,7 @@ defmodule RivaAshWeb.PropertyBasedBrowserExampleTest do
 
   describe "Data Management" do
     @tag :data_setup
+    @spec test_data_manager_creates_test_data :: :ok
     test "data manager creates test data" do
       test_data = DataManager.initialize_test_data()
 
@@ -405,6 +416,7 @@ defmodule RivaAshWeb.PropertyBasedBrowserExampleTest do
   end
 
   # Helper functions
+  @spec is_navigable_path?(path :: String.t()) :: boolean()
   defp is_navigable_path?(path) do
     # Filter out routes that are not suitable for browser navigation
     not String.contains?(path, "*") and

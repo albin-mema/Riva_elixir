@@ -4,6 +4,9 @@ defmodule RivaAshWeb.HealthController do
 
   Provides endpoints to check the health status of the application,
   including database connectivity and service status.
+
+  Uses functional programming patterns with proper error handling and
+  type safety specifications.
   """
 
   use Phoenix.Controller, formats: [:json]
@@ -46,21 +49,118 @@ defmodule RivaAshWeb.HealthController do
   """
   @spec check(Conn.t(), map()) :: Conn.t()
   def check(conn, _params) do
-    # Verify database connectivity
-    case RivaAsh.Repo.query("SELECT 1") do
-      {:ok, _result} ->
-        send_health_response(conn, :ok, "healthy", "connected")
-
-      {:error, _error} ->
-        send_health_response(conn, :service_unavailable, "unhealthy", "disconnected")
+    with {:ok, _result} <- verify_database_connectivity() do
+      send_healthy_response(conn)
+    else
+      {:error, _reason} -> send_unhealthy_response(conn)
     end
+  end
+
+  @doc """
+  Enhanced health check endpoint with detailed metrics.
+
+  Returns comprehensive health status including database connectivity,
+  service metrics, and system information.
+
+  ## Responses
+    * 200 - Application is healthy with detailed metrics
+    * 503 - Service unavailable with detailed error information
+  """
+  @spec check_detailed(Conn.t(), map()) :: Conn.t()
+  def check_detailed(conn, _params) do
+    with {:ok, db_status} <- check_database_status(),
+         {:ok, service_metrics} <- collect_service_metrics() do
+      send_detailed_healthy_response(conn, db_status, service_metrics)
+    else
+      {:error, reason} -> send_detailed_unhealthy_response(conn, reason)
+    end
+  end
+
+  # Private helper functions
+
+  defp verify_database_connectivity do
+    case RivaAsh.Repo.query("SELECT 1") do
+      {:ok, result} -> {:ok, result}
+      {:error, reason} -> {:error, reason}
+    end
+  end
+
+  defp check_database_status do
+    case verify_database_connectivity() do
+      {:ok, _result} -> {:ok, "connected"}
+      {:error, _reason} -> {:ok, "disconnected"}
+    end
+  end
+
+  defp collect_service_metrics do
+    metrics = %{
+      uptime: calculate_uptime(),
+      memory_usage: get_memory_usage(),
+      process_count: get_process_count()
+    }
+    {:ok, metrics}
+  end
+
+  defp calculate_uptime do
+    case :application.get_start_time(:riva_ash) do
+      {:ok, start_time} ->
+        seconds = :erlang.system_time(:second) - start_time
+        format_duration(seconds)
+      :undefined ->
+        "unknown"
+    end
+  end
+
+  defp get_memory_usage do
+    {memory, _} = :erlang.memory()
+    format_bytes(memory)
+  end
+
+  defp get_process_count do
+    length(:erlang.processes())
+  end
+
+  defp send_healthy_response(conn) do
+    send_health_response(conn, :ok, "healthy", "connected")
+  end
+
+  defp send_unhealthy_response(conn) do
+    send_health_response(conn, :service_unavailable, "unhealthy", "disconnected")
+  end
+
+  defp send_detailed_healthy_response(conn, db_status, service_metrics) do
+    response = %{
+      status: "healthy",
+      timestamp: DateTime.utc_now() |> DateTime.to_iso8601(),
+      database: db_status,
+      service: "riva_ash_api",
+      metrics: service_metrics
+    }
+
+    conn
+    |> put_status(:ok)
+    |> json(response)
+  end
+
+  defp send_detailed_unhealthy_response(conn, reason) do
+    response = %{
+      status: "unhealthy",
+      timestamp: DateTime.utc_now() |> DateTime.to_iso8601(),
+      database: "disconnected",
+      service: "riva_ash_api",
+      error: "Database connection failed: #{inspect(reason)}"
+    }
+
+    conn
+    |> put_status(:service_unavailable)
+    |> json(response)
   end
 
   @spec send_health_response(Conn.t(), atom(), String.t(), String.t()) :: Conn.t()
   defp send_health_response(conn, status, health_status, db_status) do
     response = %{
       status: health_status,
-      timestamp: Timex.now() |> DateTime.to_iso8601(),
+      timestamp: DateTime.utc_now() |> DateTime.to_iso8601(),
       database: db_status,
       service: "riva_ash_api"
     }
@@ -68,5 +168,48 @@ defmodule RivaAshWeb.HealthController do
     conn
     |> put_status(status)
     |> json(response)
+  end
+
+  # Utility functions
+
+  defp format_duration(seconds) when seconds < 60 do
+    "#{seconds}s"
+  end
+
+  defp format_duration(seconds) when seconds < 3600 do
+    minutes = div(seconds, 60)
+    remaining_seconds = rem(seconds, 60)
+    "#{minutes}m #{remaining_seconds}s"
+  end
+
+  defp format_duration(seconds) when seconds < 86400 do
+    hours = div(seconds, 3600)
+    remaining_minutes = div(rem(seconds, 3600), 60)
+    "#{hours}h #{remaining_minutes}m"
+  end
+
+  defp format_duration(seconds) do
+    days = div(seconds, 86400)
+    remaining_hours = div(rem(seconds, 86400), 3600)
+    "#{days}d #{remaining_hours}h"
+  end
+
+  defp format_bytes(bytes) when bytes < 1024 do
+    "#{bytes}B"
+  end
+
+  defp format_bytes(bytes) when bytes < 1024 * 1024 do
+    kb = bytes / 1024
+    "#{:erlang.float_to_binary(kb, [decimals: 2])}KB"
+  end
+
+  defp format_bytes(bytes) when bytes < 1024 * 1024 * 1024 do
+    mb = bytes / (1024 * 1024)
+    "#{:erlang.float_to_binary(mb, [decimals: 2])}MB"
+  end
+
+  defp format_bytes(bytes) do
+    gb = bytes / (1024 * 1024 * 1024)
+    "#{:erlang.float_to_binary(gb, [decimals: 2])}GB"
   end
 end

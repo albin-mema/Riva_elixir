@@ -16,8 +16,23 @@ defmodule RivaAshWeb.DevTools.PerformanceDashboardLive do
       {:ok, redirect(socket, to: "/")}
     end
   else
+    alias RivaAsh.DevTools.PerformanceService
+
     @impl true
     def mount(_params, _session, socket) do
+      socket =
+        socket
+        |> assign(:page_title, get_page_title())
+        |> assign(:response_times, [])
+        |> assign(:query_counts, %{})
+        |> assign(:slow_queries, [])
+        |> assign(:memory_usage, [])
+        |> assign(:active_connections, 0)
+        |> assign(:total_requests, 0)
+        |> assign(:avg_response_time, 0)
+        |> assign(:alerts, [])
+        |> assign(:selected_timeframe, "1h")
+
       if connected?(socket) do
         # Subscribe to telemetry events
         :telemetry.attach_many(
@@ -36,19 +51,6 @@ defmodule RivaAshWeb.DevTools.PerformanceDashboardLive do
         # Start periodic updates
         :timer.send_interval(1000, self(), :update_metrics)
       end
-
-      socket =
-        socket
-        |> assign(:page_title, "Performance Dashboard")
-        |> assign(:response_times, [])
-        |> assign(:query_counts, %{})
-        |> assign(:slow_queries, [])
-        |> assign(:memory_usage, [])
-        |> assign(:active_connections, 0)
-        |> assign(:total_requests, 0)
-        |> assign(:avg_response_time, 0)
-        |> assign(:alerts, [])
-        |> assign(:selected_timeframe, "1h")
 
       {:ok, socket}
     end
@@ -102,11 +104,11 @@ defmodule RivaAshWeb.DevTools.PerformanceDashboardLive do
     end
 
     def handle_event("clear_alerts", _params, socket) do
-      {:noreply, assign(socket, :alerts, [])}
+      PerformanceService.clear_alerts(socket)
     end
 
     def handle_event("clear_slow_queries", _params, socket) do
-      {:noreply, assign(socket, :slow_queries, [])}
+      PerformanceService.clear_slow_queries(socket)
     end
 
     @impl true
@@ -359,166 +361,7 @@ defmodule RivaAshWeb.DevTools.PerformanceDashboardLive do
       """
     end
 
-    # Helper functions for telemetry event handling
-    defp handle_telemetry_event(event, measurements, metadata, %{pid: pid}) do
-      send(pid, {:telemetry_event, event, measurements, metadata})
-    end
-
-    defp handle_endpoint_stop(socket, measurements, _metadata) do
-      duration = measurements[:duration] && System.convert_time_unit(measurements[:duration], :native, :millisecond)
-      
-      if duration do
-        response_time = %{
-          timestamp: DateTime.utc_now(),
-          value: duration
-        }
-        
-        response_times = [response_time | socket.assigns.response_times] |> Enum.take(100)
-        total_requests = socket.assigns.total_requests + 1
-        avg_response_time = calculate_avg_response_time(response_times)
-        
-        socket =
-          socket
-          |> assign(:response_times, response_times)
-          |> assign(:total_requests, total_requests)
-          |> assign(:avg_response_time, avg_response_time)
-          |> maybe_add_alert(duration)
-
-        socket
-      else
-        socket
-      end
-    end
-
-    defp handle_router_dispatch_stop(socket, _measurements, _metadata), do: socket
-
-    defp handle_ash_query_stop(socket, measurements, metadata) do
-      duration = measurements[:duration] && System.convert_time_unit(measurements[:duration], :native, :millisecond)
-      resource = get_resource_name(metadata)
-      
-      # Update query counts
-      query_counts = Map.update(socket.assigns.query_counts, resource, 1, &(&1 + 1))
-      
-      socket = assign(socket, :query_counts, query_counts)
-      
-      # Track slow queries
-      if duration && duration > 100 do
-        slow_query = %{
-          timestamp: DateTime.utc_now(),
-          duration: duration,
-          resource: resource,
-          action: metadata[:action] || "unknown",
-          details: inspect(metadata[:filter] || metadata, limit: 50)
-        }
-        
-        slow_queries = [slow_query | socket.assigns.slow_queries] |> Enum.take(50)
-        assign(socket, :slow_queries, slow_queries)
-      else
-        socket
-      end
-    end
-
-    defp handle_ash_action_stop(socket, measurements, metadata) do
-      duration = measurements[:duration] && System.convert_time_unit(measurements[:duration], :native, :millisecond)
-      resource = get_resource_name(metadata)
-      
-      # Track slow actions
-      if duration && duration > 200 do
-        slow_query = %{
-          timestamp: DateTime.utc_now(),
-          duration: duration,
-          resource: resource,
-          action: metadata[:action] || "unknown",
-          details: "Action: #{metadata[:type] || "unknown"}"
-        }
-        
-        slow_queries = [slow_query | socket.assigns.slow_queries] |> Enum.take(50)
-        assign(socket, :slow_queries, slow_queries)
-      else
-        socket
-      end
-    end
-
-    defp handle_ecto_query(socket, measurements, metadata) do
-      duration = measurements[:total_time] && System.convert_time_unit(measurements[:total_time], :native, :millisecond)
-      
-      if duration && duration > 50 do
-        slow_query = %{
-          timestamp: DateTime.utc_now(),
-          duration: duration,
-          resource: "Database",
-          action: "SQL Query",
-          details: String.slice(metadata[:query] || "Unknown query", 0, 100)
-        }
-        
-        slow_queries = [slow_query | socket.assigns.slow_queries] |> Enum.take(50)
-        assign(socket, :slow_queries, slow_queries)
-      else
-        socket
-      end
-    end
-
-    defp update_memory_usage(socket) do
-      memory_mb = :erlang.memory(:total) / 1024 / 1024 |> Float.round(1)
-      
-      memory_point = %{
-        timestamp: DateTime.utc_now(),
-        value: memory_mb
-      }
-      
-      memory_usage = [memory_point | socket.assigns.memory_usage] |> Enum.take(60)
-      assign(socket, :memory_usage, memory_usage)
-    end
-
-    defp update_connection_count(socket) do
-      # This would get actual connection count from your connection pool
-      # For now, simulate it
-      connections = :rand.uniform(10) + 5
-      assign(socket, :active_connections, connections)
-    end
-
-    defp cleanup_old_data(socket) do
-      cutoff = DateTime.add(DateTime.utc_now(), -3600) # 1 hour ago
-      
-      response_times = Enum.filter(socket.assigns.response_times, fn rt -> 
-        DateTime.compare(rt.timestamp, cutoff) == :gt
-      end)
-      
-      memory_usage = Enum.filter(socket.assigns.memory_usage, fn mu -> 
-        DateTime.compare(mu.timestamp, cutoff) == :gt
-      end)
-      
-      socket
-      |> assign(:response_times, response_times)
-      |> assign(:memory_usage, memory_usage)
-    end
-
-    defp calculate_avg_response_time([]), do: 0
-    defp calculate_avg_response_time(response_times) do
-      total = Enum.sum(Enum.map(response_times, & &1.value))
-      (total / length(response_times)) |> Float.round(1)
-    end
-
-    defp maybe_add_alert(socket, duration) when duration > 1000 do
-      alert = %{
-        timestamp: DateTime.utc_now(),
-        title: "Slow Response Time",
-        message: "Request took #{duration}ms to complete"
-      }
-      
-      alerts = [alert | socket.assigns.alerts] |> Enum.take(10)
-      assign(socket, :alerts, alerts)
-    end
-
-    defp maybe_add_alert(socket, _duration), do: socket
-
-    defp get_resource_name(metadata) do
-      case metadata[:resource] do
-        module when is_atom(module) -> 
-          module |> Module.split() |> List.last()
-        other -> 
-          inspect(other)
-      end
-    end
+    # Helper functions
+    defp get_page_title, do: Application.get_env(:riva_ash, __MODULE__, [])[:page_title] || "Performance Dashboard"
   end
 end

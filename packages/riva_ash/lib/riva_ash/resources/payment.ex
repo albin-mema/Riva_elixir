@@ -15,7 +15,32 @@ defmodule RivaAsh.Resources.Payment do
   - partial: Partial payment received
   - refunded: Payment refunded
   - cancelled: Payment cancelled
+
+  This resource manages payment processing, tracking, and refund handling
+  for reservations, ensuring proper financial record keeping.
   """
+
+  @type t :: %__MODULE__{
+          id: String.t(),
+          business_id: String.t(),
+          reservation_id: String.t(),
+          pricing_id: String.t() | nil,
+          status: :pending | :paid | :partial | :refunded | :cancelled,
+          amount_due: Decimal.t(),
+          amount_paid: Decimal.t() | nil,
+          currency: String.t(),
+          payment_method: :cash | :card | :bank_transfer | :other,
+          payment_date: DateTime.t() | nil,
+          due_date: Date.t() | nil,
+          transaction_reference: String.t() | nil,
+          refund_amount: Decimal.t() | nil,
+          refund_date: DateTime.t() | nil,
+          refund_reason: String.t() | nil,
+          notes: String.t() | nil,
+          inserted_at: DateTime.t(),
+          updated_at: DateTime.t(),
+          archived_at: DateTime.t() | nil
+        }
 
   use Ash.Resource,
     domain: RivaAsh.Domain,
@@ -423,6 +448,395 @@ defmodule RivaAsh.Resources.Payment do
     calculate :is_fully_paid, :boolean, expr(status == :paid and amount_paid >= amount_due) do
       public?(true)
       description("Whether the payment is fully paid")
+    end
+  
+    # Helper functions for business logic and data validation
+  
+    @doc """
+    Checks if the payment is currently active (not archived).
+    
+    ## Parameters
+    - payment: The payment record to check
+    
+    ## Returns
+    - `true` if the payment is active, `false` otherwise
+    """
+    @spec is_active?(t()) :: boolean()
+    def is_active?(payment) do
+      with %{archived_at: nil} <- payment do
+        true
+      else
+        _ -> false
+      end
+    end
+  
+    @doc """
+    Checks if the payment is fully paid.
+    
+    ## Parameters
+    - payment: The payment record to check
+    
+    ## Returns
+    - `true` if fully paid, `false` otherwise
+    """
+    @spec is_fully_paid?(t()) :: boolean()
+    def is_fully_paid?(payment) do
+      with %{status: :paid} <- payment,
+           amount_paid when not is_nil(amount_paid) <- payment.amount_paid do
+        Decimal.compare(amount_paid, payment.amount_due) != :lt
+      else
+        _ -> false
+      end
+    end
+  
+    @doc """
+    Checks if the payment is pending.
+    
+    ## Parameters
+    - payment: The payment record to check
+    
+    ## Returns
+    - `true` if pending, `false` otherwise
+    """
+    @spec is_pending?(t()) :: boolean()
+    def is_pending?(payment), do: payment.status == :pending
+  
+    @doc """
+    Checks if the payment is overdue.
+    
+    ## Parameters
+    - payment: The payment record to check
+    
+    ## Returns
+    - `true` if overdue, `false` otherwise
+    """
+    @spec is_overdue?(t()) :: boolean()
+    def is_overdue?(payment) do
+      with %{status: :pending} <- payment,
+           due_date when not is_nil(due_date) <- payment.due_date do
+        Date.compare(due_date, Date.utc_today()) == :lt
+      else
+        _ -> false
+      end
+    end
+  
+    @doc """
+    Checks if the payment has been refunded.
+    
+    ## Parameters
+    - payment: The payment record to check
+    
+    ## Returns
+    - `true` if refunded, `false` otherwise
+    """
+    @spec is_refunded?(t()) :: boolean()
+    def is_refunded?(payment), do: payment.status == :refunded
+  
+    @doc """
+    Gets the payment status as a human-readable string.
+    
+    ## Parameters
+    - payment: The payment record
+    
+    ## Returns
+    - String with status description
+    """
+    @spec status_description(t()) :: String.t()
+    def status_description(payment) do
+      case payment.status do
+        :pending -> "Pending"
+        :paid -> "Paid"
+        :partial -> "Partially Paid"
+        :refunded -> "Refunded"
+        :cancelled -> "Cancelled"
+        _ -> "Unknown"
+      end
+    end
+  
+    @doc """
+    Gets the payment method as a human-readable string.
+    
+    ## Parameters
+    - payment: The payment record
+    
+    ## Returns
+    - String with payment method description
+    """
+    @spec payment_method_description(t()) :: String.t()
+    def payment_method_description(payment) do
+      case payment.payment_method do
+        :cash -> "Cash"
+        :card -> "Card"
+        :bank_transfer -> "Bank Transfer"
+        :other -> "Other"
+        _ -> "Unknown"
+      end
+    end
+  
+    @doc """
+    Gets the remaining balance to be paid.
+    
+    ## Parameters
+    - payment: The payment record
+    
+    ## Returns
+    - Decimal with remaining balance
+    """
+    @spec remaining_balance(t()) :: Decimal.t()
+    def remaining_balance(payment) do
+      case payment.amount_paid do
+        nil -> payment.amount_due
+        amount_paid -> Decimal.max(Decimal.new(0), Decimal.sub(payment.amount_due, amount_paid))
+      end
+    end
+  
+    @doc """
+    Gets the formatted amount due.
+    
+    ## Parameters
+    - payment: The payment record
+    
+    ## Returns
+    - String with formatted amount due
+    """
+    @spec formatted_amount_due(t()) :: String.t()
+    def formatted_amount_due(payment) do
+      formatted_currency(payment.amount_due, payment.currency)
+    end
+  
+    @doc """
+    Gets the formatted amount paid.
+    
+    ## Parameters
+    - payment: The payment record
+    
+    ## Returns
+    - String with formatted amount paid or "Not paid"
+    """
+    @spec formatted_amount_paid(t()) :: String.t()
+    def formatted_amount_paid(payment) do
+      case payment.amount_paid do
+        nil -> "Not paid"
+        amount -> formatted_currency(amount, payment.currency)
+      end
+    end
+  
+    @doc """
+    Gets the formatted remaining balance.
+    
+    ## Parameters
+    - payment: The payment record
+    
+    ## Returns
+    - String with formatted remaining balance
+    """
+    @spec formatted_remaining_balance(t()) :: String.t()
+    def formatted_remaining_balance(payment) do
+      remaining_balance(payment) |> formatted_currency(payment.currency)
+    end
+  
+    @doc """
+    Gets the formatted due date.
+    
+    ## Parameters
+    - payment: The payment record
+    
+    ## Returns
+    - String with formatted due date or "No due date"
+    """
+    @spec formatted_due_date(t()) :: String.t()
+    def formatted_due_date(payment) do
+      case payment.due_date do
+        nil -> "No due date"
+        date -> Date.to_string(date)
+      end
+    end
+  
+    @doc """
+    Gets the formatted payment date.
+    
+    ## Parameters
+    - payment: The payment record
+    
+    ## Returns
+    - String with formatted payment date or "Not paid"
+    """
+    @spec formatted_payment_date(t()) :: String.t()
+    def formatted_payment_date(payment) do
+      case payment.payment_date do
+        nil -> "Not paid"
+        date -> DateTime.to_string(date)
+      end
+    end
+  
+    @doc """
+    Validates that the payment has all required relationships.
+    
+    ## Parameters
+    - payment: The payment record to validate
+    
+    ## Returns
+    - `{:ok, payment}` if valid
+    - `{:error, reason}` if invalid
+    """
+    @spec validate_relationships(t()) :: {:ok, t()} | {:error, String.t()}
+    def validate_relationships(payment) do
+      cond do
+        is_nil(payment.business) ->
+          {:error, "Business relationship is missing"}
+        
+        is_nil(payment.reservation) ->
+          {:error, "Reservation relationship is missing"}
+        
+        true ->
+          {:ok, payment}
+      end
+    end
+  
+    @doc """
+    Gets the reservation information for this payment.
+    
+    ## Parameters
+    - payment: The payment record
+    
+    ## Returns
+    - String with reservation information
+    """
+    @spec reservation_info(t()) :: String.t()
+    def reservation_info(payment) do
+      case payment.reservation do
+        %{id: id, reserved_from: start_date, reserved_until: end_date} ->
+          "Reservation #{id}: #{Date.to_string(start_date)} - #{Date.to_string(end_date)}"
+        
+        _ ->
+          "Unknown reservation"
+      end
+    end
+  
+    @doc """
+    Gets the business name for this payment.
+    
+    ## Parameters
+    - payment: The payment record
+    
+    ## Returns
+    - String with business name
+    """
+    @spec business_name(t()) :: String.t()
+    def business_name(payment) do
+      case payment.business do
+        %{name: name} when is_binary(name) and name != "" -> name
+        _ -> "Unknown business"
+      end
+    end
+  
+    @doc """
+    Formats the complete payment information for display.
+    
+    ## Parameters
+    - payment: The payment record
+    
+    ## Returns
+    - String with complete payment information
+    """
+    @spec formatted_info(t()) :: String.t()
+    def formatted_info(payment) do
+      with true <- is_active?(payment),
+           business_name <- business_name(payment),
+           reservation_info <- reservation_info(payment),
+           status_desc <- status_description(payment),
+           amount_due <- formatted_amount_due(payment),
+           amount_paid <- formatted_amount_paid(payment),
+           remaining_balance <- formatted_remaining_balance(payment),
+           due_date <- formatted_due_date(payment),
+           payment_method <- payment_method_description(payment) do
+        "#{business_name} - #{reservation_info}: #{status_desc}, Due: #{amount_due}, Paid: #{amount_paid}, Balance: #{remaining_balance}, Due: #{due_date}, Method: #{payment_method}"
+      else
+        false ->
+          "Archived payment: #{reservation_info(payment)}"
+      end
+    end
+  
+    @doc """
+    Checks if the payment can be marked as paid.
+    
+    ## Parameters
+    - payment: The payment record to check
+    
+    ## Returns
+    - `true` if can be marked as paid, `false` otherwise
+    """
+    @spec can_mark_as_paid?(t()) :: boolean()
+    def can_mark_as_paid?(payment) do
+      payment.status == :pending and Decimal.compare(payment.amount_due, Decimal.new(0)) == :gt
+    end
+  
+    @doc """
+    Checks if the payment can be refunded.
+    
+    ## Parameters
+    - payment: The payment record to check
+    
+    ## Returns
+    - `true` if can be refunded, `false` otherwise
+    """
+    @spec can_refund?(t()) :: boolean()
+    def can_refund?(payment) do
+      case payment.status do
+        :paid -> true
+        :partial -> true
+        _ -> false
+      end
+    end
+  
+    @doc """
+    Gets the maximum refund amount.
+    
+    ## Parameters
+    - payment: The payment record
+    
+    ## Returns
+    - Decimal with maximum refund amount
+    """
+    @spec max_refund_amount(t()) :: Decimal.t()
+    def max_refund_amount(payment) do
+      case payment.amount_paid do
+        nil -> Decimal.new(0)
+        amount_paid -> amount_paid
+      end
+    end
+  
+    @doc """
+    Validates the payment data.
+    
+    ## Parameters
+    - payment: The payment record to validate
+    
+    ## Returns
+    - `{:ok, payment}` if valid
+    - `{:error, reason}` if invalid
+    """
+    @spec validate_data(t()) :: {:ok, t()} | {:error, String.t()}
+    def validate_data(payment) do
+      cond do
+        Decimal.compare(payment.amount_due, Decimal.new(0)) == :lt ->
+          {:error, "Amount due must be greater than or equal to 0"}
+        
+        not is_nil(payment.amount_paid) and Decimal.compare(payment.amount_paid, Decimal.new(0)) == :lt ->
+          {:error, "Amount paid must be greater than or equal to 0"}
+        
+        not String.match?(payment.currency, ~r/^[A-Z]{3}$/) ->
+          {:error, "Currency must be a valid 3-letter ISO code"}
+        
+        true ->
+          {:ok, payment}
+      end
+    end
+  
+    # Private helper functions
+  
+    defp formatted_currency(amount, currency) do
+      "#{Decimal.to_string(amount)} #{currency}"
     end
   end
 end

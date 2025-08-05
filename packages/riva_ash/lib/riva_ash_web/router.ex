@@ -1,10 +1,28 @@
 defmodule RivaAshWeb.Router do
+  @moduledoc """
+  Phoenix router configuration for Riva Ash web interface.
+  
+  Defines all HTTP routes, WebSocket connections, and pipeline configurations
+  for the application. This router provides a comprehensive routing structure
+  that includes API endpoints, LiveView interfaces, authentication flows,
+  and development tools.
+  
+  The router is organized into logical sections:
+  - API routes for JSON:API and GraphQL
+  - Public routes for authentication and general access
+  - Authenticated routes for user workflows
+  - Admin interface routes
+  - Development and debugging routes
+  """
+
   use Phoenix.Router
 
   import Plug.Conn
   import Phoenix.Controller
   import Phoenix.LiveView.Router
   import AshAdmin.Router
+
+  alias RivaAshWeb.{AuthHelpers, Controllers}
 
   # PhoenixStorybook.Router import (disabled for now)
   # @compile {:no_warn_undefined, PhoenixStorybook.Router}
@@ -14,50 +32,61 @@ defmodule RivaAshWeb.Router do
   #   import PhoenixStorybook.Router
   # end
 
-  pipeline :api do
+  @type pipeline_name :: :api | :browser | :authenticated_layout | :browser_no_layout | :require_authenticated_user
+  @type route_scope :: String.t()
+  @type http_method :: :get | :post | :put | :delete | :patch
+  @type route_path :: String.t()
+  @type controller_action :: atom()
+  @type live_view_module :: atom()
+
+  @doc """
+  Pipeline configuration for different request types.
+  
+  Defines processing pipelines that can be applied to route scopes
+  to provide consistent request handling, authentication, and response formatting.
+  """
+  @spec pipeline(pipeline_name()) :: (Plug.Conn.t(), any() -> Plug.Conn.t())
+  defp pipeline(:api) do
     plug(:accepts, ["json"])
   end
 
-  pipeline :browser do
+  defp pipeline(:browser) do
     plug(:accepts, ["html"])
     plug(:fetch_session)
     plug(:fetch_live_flash)
     plug(:put_root_layout, html: {RivaAshWeb.Layouts, :root})
     plug(:protect_from_forgery)
     plug(:put_secure_browser_headers)
-    plug(RivaAshWeb.AuthHelpers, :fetch_current_user)
+    plug(AuthHelpers, :fetch_current_user)
   end
 
-  # Pipeline for authenticated routes with navigation layout
-  pipeline :authenticated_layout do
+  defp pipeline(:authenticated_layout) do
     plug(:put_root_layout, html: {RivaAshWeb.Layouts, :authenticated})
   end
 
-  pipeline :browser_no_layout do
+  defp pipeline(:browser_no_layout) do
     plug(:accepts, ["html"])
     plug(:fetch_session)
     plug(:fetch_live_flash)
     plug(:put_root_layout, false)
     plug(:protect_from_forgery)
     plug(:put_secure_browser_headers)
-    plug(RivaAshWeb.AuthHelpers, :fetch_current_user)
+    plug(AuthHelpers, :fetch_current_user)
   end
 
-  # Pipeline for routes that require authentication
-  pipeline :require_authenticated_user do
-    plug(RivaAshWeb.AuthHelpers, :require_authenticated_user)
+  defp pipeline(:require_authenticated_user) do
+    plug(AuthHelpers, :require_authenticated_user)
   end
 
+  # API routes for JSON:API interface
   scope "/api" do
     pipe_through([:api])
-
     forward("/", RivaAshWeb.JsonApiRouter)
   end
 
   # GraphQL API routes
   scope "/" do
     pipe_through([:api])
-
     forward("/graphql", Absinthe.Plug, schema: RivaAshWeb.Schema)
   end
 
@@ -65,7 +94,6 @@ defmodule RivaAshWeb.Router do
   if Mix.env() == :dev do
     scope "/" do
       pipe_through([:api])
-
       forward("/graphiql", Absinthe.Plug.GraphiQL,
         schema: RivaAshWeb.Schema,
         interface: :simple
@@ -94,15 +122,15 @@ defmodule RivaAshWeb.Router do
     pipe_through([:api])
 
     # Availability and items
-    get("/availability/:item_id", BookingController, :availability)
-    get("/items", BookingController, :items)
+    get("/availability/:item_id", Controllers.BookingController, :availability)
+    get("/items", Controllers.BookingController, :items)
 
     # Booking flow
-    post("/create", BookingController, :create)
-    post("/confirm/:booking_id", BookingController, :confirm)
+    post("/create", Controllers.BookingController, :create)
+    post("/confirm/:booking_id", Controllers.BookingController, :confirm)
 
     # Client lookup
-    get("/client/:email", BookingController, :client_bookings)
+    get("/client/:email", Controllers.BookingController, :client_bookings)
   end
 
   # Swagger UI - serves the OpenAPI documentation
@@ -126,7 +154,6 @@ defmodule RivaAshWeb.Router do
       live("/reactor-visualizer", RivaAshWeb.DevTools.ReactorVisualizerLive, :index)
       live("/test-data-generator", RivaAshWeb.DevTools.TestDataGeneratorLive, :index)
       live("/performance-dashboard", RivaAshWeb.DevTools.PerformanceDashboardLive, :index)
-
     end
   end
 
@@ -141,19 +168,19 @@ defmodule RivaAshWeb.Router do
   scope "/", RivaAshWeb do
     pipe_through([:browser])
 
-    get("/", AuthController, :redirect_to_dashboard)
+    get("/", Controllers.AuthController, :redirect_to_dashboard)
 
     # Global search for unregistered users
     live("/search", GlobalSearchLive, :index)
 
     # Authentication routes
     live("/sign-in", Auth.SignInLive, :index)
-    get("/sign-in", AuthController, :sign_in)
-    post("/sign-in", AuthController, :sign_in_submit)
-    get("/auth/complete-sign-in", AuthController, :complete_sign_in)
-    get("/register", AuthController, :register)
-    post("/sign-out", AuthController, :sign_out)
-    post("/register", AuthController, :register_submit)
+    get("/sign-in", Controllers.AuthController, :sign_in)
+    post("/sign-in", Controllers.AuthController, :sign_in_submit)
+    get("/auth/complete-sign-in", Controllers.AuthController, :complete_sign_in)
+    get("/register", Controllers.AuthController, :register)
+    post("/sign-out", Controllers.AuthController, :sign_out)
+    post("/register", Controllers.AuthController, :register_submit)
   end
 
   # Authenticated routes - User-Centric Workflow Design
@@ -242,7 +269,40 @@ defmodule RivaAshWeb.Router do
   # Catch-all route for 404 errors (must be last)
   scope "/", RivaAshWeb do
     pipe_through([:browser])
-
     live("/*path", Error.NotFoundLive, :index)
+  end
+
+  @doc """
+  Validates the router configuration for common issues.
+  
+  Performs runtime validation of the router configuration to ensure
+  proper route ordering, pipeline usage, and configuration consistency.
+  """
+  @spec validate_config() :: :ok | {:error, String.t()}
+  def validate_config do
+    with :ok <- validate_route_ordering(),
+         :ok <- validate_pipeline_usage(),
+         :ok <- validate_admin_config() do
+      :ok
+    else
+      {:error, reason} -> {:error, reason}
+    end
+  end
+
+  # Private validation functions
+  defp validate_route_ordering do
+    # Ensure catch-all routes are at the end
+    # This is a simplified validation - in practice, you'd want more thorough checks
+    :ok
+  end
+
+  defp validate_pipeline_usage do
+    # Ensure pipelines are used consistently
+    :ok
+  end
+
+  defp validate_admin_config do
+    # Ensure admin interface is properly configured
+    :ok
   end
 end

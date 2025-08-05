@@ -2,19 +2,27 @@ defmodule RivaAshWeb.BusinessSetupLive do
   @moduledoc """
   Business Setup Wizard - Guided multi-step setup flow.
   Combines Business, Plot, Section, Layout, and Item configuration into a unified workflow.
+  
+  This LiveView follows Phoenix/Ash/Elixir patterns:
+  - Uses AuthHelpers for authentication and business scoping
+  - Delegates business logic to BusinessSetup context
+  - Handles UI state and user interactions
+  - Uses proper Ash error handling
+  - Implements CRUD operations through Ash actions
   """
+
   use RivaAshWeb, :live_view
 
   # Explicitly set the authenticated layout
   @layout {RivaAshWeb.Layouts, :authenticated}
 
   alias RivaAsh.Resources.{Business, Plot, Section, Layout, Item, ItemType}
+  alias RivaAsh.BusinessSetup
   alias RivaAsh.ErrorHelpers
 
   import RivaAshWeb.Components.Organisms.PageHeader
   import RivaAshWeb.Components.Molecules.Card
   import RivaAshWeb.Components.Atoms.Button
-
   import RivaAshWeb.Components.Interactive.PlotLayoutDesigner
   import RivaAshWeb.Live.AuthHelpers
 
@@ -45,22 +53,42 @@ defmodule RivaAshWeb.BusinessSetupLive do
 
   @impl true
   def mount(_params, session, socket) do
-    case get_current_user_from_session(session) do
-      {:ok, user} ->
-        socket =
-          socket
-          |> assign(:current_user, user)
-          |> assign(:page_title, "Business Setup Wizard")
-          |> assign(:current_step, "business")
-          |> assign(:steps, @setup_steps)
-          |> assign(:setup_data, %{})
-          |> assign(:loading, false)
-          |> assign(:errors, [])
+    case mount_business_scoped(
+           socket,
+           session,
+           Business,
+           [:owner_id],
+           "Business Setup Wizard"
+         ) do
+      {:ok, socket} ->
+        {:ok,
+         socket
+         |> assign(:current_step, "business")
+         |> assign(:steps, @setup_steps)
+         |> assign(:setup_data, %{})
+         |> assign(:loading, false)
+         |> assign(:errors, [])}
 
-        {:ok, socket}
+      {:error, _} = error ->
+        {:ok, error}
+    end
+  end
 
-      {:error, _} ->
-        {:ok, redirect(socket, to: "/sign-in")}
+  @impl true
+  def handle_params(params, _url, socket) do
+    # Handle step navigation and data loading
+    case BusinessSetup.get_setup_progress(socket.assigns.current_user, params) do
+      {:ok, progress_data} ->
+        {:noreply,
+         socket
+         |> assign(:setup_data, progress_data.setup_data)
+         |> assign(:current_step, progress_data.current_step)}
+
+      {:error, reason} ->
+        {:noreply,
+         socket
+         |> put_flash(:error, "Failed to load setup progress: #{reason}")
+         |> assign(loading: false)}
     end
   end
 
@@ -184,71 +212,90 @@ defmodule RivaAshWeb.BusinessSetupLive do
         <p class="mt-2 text-gray-600">Let's start with the basics about your business.</p>
       </div>
 
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-2">Business Name</label>
-          <input
-            type="text"
-            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder="Enter your business name"
-            value={@setup_data[:business_name] || ""}
-            phx-blur="update_field"
-            phx-value-field="business_name"
-          />
+      <%= if @errors[:business] do %>
+        <div class="bg-red-50 border border-red-200 rounded-lg p-4">
+          <p class="text-red-800"><%= @errors[:business] %></p>
+        </div>
+      <% end %>
+
+      <.form id="business-form" for={@changeset} phx-submit="save_business_step" class="space-y-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Business Name</label>
+            <input
+              type="text"
+              name="business[name]"
+              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Enter your business name"
+              value={@setup_data[:business_name] || ""}
+              phx-blur="update_field"
+              phx-value-field="business_name"
+            />
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Business Type</label>
+            <select
+              name="business[business_type]"
+              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              phx-change="update_field"
+              phx-value-field="business_type"
+            >
+              <option value="">Select business type</option>
+              <option value="restaurant">Restaurant</option>
+              <option value="hotel">Hotel</option>
+              <option value="spa">Spa/Wellness</option>
+              <option value="event_venue">Event Venue</option>
+              <option value="coworking">Coworking Space</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+
+          <div class="md:col-span-2">
+            <label class="block text-sm font-medium text-gray-700 mb-2">Description</label>
+            <textarea
+              name="business[description]"
+              rows="3"
+              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Describe your business..."
+              phx-blur="update_field"
+              phx-value-field="business_description"
+            ><%= @setup_data[:business_description] || "" %></textarea>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Address</label>
+            <input
+              type="text"
+              name="business[address]"
+              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Business address"
+              value={@setup_data[:address] || ""}
+              phx-blur="update_field"
+              phx-value-field="address"
+            />
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Phone</label>
+            <input
+              type="tel"
+              name="business[phone]"
+              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Business phone"
+              value={@setup_data[:phone] || ""}
+              phx-blur="update_field"
+              phx-value-field="phone"
+            />
+          </div>
         </div>
 
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-2">Business Type</label>
-          <select
-            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            phx-change="update_field"
-            phx-value-field="business_type"
-          >
-            <option value="">Select business type</option>
-            <option value="restaurant">Restaurant</option>
-            <option value="hotel">Hotel</option>
-            <option value="spa">Spa/Wellness</option>
-            <option value="event_venue">Event Venue</option>
-            <option value="coworking">Coworking Space</option>
-            <option value="other">Other</option>
-          </select>
+        <div class="flex justify-end">
+          <.button type="submit" variant="primary">
+            Save Business Information
+          </.button>
         </div>
-
-        <div class="md:col-span-2">
-          <label class="block text-sm font-medium text-gray-700 mb-2">Description</label>
-          <textarea
-            rows="3"
-            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder="Describe your business..."
-            phx-blur="update_field"
-            phx-value-field="business_description"
-          ><%= @setup_data[:business_description] || "" %></textarea>
-        </div>
-
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-2">Address</label>
-          <input
-            type="text"
-            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder="Business address"
-            value={@setup_data[:address] || ""}
-            phx-blur="update_field"
-            phx-value-field="address"
-          />
-        </div>
-
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-2">Phone</label>
-          <input
-            type="tel"
-            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder="Business phone"
-            value={@setup_data[:phone] || ""}
-            phx-blur="update_field"
-            phx-value-field="phone"
-          />
-        </div>
-      </div>
+      </.form>
     </div>
     """
   end
@@ -265,16 +312,17 @@ defmodule RivaAshWeb.BusinessSetupLive do
         <h3 class="text-lg font-medium text-gray-900 mb-4">Layout Designer</h3>
         <p class="text-gray-600 mb-4">Use the visual designer below to create your space layout.</p>
 
-        <!-- Placeholder for layout designer component -->
-        <div class="bg-white border-2 border-dashed border-gray-300 rounded-lg h-96 flex items-center justify-center">
-          <div class="text-center">
-            <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z" />
-            </svg>
-            <p class="mt-2 text-gray-500">Interactive Layout Designer</p>
-            <p class="text-sm text-gray-400">Drag and drop to create your space</p>
-          </div>
-        </div>
+        <.plot_layout_designer
+          plots={@setup_data[:plots] || []}
+          on_plot_change="update_layout"
+          on_section_change="update_layout"
+        />
+      </div>
+
+      <div class="flex justify-end">
+        <.button phx-click="save_layout_step" variant="primary">
+          Save Layout
+        </.button>
       </div>
     </div>
     """
@@ -296,16 +344,45 @@ defmodule RivaAshWeb.BusinessSetupLive do
           </.button>
         </div>
 
-        <!-- Items list placeholder -->
-        <div class="bg-gray-50 rounded-lg p-6">
-          <div class="text-center text-gray-500">
-            <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-            </svg>
-            <p class="mt-2">No items configured yet</p>
-            <p class="text-sm text-gray-400">Add your first bookable item to get started</p>
+        <%= if @setup_data[:items] && length(@setup_data[:items]) > 0 do %>
+          <div class="space-y-3">
+            <%= for item <- @setup_data[:items] do %>
+              <.card>
+                <:title><%= item.name %></:title>
+                <p class="text-gray-600"><%= item.description || "No description" %></p>
+                <div class="mt-4 flex justify-between items-center">
+                  <span class="text-sm text-gray-500">
+                    <%= item.item_type.name %> • <%= item.duration %> min
+                  </span>
+                  <div class="space-x-2">
+                    <.button phx-click="edit_item" phx-value-id={item.id} variant="outline" size="sm">
+                      Edit
+                    </.button>
+                    <.button phx-click="delete_item" phx-value-id={item.id} variant="destructive" size="sm">
+                      Delete
+                    </.button>
+                  </div>
+                </div>
+              </.card>
+            <% end %>
           </div>
-        </div>
+        <% else %>
+          <div class="bg-gray-50 rounded-lg p-6">
+            <div class="text-center text-gray-500">
+              <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+              </svg>
+              <p class="mt-2">No items configured yet</p>
+              <p class="text-sm text-gray-400">Add your first bookable item to get started</p>
+            </div>
+          </div>
+        <% end %>
+      </div>
+
+      <div class="flex justify-end">
+        <.button phx-click="save_items_step" variant="primary">
+          Save Items
+        </.button>
       </div>
     </div>
     """
@@ -319,9 +396,55 @@ defmodule RivaAshWeb.BusinessSetupLive do
         <p class="mt-2 text-gray-600">Configure when your business is open for bookings.</p>
       </div>
 
-      <div class="bg-gray-50 rounded-lg p-6">
-        <p class="text-center text-gray-500">Schedule configuration interface will be implemented here</p>
-      </div>
+      <.form id="schedule-form" for={@changeset} phx-submit="save_schedule_step" class="space-y-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <%= for day <- ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"] do %>
+            <div class="border border-gray-200 rounded-lg p-4">
+              <h4 class="font-medium text-gray-900 mb-3"><%= day %></h4>
+              <div class="space-y-3">
+                <div class="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    name="schedule[<%= String.downcase(day) %>][enabled]"
+                    id="schedule_<%= String.downcase(day) %>_enabled"
+                    class="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                    checked={@setup_data[:schedule][String.downcase(day)]["enabled"] || false}
+                  />
+                  <label for="schedule_<%= String.downcase(day) %>_enabled" class="text-sm text-gray-700">
+                    Open
+                  </label>
+                </div>
+                <div class="grid grid-cols-2 gap-2">
+                  <div>
+                    <label class="block text-xs text-gray-500 mb-1">Open Time</label>
+                    <input
+                      type="time"
+                      name="schedule[<%= String.downcase(day) %>][open_time]"
+                      class="w-full px-2 py-1 border border-gray-300 rounded text-sm"
+                      value={@setup_data[:schedule][String.downcase(day)]["open_time"] || ""}
+                    />
+                  </div>
+                  <div>
+                    <label class="block text-xs text-gray-500 mb-1">Close Time</label>
+                    <input
+                      type="time"
+                      name="schedule[<%= String.downcase(day) %>][close_time]"
+                      class="w-full px-2 py-1 border border-gray-300 rounded text-sm"
+                      value={@setup_data[:schedule][String.downcase(day)]["close_time"] || ""}
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          <% end %>
+        </div>
+
+        <div class="flex justify-end">
+          <.button type="submit" variant="primary">
+            Save Schedule
+          </.button>
+        </div>
+      </.form>
     </div>
     """
   end
@@ -334,9 +457,71 @@ defmodule RivaAshWeb.BusinessSetupLive do
         <p class="mt-2 text-gray-600">Set up your pricing rules and rates.</p>
       </div>
 
-      <div class="bg-gray-50 rounded-lg p-6">
-        <p class="text-center text-gray-500">Pricing configuration interface will be implemented here</p>
-      </div>
+      <.form id="pricing-form" for={@changeset} phx-submit="save_pricing_step" class="space-y-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Currency</label>
+            <select
+              name="pricing[currency]"
+              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            >
+              <option value="USD">USD - US Dollar</option>
+              <option value="EUR">EUR - Euro</option>
+              <option value="GBP">GBP - British Pound</option>
+              <option value="JPY">JPY - Japanese Yen</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Tax Rate (%)</label>
+            <input
+              type="number"
+              name="pricing[tax_rate]"
+              step="0.01"
+              min="0"
+              max="100"
+              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              value={@setup_data[:pricing]["tax_rate"] || 0}
+            />
+          </div>
+
+          <div class="md:col-span-2">
+            <label class="block text-sm font-medium text-gray-700 mb-2">Pricing Rules</label>
+            <div class="space-y-3">
+              <div class="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  name="pricing[enable_dynamic_pricing]"
+                  id="dynamic_pricing"
+                  class="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                  checked={@setup_data[:pricing]["enable_dynamic_pricing"] || false}
+                />
+                <label for="dynamic_pricing" class="text-sm text-gray-700">
+                  Enable dynamic pricing based on demand
+                </label>
+              </div>
+              <div class="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  name="pricing[enable_discounts]"
+                  id="discounts"
+                  class="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                  checked={@setup_data[:pricing]["enable_discounts"] || false}
+                />
+                <label for="discounts" class="text-sm text-gray-700">
+                  Enable discount codes
+                </label>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="flex justify-end">
+          <.button type="submit" variant="primary">
+            Save Pricing
+          </.button>
+        </div>
+      </.form>
     </div>
     """
   end
@@ -347,6 +532,52 @@ defmodule RivaAshWeb.BusinessSetupLive do
       <div>
         <h2 class="text-2xl font-bold text-gray-900">Review & Launch</h2>
         <p class="mt-2 text-gray-600">Review your settings and launch your business.</p>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <.card>
+          <.card_header>
+            <h3 class="text-lg font-medium">Business Information</h3>
+          </.card_header>
+          <.card_body>
+            <dl class="space-y-2">
+              <div>
+                <dt class="text-sm font-medium text-gray-500">Name</dt>
+                <dd class="text-sm text-gray-900"><%= @setup_data[:business_name] %></dd>
+              </div>
+              <div>
+                <dt class="text-sm font-medium text-gray-500">Type</dt>
+                <dd class="text-sm text-gray-900"><%= @setup_data[:business_type] %></dd>
+              </div>
+              <div>
+                <dt class="text-sm font-medium text-gray-500">Description</dt>
+                <dd class="text-sm text-gray-900"><%= @setup_data[:business_description] %></dd>
+              </div>
+            </dl>
+          </.card_body>
+        </.card>
+
+        <.card>
+          <.card_header>
+            <h3 class="text-lg font-medium">Configuration Summary</h3>
+          </.card_header>
+          <.card_body>
+            <dl class="space-y-2">
+              <div>
+                <dt class="text-sm font-medium text-gray-500">Items Configured</dt>
+                <dd class="text-sm text-gray-900"><%= length(@setup_data[:items] || []) %> items</dd>
+              </div>
+              <div>
+                <dt class="text-sm font-medium text-gray-500">Plots Created</dt>
+                <dd class="text-sm text-gray-900"><%= length(@setup_data[:plots] || []) %> plots</dd>
+              </div>
+              <div>
+                <dt class="text-sm font-medium text-gray-500">Operating Hours</dt>
+                <dd class="text-sm text-gray-900"><%= Enum.count(@setup_data[:schedule] || [], fn {_, day} -> day["enabled"] end) %> days</dd>
+              </div>
+            </dl>
+          </.card_body>
+        </.card>
       </div>
 
       <div class="bg-green-50 border border-green-200 rounded-lg p-6">
@@ -392,37 +623,161 @@ defmodule RivaAshWeb.BusinessSetupLive do
     {:noreply, assign(socket, :setup_data, setup_data)}
   end
 
+  def handle_event("save_business_step", %{"business" => business_params}, socket) do
+    case BusinessSetup.save_business_step(socket.assigns.current_user, business_params) do
+      {:ok, _business} ->
+        {:noreply,
+         socket
+         |> put_flash(:info, "Business information saved successfully")
+         |> push_patch(to: ~p"/business-setup?step=layout")}
+
+      {:error, %Ash.InvalidChangeset{errors: errors}} ->
+        error_message = ErrorHelpers.format_errors(errors)
+        {:noreply,
+         socket
+         |> put_flash(:error, "Failed to save business information: #{error_message}")
+         |> assign(:errors, %{business: error_message})}
+
+      {:error, reason} ->
+        {:noreply,
+         socket
+         |> put_flash(:error, "Failed to save business information: #{reason}")
+         |> assign(:errors, %{business: reason})}
+    end
+  end
+
+  def handle_event("save_layout_step", _params, socket) do
+    case BusinessSetup.save_layout_step(socket.assigns.current_user, socket.assigns.setup_data) do
+      {:ok, _layout} ->
+        {:noreply,
+         socket
+         |> put_flash(:info, "Layout saved successfully")
+         |> push_patch(to: ~p"/business-setup?step=items")}
+
+      {:error, reason} ->
+        {:noreply,
+         socket
+         |> put_flash(:error, "Failed to save layout: #{reason}")}
+    end
+  end
+
+  def handle_event("save_items_step", _params, socket) do
+    case BusinessSetup.save_items_step(socket.assigns.current_user, socket.assigns.setup_data) do
+      {:ok, _items} ->
+        {:noreply,
+         socket
+         |> put_flash(:info, "Items saved successfully")
+         |> push_patch(to: ~p"/business-setup?step=schedule")}
+
+      {:error, reason} ->
+        {:noreply,
+         socket
+         |> put_flash(:error, "Failed to save items: #{reason}")}
+    end
+  end
+
+  def handle_event("save_schedule_step", %{"schedule" => schedule_params}, socket) do
+    case BusinessSetup.save_schedule_step(socket.assigns.current_user, schedule_params) do
+      {:ok, _schedule} ->
+        {:noreply,
+         socket
+         |> put_flash(:info, "Schedule saved successfully")
+         |> push_patch(to: ~p"/business-setup?step=pricing")}
+
+      {:error, reason} ->
+        {:noreply,
+         socket
+         |> put_flash(:error, "Failed to save schedule: #{reason}")}
+    end
+  end
+
+  def handle_event("save_pricing_step", %{"pricing" => pricing_params}, socket) do
+    case BusinessSetup.save_pricing_step(socket.assigns.current_user, pricing_params) do
+      {:ok, _pricing} ->
+        {:noreply,
+         socket
+         |> put_flash(:info, "Pricing saved successfully")
+         |> push_patch(to: ~p"/business-setup?step=review")}
+
+      {:error, reason} ->
+        {:noreply,
+         socket
+         |> put_flash(:error, "Failed to save pricing: #{reason}")}
+    end
+  end
+
   def handle_event("add_item", _params, socket) do
-    # Placeholder for adding items
-    {:noreply, socket}
+    {:noreply, push_navigate(socket, to: ~p"/business-setup/items/new")}
+  end
+
+  def handle_event("edit_item", %{"id" => id}, socket) do
+    {:noreply, push_navigate(socket, to: ~p"/business-setup/items/#{id}/edit")}
+  end
+
+  def handle_event("delete_item", %{"id" => id}, socket) do
+    case BusinessSetup.delete_item(socket.assigns.current_user, id) do
+      {:ok, _item} ->
+        {:noreply,
+         socket
+         |> put_flash(:info, "Item deleted successfully")
+         |> push_patch(to: ~p"/business-setup?step=items")}
+
+      {:error, reason} ->
+        {:noreply,
+         socket
+         |> put_flash(:error, "Failed to delete item: #{reason}")}
+    end
+  end
+
+  def handle_event("update_layout", %{"layout" => layout_data}, socket) do
+    setup_data = Map.put(socket.assigns.setup_data, :layout, layout_data)
+    {:noreply, assign(socket, :setup_data, setup_data)}
   end
 
   def handle_event("launch_business", _params, socket) do
     socket = assign(socket, :loading, true)
 
-    # Here you would create the business and related resources
-    # For now, just redirect to dashboard
-    Process.send_after(self(), :complete_setup, 2000)
+    case BusinessSetup.complete_setup(socket.assigns.current_user, socket.assigns.setup_data) do
+      {:ok, business} ->
+        {:noreply,
+         socket
+         |> assign(:loading, false)
+         |> put_flash(:info, "🎉 Business setup completed successfully!")
+         |> push_navigate(to: ~p"/businesses/#{business.id}")}
 
-    {:noreply, socket}
+      {:error, %Ash.InvalidChangeset{errors: errors}} ->
+        error_message = ErrorHelpers.format_errors(errors)
+        {:noreply,
+         socket
+         |> assign(:loading, false)
+         |> put_flash(:error, "Failed to launch business: #{error_message}")}
+
+      {:error, reason} ->
+        {:noreply,
+         socket
+         |> assign(:loading, false)
+         |> put_flash(:error, "Failed to launch business: #{reason}")}
+    end
   end
 
   def handle_event("save_and_exit", _params, socket) do
-    {:noreply, push_navigate(socket, to: "/dashboard")}
+    case BusinessSetup.save_progress(socket.assigns.current_user, socket.assigns.setup_data) do
+      {:ok, _progress} ->
+        {:noreply,
+         socket
+         |> put_flash(:info, "Setup progress saved successfully")
+         |> push_navigate(to: ~p"/dashboard")}
+
+      {:error, reason} ->
+        {:noreply,
+         socket
+         |> put_flash(:error, "Failed to save progress: #{reason}")
+         |> push_navigate(to: ~p"/dashboard")}
+    end
   end
 
   def handle_event(_event, _params, socket) do
     {:noreply, socket}
-  end
-
-  @impl true
-  def handle_info(:complete_setup, socket) do
-    socket =
-      socket
-      |> assign(:loading, false)
-      |> put_flash(:info, "🎉 Business setup completed successfully!")
-
-    {:noreply, push_navigate(socket, to: "/dashboard")}
   end
 
   # Helper functions

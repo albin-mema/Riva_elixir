@@ -1,8 +1,17 @@
 defmodule PropertyTestingSimpleTest do
+  @moduledoc """
+  Simple property testing tests for the Riva Ash application.
+  Tests basic property testing functionality and system components.
+  """
+
   use ExUnit.Case
 
   @moduletag :property_simple
 
+  @doc """
+  Tests that the basic property testing system works correctly.
+  """
+  @spec test_basic_property_testing_system_works :: :ok
   test "basic property testing system works" do
     alias RivaAsh.PropertyTesting.StateMachine
 
@@ -16,6 +25,10 @@ defmodule PropertyTestingSimpleTest do
     IO.puts("✅ Property testing system basic functionality works!")
   end
 
+  @doc """
+  Tests that route enumeration works correctly.
+  """
+  @spec test_route_enumeration_works :: :ok
   @tag :unit
   test "route enumeration works" do
     if Application.get_env(:riva_ash, :skip_database) == true do
@@ -36,6 +49,10 @@ defmodule PropertyTestingSimpleTest do
     end
   end
 
+  @doc """
+  Tests that the flow generator produces valid flows.
+  """
+  @spec test_flow_generator_produces_flows :: :ok
   @tag :unit
   test "flow generator produces flows" do
     if Application.get_env(:riva_ash, :skip_database) == true do

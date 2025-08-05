@@ -10,6 +10,8 @@ defmodule RivaAshWeb.UserLive do
   import RivaAshWeb.Live.AuthHelpers
 
   alias RivaAsh.Accounts.User
+  alias RivaAsh.Accounts.UserService
+  alias RivaAsh.ErrorHelpers
 
   @impl true
   def mount(_params, session, socket) do
@@ -17,17 +19,22 @@ defmodule RivaAshWeb.UserLive do
       {:ok, user} ->
         # Only admins can view all users
         if user.role == :admin do
-          users = User |> Ash.read!(domain: RivaAsh.Accounts)
+          case UserService.list_users() do
+            {:ok, users} ->
+              socket =
+                socket
+                |> assign(:current_user, user)
+                |> assign(:page_title, get_page_title())
+                |> assign(:users, users)
+                # Placeholder for pagination/metadata
+                |> assign(:meta, %{})
 
-          socket =
-            socket
-            |> assign(:current_user, user)
-            |> assign(:page_title, "Users")
-            |> assign(:users, users)
-            # Placeholder for pagination/metadata
-            |> assign(:meta, %{})
+              {:ok, socket}
 
-          {:ok, socket}
+            {:error, error} ->
+              error_message = ErrorHelpers.format_error(error)
+              {:ok, redirect(socket, to: "/access-denied")}
+          end
         else
           {:ok, redirect(socket, to: "/access-denied")}
         end
@@ -84,12 +91,42 @@ defmodule RivaAshWeb.UserLive do
   end
 
   def handle_event("delete_user", %{"id" => id}, socket) do
-    # Placeholder for delete logic
-    IO.puts("Deleting user with ID: #{id}")
-    {:noreply, socket}
+    case UserService.delete_user(id) do
+      :ok ->
+        # Reload users after successful deletion
+        case UserService.list_users() do
+          {:ok, users} ->
+            socket =
+              socket
+              |> assign(:users, users)
+              |> assign(:success_message, "User deleted successfully!")
+
+            {:noreply, socket}
+
+          {:error, error} ->
+            error_message = ErrorHelpers.format_error(error)
+            socket =
+              socket
+              |> assign(:error_message, "Failed to reload users: #{error_message}")
+
+            {:noreply, socket}
+        end
+
+      {:error, error} ->
+        error_message = ErrorHelpers.format_error(error)
+        socket =
+          socket
+          |> assign(:error_message, "Failed to delete user: #{error_message}")
+
+        {:noreply, socket}
+    end
   end
 
   def handle_event(_event, _params, socket) do
     {:noreply, socket}
   end
+
+  # Private helper functions
+
+  defp get_page_title, do: Application.get_env(:riva_ash, __MODULE__, [])[:page_title] || "Users"
 end

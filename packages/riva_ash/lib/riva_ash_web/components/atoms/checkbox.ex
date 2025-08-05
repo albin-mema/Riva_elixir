@@ -24,11 +24,18 @@ defmodule RivaAshWeb.Components.Atoms.Checkbox do
   attr :class, :string, default: ""
   attr :rest, :global
 
-  def checkbox(assigns) do
-    assigns =
-      assigns
-      |> Phoenix.Component.assign(:ui_size, map_legacy_size(assigns[:size]))
+  def checkbox(assigns) when is_map(assigns) do
+    assigns
+    |> assign_ui_size()
+    |> render_checkbox()
+  end
 
+  defp assign_ui_size(assigns) when is_map(assigns) do
+    ui_size = assigns |> Map.get(:size, "md") |> map_legacy_size()
+    Phoenix.Component.assign(assigns, :ui_size, ui_size)
+  end
+
+  defp render_checkbox(assigns) do
     ~H"""
     <UICheckbox.checkbox
       field={@field}
@@ -45,9 +52,9 @@ defmodule RivaAshWeb.Components.Atoms.Checkbox do
     """
   end
 
-  # Map legacy atom sizes to UI sizes
+  # Map legacy atom sizes to UI sizes using pattern matching
   defp map_legacy_size("sm"), do: "sm"
   defp map_legacy_size("md"), do: "default"
   defp map_legacy_size("lg"), do: "lg"
-  defp map_legacy_size(_), do: "default"
+  defp map_legacy_size(_size), do: "default"
 end

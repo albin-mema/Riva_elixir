@@ -7,6 +7,7 @@ defmodule RivaAshWeb.Components.UI.InputTest do
   import RivaAshWeb.Components.UI.Input
 
   describe "input/1" do
+    @spec test_renders_basic_input :: :ok
     test "renders basic input" do
       assigns = %{}
 
@@ -20,6 +21,7 @@ defmodule RivaAshWeb.Components.UI.InputTest do
       assert html =~ "flex w-full rounded-md border"
     end
 
+    @spec test_renders_with_different_types :: :ok
     test "renders with different types" do
       types = ~w(text email password number tel url search)
 
@@ -35,6 +37,7 @@ defmodule RivaAshWeb.Components.UI.InputTest do
       end
     end
 
+    @spec test_renders_with_value :: :ok
     test "renders with value" do
       assigns = %{}
 
@@ -46,6 +49,7 @@ defmodule RivaAshWeb.Components.UI.InputTest do
       assert html =~ ~s(value="test value")
     end
 
+    @spec test_renders_with_placeholder :: :ok
     test "renders with placeholder" do
       assigns = %{}
 
@@ -57,6 +61,7 @@ defmodule RivaAshWeb.Components.UI.InputTest do
       assert html =~ ~s(placeholder="Enter text")
     end
 
+    @spec test_renders_different_variants :: :ok
     test "renders different variants" do
       variants = ~w(default error success)
 
@@ -72,6 +77,7 @@ defmodule RivaAshWeb.Components.UI.InputTest do
       end
     end
 
+    @spec test_renders_different_sizes :: :ok
     test "renders different sizes" do
       sizes = ~w(sm default lg)
 
@@ -87,6 +93,7 @@ defmodule RivaAshWeb.Components.UI.InputTest do
       end
     end
 
+    @spec test_renders_disabled_state :: :ok
     test "renders disabled state" do
       assigns = %{}
 
@@ -99,6 +106,7 @@ defmodule RivaAshWeb.Components.UI.InputTest do
       assert html =~ "cursor-not-allowed"
     end
 
+    @spec test_renders_readonly_state :: :ok
     test "renders readonly state" do
       assigns = %{}
 
@@ -110,6 +118,7 @@ defmodule RivaAshWeb.Components.UI.InputTest do
       assert html =~ "readonly"
     end
 
+    @spec test_renders_required_state :: :ok
     test "renders required state" do
       assigns = %{}
 
@@ -121,6 +130,7 @@ defmodule RivaAshWeb.Components.UI.InputTest do
       assert html =~ "required"
     end
 
+    @spec test_renders_with_custom_class :: :ok
     test "renders with custom class" do
       assigns = %{}
 
@@ -132,6 +142,7 @@ defmodule RivaAshWeb.Components.UI.InputTest do
       assert html =~ "custom-class"
     end
 
+    @spec test_renders_with_global_attributes :: :ok
     test "renders with global attributes" do
       assigns = %{}
 
@@ -144,6 +155,7 @@ defmodule RivaAshWeb.Components.UI.InputTest do
       assert html =~ ~s(name="test")
     end
 
+    @spec test_renders_with_form_field :: :ok
     test "renders with form field" do
       # Use to_form/1 to build a proper form and take field from it
       form = Phoenix.Component.to_form(%{"test_field" => "field value"})
@@ -161,6 +173,7 @@ defmodule RivaAshWeb.Components.UI.InputTest do
       assert html =~ ~s(value="field value")
     end
 
+    @spec test_renders_error_variant_with_form_field_errors :: :ok
     test "renders error variant with form field errors" do
       # Build a proper form using to_form; inject errors via a changeset so required keys are present
       cs =

@@ -16,11 +16,24 @@ defmodule RivaAshWeb.Components.Navigation.ExpandedSidebar do
   attr(:class, :string, default: "")
   attr(:rest, :global)
 
+  @spec expanded_sidebar(assigns :: map()) :: Phoenix.LiveView.Rendered.t()
   def expanded_sidebar(assigns) do
+    # Render expanded sidebar using functional composition
+    assigns
+    |> Map.put_new(:container_class, build_container_class(assigns.class, assigns.collapsed))
+    |> Map.put_new(:header_class, build_header_class(assigns.collapsed))
+    |> Map.put_new(:content_class, build_content_class(assigns.collapsed))
+    |> Map.put_new(:footer_class, build_footer_class(assigns.collapsed))
+    |> render_expanded_sidebar_component()
+  end
+
+  # Private helper for expanded sidebar rendering
+  @spec render_expanded_sidebar_component(assigns :: map()) :: Phoenix.LiveView.Rendered.t()
+  defp render_expanded_sidebar_component(assigns) do
     ~H"""
     <!-- Expanded sidebar implementation will go here -->
-    <nav {@rest} class={["sidebar", if(@collapsed, do: "collapsed", else: "expanded"), @class]}>
-      <div class="sidebar-header">
+    <nav {@rest} class={@container_class}>
+      <div class={@header_class}>
         <div :if={!@collapsed}>
           <h2>Riva Ash</h2>
           <p><%= @current_user.business.name %></p>
@@ -30,7 +43,7 @@ defmodule RivaAshWeb.Components.Navigation.ExpandedSidebar do
         </button>
       </div>
 
-      <div class="sidebar-content">
+      <div class={@content_class}>
         <!-- Dashboard -->
         <div class="nav-section">
           <.nav_item
@@ -167,7 +180,7 @@ defmodule RivaAshWeb.Components.Navigation.ExpandedSidebar do
         </div>
       </div>
 
-      <div class="sidebar-footer">
+      <div class={@footer_class}>
         <.nav_item
           path="/profile"
           current_path={@current_path}
@@ -183,6 +196,32 @@ defmodule RivaAshWeb.Components.Navigation.ExpandedSidebar do
       </div>
     </nav>
     """
+  end
+
+  # Helper function to build container classes
+  @spec build_container_class(String.t(), boolean()) :: String.t()
+  defp build_container_class(class, collapsed) do
+    ["sidebar", if(collapsed, do: "collapsed", else: "expanded"), class]
+    |> Enum.filter(& &1 != "")
+    |> Enum.join(" ")
+  end
+
+  # Helper function to build header classes
+  @spec build_header_class(boolean()) :: String.t()
+  defp build_header_class(collapsed) do
+    "sidebar-header"
+  end
+
+  # Helper function to build content classes
+  @spec build_content_class(boolean()) :: String.t()
+  defp build_content_class(collapsed) do
+    "sidebar-content"
+  end
+
+  # Helper function to build footer classes
+  @spec build_footer_class(boolean()) :: String.t()
+  defp build_footer_class(collapsed) do
+    "sidebar-footer"
   end
 
   defp nav_section_header(assigns) do

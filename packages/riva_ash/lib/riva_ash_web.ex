@@ -16,8 +16,25 @@ defmodule RivaAshWeb do
   those modules here.
   """
 
+  @type static_path :: String.t()
+  @type static_paths :: [static_path()]
+
+  @doc """
+  Returns the list of static paths served by the application.
+  
+  These paths are used for static asset serving and should include
+  all publicly accessible files.
+  """
+  @spec static_paths() :: static_paths()
   def static_paths, do: ~w(assets fonts images favicon.ico robots.txt)
 
+  @doc """
+  Generates router configuration with common imports and setup.
+  
+  Returns a quoted expression that configures a Phoenix router
+  with essential imports for web development.
+  """
+  @spec router() :: Macro.t()
   def router do
     quote do
       use Phoenix.Router, helpers: false
@@ -28,12 +45,26 @@ defmodule RivaAshWeb do
     end
   end
 
+  @doc """
+  Generates channel configuration for real-time features.
+  
+  Returns a quoted expression that configures a Phoenix channel
+  with essential setup for WebSocket communication.
+  """
+  @spec channel() :: Macro.t()
   def channel do
     quote do
       use Phoenix.Channel
     end
   end
 
+  @doc """
+  Generates controller configuration with standard formats and helpers.
+  
+  Returns a quoted expression that configures a Phoenix controller
+  with HTML and JSON formats, along with essential imports.
+  """
+  @spec controller() :: Macro.t()
   def controller do
     quote do
       use Phoenix.Controller,
@@ -46,6 +77,13 @@ defmodule RivaAshWeb do
     end
   end
 
+  @doc """
+  Generates LiveView configuration with layout hooks and helpers.
+  
+  Returns a quoted expression that configures a Phoenix LiveView
+  with layout compilation and essential imports.
+  """
+  @spec live_view() :: Macro.t()
   def live_view do
     quote do
       use Phoenix.LiveView
@@ -58,6 +96,13 @@ defmodule RivaAshWeb do
     end
   end
 
+  @doc """
+  Generates LiveComponent configuration with HTML helpers.
+  
+  Returns a quoted expression that configures a Phoenix LiveComponent
+  with essential HTML rendering helpers.
+  """
+  @spec live_component() :: Macro.t()
   def live_component do
     quote do
       use Phoenix.LiveComponent
@@ -66,6 +111,13 @@ defmodule RivaAshWeb do
     end
   end
 
+  @doc """
+  Generates HTML component configuration with form and controller helpers.
+  
+  Returns a quoted expression that configures Phoenix HTML components
+  with form handling and controller convenience functions.
+  """
+  @spec html() :: Macro.t()
   def html do
     quote do
       use Phoenix.Component
@@ -79,6 +131,13 @@ defmodule RivaAshWeb do
     end
   end
 
+  @doc """
+  Generates HTML helper functions for common web operations.
+  
+  Returns a quoted expression with imports for HTML escaping,
+  form handling, internationalization, and route generation.
+  """
+  @spec html_helpers() :: Macro.t()
   defp html_helpers do
     quote do
       # HTML escaping functionality
@@ -96,6 +155,13 @@ defmodule RivaAshWeb do
     end
   end
 
+  @doc """
+  Generates verified route configuration for type-safe routing.
+  
+  Returns a quoted expression that configures Phoenix VerifiedRoutes
+  with endpoint, router, and static path information.
+  """
+  @spec verified_routes() :: Macro.t()
   def verified_routes do
     quote do
       use Phoenix.VerifiedRoutes,
@@ -106,8 +172,19 @@ defmodule RivaAshWeb do
   end
 
   @doc """
-  When used, dispatch to the appropriate controller/view/etc.
+  Dispatches to the appropriate web component configuration.
+  
+  When used, this macro dispatches to the appropriate controller/view/etc.
+  configuration based on the atom provided.
+  
+  ## Parameters
+    - `which`: An atom indicating which web component to configure
+      (e.g., `:controller`, `:live_view`, `:html`)
+  
+  ## Returns
+    A quoted expression for the requested web component configuration
   """
+  @spec __using__(atom()) :: Macro.t()
   defmacro __using__(which) when is_atom(which) do
     apply(__MODULE__, which, [])
   end

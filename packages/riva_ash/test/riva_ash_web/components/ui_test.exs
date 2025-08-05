@@ -19,6 +19,7 @@ defmodule RivaAshWeb.UIComponentsTest do
       assert html =~ "text-primary-foreground"
     end
 
+    @spec test_renders_with_destructive_variant :: :ok
     test "renders with destructive variant" do
       assigns = %{}
 
@@ -32,6 +33,7 @@ defmodule RivaAshWeb.UIComponentsTest do
       assert html =~ "text-destructive-foreground"
     end
 
+    @spec test_renders_with_loading_state :: :ok
     test "renders with loading state" do
       assigns = %{}
 
@@ -47,6 +49,9 @@ defmodule RivaAshWeb.UIComponentsTest do
   end
 
   describe "input component" do
+    @spec test_renders_with_default_variant :: :ok
+    @spec test_renders_with_default_variant :: :ok
+    @spec test_renders_with_default_variant :: :ok
     test "renders with default variant" do
       assigns = %{}
 
@@ -60,6 +65,8 @@ defmodule RivaAshWeb.UIComponentsTest do
       assert html =~ "bg-background"
     end
 
+    @spec test_renders_with_error_variant :: :ok
+    @spec test_renders_with_error_variant :: :ok
     test "renders with error variant" do
       assigns = %{}
 
@@ -75,6 +82,7 @@ defmodule RivaAshWeb.UIComponentsTest do
   end
 
   describe "checkbox component" do
+    @spec test_renders_with_label :: :ok
     test "renders with label" do
       assigns = %{}
 
@@ -102,6 +110,7 @@ defmodule RivaAshWeb.UIComponentsTest do
   end
 
   describe "card component" do
+    @spec test_renders_with_content :: :ok
     test "renders with content" do
       assigns = %{}
 
@@ -135,6 +144,7 @@ defmodule RivaAshWeb.UIComponentsTest do
       assert html =~ "text-primary-foreground"
     end
 
+    @spec test_renders_with_secondary_variant :: :ok
     test "renders with secondary variant" do
       assigns = %{}
 

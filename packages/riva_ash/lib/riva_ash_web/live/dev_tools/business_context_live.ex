@@ -18,8 +18,7 @@ defmodule RivaAshWeb.DevTools.BusinessContextLive do
     end
   else
     import RivaAshWeb.Live.AuthHelpers
-    alias RivaAsh.Resources.{Business, Employee}
-    alias RivaAsh.Permissions
+    alias RivaAsh.DevTools.BusinessContextService
 
     @impl true
     def mount(_params, session, socket) do
@@ -27,25 +26,22 @@ defmodule RivaAshWeb.DevTools.BusinessContextLive do
         {:ok, user} ->
           socket =
             socket
-            |> assign(:page_title, "Business Context Inspector")
+            |> assign(:page_title, get_page_title())
             |> assign(:current_user, user)
             |> assign(:session_data, session)
             |> assign(:selected_tab, "user")
-            |> load_business_context(user)
-            |> load_permissions(user)
+            |> BusinessContextService.load_context(user)
 
           {:ok, socket}
 
         {:error, _} ->
           socket =
             socket
-            |> assign(:page_title, "Business Context Inspector")
+            |> assign(:page_title, get_page_title())
             |> assign(:current_user, nil)
             |> assign(:session_data, session)
             |> assign(:selected_tab, "user")
-            |> assign(:businesses, [])
-            |> assign(:permissions, %{})
-            |> assign(:employees, [])
+            |> BusinessContextService.load_context(nil)
 
           {:ok, socket}
       end
@@ -57,35 +53,11 @@ defmodule RivaAshWeb.DevTools.BusinessContextLive do
     end
 
     def handle_event("refresh_context", _params, socket) do
-      user = socket.assigns.current_user
-      
-      socket =
-        if user do
-          socket
-          |> load_business_context(user)
-          |> load_permissions(user)
-        else
-          socket
-        end
-
-      {:noreply, socket}
+      BusinessContextService.refresh_context(socket)
     end
 
     def handle_event("simulate_user", %{"user_id" => user_id}, socket) do
-      # In development, allow simulating different users
-      case RivaAsh.Accounts.User.by_id(user_id, domain: RivaAsh.Accounts) do
-        {:ok, user} ->
-          socket =
-            socket
-            |> assign(:current_user, user)
-            |> load_business_context(user)
-            |> load_permissions(user)
-
-          {:noreply, socket}
-
-        {:error, _} ->
-          {:noreply, put_flash(socket, :error, "User not found")}
-      end
+      BusinessContextService.simulate_user(socket, user_id)
     end
 
     @impl true
@@ -420,63 +392,6 @@ defmodule RivaAshWeb.DevTools.BusinessContextLive do
     end
 
     # Helper functions
-    defp load_business_context(socket, user) do
-      try do
-        businesses = Business.read!(actor: user, domain: RivaAsh.Domain)
-        business_ids = Enum.map(businesses, & &1.id)
-        
-        employees = 
-          if business_ids != [] do
-            Employee.by_business(List.first(business_ids), actor: user, domain: RivaAsh.Domain)
-            |> case do
-              {:ok, employees} -> employees
-              {:error, _} -> []
-            end
-          else
-            []
-          end
-
-        socket
-        |> assign(:businesses, businesses)
-        |> assign(:employees, employees)
-      rescue
-        _ ->
-          socket
-          |> assign(:businesses, [])
-          |> assign(:employees, [])
-      end
-    end
-
-    defp load_permissions(socket, user) do
-      # Simulate permission checking for different resources
-      permissions = %{
-        "Business" => %{
-          read: user.role in ["admin", "superadmin", "manager"],
-          create: user.role in ["admin", "superadmin"],
-          update: user.role in ["admin", "superadmin", "manager"],
-          destroy: user.role in ["superadmin"]
-        },
-        "Item" => %{
-          read: true,
-          create: user.role in ["admin", "superadmin", "manager"],
-          update: user.role in ["admin", "superadmin", "manager"],
-          destroy: user.role in ["admin", "superadmin"]
-        },
-        "Reservation" => %{
-          read: true,
-          create: user.role in ["admin", "superadmin", "manager", "staff"],
-          update: user.role in ["admin", "superadmin", "manager"],
-          destroy: user.role in ["admin", "superadmin"]
-        },
-        "Client" => %{
-          read: user.role in ["admin", "superadmin", "manager", "staff"],
-          create: user.role in ["admin", "superadmin", "manager", "staff"],
-          update: user.role in ["admin", "superadmin", "manager"],
-          destroy: user.role in ["admin", "superadmin"]
-        }
-      }
-
-      assign(socket, :permissions, permissions)
-    end
+    defp get_page_title, do: Application.get_env(:riva_ash, __MODULE__, [])[:page_title] || "Business Context Inspector"
   end
 end

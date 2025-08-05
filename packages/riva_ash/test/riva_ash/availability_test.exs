@@ -7,6 +7,7 @@ defmodule RivaAsh.AvailabilityTest do
   alias RivaAsh.Resources.Reservation
 
   describe "check_availability/3" do
+    @spec test_returns_available_slots_for_valid_parameters :: :ok
     test "returns available slots for valid parameters" do
       business_id = "business-123"
       date = ~D[2024-01-15]
@@ -16,6 +17,7 @@ defmodule RivaAsh.AvailabilityTest do
       assert is_list(slots)
     end
 
+    @spec test_returns_empty_list_when_no_availability :: :ok
     test "returns empty list when no availability" do
       business_id = "business-no-availability"
       date = ~D[2024-01-15]
@@ -61,6 +63,7 @@ defmodule RivaAsh.AvailabilityTest do
       {:ok, item: item, weekday_schedule: weekday_schedule, weekend_schedule: weekend_schedule}
     end
 
+    @spec test_item_is_available_during_weekday_business_hours :: :ok
     test "item is available during weekday business hours", %{
       item: item,
       weekday_schedule: weekday_schedule
@@ -84,6 +87,7 @@ defmodule RivaAsh.AvailabilityTest do
                Availability.check_availability("item-1", start_datetime, end_datetime)
     end
 
+    @spec test_item_is_not_available_during_weekday_outside_business_hours :: :ok
     test "item is not available during weekday outside business hours", %{
       item: item,
       weekday_schedule: weekday_schedule
@@ -107,6 +111,7 @@ defmodule RivaAsh.AvailabilityTest do
                Availability.check_availability("item-1", start_datetime, end_datetime)
     end
 
+    @spec test_item_is_available_during_weekend_business_hours :: :ok
     test "item is available during weekend business hours", %{
       item: item,
       weekend_schedule: weekend_schedule
@@ -130,6 +135,7 @@ defmodule RivaAsh.AvailabilityTest do
                Availability.check_availability("item-1", start_datetime, end_datetime)
     end
 
+    @spec test_item_is_not_available_during_weekend_outside_business_hours :: :ok
     test "item is not available during weekend outside business hours", %{
       item: item,
       weekend_schedule: weekend_schedule
@@ -153,6 +159,7 @@ defmodule RivaAsh.AvailabilityTest do
                Availability.check_availability("item-1", start_datetime, end_datetime)
     end
 
+    @spec test_weekday_and_weekend_have_different_business_hours :: :ok
     test "weekday and weekend have different business hours", %{
       item: item,
       weekday_schedule: weekday_schedule,
@@ -220,6 +227,7 @@ defmodule RivaAsh.AvailabilityTest do
         {:ok, item: item, weekday_schedule: weekday_schedule, weekend_schedule: weekend_schedule}
       end
 
+      @spec test_multi_day_reservation_spanning_weekday_to_weekend :: :ok
       test "multi-day reservation spanning weekday to weekend", %{
         item: item,
         weekday_schedule: weekday_schedule,
@@ -286,6 +294,7 @@ defmodule RivaAsh.AvailabilityTest do
            non_business_schedule: non_business_schedule}
         end
 
+        @spec test_item_is_available_during_business_hours :: :ok
         test "item is available during business hours", %{
           item: item,
           business_schedule: business_schedule
@@ -335,6 +344,7 @@ defmodule RivaAsh.AvailabilityTest do
             {:ok, item: item, business_schedule: business_schedule}
           end
 
+          @spec test_midnight_transition_within_same_day :: :ok
           test "midnight transition within same day", %{
             item: item,
             business_schedule: business_schedule
@@ -361,6 +371,7 @@ defmodule RivaAsh.AvailabilityTest do
                      Availability.check_availability("item-1", start_datetime, end_datetime)
           end
 
+          @spec test_midnight_transition_with_available_schedule :: :ok
           test "midnight transition with available schedule", %{item: item} do
             # Create schedules for both days
             monday_schedule = %ItemSchedule{
@@ -401,6 +412,7 @@ defmodule RivaAsh.AvailabilityTest do
                      Availability.check_availability("item-1", start_datetime, end_datetime)
           end
 
+          @spec test_month_boundary_transition :: :ok
           test "month boundary transition", %{item: item, business_schedule: business_schedule} do
             # Test a reservation that spans the end of one month to the beginning of the next
             # January 31st
@@ -423,6 +435,7 @@ defmodule RivaAsh.AvailabilityTest do
                      Availability.check_availability("item-1", start_datetime, end_datetime)
           end
 
+          @spec test_year_boundary_transition :: :ok
           test "year boundary transition", %{item: item, business_schedule: business_schedule} do
             # Test a reservation that spans the end of one year to the beginning of the next
             # December 31st, 2024
@@ -445,6 +458,7 @@ defmodule RivaAsh.AvailabilityTest do
                      Availability.check_availability("item-1", start_datetime, end_datetime)
           end
 
+          @spec test_leap_year_date_handling :: :ok
           test "leap year date handling", %{item: item, business_schedule: business_schedule} do
             # Test availability on February 29th of a leap year
             # February 29th, 2024 (leap year)
@@ -465,6 +479,7 @@ defmodule RivaAsh.AvailabilityTest do
                      Availability.check_availability("item-1", start_datetime, end_datetime)
           end
 
+          @spec test_get_available_slots_at_midnight_boundary :: :ok
           test "get_available_slots at midnight boundary", %{item: item} do
             # Test getting available slots for a day that has a schedule crossing midnight
             item_with_midnight_schedule = %Item{
@@ -512,6 +527,7 @@ defmodule RivaAsh.AvailabilityTest do
           end
         end
 
+        @spec test_item_is_not_available_during_non_business_hours :: :ok
         test "item is not available during non-business hours", %{
           item: item,
           business_schedule: business_schedule
@@ -535,6 +551,7 @@ defmodule RivaAsh.AvailabilityTest do
                    Availability.check_availability("item-1", start_datetime, end_datetime)
         end
 
+        @spec test_item_is_not_available_after_business_hours :: :ok
         test "item is not available after business hours", %{
           item: item,
           business_schedule: business_schedule
@@ -558,6 +575,7 @@ defmodule RivaAsh.AvailabilityTest do
                    Availability.check_availability("item-1", start_datetime, end_datetime)
         end
 
+        @spec test_get_available_slots_returns_slots_only_during_business_hours :: :ok
         test "get_available_slots returns slots only during business hours", %{
           item: item,
           business_schedule: business_schedule
@@ -584,6 +602,7 @@ defmodule RivaAsh.AvailabilityTest do
           assert List.last(slots) == {~T[16:00:00], ~T[17:00:00]}
         end
 
+        @spec test_time_slot_availability_with_partial_business_hours :: :ok
         test "time slot availability with partial business hours", %{item: item} do
           # Create a schedule with partial business hours
           partial_schedule = %ItemSchedule{
@@ -615,6 +634,7 @@ defmodule RivaAsh.AvailabilityTest do
         end
       end
 
+      @spec test_multi_day_reservation_spanning_weekend_to_weekday :: :ok
       test "multi-day reservation spanning weekend to weekday", %{
         item: item,
         weekday_schedule: weekday_schedule,
@@ -642,6 +662,7 @@ defmodule RivaAsh.AvailabilityTest do
                  Availability.check_availability("item-1", start_datetime, end_datetime)
       end
 
+      @spec test_multi_day_reservation_blocked_by_schedule_gap :: :ok
       test "multi-day reservation blocked by schedule gap", %{
         item: item,
         weekday_schedule: weekday_schedule
@@ -667,6 +688,7 @@ defmodule RivaAsh.AvailabilityTest do
                  Availability.check_availability("item-1", start_datetime, end_datetime)
       end
 
+      @spec test_date_range_calculation_with_week_boundary_in_get_available_slots :: :ok
       test "date range calculation with week boundary in get_available_slots", %{
         item: item,
         weekday_schedule: weekday_schedule,
@@ -697,6 +719,7 @@ defmodule RivaAsh.AvailabilityTest do
   end
 
   describe "get_business_hours/2" do
+    @spec test_returns_business_hours_for_date :: :ok
     test "returns business hours for date" do
       business_id = "business-123"
       date = ~D[2024-01-15]
@@ -707,6 +730,7 @@ defmodule RivaAsh.AvailabilityTest do
       assert Map.has_key?(hours, :close)
     end
 
+    @spec test_handles_business_with_no_hours_set :: :ok
     test "handles business with no hours set" do
       business_id = "business-no-hours"
       date = ~D[2024-01-15]
@@ -716,6 +740,7 @@ defmodule RivaAsh.AvailabilityTest do
   end
 
   describe "block_time_slot/3" do
+    @spec test_blocks_time_slot_successfully :: :ok
     test "blocks time slot successfully" do
       business_id = "business-123"
       start_time = ~N[2024-01-15 09:00:00]
@@ -724,6 +749,7 @@ defmodule RivaAsh.AvailabilityTest do
       assert :ok = Availability.block_time_slot(business_id, start_time, end_time)
     end
 
+    @spec test_returns_error_for_invalid_time_range :: :ok
     test "returns error for invalid time range" do
       business_id = "business-123"
       start_time = ~N[2024-01-15 10:00:00]
@@ -734,6 +760,7 @@ defmodule RivaAsh.AvailabilityTest do
   end
 
   describe "unblock_time_slot/3" do
+    @spec test_unblocks_time_slot_successfully :: :ok
     test "unblocks time slot successfully" do
       business_id = "business-123"
       start_time = ~N[2024-01-15 09:00:00]
@@ -744,6 +771,7 @@ defmodule RivaAsh.AvailabilityTest do
   end
 
   describe "get_blocked_slots/2" do
+    @spec test_returns_blocked_slots_for_date_range :: :ok
     test "returns blocked slots for date range" do
       business_id = "business-123"
       start_date = ~D[2024-01-15]
@@ -755,6 +783,7 @@ defmodule RivaAsh.AvailabilityTest do
   end
 
   describe "set_business_hours/2" do
+    @spec test_sets_business_hours_successfully :: :ok
     test "sets business hours successfully" do
       business_id = "business-123"
 
@@ -771,6 +800,7 @@ defmodule RivaAsh.AvailabilityTest do
       assert :ok = Availability.set_business_hours(business_id, hours)
     end
 
+    @spec test_returns_error_for_invalid_hours_format :: :ok
     test "returns error for invalid hours format" do
       business_id = "business-123"
 
@@ -783,6 +813,7 @@ defmodule RivaAsh.AvailabilityTest do
   end
 
   describe "calculate_available_slots/4" do
+    @spec test_calculates_available_slots_correctly :: :ok
     test "calculates available slots correctly" do
       business_id = "business-123"
       date = ~D[2024-01-15]
@@ -797,6 +828,7 @@ defmodule RivaAsh.AvailabilityTest do
   end
 
   describe "check_holiday/2" do
+    @spec test_identifies_holidays_correctly :: :ok
     test "identifies holidays correctly" do
       business_id = "business-123"
       date = ~D[2024-12-25]
@@ -807,6 +839,7 @@ defmodule RivaAsh.AvailabilityTest do
   end
 
   describe "get_special_hours/2" do
+    @spec test_returns_special_hours_for_date :: :ok
     test "returns special hours for date" do
       business_id = "business-123"
       date = ~D[2024-12-25]

@@ -7,7 +7,6 @@ defmodule RivaAshWeb.ReservationCenterLive do
 
   # Explicitly set the authenticated layout
 
-
   alias RivaAsh.Resources.{
     Business,
     Reservation,
@@ -18,6 +17,7 @@ defmodule RivaAshWeb.ReservationCenterLive do
   }
 
   alias RivaAsh.ErrorHelpers
+  alias RivaAsh.Reservation.ReservationService
 
   import RivaAshWeb.Components.Organisms.PageHeader
   import RivaAshWeb.Components.Organisms.CalendarView
@@ -31,53 +31,27 @@ defmodule RivaAshWeb.ReservationCenterLive do
   def mount(_params, session, socket) do
     case get_current_user_from_session(session) do
       {:ok, user} ->
-        try do
-          # Load user's businesses
-          businesses = Business.read!(actor: user)
-          business_ids = Enum.map(businesses, & &1.id)
+        case ReservationService.get_reservation_center_data(user) do
+          {:ok, %{businesses: businesses, reservations: reservations, items: items}} ->
+            socket =
+              socket
+              |> assign(:current_user, user)
+              |> assign(:page_title, get_page_title())
+              |> assign(:businesses, businesses)
+              |> assign(:reservations, reservations)
+              |> assign(:items, items)
+              |> assign(:current_date, Date.utc_today())
+              |> assign(:view_mode, "month")
+              |> assign(:selected_reservation, nil)
+              |> assign(:show_booking_form, false)
+              |> assign(:show_recurring_form, false)
+              |> assign(:filters, %{})
+              |> assign(:loading, false)
 
-          # Load reservations for current month
-          {start_date, end_date} = get_month_range(Date.utc_today())
+            {:ok, socket}
 
-          reservations =
-            Reservation.read!(
-              actor: user,
-              filter: [
-                business_id: [in: business_ids],
-                reserved_from: [
-                  greater_than_or_equal_to: DateTime.new!(start_date, ~T[00:00:00], "Etc/UTC")
-                ],
-                reserved_from: [
-                  less_than_or_equal_to: DateTime.new!(end_date, ~T[23:59:59], "Etc/UTC")
-                ]
-              ]
-            )
-
-          # Load items for filtering
-          items =
-            Item.read!(
-              actor: user,
-              filter: [section: [plot: [business_id: [in: business_ids]]]]
-            )
-
-          socket =
-            socket
-            |> assign(:current_user, user)
-            |> assign(:page_title, "Reservation Center")
-            |> assign(:businesses, businesses)
-            |> assign(:reservations, reservations)
-            |> assign(:items, items)
-            |> assign(:current_date, Date.utc_today())
-            |> assign(:view_mode, "month")
-            |> assign(:selected_reservation, nil)
-            |> assign(:show_booking_form, false)
-            |> assign(:show_recurring_form, false)
-            |> assign(:filters, %{})
-            |> assign(:loading, false)
-
-          {:ok, socket}
-        rescue
-          _error in [Ash.Error.Forbidden, Ash.Error.Invalid] ->
+          {:error, error} ->
+            error_message = ErrorHelpers.format_error(error)
             {:ok, redirect(socket, to: "/access-denied")}
         end
 
@@ -483,74 +457,7 @@ defmodule RivaAshWeb.ReservationCenterLive do
     {:noreply, socket}
   end
 
-  # Helper functions
-  defp get_month_range(date) do
-    start_date = Date.beginning_of_month(date)
-    end_date = Date.end_of_month(date)
-    {start_date, end_date}
-  end
+  # Private helper functions
 
-  defp format_current_period(date, view_mode) do
-    case view_mode do
-      "day" -> Calendar.strftime(date, "%A, %B %d, %Y")
-      "week" -> "Week of #{Calendar.strftime(date, "%B %d, %Y")}"
-      "month" -> Calendar.strftime(date, "%B %Y")
-    end
-  end
-
-  defp format_hour(hour) do
-    case hour do
-      0 -> "12 AM"
-      h when h < 12 -> "#{h} AM"
-      12 -> "12 PM"
-      h -> "#{h - 12} PM"
-    end
-  end
-
-  defp get_calendar_dates(date) do
-    start_of_month = Date.beginning_of_month(date)
-    end_of_month = Date.end_of_month(date)
-
-    # Get the first Sunday of the calendar view
-    start_date = Date.add(start_of_month, -Date.day_of_week(start_of_month, :sunday))
-
-    # Get the last Saturday of the calendar view
-    end_date = Date.add(end_of_month, 6 - Date.day_of_week(end_of_month, :sunday))
-
-    Date.range(start_date, end_date) |> Enum.to_list()
-  end
-
-  defp get_reservations_for_date(reservations, date) do
-    Enum.filter(reservations, fn reservation ->
-      Date.compare(DateTime.to_date(reservation.reserved_from), date) == :eq
-    end)
-  end
-
-  defp count_today_reservations(reservations) do
-    today = Date.utc_today()
-
-    reservations
-    |> Enum.filter(&(Date.compare(DateTime.to_date(&1.reserved_from), today) == :eq))
-    |> length()
-  end
-
-  defp count_confirmed_today(reservations) do
-    today = Date.utc_today()
-
-    reservations
-    |> Enum.filter(fn r ->
-      Date.compare(DateTime.to_date(r.reserved_from), today) == :eq and r.status == :confirmed
-    end)
-    |> length()
-  end
-
-  defp count_pending_today(reservations) do
-    today = Date.utc_today()
-
-    reservations
-    |> Enum.filter(fn r ->
-      Date.compare(DateTime.to_date(r.reserved_from), today) == :eq and r.status == :pending
-    end)
-    |> length()
-  end
+  defp get_page_title, do: Application.get_env(:riva_ash, :reservation_center_page_title, "Reservation Center")
 end

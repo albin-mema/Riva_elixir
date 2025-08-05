@@ -13,6 +13,7 @@ defmodule RivaAsh.Resources.PricingResourceTest do
     |> Ash.create!()
   end
 
+  @spec test_set_price_tier_applies_correct_amount :: :ok
   test "set price tier applies correct amount" do
     %{business: business} = Factory.sample_data()
 
@@ -35,6 +36,7 @@ defmodule RivaAsh.Resources.PricingResourceTest do
     assert pricing.is_active == true
   end
 
+  @spec test_invalid_tier_returns_validation_error :: :ok
   test "invalid tier returns validation error" do
     %{business: business} = Factory.sample_data()
     item_type = create_item_type!(business.id)

@@ -15,6 +15,8 @@ defmodule RivaAshWeb.TokenLive do
 
   alias RivaAsh.Accounts.Token
   alias RivaAsh.Accounts.User
+  alias RivaAsh.Accounts.TokenService
+  alias RivaAsh.ErrorHelpers
 
   @impl true
   def mount(_params, session, socket) do
@@ -22,22 +24,29 @@ defmodule RivaAshWeb.TokenLive do
       {:ok, user} ->
         # Only admins can view all tokens
         if user.role == :admin do
-          socket =
-            socket
-            |> assign(:current_user, user)
-            |> assign(:page_title, "Tokens")
-            |> assign(:tokens, [])
-            |> assign(:meta, %{})
-            |> assign(:form, nil)
-            |> assign(:show_form, false)
-            |> assign(:editing_token, nil)
-            |> assign(:loading, false)
-            |> assign(:error_message, nil)
-            |> assign(:success_message, nil)
-            |> assign(:confirm_delete_id, nil)
-            |> assign(:users, [])
+          case TokenService.get_token_setup_data(user) do
+            {:ok, %{tokens: tokens, users: users}} ->
+              socket =
+                socket
+                |> assign(:current_user, user)
+                |> assign(:page_title, get_page_title())
+                |> assign(:tokens, tokens)
+                |> assign(:meta, %{})
+                |> assign(:form, nil)
+                |> assign(:show_form, false)
+                |> assign(:editing_token, nil)
+                |> assign(:loading, false)
+                |> assign(:error_message, nil)
+                |> assign(:success_message, nil)
+                |> assign(:confirm_delete_id, nil)
+                |> assign(:users, users)
 
-          {:ok, socket}
+              {:ok, socket}
+
+            {:error, error} ->
+              error_message = ErrorHelpers.format_error(error)
+              {:ok, redirect(socket, to: "/access-denied")}
+          end
         else
           {:ok, redirect(socket, to: "/access-denied")}
         end
@@ -259,7 +268,7 @@ defmodule RivaAshWeb.TokenLive do
   def handle_event("edit_token", %{"id" => id}, socket) do
     user = socket.assigns.current_user
 
-    case Token.by_id(id, actor: user) do
+    case TokenService.get_token_for_edit(id, user) do
       {:ok, token} ->
         form =
           AshPhoenix.Form.for_update(token, :update, actor: user)
@@ -273,10 +282,11 @@ defmodule RivaAshWeb.TokenLive do
 
         {:noreply, socket}
 
-      {:error, _reason} ->
+      {:error, error} ->
+        error_message = ErrorHelpers.format_error(error)
         socket =
           socket
-          |> assign(:error_message, "Token not found.")
+          |> assign(:error_message, "Token not found: #{error_message}")
           |> assign(:show_form, false)
 
         {:noreply, socket}
@@ -297,35 +307,22 @@ defmodule RivaAshWeb.TokenLive do
       |> assign(:loading, true)
       |> assign(:confirm_delete_id, nil)
 
-    case Token.by_id(token_id, actor: user) do
-      {:ok, token} ->
-        case Ash.destroy(token, actor: user) do
-          :ok ->
-            socket =
-              socket
-              |> assign(:loading, false)
-              |> assign(:success_message, "Token deleted successfully!")
+    case TokenService.delete_token(token_id, user) do
+      {:ok, _token} ->
+        socket =
+          socket
+          |> assign(:loading, false)
+          |> assign(:success_message, "Token deleted successfully!")
 
-            {:noreply, push_patch(socket, to: ~p"/tokens")}
-
-          {:error, error} ->
-            error_message = format_error_message(error)
-
-            socket =
-              socket
-              |> assign(:loading, false)
-              |> assign(:error_message, "Failed to delete token: #{error_message}")
-
-            {:noreply, socket}
-        end
+        {:noreply, push_patch(socket, to: ~p"/tokens")}
 
       {:error, error} ->
-        error_message = format_error_message(error)
+        error_message = ErrorHelpers.format_error(error)
 
         socket =
           socket
           |> assign(:loading, false)
-          |> assign(:error_message, "Failed to find token: #{error_message}")
+          |> assign(:error_message, "Failed to delete token: #{error_message}")
 
         {:noreply, socket}
     end
@@ -365,8 +362,12 @@ defmodule RivaAshWeb.TokenLive do
 
     socket = assign(socket, :loading, true)
 
-    # Submit the form with the correct parameters
-    result = AshPhoenix.Form.submit(socket.assigns.form, params: params, actor: user)
+    # Use TokenService for business logic
+    result = if socket.assigns.editing_token do
+      TokenService.update_token(socket.assigns.editing_token.id, params, user)
+    else
+      TokenService.create_token(params, user)
+    end
 
     case result do
       {:ok, token} ->
@@ -382,18 +383,14 @@ defmodule RivaAshWeb.TokenLive do
 
         {:noreply, push_patch(socket, to: ~p"/tokens")}
 
-      {:error, form} ->
-        error_messages =
-          form
-          |> AshPhoenix.Form.errors()
-          |> Enum.map(fn {field, {message, _}} -> "#{field}: #{message}" end)
-          |> Enum.join(", ")
+      {:error, error} ->
+        error_message = ErrorHelpers.format_error(error)
 
         socket =
           socket
           |> assign(:loading, false)
-          |> assign(:form, to_form(form))
-          |> assign(:error_message, "Failed to save token. #{error_messages}")
+          |> assign(:form, nil)
+          |> assign(:error_message, "Failed to save token: #{error_message}")
 
         {:noreply, socket}
     end
@@ -634,11 +631,8 @@ defmodule RivaAshWeb.TokenLive do
     end
   end
 
-  defp format_error_message(error) do
-    case RivaAsh.ErrorHelpers.format_error(error) do
-      %{message: message} -> message
-      _ -> "An unexpected error occurred"
-    end
+  defp get_page_title do
+    Application.get_env(:riva_ash, __MODULE__, [])[:page_title] || "Tokens"
   end
 
   defp mask_token_value(token) when is_binary(token) and byte_size(token) > 8 do

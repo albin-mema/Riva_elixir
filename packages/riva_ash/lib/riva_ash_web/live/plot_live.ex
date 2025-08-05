@@ -31,7 +31,7 @@ defmodule RivaAshWeb.PlotLive do
           socket =
             socket
             |> assign(:current_user, user)
-            |> assign(:page_title, "Plots")
+            |> assign(:page_title, get_page_title())
             |> assign(:business_ids, business_ids)
             |> assign(:confirm_delete_id, nil)
             |> assign(:loading, false)
@@ -292,6 +292,8 @@ defmodule RivaAshWeb.PlotLive do
         RivaAsh.ErrorHelpers.failure(e)
     end
   end
+
+  defp get_page_title, do: Application.get_env(:riva_ash, __MODULE__, [])[:page_title] || "Plots"
 
   defp format_error_message(error) do
     case RivaAsh.ErrorHelpers.format_error(error) do

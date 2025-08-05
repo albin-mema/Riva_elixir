@@ -12,9 +12,17 @@ defmodule RivaAshWeb.Components.UI.CardHeader do
 
   slot :inner_block, required: true
 
-  def card_header(assigns) do
-    assigns = assign(assigns, :header_class, header_class(assigns))
+  def card_header(assigns) when is_map(assigns) do
+    assigns
+    |> assign_header_class()
+    |> render_header()
+  end
 
+  defp assign_header_class(assigns) do
+    assign(assigns, :header_class, build_header_class(assigns))
+  end
+
+  defp render_header(assigns) do
     ~H"""
     <div class={@header_class} {@rest}>
       <%= render_slot(@inner_block) %>
@@ -22,9 +30,14 @@ defmodule RivaAshWeb.Components.UI.CardHeader do
     """
   end
 
-  defp header_class(assigns) do
-    base = "flex flex-col space-y-1.5 p-6"
+  defp build_header_class(assigns) when is_map(assigns) do
+    assigns
+    |> Map.get(:class, "")
+    |> prepend_base_class()
+  end
 
-    Enum.join([base, assigns.class], " ")
+  defp prepend_base_class(class) when is_binary(class) do
+    base = "flex flex-col space-y-1.5 p-6"
+    [base, class] |> Enum.reject(&(&1 == "")) |> Enum.join(" ")
   end
 end

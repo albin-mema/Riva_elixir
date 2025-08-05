@@ -4,6 +4,7 @@ defmodule RivaAsh.Resources.ReservationTest do
   import ExUnit.CaptureLog
 
   describe "create/1 - property-based tests" do
+    @spec test_creates_reservations_with_valid_randomized_attributes :: :ok
     property "creates reservations with valid randomized attributes" do
       check all(
               client_attrs <- client_attrs(),
@@ -47,6 +48,7 @@ defmodule RivaAsh.Resources.ReservationTest do
       end
     end
 
+    @spec test_validates_required_fields :: :ok
     property "validates required fields" do
       check all(attrs <- reservation_attrs()) do
         # Test missing client_id
@@ -61,6 +63,7 @@ defmodule RivaAsh.Resources.ReservationTest do
       end
     end
 
+    @spec test_validates_datetime_ordering :: :ok
     property "validates datetime ordering" do
       check all(
               client_attrs <- client_attrs(),
@@ -88,6 +91,7 @@ defmodule RivaAsh.Resources.ReservationTest do
   end
 
   describe "status updates - property-based tests" do
+    @spec test_status_transitions_work_correctly :: :ok
     property "status transitions work correctly" do
       check all(
               client_attrs <- client_attrs(),
@@ -145,6 +149,7 @@ defmodule RivaAsh.Resources.ReservationTest do
   end
 
   describe "queries - property-based tests" do
+    @spec test_time_based_queries_work_correctly :: :ok
     property "time-based queries work correctly" do
       check all(
               client_attrs <- client_attrs(),

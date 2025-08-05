@@ -18,38 +18,63 @@ defmodule RivaAsh.Authorization do
       iex> RivaAsh.Authorization.has_permission(actor, :delete_business)
       false
   """
+  @spec has_permission(map(), atom() | String.t()) :: boolean()
   def has_permission(actor, permission_name) do
-    case actor do
-      %{role: "admin"} ->
-        true
-
-      %{role: "user"} ->
-        check_user_permission(actor, permission_name)
-
-      %{id: employee_id} when is_binary(employee_id) ->
-        check_employee_permission(employee_id, permission_name)
+    with {:ok, normalized_permission} <- normalize_permission_name(permission_name),
+         true <- admin_user?(actor) do
+      true
+    else
+      {:ok, normalized_permission} ->
+        check_user_or_employee_permission(actor, normalized_permission)
 
       _ ->
         false
+    end
+  end
+
+  @spec check_user_or_employee_permission(map(), atom()) :: boolean()
+  defp check_user_or_employee_permission(actor, permission_name) do
+    if regular_user?(actor) do
+      check_user_permission(actor, permission_name)
+    else
+      check_employee_permission(actor.id, permission_name)
     end
   end
 
   @doc """
   Checks if an actor can access a business's resources.
   """
-  def can_access_business?(actor, business_id) do
+  @spec can_access_business?(map(), String.t()) :: boolean()
+  def can_access_business?(actor, business_id) when is_binary(business_id) do
+    with {:ok, validated_business_id} <- validate_business_id(business_id),
+         true <- admin_user?(actor) do
+      true
+    else
+      {:ok, validated_business_id} ->
+        check_business_access_permissions(actor, validated_business_id)
+
+      _ ->
+        false
+    end
+  end
+
+  @spec check_business_access_permissions(map(), String.t()) :: boolean()
+  defp check_business_access_permissions(actor, business_id) do
+    current_business_matches?(actor, business_id) or
+      has_business_in_list?(actor, business_id) or
+      check_business_ownership(actor.id, business_id)
+  end
+
+  @doc """
+  Checks if an actor owns or manages a business.
+  """
+  @spec owns_business?(map(), String.t()) :: boolean()
+  def owns_business?(actor, business_id) when is_binary(business_id) do
     case actor do
       %{role: :admin} ->
         true
 
-      %{current_business_id: ^business_id} ->
-        true
-
-      %{businesses: businesses} when is_list(businesses) ->
-        Enum.any?(businesses, &(&1.id == business_id))
-
       %{id: user_id} when is_binary(user_id) ->
-        # Check if user owns this business
         check_business_ownership(user_id, business_id)
 
       _ ->
@@ -57,19 +82,12 @@ defmodule RivaAsh.Authorization do
     end
   end
 
-  @doc """
-  Checks if an actor owns or manages a business.
-  """
-  def owns_business?(actor, business_id) do
-    case actor do
-      %{role: :admin} ->
-        true
-
-      %{id: user_id} when is_binary(user_id) ->
-        check_business_ownership(user_id, business_id)
-
-      _ ->
-        false
+  @spec check_business_ownership(String.t(), String.t()) :: boolean()
+  defp check_business_ownership(user_id, business_id) when is_binary(user_id) and is_binary(business_id) do
+    with {:ok, business} <- Ash.get(RivaAsh.Resources.Business, business_id, domain: RivaAsh.Domain) do
+      business.owner_id == user_id
+    else
+      {:error, _} -> false
     end
   end
 
@@ -139,78 +157,84 @@ defmodule RivaAsh.Authorization do
     end
   end
 
-  # Private helper functions
+  # Private helper functions with comprehensive specs
 
+  @spec admin_user?(map()) :: boolean()
+  defp admin_user?(%{role: "admin"}), do: true
+  defp admin_user?(_), do: false
+
+  @spec regular_user?(map()) :: boolean()
+  defp regular_user?(%{role: "user"}), do: true
+  defp regular_user?(_), do: false
+
+  @spec employee?(map()) :: boolean()
+  defp employee?(%{id: employee_id}) when is_binary(employee_id), do: true
+  defp employee?(_), do: false
+
+  @spec current_business_matches?(map(), String.t()) :: boolean()
+  defp current_business_matches?(%{current_business_id: business_id}, business_id), do: true
+  defp current_business_matches?(_, _), do: false
+
+  @spec has_business_in_list?(map(), String.t()) :: boolean()
+  defp has_business_in_list?(%{businesses: businesses}, business_id) when is_list(businesses) do
+    Enum.any?(businesses, &(&1.id == business_id))
+  end
+  defp has_business_in_list?(_, _), do: false
+
+  @spec check_user_permission(map(), atom()) :: boolean()
   defp check_user_permission(actor, permission_name) do
-    # Regular users need to check if they own businesses and have permissions
     case actor do
       %{id: user_id} when is_binary(user_id) ->
-        # Check if user owns any business and has business owner permissions
-        if user_owns_any_business?(user_id) do
-          check_business_owner_permission(actor, permission_name)
-        else
-          # Non-business owners need explicit employee permissions
-          check_employee_permission(user_id, permission_name)
-        end
+        check_user_business_permissions(user_id, permission_name)
 
       _ ->
         false
     end
   end
 
+  @spec check_user_business_permissions(String.t(), atom()) :: boolean()
+  defp check_user_business_permissions(user_id, permission_name) do
+    if user_owns_any_business?(user_id) do
+      check_business_owner_permission(%{id: user_id}, permission_name)
+    else
+      check_employee_permission(user_id, permission_name)
+    end
+  end
+
+  @business_owner_permissions [
+    :manage_business_settings,
+    :manage_plots_and_layouts,
+    :manage_all_items,
+    :set_pricing,
+    :view_all_reports,
+    :manage_employees,
+    :can_manage_business_settings,
+    :can_manage_plots_and_layouts,
+    :can_manage_all_items,
+    :can_set_pricing,
+    :can_view_all_reports,
+    :can_manage_employees
+  ]
+
+  @spec check_business_owner_permission(map(), atom()) :: boolean()
   defp check_business_owner_permission(actor, permission_name) do
-    # Business owners have certain inherent permissions but not all
-    case permission_name do
-      # Core business management permissions - always allowed for business owners
-      :manage_business_settings ->
-        true
-
-      :manage_plots_and_layouts ->
-        true
-
-      :manage_all_items ->
-        true
-
-      :set_pricing ->
-        true
-
-      :view_all_reports ->
-        true
-
-      :manage_employees ->
-        true
-
-      :can_manage_business_settings ->
-        true
-
-      :can_manage_plots_and_layouts ->
-        true
-
-      :can_manage_all_items ->
-        true
-
-      :can_set_pricing ->
-        true
-
-      :can_view_all_reports ->
-        true
-
-      :can_manage_employees ->
-        true
-
-      # Operational permissions - check if explicitly granted
-      permission when is_atom(permission) ->
-        check_explicit_business_owner_permission(actor, permission)
-
-      permission when is_binary(permission) ->
-        check_explicit_business_owner_permission(actor, String.to_atom(permission))
-
-      # Default deny for unknown permissions
-      _ ->
-        false
+    cond do
+      permission_name in @business_owner_permissions -> true
+      true -> check_explicit_business_owner_permission(actor, permission_name)
     end
   end
 
+  @spec normalize_permission_name(atom() | String.t()) :: {:ok, atom()} | {:error, String.t()}
+  defp normalize_permission_name(permission) when is_atom(permission), do: {:ok, permission}
+  defp normalize_permission_name(permission) when is_binary(permission) do
+    try do
+      {:ok, String.to_atom(permission)}
+    rescue
+      ArgumentError -> {:error, "Invalid permission name: #{permission}"}
+    end
+  end
+
+  @spec check_explicit_business_owner_permission(map(), atom()) :: boolean()
   defp check_explicit_business_owner_permission(actor, permission_name) do
     # For non-core permissions, business owners need explicit grants
     # This could be extended to check a business_owner_permissions table
@@ -224,7 +248,8 @@ defmodule RivaAsh.Authorization do
     end
   end
 
-  defp user_owns_any_business?(user_id) do
+  @spec user_owns_any_business?(String.t()) :: boolean()
+  defp user_owns_any_business?(user_id) when is_binary(user_id) do
     query =
       RivaAsh.Resources.Business
       |> Ash.Query.filter(expr(owner_id == ^user_id))
@@ -239,33 +264,12 @@ defmodule RivaAsh.Authorization do
     end
   end
 
-  defp check_business_ownership(user_id, business_id) do
-    business_id
-    |> (&Ash.get(RivaAsh.Resources.Business, &1, domain: RivaAsh.Domain)).()
-    |> case do
-      {:ok, %{owner_id: ^user_id}} -> true
-      _ -> false
-    end
-  end
-
-  defp check_employee_permission(employee_id, permission_name) do
-    employee_id
-    |> (&Ash.get(RivaAsh.Resources.Employee, &1,
-          domain: RivaAsh.Domain,
-          load: [employee_permissions: :permission]
-        )).()
-    |> case do
-      {:ok, nil} ->
-        false
-
-      {:ok, employee} ->
-        # Check if the employee has the specific permission
-        Enum.any?(employee.employee_permissions, fn ep ->
-          ep.permission.name == permission_name and ep.is_active
-        end)
-
-      {:error, _} ->
-        false
+  @spec validate_business_id(String.t()) :: {:ok, String.t()} | {:error, String.t()}
+  defp validate_business_id(business_id) when is_binary(business_id) do
+    if String.length(business_id) > 0 do
+      {:ok, business_id}
+    else
+      {:error, "Invalid business ID"}
     end
   end
 end

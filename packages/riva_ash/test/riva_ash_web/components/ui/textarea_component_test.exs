@@ -9,6 +9,7 @@ defmodule RivaAshWeb.Components.UI.TextareaComponentTest do
   alias RivaAshWeb.Components.UI.Textarea
 
   describe "UI.Textarea.textarea/1" do
+    @spec test_renders_with_placeholder_and_value :: :ok
     test "renders with placeholder and value" do
       html =
         render_component(
@@ -26,6 +27,7 @@ defmodule RivaAshWeb.Components.UI.TextareaComponentTest do
       assert html =~ ~s(data-testid="ta")
     end
 
+    @spec test_applies_size_and_variant_classes :: :ok
     test "applies size and variant classes" do
       html =
         render_component(
@@ -42,6 +44,7 @@ defmodule RivaAshWeb.Components.UI.TextareaComponentTest do
       assert html =~ "focus-visible:ring-[var(--chart-5)]"
     end
 
+    @spec test_disabled_readonly_required_rows_propagate :: :ok
     test "disabled, readonly, required, rows propagate" do
       html =
         render_component(

@@ -14,7 +14,7 @@ defmodule RivaAshWeb.DevTools.DevToolsHomeLive do
     def mount(_params, _session, socket) do
       socket =
         socket
-        |> assign(:page_title, "Development Tools")
+        |> assign(:page_title, get_page_title())
 
       {:ok, socket}
     end
@@ -287,5 +287,8 @@ defmodule RivaAshWeb.DevTools.DevToolsHomeLive do
       </div>
       """
     end
+
+    # Helper functions
+    defp get_page_title, do: Application.get_env(:riva_ash, __MODULE__, [])[:page_title] || "Development Tools"
   end
 end

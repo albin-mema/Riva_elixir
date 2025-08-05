@@ -24,6 +24,7 @@ defmodule RivaAsh.Policies.OwnershipCheckTest do
   end
 
   describe "admin can manage all" do
+    @spec test_admin_allowed_regardless_of_ownership :: :ok
     test "admin allowed regardless of ownership" do
       admin_ctx = Factory.insert(:business_context)
       other_owner = Ash.UUID.generate()
@@ -35,6 +36,7 @@ defmodule RivaAsh.Policies.OwnershipCheckTest do
   end
 
   describe "owner update permissions" do
+    @spec test_owner_can_update_own_resource_cannot_update_others :: :ok
     test "owner can update own resource, cannot update others" do
       owner_ctx = Factory.insert(:business_context)
       not_owner_ctx = Factory.insert(:business_context)
@@ -48,6 +50,7 @@ defmodule RivaAsh.Policies.OwnershipCheckTest do
   end
 
   describe "staff cannot delete (ownership alone insufficient)" do
+    @spec test_staff_cannot_delete_via_ownership_check_semantics :: :ok
     test "staff cannot delete via ownership check semantics" do
       staff_ctx = Factory.insert(:business_context)
       record = make_reservation_for_owner(staff_ctx.user.id)

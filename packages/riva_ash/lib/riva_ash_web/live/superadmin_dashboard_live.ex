@@ -13,18 +13,20 @@ defmodule RivaAshWeb.SuperadminDashboardLive do
   alias RivaAsh.Accounts.User
   alias RivaAsh.Accounts
   alias RivaAsh.Domain
+  alias RivaAsh.Accounts.UserService
+  alias RivaAsh.ErrorHelpers
   
   def mount(_params, _session, socket) do
     # Verify superadmin access
     case socket.assigns.current_user do
       %{role: :superadmin} ->
-        {:ok, 
+        {:ok,
          socket
-         |> assign(:page_title, "Superadmin Dashboard")
+         |> assign(:page_title, get_page_title())
          |> load_system_stats()
         }
       _ ->
-        {:ok, 
+        {:ok,
          socket
          |> put_flash(:error, "Access denied. Superadmin privileges required.")
          |> redirect(to: "/access-denied")
@@ -184,20 +186,21 @@ defmodule RivaAshWeb.SuperadminDashboardLive do
   end
   
   defp load_system_stats(socket) do
-    stats = %{
-      total_users: count_resource(User, Accounts),
-      total_businesses: count_resource(RivaAsh.Resources.Business, Domain),
-      total_reservations: count_resource(RivaAsh.Resources.Reservation, Domain),
-      total_consents: count_resource(RivaAsh.GDPR.ConsentRecord, Domain)
-    }
-    
-    assign(socket, :stats, stats)
-  end
-  
-  defp count_resource(resource, domain) do
-    case Ash.count(resource, domain: domain, actor: %{role: :superadmin}) do
-      {:ok, count} -> count
-      {:error, _} -> 0
+    case UserService.get_system_stats() do
+      {:ok, stats} ->
+        assign(socket, :stats, stats)
+      {:error, error} ->
+        error_message = ErrorHelpers.format_error(error)
+        socket
+        |> put_flash(:error, "Failed to load system stats: #{error_message}")
+        |> assign(:stats, %{
+          total_users: 0,
+          total_businesses: 0,
+          total_reservations: 0,
+          total_consents: 0
+        })
     end
   end
+  
+  defp get_page_title, do: Application.get_env(:riva_ash, :superadmin_dashboard_page_title, "Superadmin Dashboard")
 end

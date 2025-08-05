@@ -18,6 +18,21 @@ defmodule RivaAsh.Resources.Business do
 
   import RivaAsh.ResourceHelpers
 
+  @type t :: %__MODULE__{
+          id: String.t(),
+          name: String.t(),
+          description: String.t() | nil,
+          owner_id: String.t(),
+          is_public_searchable: boolean(),
+          public_description: String.t() | nil,
+          city: String.t() | nil,
+          country: String.t() | nil,
+          address: String.t() | nil,
+          inserted_at: DateTime.t(),
+          updated_at: DateTime.t(),
+          archived_at: DateTime.t() | nil
+        }
+
   standard_postgres("businesses")
   standard_archive()
   standard_paper_trail()
@@ -176,38 +191,13 @@ defmodule RivaAsh.Resources.Business do
       argument(:country, :string, allow_nil?: true)
 
       prepare(fn query, _context ->
-        query =
-          case Ash.Query.get_argument(query, :search_term) do
-            nil ->
-              query
-
-            "" ->
-              query
-
-            search_term ->
-              Ash.Query.filter(
-                query,
-                expr(
-                  ilike(name, ^"%#{search_term}%") or
-                    ilike(public_description, ^"%#{search_term}%") or
-                    ilike(city, ^"%#{search_term}%") or
-                    ilike(address, ^"%#{search_term}%")
-                )
-              )
-          end
-
-        query =
-          case Ash.Query.get_argument(query, :city) do
-            nil -> query
-            "" -> query
-            city -> Ash.Query.filter(query, expr(ilike(city, ^"%#{city}%")))
-          end
-
-        case Ash.Query.get_argument(query, :country) do
-          nil -> query
-          "" -> query
-          country -> Ash.Query.filter(query, expr(ilike(country, ^"%#{country}%")))
-        end
+        query
+        |> apply_search_filter(Ash.Query.get_argument(query, :search_term))
+        |> apply_location_filter(
+          Ash.Query.get_argument(query, :city),
+          Ash.Query.get_argument(query, :country)
+        )
+        |> apply_active_filter()
       end)
     end
 
@@ -312,19 +302,31 @@ defmodule RivaAsh.Resources.Business do
     identity(:unique_name, [:name])
   end
 
-  # Helper function for admin dropdowns
+  @doc """
+  Returns a list of businesses formatted for dropdown selection.
+  
+  ## Returns
+  A list of tuples `{id, name}` suitable for form dropdowns.
+  """
+  @spec choices_for_select :: [{String.t(), String.t()}]
   def choices_for_select do
-    RivaAsh.Resources.Business
+    __MODULE__
     |> Ash.read!()
-    |> Enum.map(fn business ->
-      {business.id, business.name}
-    end)
+    |> Enum.map(&{&1.id, &1.name})
   end
 
   @doc """
   Fetches the owner user for a business.
+  
   Since User is in a different domain, we handle this at the application level.
+  
+  ## Parameters
+  - business - A business record with owner_id field
+  
+  ## Returns
+  `{:ok, user | nil}` or `{:error, reason}`
   """
+  @spec get_owner(%{owner_id: String.t() | nil}) :: {:ok, map() | nil} | {:error, any()}
   def get_owner(%{owner_id: owner_id}) when not is_nil(owner_id) do
     Ash.get(RivaAsh.Accounts.User, owner_id, domain: RivaAsh.Accounts)
   end
@@ -333,11 +335,109 @@ defmodule RivaAsh.Resources.Business do
 
   @doc """
   Fetches the owner user for a business by business ID.
+  
+  ## Parameters
+  - business_id - The UUID of the business
+  
+  ## Returns
+  `{:ok, user | nil}` or `{:error, reason}`
   """
+  @spec get_owner_by_business_id(String.t()) :: {:ok, map() | nil} | {:error, any()}
   def get_owner_by_business_id(business_id) do
-    case Ash.get(__MODULE__, business_id, domain: RivaAsh.Domain) do
-      {:ok, business} -> get_owner(business)
-      error -> error
+    with {:ok, business} <- Ash.get(__MODULE__, business_id, domain: RivaAsh.Domain) do
+      get_owner(business)
     end
+  end
+
+  @doc """
+  Determines if a business is currently active (not archived).
+  
+  ## Parameters
+  - business - A business record
+  
+  ## Returns
+  `true` if the business is active, `false` otherwise
+  """
+  @spec is_active?(t()) :: boolean()
+  def is_active?(%__MODULE__{archived_at: nil}), do: true
+  def is_active?(%__MODULE__{}), do: false
+
+  @doc """
+  Formats the business address for display.
+  
+  ## Parameters
+  - business - A business record
+  
+  ## Returns
+  A formatted address string or "No address provided"
+  """
+  @spec formatted_address(t()) :: String.t()
+  def formatted_address(%__MODULE__{address: address, city: city, country: country}) do
+    [address, city, country]
+    |> Enum.reject(&is_nil/1)
+    |> Enum.join(", ")
+    |> case do
+      "" -> "No address provided"
+      result -> result
+    end
+  end
+
+  @doc """
+  Generates a search-friendly name for the business.
+  
+  Combines name and location for better search results.
+  
+  ## Parameters
+  - business - A business record
+  
+  ## Returns
+  A formatted search string
+  """
+  @spec search_name(t()) :: String.t()
+  def search_name(%__MODULE__{name: name, city: city}) do
+    case city do
+      nil -> name
+      _ -> "#{name}, #{city}"
+    end
+  end
+
+  # Private helper functions for search filtering
+  @spec apply_search_filter(Ash.Query.t(), String.t() | nil) :: Ash.Query.t()
+  defp apply_search_filter(query, nil), do: query
+
+  defp apply_search_filter(query, "") do
+    query
+  end
+
+  defp apply_search_filter(query, search_term) do
+    Ash.Query.filter(
+      query,
+      expr(
+        ilike(name, ^"%#{search_term}%") or
+          ilike(public_description, ^"%#{search_term}%") or
+          ilike(city, ^"%#{search_term}%") or
+          ilike(address, ^"%#{search_term}%")
+      )
+    )
+  end
+
+  @spec apply_location_filter(Ash.Query.t(), String.t() | nil, String.t() | nil) :: Ash.Query.t()
+  defp apply_location_filter(query, nil, _country), do: query
+
+  defp apply_location_filter(query, "", _country), do: query
+
+  defp apply_location_filter(query, city, nil) do
+    Ash.Query.filter(query, expr(ilike(city, ^"%#{city}%")))
+  end
+
+  defp apply_location_filter(query, city, country) do
+    query
+    |> Ash.Query.filter(expr(ilike(city, ^"%#{city}%")))
+    |> Ash.Query.filter(expr(ilike(country, ^"%#{country}%")))
+  end
+
+  @spec apply_active_filter(Ash.Query.t()) :: Ash.Query.t()
+  defp apply_active_filter(query) do
+    Ash.Query.filter(query, expr(is_nil(archived_at)))
   end
 end

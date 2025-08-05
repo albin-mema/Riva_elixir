@@ -23,16 +23,26 @@ defmodule RivaAsh.Jobs.GDPRRetentionJob do
   # Run at 2 AM daily
   @default_schedule "0 2 * * *"
 
+  @type state :: %{
+          schedule: String.t(),
+          last_run: DateTime.t() | nil,
+          stats: map()
+        }
+
+  @type job_result :: {:ok, map()} | {:error, String.t()}
+
+  @spec start_link(keyword()) :: GenServer.on_start()
   def start_link(opts \\ []) do
     GenServer.start_link(__MODULE__, opts, name: __MODULE__)
   end
 
   @impl true
+  @spec init(keyword()) :: {:ok, state()}
   def init(opts) do
     schedule = Keyword.get(opts, :schedule, @default_schedule)
 
-    # Schedule the first run
-    schedule_next_run(schedule)
+    schedule
+    |> schedule_next_run()
 
     Logger.info("GDPR Retention Job started with schedule: #{schedule}")
 
@@ -40,81 +50,32 @@ defmodule RivaAsh.Jobs.GDPRRetentionJob do
   end
 
   @impl true
+  @spec handle_info(:run_retention_cleanup, state()) :: {:noreply, state()}
   def handle_info(:run_retention_cleanup, state) do
     Logger.info("GDPR: Starting scheduled retention cleanup")
 
     start_time = System.monotonic_time(:millisecond)
 
-    try do
-      # Run the retention cleanup
-      {:ok, results} = RetentionPolicy.run_retention_cleanup()
-
-      # Generate compliance report
-      report = RetentionPolicy.generate_retention_report()
-
-      # Calculate execution time
-      execution_time = System.monotonic_time(:millisecond) - start_time
-
-      # Update state with results
-      new_state = %{
-        state
-        | last_run: DateTime.utc_now(),
-          stats:
-            Map.merge(results, %{
-              execution_time_ms: execution_time,
-              report: report
-            })
-      }
-
-      # Log success
-      Logger.info("GDPR: Retention cleanup completed successfully",
-        extra: %{
-          execution_time_ms: execution_time,
-          results: results
-        }
-      )
-
-      # Send notification if there were any issues
-      if has_compliance_issues?(results) do
-        send_compliance_alert(results)
-      end
-
-      # Schedule next run
-      schedule_next_run(state.schedule)
-
-      {:noreply, new_state}
-    rescue
-      error ->
-        Logger.error("GDPR: Retention cleanup failed",
-          extra: %{
-            error: inspect(error),
-            stacktrace: __STACKTRACE__
-          }
-        )
-
-        # Send alert about failure
-        send_failure_alert(error)
-
-        # Schedule retry in 1 hour
-        Process.send_after(self(), :run_retention_cleanup, :timer.hours(1))
-
-        {:noreply, state}
-    end
+    state
+    |> execute_retention_cleanup(start_time)
+    |> handle_cleanup_result(start_time, state.schedule, state)
   end
 
   @impl true
+  @spec handle_call(:get_stats, {pid(), term()}, state()) :: {:reply, map(), state()}
   def handle_call(:get_stats, _from, state) do
     {:reply, state.stats, state}
   end
 
   @impl true
+  @spec handle_call(:run_now, {pid(), term()}, state()) :: {:reply, :ok, state()}
   def handle_call(:run_now, _from, state) do
-    # Trigger immediate run
     send(self(), :run_retention_cleanup)
     {:reply, :ok, state}
   end
 
   @impl true
+  @spec handle_cast({:update_schedule, String.t()}, state()) :: {:noreply, state()}
   def handle_cast({:update_schedule, new_schedule}, state) do
     Logger.info("GDPR: Updating retention job schedule to: #{new_schedule}")
 
@@ -129,6 +90,7 @@ defmodule RivaAsh.Jobs.GDPRRetentionJob do
   @doc """
   Get statistics from the last retention cleanup run.
   """
+  @spec get_stats() :: map()
   def get_stats do
     GenServer.call(__MODULE__, :get_stats)
   end
@@ -136,6 +98,7 @@ defmodule RivaAsh.Jobs.GDPRRetentionJob do
   @doc """
   Trigger an immediate retention cleanup run.
   """
+  @spec run_now() :: :ok
   def run_now do
     GenServer.call(__MODULE__, :run_now)
   end
@@ -143,110 +106,24 @@ defmodule RivaAsh.Jobs.GDPRRetentionJob do
   @doc """
   Update the cleanup schedule.
   """
+  @spec update_schedule(String.t()) :: :ok
   def update_schedule(new_schedule) do
     GenServer.cast(__MODULE__, {:update_schedule, new_schedule})
-  end
-
-  # Private helper functions
-
-  defp schedule_next_run(_schedule) do
-    # Parse cron schedule and calculate next run time
-    # For simplicity, we'll run every 24 hours
-    # In production, you'd use a proper cron parser
-
-    next_run_ms = :timer.hours(24)
-    Process.send_after(self(), :run_retention_cleanup, next_run_ms)
-
-    Logger.debug("GDPR: Next retention cleanup scheduled in #{next_run_ms}ms")
-  end
-
-  defp has_compliance_issues?(results) do
-    # Check if any cleanup operations failed or if there are concerning patterns
-    total_processed =
-      results
-      |> Map.values()
-      |> Enum.sum()
-
-    # Alert if we processed more than expected (might indicate a problem)
-    total_processed > 1000 or
-      Map.get(results, :errors, 0) > 0
-  end
-
-  defp send_compliance_alert(results) do
-    Logger.warning("GDPR: Compliance issues detected during retention cleanup", extra: results)
-
-    # In production, this would send emails/notifications to compliance team
-    # For now, we'll just log the alert
-
-    _alert_data = %{
-      timestamp: DateTime.utc_now(),
-      job: @job_name,
-      alert_type: "compliance_issue",
-      details: results
-    }
-
-    # This could integrate with your notification system
-    # send_notification(:compliance_team, :gdpr_alert, alert_data)
-  end
-
-  defp send_failure_alert(error) do
-    Logger.error("GDPR: Critical failure in retention cleanup job",
-      extra: %{
-        error: inspect(error),
-        timestamp: DateTime.utc_now()
-      }
-    )
-
-    # In production, this would send immediate alerts to technical team
-    _alert_data = %{
-      timestamp: DateTime.utc_now(),
-      job: @job_name,
-      alert_type: "job_failure",
-      error: inspect(error),
-      severity: "critical"
-    }
-
-    # This could integrate with your alerting system (PagerDuty, etc.)
-    # send_alert(:technical_team, :critical, alert_data)
   end
 
   @doc """
   Health check function to verify the job is running properly.
   """
+  @spec health_check() :: {:ok, String.t()} | {:warning, String.t()} | {:error, String.t()}
   def health_check do
-    try do
-      stats = get_stats()
-
-      case stats do
-        %{last_run: nil} ->
-          {:warning, "Job has not run yet"}
-
-        %{last_run: last_run} ->
-          hours_since_last_run = DateTime.diff(DateTime.utc_now(), last_run, :hour)
-
-          cond do
-            hours_since_last_run > 48 ->
-              {:error, "Job has not run in #{hours_since_last_run} hours"}
-
-            hours_since_last_run > 25 ->
-              {:warning, "Job is overdue (#{hours_since_last_run} hours since last run)"}
-
-            true ->
-              {:ok, "Job is running normally (last run: #{hours_since_last_run} hours ago)"}
-          end
-
-        _ ->
-          {:error, "Unable to get job statistics"}
-      end
-    rescue
-      error ->
-        {:error, "Health check failed: #{inspect(error)}"}
-    end
+    get_stats()
+    |> evaluate_job_health()
   end
 
   @doc """
   Generate a compliance report for the retention job.
   """
+  @spec generate_job_report() :: map()
   def generate_job_report do
     stats = get_stats()
     health = health_check()
@@ -264,5 +141,218 @@ defmodule RivaAsh.Jobs.GDPRRetentionJob do
         "Failures trigger immediate alerts to technical team"
       ]
     }
+  end
+
+  # Private helper functions
+
+  @spec schedule_next_run(String.t()) :: :ok
+  defp schedule_next_run(_schedule) do
+    next_run_ms = :timer.hours(24)
+    Process.send_after(self(), :run_retention_cleanup, next_run_ms)
+
+    Logger.debug("GDPR: Next retention cleanup scheduled in #{next_run_ms}ms")
+  end
+
+  @spec execute_retention_cleanup(state(), integer()) :: job_result()
+  defp execute_retention_cleanup(_state, start_time) do
+    with {:ok, results} <- RetentionPolicy.run_retention_cleanup(),
+         report <- RetentionPolicy.generate_retention_report(),
+         execution_time <- calculate_execution_time(start_time) do
+      {:ok, %{results: results, report: report, execution_time_ms: execution_time}}
+    end
+  end
+
+  @spec handle_cleanup_result(job_result(), integer(), String.t(), state()) :: {:noreply, state()}
+  defp handle_cleanup_result({:ok, cleanup_data}, start_time, schedule, state) do
+    cleanup_data
+    |> extract_cleanup_metrics()
+    |> update_state_with_results(state)
+    |> log_successful_cleanup(start_time)
+    |> handle_compliance_alerts()
+    |> schedule_next_run(schedule)
+  end
+
+  defp handle_cleanup_result({:error, reason}, _start_time, _schedule, state) do
+    reason
+    |> log_cleanup_failure()
+    |> send_failure_alert()
+    |> schedule_retry()
+
+    {:noreply, state}
+  end
+
+  # Helper functions for better single level of abstraction
+  @spec extract_cleanup_metrics(map()) :: {integer(), map(), map()}
+  defp extract_cleanup_metrics(cleanup_data) do
+    {
+      cleanup_data.execution_time_ms,
+      cleanup_data.results,
+      cleanup_data.report
+    }
+  end
+
+  @spec log_successful_cleanup({integer(), map(), map()}, integer()) :: :ok
+  defp log_successful_cleanup({execution_time, results, _report}, _start_time) do
+    Logger.info("GDPR: Retention cleanup completed successfully",
+      extra: %{
+        execution_time_ms: execution_time,
+        results: results
+      }
+    )
+  end
+
+  @spec log_cleanup_failure(term()) :: term()
+  defp log_cleanup_failure(reason) do
+    Logger.error("GDPR: Retention cleanup failed",
+      extra: %{error: inspect(reason)}
+    )
+    reason
+  end
+
+  @spec calculate_execution_time(integer()) :: integer()
+  defp calculate_execution_time(start_time) do
+    System.monotonic_time(:millisecond) - start_time
+  end
+
+  @spec update_state_with_results(state(), {integer(), map(), map()}) :: state()
+  defp update_state_with_results(state, {execution_time, results, report}) do
+    state
+    |> update_last_run()
+    |> merge_results(results, execution_time, report)
+  end
+
+  @spec update_last_run(state()) :: state()
+  defp update_last_run(state) do
+    %{state | last_run: DateTime.utc_now()}
+  end
+
+  @spec merge_results(state(), map(), integer(), map()) :: state()
+  defp merge_results(state, results, execution_time, report) do
+    %{state |
+      stats: Map.merge(results, %{
+        execution_time_ms: execution_time,
+        report: report
+      })
+    }
+  end
+
+  @spec log_successful_cleanup(integer(), map()) :: :ok
+  defp log_successful_cleanup(execution_time, results) do
+    Logger.info("GDPR: Retention cleanup completed successfully",
+      extra: %{
+        execution_time_ms: execution_time,
+        results: results
+      }
+    )
+  end
+
+  @spec handle_compliance_alerts(map()) :: :ok
+  defp handle_compliance_alerts(results) do
+    if has_compliance_issues?(results) do
+      results
+      |> build_compliance_alert()
+      |> send_compliance_alert()
+    end
+  end
+
+  @spec has_compliance_issues?(map()) :: boolean()
+  defp has_compliance_issues?(results) do
+    results
+    |> calculate_total_processed()
+    |> exceeds_threshold?()
+  end
+
+  @spec calculate_total_processed(map()) :: integer()
+  defp calculate_total_processed(results) do
+    results
+    |> Map.values()
+    |> Enum.sum()
+  end
+
+  @spec exceeds_threshold?(integer()) :: boolean()
+  defp exceeds_threshold?(total_processed) do
+    total_processed > 1000 or Map.get(results, :errors, 0) > 0
+  end
+
+  @spec build_compliance_alert(map()) :: map()
+  defp build_compliance_alert(results) do
+    %{
+      timestamp: DateTime.utc_now(),
+      job: @job_name,
+      alert_type: "compliance_issue",
+      details: results
+    }
+  end
+
+  @spec send_compliance_alert(map()) :: :ok
+  defp send_compliance_alert(alert_data) do
+    Logger.warning("GDPR: Compliance issues detected during retention cleanup", extra: alert_data)
+
+    # This could integrate with your notification system
+    # send_notification(:compliance_team, :gdpr_alert, alert_data)
+  end
+
+  @spec send_failure_alert(term()) :: :ok
+  defp send_failure_alert(error) do
+    error
+    |> build_failure_alert()
+    |> log_failure_alert()
+    |> schedule_retry()
+  end
+
+  @spec build_failure_alert(term()) :: map()
+  defp build_failure_alert(error) do
+    %{
+      timestamp: DateTime.utc_now(),
+      job: @job_name,
+      alert_type: "job_failure",
+      error: inspect(error),
+      severity: "critical"
+    }
+  end
+
+  @spec log_failure_alert(map()) :: map()
+  defp log_failure_alert(alert_data) do
+    Logger.error("GDPR: Critical failure in retention cleanup job", extra: alert_data)
+    alert_data
+  end
+
+  @spec schedule_retry() :: :ok
+  defp schedule_retry do
+    Process.send_after(self(), :run_retention_cleanup, :timer.hours(1))
+  end
+
+  @spec evaluate_job_health(map()) :: {:ok, String.t()} | {:warning, String.t()} | {:error, String.t()}
+  defp evaluate_job_health(%{last_run: nil}) do
+    {:warning, "Job has not run yet"}
+  end
+
+  defp evaluate_job_health(%{last_run: last_run}) do
+    last_run
+    |> calculate_hours_since_last_run()
+    |> evaluate_health_status()
+  end
+
+  defp evaluate_job_health(_stats) do
+    {:error, "Unable to get job statistics"}
+  end
+
+  # Helper functions for health evaluation
+  @spec calculate_hours_since_last_run(DateTime.t()) :: integer()
+  defp calculate_hours_since_last_run(last_run) do
+    DateTime.diff(DateTime.utc_now(), last_run, :hour)
+  end
+
+  @spec evaluate_health_status(integer()) :: {:ok, String.t()} | {:warning, String.t()} | {:error, String.t()}
+  defp evaluate_health_status(hours_since_last_run) when hours_since_last_run > 48 do
+    {:error, "Job has not run in #{hours_since_last_run} hours"}
+  end
+
+  defp evaluate_health_status(hours_since_last_run) when hours_since_last_run > 25 do
+    {:warning, "Job is overdue (#{hours_since_last_run} hours since last run)"}
+  end
+
+  defp evaluate_health_status(hours_since_last_run) do
+    {:ok, "Job is running normally (last run: #{hours_since_last_run} hours ago)"}
   end
 end

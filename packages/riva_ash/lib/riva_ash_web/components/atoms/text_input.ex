@@ -25,20 +25,30 @@ defmodule RivaAshWeb.Components.Atoms.TextInput do
   attr :phx_keydown, :string, default: nil
   attr :rest, :global
 
-  def text_input(assigns) do
-    # Build rest attributes from legacy Phoenix event attributes
+  def text_input(assigns) when is_map(assigns) do
+    assigns
+    |> build_rest_attributes()
+    |> assign_rest_attrs()
+    |> render_text_input()
+  end
+
+  defp build_rest_attributes(assigns) when is_map(assigns) do
     rest_attrs =
       []
-      |> maybe_add_attr("name", assigns[:name])
-      |> maybe_add_attr("id", assigns[:id] || assigns[:name])
-      |> maybe_add_attr("phx-debounce", assigns[:phx_debounce])
-      |> maybe_add_attr("phx-change", assigns[:phx_change])
-      |> maybe_add_attr("phx-keydown", assigns[:phx_keydown])
+      |> add_attribute("name", assigns[:name])
+      |> add_attribute("id", assigns[:id] || assigns[:name])
+      |> add_attribute("phx-debounce", assigns[:phx_debounce])
+      |> add_attribute("phx-change", assigns[:phx_change])
+      |> add_attribute("phx-keydown", assigns[:phx_keydown])
       |> Enum.into(%{})
       |> Map.merge(assigns[:rest] || %{})
+  end
 
-    assigns = Phoenix.Component.assign(assigns, :computed_rest, rest_attrs)
+  defp assign_rest_attrs(assigns) when is_map(assigns) do
+    Phoenix.Component.assign(assigns, :computed_rest, build_rest_attributes(assigns))
+  end
 
+  defp render_text_input(assigns) do
     ~H"""
     <UIInput.input
       type={@type}
@@ -51,6 +61,7 @@ defmodule RivaAshWeb.Components.Atoms.TextInput do
     """
   end
 
-  defp maybe_add_attr(attrs, _key, nil), do: attrs
-  defp maybe_add_attr(attrs, key, value), do: [{key, value} | attrs]
+  # Pattern matching for attribute building
+  defp add_attribute(attrs, _key, nil), do: attrs
+  defp add_attribute(attrs, key, value) when is_binary(key) and not is_nil(value), do: [{key, value} | attrs]
 end

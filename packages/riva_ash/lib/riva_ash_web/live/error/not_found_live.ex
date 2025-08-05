@@ -10,7 +10,7 @@ defmodule RivaAshWeb.Error.NotFoundLive do
   def mount(_params, _session, socket) do
     socket =
       socket
-      |> assign(:page_title, "Page Not Found")
+      |> assign(:page_title, get_page_title())
 
     {:ok, socket}
   end
@@ -84,4 +84,7 @@ defmodule RivaAshWeb.Error.NotFoundLive do
   def handle_event(_event, _params, socket) do
     {:noreply, socket}
   end
+
+  # Private helper functions
+  defp get_page_title, do: Application.get_env(:riva_ash, __MODULE__, [])[:page_title] || "Page Not Found"
 end

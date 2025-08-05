@@ -8,35 +8,79 @@ defmodule RivaAsh.Validations do
   require Ash.Query
   alias RivaAsh.ErrorHelpers
 
+  @type changeset :: Ash.Changeset.t()
+  @type opts :: Keyword.t()
+  @type item_id :: String.t() | integer()
+  @type reserved_from :: DateTime.t() | NaiveDateTime.t()
+  @type reserved_until :: DateTime.t() | NaiveDateTime.t()
+  @type business_id :: String.t() | integer()
+  @type employee_id :: String.t() | integer()
+  @type client_id :: String.t() | integer()
+  @type section_id :: String.t() | integer()
+  @type item_type_id :: String.t() | integer()
+  @type plot_id :: String.t() | integer()
+  @type layout_id :: String.t() | integer()
+  @type reservation_id :: String.t() | integer()
+  @type granted_by_id :: String.t() | integer()
+  @type pricing_type :: atom()
+  @type effective_from :: Date.t() | nil
+  @type effective_until :: Date.t() | nil
+  @type weekday_price :: Decimal.t() | nil
+  @type weekend_price :: Decimal.t() | nil
+  @type start_time :: Time.t() | DateTime.t()
+  @type end_time :: Time.t() | DateTime.t()
+  @type date :: Date.t()
+  @type email :: String.t()
+  @type phone :: String.t()
+  @type text_input :: String.t()
+  @type availability_status :: :available | {:unavailable, String.t()}
+  @type overlap_result :: {:ok, :no_overlap} | {:ok, :overlap_found} | {:error, String.t()}
+  @type availability_result :: {:ok, availability_status()} | {:error, String.t()}
+  @type validation_result :: :ok | {:error, map()}
+
   @doc """
   Validates that a reservation doesn't conflict with existing reservations.
   Uses standardized overlap detection logic.
   """
+  @spec validate_reservation_availability(changeset, opts) :: validation_result()
   def validate_reservation_availability(changeset, opts \\ []) do
-    item_id = Ash.Changeset.get_argument_or_attribute(changeset, :item_id)
-    reserved_from = Ash.Changeset.get_argument_or_attribute(changeset, :reserved_from)
-    reserved_until = Ash.Changeset.get_argument_or_attribute(changeset, :reserved_until)
-
-    if item_id && reserved_from && reserved_until do
-      # Get current reservation ID to exclude from overlap check (for updates)
-      current_reservation_id = Ash.Changeset.get_attribute(changeset, :id)
-
-      case check_reservation_overlap(
-             item_id,
-             reserved_from,
-             reserved_until,
-             current_reservation_id,
-             opts
-           ) do
-        {:ok, :no_overlap} ->
-          :ok
-
-        {:error, reason} ->
-          {:error, %{field: :reserved_from, message: "Failed to check availability: #{reason}"}}
-      end
+    with {:ok, item_id} <- get_required_attribute(changeset, :item_id),
+         {:ok, reserved_from} <- get_required_attribute(changeset, :reserved_from),
+         {:ok, reserved_until} <- get_required_attribute(changeset, :reserved_until),
+         {:ok, current_reservation_id} <- get_optional_attribute(changeset, :id) do
+      check_reservation_availability(item_id, reserved_from, reserved_until, current_reservation_id, opts)
     else
-      # Skip validation if required fields are missing
-      :ok
+      {:error, :missing_attribute} -> :ok
+      {:error, reason} -> {:error, reason}
+    end
+  end
+
+  @spec get_required_attribute(changeset, atom()) :: {:ok, any()} | {:error, :missing_attribute}
+  defp get_required_attribute(changeset, field) do
+    case Ash.Changeset.get_argument_or_attribute(changeset, field) do
+      value when not is_nil(value) -> {:ok, value}
+      _ -> {:error, :missing_attribute}
+    end
+  end
+
+  @spec get_optional_attribute(changeset, atom()) :: {:ok, any()} | {:error, :missing_attribute}
+  defp get_optional_attribute(changeset, field) do
+    case Ash.Changeset.get_argument_or_attribute(changeset, field) do
+      value -> {:ok, value}
+    end
+  end
+
+  @spec check_reservation_availability(
+          item_id,
+          reserved_from,
+          reserved_until,
+          reservation_id | nil,
+          opts
+        ) :: validation_result()
+  defp check_reservation_availability(item_id, reserved_from, reserved_until, current_reservation_id, opts) do
+    case check_reservation_overlap(item_id, reserved_from, reserved_until, current_reservation_id, opts) do
+      {:ok, :no_overlap} -> :ok
+      {:error, reason} -> {:error, %{field: :reserved_from, message: "Failed to check availability: #{reason}"}}
     end
   end
 
@@ -48,6 +92,7 @@ defmodule RivaAsh.Validations do
   - exclude_statuses: List of statuses to exclude from overlap check (default: [:cancelled, :completed])
   - include_provisional: Whether to include provisional reservations (default: true)
   """
+  @spec check_reservation_overlap(item_id, reserved_from, reserved_until, item_id | nil, opts) :: overlap_result()
   def check_reservation_overlap(
         item_id,
         reserved_from,
@@ -55,79 +100,117 @@ defmodule RivaAsh.Validations do
         exclude_reservation_id \\ nil,
         opts \\ []
       ) do
-    exclude_statuses = Keyword.get(opts, :exclude_statuses, [:cancelled, :completed])
-    include_provisional = Keyword.get(opts, :include_provisional, true)
+    with {:ok, exclude_statuses} <- get_exclude_statuses(opts),
+         {:ok, status_filter} <- build_status_filter(opts),
+         {:ok, final_status_filter} <- filter_statuses(status_filter, exclude_statuses) do
+      build_and_execute_overlap_query(item_id, reserved_from, reserved_until, exclude_reservation_id, final_status_filter)
+    else
+      {:error, reason} -> {:error, reason}
+    end
+  end
 
-    # Build status filter
-    status_filter =
-      if include_provisional do
-        [:confirmed, :pending, :provisional]
-      else
-        [:confirmed, :pending]
+  @spec get_exclude_statuses(opts) :: {:ok, list()} | {:error, String.t()}
+  defp get_exclude_statuses(opts) do
+    case Keyword.get(opts, :exclude_statuses, [:cancelled, :completed]) do
+      statuses when is_list(statuses) -> {:ok, statuses}
+      _ -> {:error, "Invalid exclude_statuses format"}
+    end
+  end
+
+  @spec build_status_filter(opts) :: {:ok, list()} | {:error, String.t()}
+  defp build_status_filter(opts) do
+    with {:ok, include_provisional} <- validate_include_provisional(Keyword.get(opts, :include_provisional, true)) do
+      case include_provisional do
+        true -> {:ok, [:confirmed, :pending, :provisional]}
+        false -> {:ok, [:confirmed, :pending]}
       end
+    else
+      {:error, reason} -> {:error, reason}
+    end
+  end
 
-    # Remove excluded statuses
+  @spec validate_include_provisional(boolean()) :: {:ok, boolean()} | {:error, String.t()}
+  defp validate_include_provisional(value) when is_boolean(value) do
+    {:ok, value}
+  end
+
+  defp validate_include_provisional(_), do: {:error, "Invalid include_provisional value"}
+
+  @spec filter_statuses(list(), list()) :: {:ok, list()}
+  defp filter_statuses(status_filter, exclude_statuses) do
     final_status_filter = status_filter -- exclude_statuses
+    {:ok, final_status_filter}
+  end
 
+  @spec build_and_execute_overlap_query(
+          item_id,
+          reserved_from,
+          reserved_until,
+          item_id | nil,
+          list()
+        ) :: overlap_result()
+  defp build_and_execute_overlap_query(item_id, reserved_from, reserved_until, exclude_reservation_id, final_status_filter) do
     try do
-      # Query for overlapping reservations
-      query =
-        RivaAsh.Resources.Reservation
-        |> Ash.Query.filter(expr(item_id == ^item_id))
-        |> Ash.Query.filter(expr(status in ^final_status_filter))
-        |> Ash.Query.filter(
-          expr(
-            fragment(
-              "? < ? AND ? > ?",
-              ^reserved_from,
-              ^reserved_until,
-              ^reserved_until,
-              ^reserved_from
-            )
-          )
-        )
-
-      # Exclude current reservation if updating
-      query =
-        if exclude_reservation_id do
-          Ash.Query.filter(query, expr(id != ^exclude_reservation_id))
-        else
-          query
-        end
-
-      query
-      |> Ash.read(domain: RivaAsh.Domain)
-      |> case do
-        {:ok, []} -> {:ok, :no_overlap}
-        {:ok, _overlapping} -> {:error, "Time slot conflicts with existing reservation"}
-        {:error, error} -> {:error, "Failed to read reservations: #{inspect(error)}"}
-      end
+      query = build_overlap_query(item_id, reserved_from, reserved_until, exclude_reservation_id, final_status_filter)
+      execute_overlap_query(query)
     rescue
       e -> {:error, "Exception during overlap check: #{inspect(e)}"}
+    end
+  end
+
+  @spec build_overlap_query(
+          item_id,
+          reserved_from,
+          reserved_until,
+          item_id | nil,
+          list()
+        ) :: Ash.Query.t()
+  defp build_overlap_query(item_id, reserved_from, reserved_until, exclude_reservation_id, final_status_filter) do
+    query =
+      RivaAsh.Resources.Reservation
+      |> Ash.Query.filter(expr(item_id == ^item_id))
+      |> Ash.Query.filter(expr(status in ^final_status_filter))
+      |> Ash.Query.filter(
+        expr(
+          fragment(
+            "? < ? AND ? > ?",
+            ^reserved_from,
+            ^reserved_until,
+            ^reserved_until,
+            ^reserved_from
+          )
+        )
+      )
+
+    # Exclude current reservation if updating
+    if exclude_reservation_id do
+      Ash.Query.filter(query, expr(id != ^exclude_reservation_id))
+    else
+      query
+    end
+  end
+
+  @spec execute_overlap_query(Ash.Query.t()) :: overlap_result()
+  defp execute_overlap_query(query) do
+    case Ash.read(query, domain: RivaAsh.Domain) do
+      {:ok, []} -> {:ok, :no_overlap}
+      {:ok, _overlapping} -> {:ok, :overlap_found}
+      {:error, error} -> {:error, "Failed to read reservations: #{inspect(error)}"}
     end
   end
 
   @doc """
   Validates item availability considering holds, schedules, and exceptions.
   """
+  @spec validate_item_availability(changeset, opts) :: validation_result()
   def validate_item_availability(changeset, opts \\ []) do
-    item_id = Ash.Changeset.get_argument_or_attribute(changeset, :item_id)
-    reserved_from = Ash.Changeset.get_argument_or_attribute(changeset, :reserved_from)
-    reserved_until = Ash.Changeset.get_argument_or_attribute(changeset, :reserved_until)
-
-    if item_id && reserved_from && reserved_until do
-      case check_item_availability(item_id, reserved_from, reserved_until, opts) do
-        {:ok, :available} ->
-          :ok
-
-        {:ok, :unavailable, reason} ->
-          {:error, %{field: :item_id, message: reason}}
-
-        {:error, reason} ->
-          {:error, %{field: :item_id, message: "Failed to check item availability: #{reason}"}}
-      end
+    with {:ok, item_id} <- get_required_attribute(changeset, :item_id),
+         {:ok, reserved_from} <- get_required_attribute(changeset, :reserved_from),
+         {:ok, reserved_until} <- get_required_attribute(changeset, :reserved_until) do
+      check_item_availability(item_id, reserved_from, reserved_until, opts)
     else
-      :ok
+      {:error, :missing_attribute} -> :ok
+      {:error, reason} -> {:error, reason}
     end
   end
 
@@ -135,14 +218,12 @@ defmodule RivaAsh.Validations do
   Comprehensive item availability checking.
   Considers item schedules, availability exceptions, and active holds.
   """
+  @spec check_item_availability(item_id, reserved_from, reserved_until, opts) :: availability_result()
   def check_item_availability(item_id, reserved_from, reserved_until, opts \\ []) do
     check_holds = Keyword.get(opts, :check_holds, true)
 
     try do
-      with {:ok, item} <-
-             RivaAsh.Resources.Item
-             |> Ash.get(item_id, domain: RivaAsh.Domain)
-             |> ErrorHelpers.to_result(),
+      with {:ok, item} <- get_item(item_id),
            {:ok, _} <- validate_item_is_active(item),
            {:ok, _} <- validate_item_not_archived(item) do
         result =
@@ -164,12 +245,23 @@ defmodule RivaAsh.Validations do
     end
   end
 
+  @spec get_item(item_id) :: {:ok, map()} | {:error, atom()}
+  defp get_item(item_id) do
+    case Ash.get(RivaAsh.Resources.Item, item_id, domain: RivaAsh.Domain) do
+      nil -> {:error, :item_not_found}
+      item -> {:ok, item}
+    end
+  end
+
+  @spec validate_item_is_active(map()) :: {:ok, :ok} | {:error, :item_inactive}
   defp validate_item_is_active(%{is_active: true}), do: {:ok, :ok}
   defp validate_item_is_active(_), do: {:error, :item_inactive}
 
+  @spec validate_item_not_archived(map()) :: {:ok, :ok} | {:error, :item_archived}
   defp validate_item_not_archived(%{archived_at: nil}), do: {:ok, :ok}
   defp validate_item_not_archived(_), do: {:error, :item_archived}
 
+  @spec check_additional_constraints(item_id, reserved_from, reserved_until, boolean()) :: availability_result()
   defp check_additional_constraints(item_id, reserved_from, reserved_until, check_holds) do
     if check_holds do
       check_active_holds(item_id, reserved_from, reserved_until)
@@ -178,53 +270,58 @@ defmodule RivaAsh.Validations do
     end
   end
 
+  @spec check_schedule_and_exceptions(map(), reserved_from, reserved_until, boolean()) :: availability_result()
   defp check_schedule_and_exceptions(item, reserved_from, reserved_until, check_holds) do
-    # Check if the item has any schedule restrictions
-    # For now, we'll implement basic availability checking
-    # In the future, this could check ItemSchedule and AvailabilityException resources
-
     reservation_date = DateTime.to_date(reserved_from)
 
-    with {:ok, exceptions} <-
-           RivaAsh.Resources.AvailabilityException
-           |> Ash.read(domain: RivaAsh.Domain)
-           |> ErrorHelpers.to_result(),
-         has_exception = check_exceptions_for_date(exceptions, item.id, reservation_date),
-         {:ok, _} <-
-           if(has_exception,
-             do: {:error, "Item is unavailable due to scheduled exception"},
-             else: {:ok, :ok}
-           ) do
-      result =
-        if check_holds,
-          do: check_active_holds(item.id, reserved_from, reserved_until),
-          else: {:ok, :available}
-
-      result
+    with {:ok, exceptions} <- get_availability_exceptions(),
+         {:ok, _} <- check_exceptions_for_date(exceptions, item.id, reservation_date),
+         {:ok, result} <- check_holds_or_availability(item.id, reserved_from, reserved_until, check_holds) do
+      {:ok, result}
     else
       {:error, :exception_check_failed} ->
         # If we can't check exceptions, assume no exceptions and proceed
-        if check_holds do
-          check_active_holds(item.id, reserved_from, reserved_until)
-        else
-          {:ok, :available}
-        end
+        check_holds_or_availability(item.id, reserved_from, reserved_until, check_holds)
 
       {:error, error} ->
         {:error, error}
     end
   end
 
+  @spec get_availability_exceptions() :: {:ok, list()} | {:error, atom()}
+  defp get_availability_exceptions() do
+    case Ash.read(RivaAsh.Resources.AvailabilityException, domain: RivaAsh.Domain) do
+      {:ok, exceptions} -> {:ok, exceptions}
+      {:error, _} -> {:error, :exception_check_failed}
+    end
+  end
+
+  @spec check_exceptions_for_date(list(), item_id, Date.t()) :: {:ok, :ok} | {:error, String.t()}
   defp check_exceptions_for_date(exceptions, item_id, reservation_date) do
-    Enum.any?(exceptions, fn exception ->
+    has_exception = Enum.any?(exceptions, fn exception ->
       exception.item_id == item_id and
         Timex.compare(exception.exception_date, reservation_date) == 0 and
         not exception.is_available
     end)
+
+    if has_exception do
+      {:error, "Item is unavailable due to scheduled exception"}
+    else
+      {:ok, :ok}
+    end
   end
 
+  @spec check_holds_or_availability(item_id, reserved_from, reserved_until, boolean()) :: availability_result()
+  defp check_holds_or_availability(item_id, reserved_from, reserved_until, true) do
+    check_active_holds(item_id, reserved_from, reserved_until)
+  end
+
+  defp check_holds_or_availability(_item_id, _reserved_from, _reserved_until, false) do
+    {:ok, :available}
+  end
+
+  @spec check_active_holds(item_id, reserved_from, reserved_until) :: availability_result()
   def check_active_holds(item_id, reserved_from, reserved_until) do
-    # Check for active holds that would conflict with this reservation
     now = Timex.now()
 
     try do
@@ -259,83 +356,103 @@ defmodule RivaAsh.Validations do
   Validates day type pricing configuration.
   Ensures that if has_day_type_pricing is true, at least one of weekday_price or weekend_price is set.
   """
+  @spec validate_day_type_pricing(changeset, opts) :: :ok | {:error, map()}
   def validate_day_type_pricing(changeset, _opts) do
-    has_day_type_pricing =
-      Ash.Changeset.get_argument_or_attribute(changeset, :has_day_type_pricing)
-
-    weekday_price = Ash.Changeset.get_argument_or_attribute(changeset, :weekday_price)
-    weekend_price = Ash.Changeset.get_argument_or_attribute(changeset, :weekend_price)
-
-    if has_day_type_pricing do
-      if is_nil(weekday_price) and is_nil(weekend_price) do
-        {:error,
-         field: :has_day_type_pricing,
-         message:
-           "When day type pricing is enabled, at least one of weekday_price or weekend_price must be set"}
-      else
-        # Validate that prices are non-negative if set
-        cond do
-          not is_nil(weekday_price) and Decimal.compare(weekday_price, 0) == :lt ->
-            {:error, field: :weekday_price, message: "Weekday price must be non-negative"}
-
-          not is_nil(weekend_price) and Decimal.compare(weekend_price, 0) == :lt ->
-            {:error, field: :weekend_price, message: "Weekend price must be non-negative"}
-
-          true ->
-            :ok
-        end
-      end
+    with {:ok, has_day_type_pricing} <- get_required_attribute(changeset, :has_day_type_pricing),
+         {:ok, weekday_price} <- get_optional_attribute(changeset, :weekday_price),
+         {:ok, weekend_price} <- get_optional_attribute(changeset, :weekend_price) do
+      validate_pricing_config(has_day_type_pricing, weekday_price, weekend_price)
     else
-      :ok
+      {:error, :missing_attribute} -> :ok
+      {:error, reason} -> {:error, reason}
+    end
+  end
+
+  @spec validate_pricing_config(boolean(), weekday_price, weekend_price) :: :ok | {:error, map()}
+  defp validate_pricing_config(true, nil, nil) do
+    {:error,
+     field: :has_day_type_pricing,
+     message:
+       "When day type pricing is enabled, at least one of weekday_price or weekend_price must be set"}
+  end
+
+  defp validate_pricing_config(true, weekday_price, weekend_price) do
+    validate_price_non_negative(weekday_price, weekend_price)
+  end
+
+  defp validate_pricing_config(false, _weekday_price, _weekend_price) do
+    :ok
+  end
+
+  @spec validate_price_non_negative(weekday_price, weekend_price) :: :ok | {:error, map()}
+  defp validate_price_non_negative(weekday_price, weekend_price) do
+    cond do
+      not is_nil(weekday_price) and Decimal.compare(weekday_price, 0) == :lt ->
+        {:error, field: :weekday_price, message: "Weekday price must be non-negative"}
+
+      not is_nil(weekend_price) and Decimal.compare(weekend_price, 0) == :lt ->
+        {:error, field: :weekend_price, message: "Weekend price must be non-negative"}
+
+      true ->
+        :ok
     end
   end
 
   @doc """
   Validates that end time is after start time.
   """
+  @spec validate_time_range(changeset, opts) :: :ok | {:error, map()}
   def validate_time_range(changeset, _opts) do
-    start_field = :start_time
-    end_field = :end_time
-
-    start_time = Ash.Changeset.get_argument_or_attribute(changeset, start_field)
-    end_time = Ash.Changeset.get_argument_or_attribute(changeset, end_field)
-
-    if start_time && end_time do
-      if Timex.compare(end_time, start_time) == 1 do
-        :ok
-      else
-        {:error, field: end_field, message: "End time must be after start time"}
-      end
+    with {:ok, start_time} <- get_optional_attribute(changeset, :start_time),
+         {:ok, end_time} <- get_optional_attribute(changeset, :end_time) do
+      validate_time_order(start_time, end_time)
     else
-      # Skip validation if fields are missing
+      {:error, :missing_attribute} -> :ok
+      {:error, reason} -> {:error, reason}
+    end
+  end
+
+  @spec validate_time_order(start_time | nil, end_time | nil) :: :ok | {:error, map()}
+  defp validate_time_order(nil, _end_time), do: :ok
+  defp validate_time_order(_start_time, nil), do: :ok
+  defp validate_time_order(start_time, end_time) do
+    if Timex.compare(end_time, start_time) == 1 do
       :ok
+    else
+      {:error, field: :end_time, message: "End time must be after start time"}
     end
   end
 
   @doc """
   Validates that a date is not in the past.
   """
+  @spec validate_future_date(changeset, opts) :: :ok | {:error, map()}
   def validate_future_date(changeset, _opts) do
-    field = :date
-
-    case Ash.Changeset.get_argument_or_attribute(changeset, field) do
-      date when not is_nil(date) ->
-        today = Timex.today()
-
-        if Timex.compare(date, today) != -1 do
-          :ok
-        else
-          {:error, field: field, message: "Date cannot be in the past"}
-        end
-
-      _ ->
+    case get_optional_attribute(changeset, :date) do
+      {:ok, date} when not is_nil(date) ->
+        validate_date_not_in_past(date)
+      {:ok, _} ->
         :ok
+      {:error, reason} ->
+        {:error, reason}
+    end
+  end
+
+  @spec validate_date_not_in_past(date) :: :ok | {:error, map()}
+  defp validate_date_not_in_past(date) do
+    today = Timex.today()
+
+    if Timex.compare(date, today) != -1 do
+      :ok
+    else
+      {:error, field: :date, message: "Date cannot be in the past"}
     end
   end
 
   @doc """
   Validates business capacity constraints.
   """
+  @spec validate_business_capacity(changeset, opts) :: :ok | {:error, map()}
   def validate_business_capacity(_changeset, _opts) do
     # This would check business-specific capacity rules
     # Implementation depends on your business logic
@@ -345,79 +462,85 @@ defmodule RivaAsh.Validations do
   @doc """
   Validates email format with improved regex.
   """
+  @spec validate_email_format(changeset, opts) :: :ok | {:error, map()}
   def validate_email_format(changeset, _opts) do
-    field = :email
-
-    case Ash.Changeset.get_argument_or_attribute(changeset, field) do
-      email when is_binary(email) ->
-        # More comprehensive email validation
-        email_regex =
-          ~r/^[a-zA-Z0-9.!#$%&'*+\/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/
-
-        if Regex.match?(email_regex, email) do
-          :ok
-        else
-          {:error, field: field, message: "Invalid email format"}
-        end
-
-      # Allow nil if field is optional
-      nil ->
+    case get_optional_attribute(changeset, :email) do
+      {:ok, email} when is_binary(email) ->
+        validate_email_regex(email)
+      {:ok, _} ->
         :ok
+      {:error, reason} ->
+        {:error, reason}
+    end
+  end
 
-      _ ->
-        :ok
+  @spec validate_email_regex(email) :: :ok | {:error, map()}
+  defp validate_email_regex(email) do
+    email_regex =
+      ~r/^[a-zA-Z0-9.!#$%&'*+\/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/
+
+    if Regex.match?(email_regex, email) do
+      :ok
+    else
+      {:error, field: :email, message: "Invalid email format"}
     end
   end
 
   @doc """
   Validates phone number format.
   """
+  @spec validate_phone_format(changeset, opts) :: :ok | {:error, map()}
   def validate_phone_format(changeset, _opts) do
-    field = :phone
-
-    case Ash.Changeset.get_argument_or_attribute(changeset, field) do
-      phone when is_binary(phone) ->
-        # Allow various phone formats
-        phone_regex = ~r/^[\+]?[1-9][\d\s\-\(\)\.]{7,15}$/
-
-        if Regex.match?(phone_regex, phone) do
-          :ok
-        else
-          {:error, field: field, message: "Invalid phone number format"}
-        end
-
-      nil ->
+    case get_optional_attribute(changeset, :phone) do
+      {:ok, phone} when is_binary(phone) ->
+        validate_phone_regex(phone)
+      {:ok, _} ->
         :ok
+      {:error, reason} ->
+        {:error, reason}
+    end
+  end
 
-      _ ->
-        :ok
+  @spec validate_phone_regex(phone) :: :ok | {:error, map()}
+  defp validate_phone_regex(phone) do
+    phone_regex = ~r/^[\+]?[1-9][\d\s\-\(\)\.]{7,15}$/
+
+    if Regex.match?(phone_regex, phone) do
+      :ok
+    else
+      {:error, field: :phone, message: "Invalid phone number format"}
     end
   end
 
   @doc """
   Sanitizes text input to prevent XSS.
   """
+  @spec sanitize_text_input(changeset, opts) :: changeset()
   def sanitize_text_input(changeset, _opts) do
-    field = :name
-
-    case Ash.Changeset.get_argument_or_attribute(changeset, field) do
-      text when is_binary(text) ->
-        # Basic sanitization - remove potentially dangerous characters
-        sanitized =
-          text
-          |> String.trim()
-          |> String.replace(~r/[<>\"'&]/, "")
-
-        Ash.Changeset.change_attribute(changeset, field, sanitized)
-
-      _ ->
+    case get_optional_attribute(changeset, :name) do
+      {:ok, text} when is_binary(text) ->
+        sanitize_text(text, changeset)
+      {:ok, _} ->
         changeset
+      {:error, reason} ->
+        {:error, reason}
     end
+  end
+
+  @spec sanitize_text(text_input, changeset) :: changeset()
+  defp sanitize_text(text, changeset) do
+    sanitized =
+      text
+      |> String.trim()
+      |> String.replace(~r/[<>\"'&]/, "")
+
+    Ash.Changeset.change_attribute(changeset, :name, sanitized)
   end
 
   @doc """
   Validates that a business_id belongs to the current actor's accessible businesses.
   """
+  @spec validate_business_access(changeset, opts) :: :ok | {:error, map()}
   def validate_business_access(changeset, _opts) do
     case Ash.Changeset.get_argument_or_attribute(changeset, :business_id) do
       nil ->
@@ -445,321 +568,355 @@ defmodule RivaAsh.Validations do
   @doc """
   Validates that a section belongs to the same business as the item.
   """
+  @spec validate_section_business_match(changeset, opts) :: :ok | {:error, map()}
   def validate_section_business_match(changeset, _opts) do
-    section_id = Ash.Changeset.get_argument_or_attribute(changeset, :section_id)
-    business_id = Ash.Changeset.get_argument_or_attribute(changeset, :business_id)
-
-    if section_id && business_id do
-      case Ash.get(RivaAsh.Resources.Section, section_id, domain: RivaAsh.Domain) do
-        {:ok, %{business_id: ^business_id}} ->
-          :ok
-
-        {:ok, %{business_id: _other_business_id}} ->
-          {:error, field: :section_id, message: "Section must belong to the same business"}
-
-        {:error, _} ->
-          {:error, field: :section_id, message: "Section not found"}
-      end
+    with {:ok, section_id} <- get_required_attribute(changeset, :section_id),
+         {:ok, business_id} <- get_required_attribute(changeset, :business_id) do
+      check_section_business_match(section_id, business_id)
     else
-      # Skip validation if fields are not present
-      :ok
+      {:error, :missing_attribute} -> :ok
+      {:error, reason} -> {:error, reason}
+    end
+  end
+
+  @spec check_section_business_match(section_id, business_id) :: :ok | {:error, map()}
+  defp check_section_business_match(section_id, business_id) do
+    case Ash.get(RivaAsh.Resources.Section, section_id, domain: RivaAsh.Domain) do
+      {:ok, %{business_id: ^business_id}} ->
+        :ok
+
+      {:ok, %{business_id: _other_business_id}} ->
+        {:error, field: :section_id, message: "Section must belong to the same business"}
+
+      {:error, _} ->
+        {:error, field: :section_id, message: "Section not found"}
     end
   end
 
   @doc """
   Validates that an item_type belongs to the same business as the item.
   """
+  @spec validate_item_type_business_match(changeset, opts) :: :ok | {:error, map()}
   def validate_item_type_business_match(changeset, _opts) do
-    item_type_id = Ash.Changeset.get_argument_or_attribute(changeset, :item_type_id)
-    business_id = Ash.Changeset.get_argument_or_attribute(changeset, :business_id)
-
-    if item_type_id && business_id do
-      case Ash.get(RivaAsh.Resources.ItemType, item_type_id, domain: RivaAsh.Domain) do
-        {:ok, %{business_id: ^business_id}} ->
-          :ok
-
-        {:ok, %{business_id: _other_business_id}} ->
-          {:error, field: :item_type_id, message: "Item type must belong to the same business"}
-
-        {:error, _} ->
-          {:error, field: :item_type_id, message: "Item type not found"}
-      end
+    with {:ok, item_type_id} <- get_required_attribute(changeset, :item_type_id),
+         {:ok, business_id} <- get_required_attribute(changeset, :business_id) do
+      check_item_type_business_match(item_type_id, business_id)
     else
-      # Skip validation if fields are not present
-      :ok
+      {:error, :missing_attribute} -> :ok
+      {:error, reason} -> {:error, reason}
+    end
+  end
+
+  @spec check_item_type_business_match(item_type_id, business_id) :: :ok | {:error, map()}
+  defp check_item_type_business_match(item_type_id, business_id) do
+    case Ash.get(RivaAsh.Resources.ItemType, item_type_id, domain: RivaAsh.Domain) do
+      {:ok, %{business_id: ^business_id}} ->
+        :ok
+
+      {:ok, %{business_id: _other_business_id}} ->
+        {:error, field: :item_type_id, message: "Item type must belong to the same business"}
+
+      {:error, _} ->
+        {:error, field: :item_type_id, message: "Item type not found"}
     end
   end
 
   @doc """
   Validates that a plot belongs to the same business as the section.
   """
+  @spec validate_plot_business_match(changeset, opts) :: :ok | {:error, map()}
   def validate_plot_business_match(changeset, _opts) do
-    plot_id = Ash.Changeset.get_argument_or_attribute(changeset, :plot_id)
-    business_id = Ash.Changeset.get_argument_or_attribute(changeset, :business_id)
-
-    if plot_id && business_id do
-      case Ash.get(RivaAsh.Resources.Plot, plot_id, domain: RivaAsh.Domain) do
-        {:ok, %{business_id: ^business_id}} ->
-          :ok
-
-        {:ok, %{business_id: _other_business_id}} ->
-          {:error, field: :plot_id, message: "Plot must belong to the same business"}
-
-        {:error, _} ->
-          {:error, field: :plot_id, message: "Plot not found"}
-      end
+    with {:ok, plot_id} <- get_required_attribute(changeset, :plot_id),
+         {:ok, business_id} <- get_required_attribute(changeset, :business_id) do
+      check_plot_business_match(plot_id, business_id)
     else
-      # Skip validation if fields are not present
-      :ok
+      {:error, :missing_attribute} -> :ok
+      {:error, reason} -> {:error, reason}
+    end
+  end
+
+  @spec check_plot_business_match(plot_id, business_id) :: :ok | {:error, map()}
+  defp check_plot_business_match(plot_id, business_id) do
+    case Ash.get(RivaAsh.Resources.Plot, plot_id, domain: RivaAsh.Domain) do
+      {:ok, %{business_id: ^business_id}} ->
+        :ok
+
+      {:ok, %{business_id: _other_business_id}} ->
+        {:error, field: :plot_id, message: "Plot must belong to the same business"}
+
+      {:error, _} ->
+        {:error, field: :plot_id, message: "Plot not found"}
     end
   end
 
   @doc """
   Validates that a client belongs to the same business as the reservation item.
   """
+  @spec validate_client_item_business_match(changeset, opts) :: :ok | {:error, map()}
   def validate_client_item_business_match(changeset, _opts) do
-    client_id = Ash.Changeset.get_argument_or_attribute(changeset, :client_id)
-    item_id = Ash.Changeset.get_argument_or_attribute(changeset, :item_id)
-
-    if client_id && item_id do
-      with {:ok, client} <- Ash.get(RivaAsh.Resources.Client, client_id, domain: RivaAsh.Domain),
-           {:ok, item} <- Ash.get(RivaAsh.Resources.Item, item_id, domain: RivaAsh.Domain) do
-        if client.business_id == item.business_id do
-          :ok
-        else
-          {:error, field: :client_id, message: "Client and item must belong to the same business"}
-        end
-      else
-        {:error, _} ->
-          {:error, field: :client_id, message: "Client or item not found"}
-      end
+    with {:ok, client_id} <- get_required_attribute(changeset, :client_id),
+         {:ok, item_id} <- get_required_attribute(changeset, :item_id) do
+      check_client_item_business_match(client_id, item_id)
     else
-      # Skip validation if fields are not present
-      :ok
+      {:error, :missing_attribute} -> :ok
+      {:error, reason} -> {:error, reason}
     end
+  end
+
+  @spec check_client_item_business_match(client_id, item_id) :: :ok | {:error, map()}
+  defp check_client_item_business_match(client_id, item_id) do
+    with {:ok, client} <- Ash.get(RivaAsh.Resources.Client, client_id, domain: RivaAsh.Domain),
+         {:ok, item} <- Ash.get(RivaAsh.Resources.Item, item_id, domain: RivaAsh.Domain) do
+      check_business_match(client.business_id, item.business_id, :client_id)
+    else
+      {:error, _} ->
+        {:error, field: :client_id, message: "Client or item not found"}
+    end
+  end
+
+  @spec check_business_match(business_id, business_id, atom()) :: :ok | {:error, map()}
+  defp check_business_match(business_id, business_id, _field), do: :ok
+  defp check_business_match(_business_id1, _business_id2, field) do
+    {:error, field: field, message: "Client and item must belong to the same business"}
   end
 
   @doc """
   Validates that an employee belongs to the same business as the reservation item.
   """
+  @spec validate_employee_item_business_match(changeset, opts) :: :ok | {:error, map()}
   def validate_employee_item_business_match(changeset, _opts) do
-    with {:ok, employee_id} <- Ash.Changeset.get_argument_or_attribute(changeset, :employee_id),
-         {:ok, item_id} <- Ash.Changeset.get_argument_or_attribute(changeset, :item_id) do
-      with {:ok, employee} <-
-             Ash.get(RivaAsh.Resources.Employee, employee_id, domain: RivaAsh.Domain),
-           {:ok, item} <- Ash.get(RivaAsh.Resources.Item, item_id, domain: RivaAsh.Domain) do
-        if employee.business_id == item.business_id do
-          :ok
-        else
-          {:error,
-           field: :employee_id, message: "Employee and item must belong to the same business"}
-        end
-      else
-        {:error, _} ->
-          {:error, field: :employee_id, message: "Employee or item not found"}
-      end
+    with {:ok, employee_id} <- get_required_attribute(changeset, :employee_id),
+         {:ok, item_id} <- get_required_attribute(changeset, :item_id) do
+      check_employee_item_business_match(employee_id, item_id)
     else
-      # Skip validation if fields are not present
-      :error -> :ok
+      {:error, :missing_attribute} -> :ok
+      {:error, reason} -> {:error, reason}
+    end
+  end
+
+  @spec check_employee_item_business_match(employee_id, item_id) :: :ok | {:error, map()}
+  defp check_employee_item_business_match(employee_id, item_id) do
+    with {:ok, employee} <- Ash.get(RivaAsh.Resources.Employee, employee_id, domain: RivaAsh.Domain),
+         {:ok, item} <- Ash.get(RivaAsh.Resources.Item, item_id, domain: RivaAsh.Domain) do
+      check_business_match(employee.business_id, item.business_id, :employee_id)
+    else
+      {:error, _} ->
+        {:error, field: :employee_id, message: "Employee or item not found"}
     end
   end
 
   @doc """
   Validates that an item and layout belong to the same business (for ItemPosition).
   """
+  @spec validate_item_layout_business_match(changeset, opts) :: :ok | {:error, map()}
   def validate_item_layout_business_match(changeset, _opts) do
-    with {:ok, item_id} <- Ash.Changeset.get_argument_or_attribute(changeset, :item_id),
-         {:ok, layout_id} <- Ash.Changeset.get_argument_or_attribute(changeset, :layout_id) do
-      with {:ok, item} <- Ash.get(RivaAsh.Resources.Item, item_id, domain: RivaAsh.Domain),
-           {:ok, layout} <-
-             Ash.get(RivaAsh.Resources.Layout, layout_id, domain: RivaAsh.Domain, load: [:plot]) do
-        if item.business_id == layout.plot.business_id do
-          :ok
-        else
-          {:error, field: :layout_id, message: "Item and layout must belong to the same business"}
-        end
-      else
-        {:error, _} ->
-          {:error, field: :layout_id, message: "Item or layout not found"}
-      end
+    with {:ok, item_id} <- get_required_attribute(changeset, :item_id),
+         {:ok, layout_id} <- get_required_attribute(changeset, :layout_id) do
+      check_item_layout_business_match(item_id, layout_id)
     else
-      # Skip validation if fields are not present
-      :error -> :ok
+      {:error, :missing_attribute} -> :ok
+      {:error, reason} -> {:error, reason}
+    end
+  end
+
+  @spec check_item_layout_business_match(item_id, layout_id) :: :ok | {:error, map()}
+  defp check_item_layout_business_match(item_id, layout_id) do
+    with {:ok, item} <- Ash.get(RivaAsh.Resources.Item, item_id, domain: RivaAsh.Domain),
+         {:ok, layout} <- Ash.get(RivaAsh.Resources.Layout, layout_id, domain: RivaAsh.Domain, load: [:plot]) do
+      check_business_match(item.business_id, layout.plot.business_id, :layout_id)
+    else
+      {:error, _} ->
+        {:error, field: :layout_id, message: "Item or layout not found"}
     end
   end
 
   @doc """
   Validates that a reservation belongs to the same business as the payment.
   """
+  @spec validate_reservation_payment_business_match(changeset, opts) :: :ok | {:error, map()}
   def validate_reservation_payment_business_match(changeset, _opts) do
-    with {:ok, reservation_id} <-
-           Ash.Changeset.get_argument_or_attribute(changeset, :reservation_id) do
-      case Ash.get(RivaAsh.Resources.Reservation, reservation_id,
-             domain: RivaAsh.Domain,
-             load: [:item]
-           ) do
-        {:ok, reservation} ->
-          # Get business_id from the changeset or derive from reservation
-          case Ash.Changeset.get_argument_or_attribute(changeset, :business_id) do
-            {:ok, business_id} ->
-              if reservation.item.business_id == business_id do
-                :ok
-              else
-                {:error,
-                 field: :reservation_id,
-                 message: "Payment and reservation must belong to the same business"}
-              end
-
-            :error ->
-              # If no business_id in changeset, set it from the reservation
-              Ash.Changeset.force_change_attribute(
-                changeset,
-                :business_id,
-                reservation.item.business_id
-              )
-
-              :ok
-          end
-
-        {:error, _} ->
-          {:error, field: :reservation_id, message: "Reservation not found"}
-      end
+    with {:ok, reservation_id} <- get_required_attribute(changeset, :reservation_id) do
+      check_reservation_payment_business_match(changeset, reservation_id)
     else
-      # Skip validation if fields are not present
-      :error -> :ok
+      {:error, :missing_attribute} -> :ok
+      {:error, reason} -> {:error, reason}
+    end
+  end
+
+  @spec check_reservation_payment_business_match(changeset, reservation_id) :: :ok | {:error, map()}
+  defp check_reservation_payment_business_match(changeset, reservation_id) do
+    case Ash.get(RivaAsh.Resources.Reservation, reservation_id,
+           domain: RivaAsh.Domain,
+           load: [:item]
+         ) do
+      {:ok, reservation} ->
+        # Get business_id from the changeset or derive from reservation
+        case Ash.Changeset.get_argument_or_attribute(changeset, :business_id) do
+          {:ok, business_id} ->
+            if reservation.item.business_id == business_id do
+              :ok
+            else
+              {:error,
+               field: :reservation_id,
+               message: "Payment and reservation must belong to the same business"}
+            end
+
+          :error ->
+            # If no business_id in changeset, set it from the reservation
+            Ash.Changeset.force_change_attribute(
+              changeset,
+              :business_id,
+              reservation.item.business_id
+            )
+
+            :ok
+        end
+
+      {:error, _} ->
+        {:error, field: :reservation_id, message: "Reservation not found"}
     end
   end
 
   @doc """
   Validates that employee and granter belong to the same business (for EmployeePermission).
   """
+  @spec validate_employee_granter_business_match(changeset, opts) :: :ok | {:error, map()}
   def validate_employee_granter_business_match(changeset, _opts) do
-    with {:ok, employee_id} <- Ash.Changeset.get_argument_or_attribute(changeset, :employee_id),
-         {:ok, granted_by_id} <-
-           Ash.Changeset.get_argument_or_attribute(changeset, :granted_by_id) do
-      with {:ok, employee} <-
-             Ash.get(RivaAsh.Resources.Employee, employee_id, domain: RivaAsh.Domain),
-           {:ok, granter} <-
-             Ash.get(RivaAsh.Resources.Employee, granted_by_id, domain: RivaAsh.Domain) do
-        if employee.business_id == granter.business_id do
-          :ok
-        else
-          {:error,
-           field: :granted_by_id, message: "Employee and granter must belong to the same business"}
-        end
-      else
-        {:error, _} ->
-          {:error, field: :granted_by_id, message: "Employee or granter not found"}
-      end
+    with {:ok, employee_id} <- get_required_attribute(changeset, :employee_id),
+         {:ok, granted_by_id} <- get_required_attribute(changeset, :granted_by_id) do
+      check_employee_granter_business_match(employee_id, granted_by_id)
     else
-      # Skip validation if fields are not present
-      :error -> :ok
+      {:error, :missing_attribute} -> :ok
+      {:error, reason} -> {:error, reason}
+    end
+  end
+
+  @spec check_employee_granter_business_match(employee_id, granted_by_id) :: :ok | {:error, map()}
+  defp check_employee_granter_business_match(employee_id, granted_by_id) do
+    with {:ok, employee} <- Ash.get(RivaAsh.Resources.Employee, employee_id, domain: RivaAsh.Domain),
+         {:ok, granter} <- Ash.get(RivaAsh.Resources.Employee, granted_by_id, domain: RivaAsh.Domain) do
+      check_business_match(employee.business_id, granter.business_id, :granted_by_id)
+    else
+      {:error, _} ->
+        {:error, field: :granted_by_id, message: "Employee or granter not found"}
     end
   end
 
   @doc """
   Validates that pricing rules don't have overlapping date ranges for the same business/item_type/pricing_type.
   """
+  @spec validate_pricing_date_overlap(changeset, opts) :: :ok | {:error, map()}
   def validate_pricing_date_overlap(changeset, _opts) do
-    with {:ok, business_id} <- Ash.Changeset.get_argument_or_attribute(changeset, :business_id),
-         {:ok, item_type_id} <- Ash.Changeset.get_argument_or_attribute(changeset, :item_type_id),
-         {:ok, pricing_type} <- Ash.Changeset.get_argument_or_attribute(changeset, :pricing_type),
-         {:ok, effective_from} <-
-           Ash.Changeset.get_argument_or_attribute(changeset, :effective_from),
-         {:ok, effective_until} <-
-           Ash.Changeset.get_argument_or_attribute(changeset, :effective_until) do
-      current_id = Ash.Changeset.get_attribute(changeset, :id)
+    with {:ok, business_id} <- get_required_attribute(changeset, :business_id),
+         {:ok, item_type_id} <- get_required_attribute(changeset, :item_type_id),
+         {:ok, pricing_type} <- get_required_attribute(changeset, :pricing_type),
+         {:ok, effective_from} <- get_required_attribute(changeset, :effective_from),
+         {:ok, effective_until} <- get_required_attribute(changeset, :effective_until) do
+      check_pricing_date_overlap(changeset, business_id, item_type_id, pricing_type, effective_from, effective_until)
+    else
+      {:error, :missing_attribute} -> :ok
+      {:error, reason} -> {:error, reason}
+    end
+  end
 
-      # Query for existing pricing rules with same business/item_type/pricing_type
-      query =
-        RivaAsh.Resources.Pricing
-        |> Ash.Query.filter(expr(business_id == ^business_id))
-        |> Ash.Query.filter(expr(item_type_id == ^item_type_id))
-        |> Ash.Query.filter(expr(pricing_type == ^pricing_type))
+  @spec check_pricing_date_overlap(changeset, business_id, item_type_id, pricing_type, effective_from, effective_until) :: :ok | {:error, map()}
+  defp check_pricing_date_overlap(changeset, business_id, item_type_id, pricing_type, effective_from, effective_until) do
+    current_id = Ash.Changeset.get_attribute(changeset, :id)
 
-      # Exclude current record if updating
-      query =
-        if current_id do
-          Ash.Query.filter(query, expr(id != ^current_id))
+    # Query for existing pricing rules with same business/item_type/pricing_type
+    query =
+      RivaAsh.Resources.Pricing
+      |> Ash.Query.filter(expr(business_id == ^business_id))
+      |> Ash.Query.filter(expr(item_type_id == ^item_type_id))
+      |> Ash.Query.filter(expr(pricing_type == ^pricing_type))
+
+    # Exclude current record if updating
+    query =
+      if current_id do
+        Ash.Query.filter(query, expr(id != ^current_id))
+      else
+        query
+      end
+
+    case Ash.read(query, domain: RivaAsh.Domain) do
+      {:ok, existing_rules} ->
+        if has_date_overlap?(existing_rules, effective_from, effective_until) do
+          {:error,
+           field: :effective_from, message: "Date range overlaps with existing pricing rule"}
         else
-          query
+          :ok
         end
 
-      case Ash.read(query, domain: RivaAsh.Domain) do
-        {:ok, existing_rules} ->
-          if has_date_overlap?(existing_rules, effective_from, effective_until) do
-            {:error,
-             field: :effective_from, message: "Date range overlaps with existing pricing rule"}
-          else
-            :ok
-          end
-
-        # Skip validation if query fails
-        {:error, _} ->
-          :ok
-      end
-    else
-      # Skip validation if required fields are missing
-      :error -> :ok
+      # Skip validation if query fails
+      {:error, _} ->
+        :ok
     end
   end
 
   @doc """
   Validates that there's only one active base pricing rule per business/item_type at any given time.
   """
+  @spec validate_single_active_base_pricing(changeset, opts) :: :ok | {:error, map()}
   def validate_single_active_base_pricing(changeset, _opts) do
-    with {:ok, business_id} <- Ash.Changeset.get_argument_or_attribute(changeset, :business_id),
-         {:ok, item_type_id} <- Ash.Changeset.get_argument_or_attribute(changeset, :item_type_id),
-         {:ok, pricing_type} <- Ash.Changeset.get_argument_or_attribute(changeset, :pricing_type) do
-      if pricing_type == :base do
-        current_id = Ash.Changeset.get_attribute(changeset, :id)
-        today = Timex.today()
-
-        # Query for other active base pricing rules
-        query =
-          RivaAsh.Resources.Pricing
-          |> Ash.Query.filter(expr(business_id == ^business_id))
-          |> Ash.Query.filter(expr(item_type_id == ^item_type_id))
-          |> Ash.Query.filter(expr(pricing_type == :base))
-          |> Ash.Query.filter(
-            expr(
-              fragment(
-                "(effective_from IS NULL OR effective_from <= ?) AND (effective_until IS NULL OR effective_until >= ?)",
-                ^today,
-                ^today
-              )
-            )
-          )
-
-        # Exclude current record if updating
-        query =
-          if current_id do
-            Ash.Query.filter(query, expr(id != ^current_id))
-          else
-            query
-          end
-
-        case Ash.read(query, domain: RivaAsh.Domain) do
-          {:ok, []} ->
-            :ok
-
-          {:ok, _existing} ->
-            {:error,
-             field: :pricing_type,
-             message: "Only one active base pricing rule allowed per business/item_type"}
-
-          {:error, _} ->
-            :ok
-        end
-      else
-        :ok
-      end
+    with {:ok, business_id} <- get_required_attribute(changeset, :business_id),
+         {:ok, item_type_id} <- get_required_attribute(changeset, :item_type_id),
+         {:ok, pricing_type} <- get_required_attribute(changeset, :pricing_type) do
+      check_single_active_base_pricing(changeset, business_id, item_type_id, pricing_type)
     else
-      :error -> :ok
+      {:error, :missing_attribute} -> :ok
+      {:error, reason} -> {:error, reason}
     end
   end
 
+  @spec check_single_active_base_pricing(changeset, business_id, item_type_id, pricing_type) :: :ok | {:error, map()}
+  defp check_single_active_base_pricing(changeset, business_id, item_type_id, :base) do
+    current_id = Ash.Changeset.get_attribute(changeset, :id)
+    today = Timex.today()
+
+    # Query for other active base pricing rules
+    query =
+      RivaAsh.Resources.Pricing
+      |> Ash.Query.filter(expr(business_id == ^business_id))
+      |> Ash.Query.filter(expr(item_type_id == ^item_type_id))
+      |> Ash.Query.filter(expr(pricing_type == :base))
+      |> Ash.Query.filter(
+        expr(
+          fragment(
+            "(effective_from IS NULL OR effective_from <= ?) AND (effective_until IS NULL OR effective_until >= ?)",
+            ^today,
+            ^today
+          )
+        )
+      )
+
+    # Exclude current record if updating
+    query =
+      if current_id do
+        Ash.Query.filter(query, expr(id != ^current_id))
+      else
+        query
+      end
+
+    case Ash.read(query, domain: RivaAsh.Domain) do
+      {:ok, []} ->
+        :ok
+
+      {:ok, _existing} ->
+        {:error,
+         field: :pricing_type,
+         message: "Only one active base pricing rule allowed per business/item_type"}
+
+      {:error, _} ->
+        :ok
+    end
+  end
+
+  defp check_single_active_base_pricing(_changeset, _business_id, _item_type_id, _pricing_type) do
+    :ok
+  end
+
   # Helper function to check for date range overlaps
+  @spec has_date_overlap?(list(), effective_from, effective_until) :: boolean()
   defp has_date_overlap?(existing_rules, new_from, new_until) do
     Enum.any?(existing_rules, fn rule ->
       date_ranges_overlap?(
@@ -770,6 +927,7 @@ defmodule RivaAsh.Validations do
   end
 
   # Helper function to check if two date ranges overlap
+  @spec date_ranges_overlap?({effective_from | nil, effective_until | nil}, {effective_from | nil, effective_until | nil}) :: boolean()
   defp date_ranges_overlap?({from1, until1}, {from2, until2}) do
     # Convert nil dates to appropriate boundaries
     from1 = from1 || Timex.parse!("1900-01-01", "{YYYY}-{0M}-{0D}")

@@ -20,11 +20,24 @@ defmodule RivaAshWeb.Components.Organisms.CalendarView do
   attr(:class, :string, default: "")
   attr(:rest, :global)
 
+  @spec calendar_view(assigns :: map()) :: Phoenix.LiveView.Rendered.t()
   def calendar_view(assigns) do
+    # Render calendar view using functional composition
+    assigns
+    |> Map.put_new(:container_class, build_container_class(assigns.class))
+    |> Map.put_new(:navigation_class, build_navigation_class())
+    |> Map.put_new(:tab_navigation_class, build_tab_navigation_class())
+    |> Map.put_new(:content_class, build_content_class(assigns.editable))
+    |> render_calendar_view_component()
+  end
+
+  # Private helper for calendar view rendering
+  @spec render_calendar_view_component(assigns :: map()) :: Phoenix.LiveView.Rendered.t()
+  defp render_calendar_view_component(assigns) do
     ~H"""
     <!-- Calendar view implementation will go here -->
-    <div {@rest}>
-      <div>
+    <div {@rest} class={@container_class}>
+      <div class={@navigation_class}>
         <.button phx-click={@on_navigate} phx-value-direction="prev">Previous</.button>
         <span><%= @current_date %></span>
         <.button phx-click={@on_navigate} phx-value-direction="next">Next</.button>
@@ -38,9 +51,10 @@ defmodule RivaAshWeb.Components.Organisms.CalendarView do
         ]}
         active_tab={@view_mode}
         on_tab_change={@on_view_change}
+        class={@tab_navigation_class}
       />
       
-      <div>
+      <div class={@content_class}>
         <!-- Calendar grid will go here -->
         <div :for={event <- @events}>
           <%= event.title %>
@@ -48,5 +62,29 @@ defmodule RivaAshWeb.Components.Organisms.CalendarView do
       </div>
     </div>
     """
+  end
+
+  # Helper function to build container classes
+  @spec build_container_class(String.t()) :: String.t()
+  defp build_container_class(class) do
+    class
+  end
+
+  # Helper function to build navigation classes
+  @spec build_navigation_class() :: String.t()
+  defp build_navigation_class() do
+    ""
+  end
+
+  # Helper function to build tab navigation classes
+  @spec build_tab_navigation_class() :: String.t()
+  defp build_tab_navigation_class() do
+    ""
+  end
+
+  # Helper function to build content classes
+  @spec build_content_class(boolean()) :: String.t()
+  defp build_content_class(editable) do
+    ""
   end
 end

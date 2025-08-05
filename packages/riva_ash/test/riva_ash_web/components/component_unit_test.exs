@@ -19,6 +19,7 @@ defmodule RivaAshWeb.ComponentUnitTest do
   import RivaAshWeb.Components.Molecules.Card
 
   describe "Button component" do
+    @spec test_renders_basic_button_with_default_attributes :: :ok
     test "renders basic button with default attributes" do
       assigns = %{}
 
@@ -31,6 +32,7 @@ defmodule RivaAshWeb.ComponentUnitTest do
       assert html =~ "button"
     end
 
+    @spec test_renders_button_with_custom_variant :: :ok
     test "renders button with custom variant" do
       assigns = %{}
 
@@ -44,6 +46,7 @@ defmodule RivaAshWeb.ComponentUnitTest do
       assert html =~ "button"
     end
 
+    @spec test_renders_disabled_button :: :ok
     test "renders disabled button" do
       assigns = %{}
 
@@ -56,6 +59,7 @@ defmodule RivaAshWeb.ComponentUnitTest do
       assert html =~ "disabled"
     end
 
+    @spec test_renders_button_with_different_sizes :: :ok
     test "renders button with different sizes" do
       assigns = %{}
 
@@ -72,6 +76,7 @@ defmodule RivaAshWeb.ComponentUnitTest do
       end)
     end
 
+    @spec test_renders_button_with_icon :: :ok
     test "renders button with icon" do
       assigns = %{}
 
@@ -91,6 +96,7 @@ defmodule RivaAshWeb.ComponentUnitTest do
   end
 
   describe "Badge component" do
+    @spec test_renders_basic_badge :: :ok
     test "renders basic badge" do
       assigns = %{}
 
@@ -102,6 +108,7 @@ defmodule RivaAshWeb.ComponentUnitTest do
       assert html =~ "New"
     end
 
+    @spec test_renders_badge_with_different_variants :: :ok
     test "renders badge with different variants" do
       assigns = %{}
 
@@ -117,6 +124,7 @@ defmodule RivaAshWeb.ComponentUnitTest do
       end)
     end
 
+    @spec test_renders_badge_with_custom_color :: :ok
     test "renders badge with custom color" do
       assigns = %{}
 
@@ -130,6 +138,7 @@ defmodule RivaAshWeb.ComponentUnitTest do
   end
 
   describe "Input component" do
+    @spec test_renders_basic_text_input :: :ok
     test "renders basic text input" do
       assigns = %{}
 
@@ -142,6 +151,7 @@ defmodule RivaAshWeb.ComponentUnitTest do
       assert html =~ ~s(name="test")
     end
 
+    @spec test_renders_input_with_label :: :ok
     test "renders input with label" do
       assigns = %{}
 
@@ -154,6 +164,7 @@ defmodule RivaAshWeb.ComponentUnitTest do
       assert html =~ ~s(name="test")
     end
 
+    @spec test_renders_input_with_error_state :: :ok
     test "renders input with error state" do
       assigns = %{}
 
@@ -165,6 +176,7 @@ defmodule RivaAshWeb.ComponentUnitTest do
       assert html =~ "This field is required"
     end
 
+    @spec test_renders_different_input_types :: :ok
     test "renders different input types" do
       assigns = %{}
 
@@ -180,6 +192,7 @@ defmodule RivaAshWeb.ComponentUnitTest do
       end)
     end
 
+    @spec test_renders_input_with_placeholder :: :ok
     test "renders input with placeholder" do
       assigns = %{}
 
@@ -193,6 +206,8 @@ defmodule RivaAshWeb.ComponentUnitTest do
   end
 
   describe "Card component" do
+    @spec test_renders_basic_card :: :ok
+    @spec test_renders_basic_card :: :ok
     test "renders basic card" do
       assigns = %{}
 
@@ -208,6 +223,8 @@ defmodule RivaAshWeb.ComponentUnitTest do
       assert html =~ "Card content"
     end
 
+    @spec test_renders_card_with_header :: :ok
+    @spec test_renders_card_with_header :: :ok
     test "renders card with header" do
       assigns = %{}
 
@@ -227,6 +244,8 @@ defmodule RivaAshWeb.ComponentUnitTest do
       assert html =~ "Card content"
     end
 
+    @spec test_renders_card_with_footer :: :ok
+    @spec test_renders_card_with_footer :: :ok
     test "renders card with footer" do
       assigns = %{}
 
@@ -246,6 +265,8 @@ defmodule RivaAshWeb.ComponentUnitTest do
       assert html =~ "Card Footer"
     end
 
+    @spec test_renders_card_with_custom_class :: :ok
+    @spec test_renders_card_with_custom_class :: :ok
     test "renders card with custom class" do
       assigns = %{}
 
@@ -264,6 +285,8 @@ defmodule RivaAshWeb.ComponentUnitTest do
   end
 
   describe "Component attribute validation" do
+    @spec test_button_validates_size_attribute :: :ok
+    @spec test_button_validates_size_attribute :: :ok
     test "button validates size attribute" do
       # This would test that invalid sizes are handled gracefully
       assigns = %{}
@@ -277,6 +300,8 @@ defmodule RivaAshWeb.ComponentUnitTest do
       assert html =~ "Button"
     end
 
+    @spec test_badge_validates_variant_attribute :: :ok
+    @spec test_badge_validates_variant_attribute :: :ok
     test "badge validates variant attribute" do
       assigns = %{}
 
@@ -289,6 +314,8 @@ defmodule RivaAshWeb.ComponentUnitTest do
       assert html =~ "Badge"
     end
 
+    @spec test_input_validates_type_attribute :: :ok
+    @spec test_input_validates_type_attribute :: :ok
     test "input validates type attribute" do
       assigns = %{}
 
@@ -303,6 +330,8 @@ defmodule RivaAshWeb.ComponentUnitTest do
   end
 
   describe "Component accessibility" do
+    @spec test_button_includes_proper_aria_attributes_when_disabled :: :ok
+    @spec test_button_includes_proper_aria_attributes_when_disabled :: :ok
     test "button includes proper ARIA attributes when disabled" do
       assigns = %{}
 
@@ -315,6 +344,8 @@ defmodule RivaAshWeb.ComponentUnitTest do
       assert html =~ ~s(aria-label="Disabled button")
     end
 
+    @spec test_input_includes_proper_labels_and_aria_attributes :: :ok
+    @spec test_input_includes_proper_labels_and_aria_attributes :: :ok
     test "input includes proper labels and ARIA attributes" do
       assigns = %{}
 
@@ -336,6 +367,8 @@ defmodule RivaAshWeb.ComponentUnitTest do
   end
 
   describe "Component error handling" do
+    @spec test_components_handle_missing_required_attributes_gracefully :: :ok
+    @spec test_components_handle_missing_required_attributes_gracefully :: :ok
     test "components handle missing required attributes gracefully" do
       assigns = %{}
 
@@ -348,6 +381,8 @@ defmodule RivaAshWeb.ComponentUnitTest do
       assert html =~ "button"
     end
 
+    @spec test_components_handle_nil_values_gracefully :: :ok
+    @spec test_components_handle_nil_values_gracefully :: :ok
     test "components handle nil values gracefully" do
       assigns = %{nil_value: nil}
 
@@ -359,6 +394,8 @@ defmodule RivaAshWeb.ComponentUnitTest do
       assert html =~ "Button"
     end
 
+    @spec test_components_handle_empty_lists_gracefully :: :ok
+    @spec test_components_handle_empty_lists_gracefully :: :ok
     test "components handle empty lists gracefully" do
       assigns = %{empty_list: []}
 

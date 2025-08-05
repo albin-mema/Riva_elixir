@@ -94,8 +94,8 @@ defmodule RivaAsh.Accounts.User do
 
   # Define the validations
   validations do
-    validate(present([:email]))
-    validate(one_of(:role, ["admin", "user", "superadmin"]))
+    validate present([:email])
+    validate one_of(:role, ["admin", "user", "superadmin"])
   end
 
   # Define authorization policies

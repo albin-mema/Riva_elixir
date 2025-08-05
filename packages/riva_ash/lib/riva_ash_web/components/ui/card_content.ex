@@ -12,9 +12,17 @@ defmodule RivaAshWeb.Components.UI.CardContent do
 
   slot :inner_block, required: true
 
-  def card_content(assigns) do
-    assigns = assign(assigns, :content_class, content_class(assigns))
+  def card_content(assigns) when is_map(assigns) do
+    assigns
+    |> assign_content_class()
+    |> render_content()
+  end
 
+  defp assign_content_class(assigns) do
+    assign(assigns, :content_class, build_content_class(assigns))
+  end
+
+  defp render_content(assigns) do
     ~H"""
     <div class={@content_class} {@rest}>
       <%= render_slot(@inner_block) %>
@@ -22,9 +30,14 @@ defmodule RivaAshWeb.Components.UI.CardContent do
     """
   end
 
-  defp content_class(assigns) do
-    base = "p-6 pt-0"
+  defp build_content_class(assigns) when is_map(assigns) do
+    assigns
+    |> Map.get(:class, "")
+    |> prepend_base_class()
+  end
 
-    Enum.join([base, assigns.class], " ")
+  defp prepend_base_class(class) when is_binary(class) do
+    base = "p-6 pt-0"
+    [base, class] |> Enum.reject(&(&1 == "")) |> Enum.join(" ")
   end
 end

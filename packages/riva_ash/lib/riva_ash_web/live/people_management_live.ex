@@ -5,53 +5,23 @@ defmodule RivaAshWeb.PeopleManagementLive do
   """
   use RivaAshWeb, :live_view
 
-  # Explicitly set the authenticated layout
-
   alias RivaAsh.Resources.{Business, Client, Employee}
+  alias RivaAsh.People.PeopleService
+  alias RivaAsh.Live.AuthHelpers
 
   import RivaAshWeb.Components.Organisms.PageHeader
   import RivaAshWeb.Components.Molecules.Card
   import RivaAshWeb.Components.Atoms.Button
-  import RivaAshWeb.Live.AuthHelpers
 
   @impl true
   def mount(_params, session, socket) do
-    case get_current_user_from_session(session) do
+    case AuthHelpers.get_current_user_from_session(session) do
       {:ok, user} ->
-        try do
-          # Load user's businesses
-          businesses = Business.read!(actor: user)
-          business_ids = Enum.map(businesses, & &1.id)
-
-          # Load people data
-          clients =
-            Client.read!(
-              actor: user,
-              filter: [business_id: [in: business_ids]]
-            )
-
-          employees =
-            Employee.read!(
-              actor: user,
-              filter: [business_id: [in: business_ids]]
-            )
-
-          socket =
-            socket
-            |> assign(:current_user, user)
-            |> assign(:page_title, "People Management")
-            |> assign(:businesses, businesses)
-            |> assign(:clients, clients)
-            |> assign(:employees, employees)
-            |> assign(:view_mode, "clients")
-            |> assign(:selected_person, nil)
-            |> assign(:show_person_form, false)
-            |> assign(:filters, %{})
-            |> assign(:loading, false)
-
-          {:ok, socket}
-        rescue
-          _error in [Ash.Error.Forbidden, Ash.Error.Invalid] ->
+        case load_people_data(socket, user) do
+          {:ok, socket} ->
+            {:ok, socket}
+          {:error, reason} ->
+            Logger.error("Failed to load people data: #{inspect(reason)}")
             {:ok, redirect(socket, to: "/access-denied")}
         end
 
@@ -183,7 +153,7 @@ defmodule RivaAshWeb.PeopleManagementLive do
                 </div>
                 <div class="flex justify-between items-center">
                   <span class="text-sm text-gray-600">System Users</span>
-                  <span class="text-sm font-medium text-blue-600">5</span>
+                  <span class="text-sm font-medium text-blue-600"><%= @system_users_count || 0 %></span>
                 </div>
               </div>
             </div>
@@ -241,11 +211,28 @@ defmodule RivaAshWeb.PeopleManagementLive do
                     <span class="text-sm text-gray-600">Phone:</span>
                     <span class="text-sm font-medium text-gray-900 ml-2"><%= @selected_person.phone || "N/A" %></span>
                   </div>
+                  <div>
+                    <span class="text-sm text-gray-600">Type:</span>
+                    <span class="text-sm font-medium text-gray-900 ml-2"><%= String.capitalize(@selected_person.type) %></span>
+                  </div>
+                  <div>
+                    <span class="text-sm text-gray-600">Status:</span>
+                    <span class={[
+                      "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium",
+                      case @selected_person.status do
+                        :active -> "bg-green-100 text-green-800"
+                        :inactive -> "bg-gray-100 text-gray-800"
+                        _ -> "bg-gray-100 text-gray-800"
+                      end
+                    ]}>
+                      <%= String.capitalize(to_string(@selected_person.status)) %>
+                    </span>
+                  </div>
                   <div class="pt-3 border-t">
-                    <.button phx-click="edit_person" phx-value-id={@selected_person.id} variant="primary" size="sm" class="mr-2">
+                    <.button phx-click="edit_person" phx-value-id={@selected_person.id} phx-value-type={@selected_person.type} variant="primary" size="sm" class="mr-2">
                       Edit
                     </.button>
-                    <.button phx-click="view_history" phx-value-id={@selected_person.id} variant="secondary" size="sm">
+                    <.button phx-click="view_history" phx-value-id={@selected_person.id} phx-value-type={@selected_person.type} variant="secondary" size="sm">
                       History
                     </.button>
                   </div>
@@ -299,11 +286,18 @@ defmodule RivaAshWeb.PeopleManagementLive do
                   <div class="text-sm text-gray-500"><%= client.phone || "N/A" %></div>
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  Never
+                  <%= format_date(client.last_booking_date) %>
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap">
-                  <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                    Active
+                  <span class={[
+                    "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium",
+                    case client.status do
+                      :active -> "bg-green-100 text-green-800"
+                      :inactive -> "bg-gray-100 text-gray-800"
+                      _ -> "bg-gray-100 text-gray-800"
+                    end
+                  ]}>
+                    <%= String.capitalize(to_string(client.status)) %>
                   </span>
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
@@ -312,6 +306,9 @@ defmodule RivaAshWeb.PeopleManagementLive do
                   </.button>
                   <.button phx-click="view_history" phx-value-id={client.id} phx-value-type="client" variant="ghost" size="sm">
                     History
+                  </.button>
+                  <.button phx-click="delete_person" phx-value-id={client.id} phx-value-type="client" variant="ghost" size="sm">
+                    Delete
                   </.button>
                 </td>
               </tr>
@@ -365,8 +362,15 @@ defmodule RivaAshWeb.PeopleManagementLive do
                   <div class="text-sm text-gray-500"><%= employee.phone || "N/A" %></div>
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap">
-                  <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                    Active
+                  <span class={[
+                    "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium",
+                    case employee.status do
+                      :active -> "bg-green-100 text-green-800"
+                      :inactive -> "bg-gray-100 text-gray-800"
+                      _ -> "bg-gray-100 text-gray-800"
+                    end
+                  ]}>
+                    <%= String.capitalize(to_string(employee.status)) %>
                   </span>
                 </td>
                 <td class="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
@@ -375,6 +379,9 @@ defmodule RivaAshWeb.PeopleManagementLive do
                   </.button>
                   <.button phx-click="manage_permissions" phx-value-id={employee.id} variant="ghost" size="sm">
                     Permissions
+                  </.button>
+                  <.button phx-click="delete_person" phx-value-id={employee.id} phx-value-type="employee" variant="ghost" size="sm">
+                    Delete
                   </.button>
                 </td>
               </tr>
@@ -420,11 +427,97 @@ defmodule RivaAshWeb.PeopleManagementLive do
   end
 
   def handle_event("new_client", _params, socket) do
-    {:noreply, assign(socket, :show_person_form, true)}
+    {:noreply, push_patch(socket, to: "/clients/new")}
   end
 
   def handle_event("new_employee", _params, socket) do
-    {:noreply, assign(socket, :show_person_form, true)}
+    {:noreply, push_patch(socket, to: "/employees/new")}
+  end
+
+  def handle_event("edit_person", %{"id" => id, "type" => type}, socket) do
+    path = case type do
+      "client" -> "/clients/#{id}/edit"
+      "employee" -> "/employees/#{id}/edit"
+      _ -> "/people/#{id}/edit"
+    end
+    {:noreply, push_patch(socket, to: path)}
+  end
+
+  def handle_event("view_history", %{"id" => id, "type" => type}, socket) do
+    path = case type do
+      "client" -> "/clients/#{id}/history"
+      "employee" -> "/employees/#{id}/history"
+      _ -> "/people/#{id}/history"
+    end
+    {:noreply, push_patch(socket, to: path)}
+  end
+
+  def handle_event("delete_person", %{"id" => id, "type" => type}, socket) do
+    case PeopleService.delete_person(id, type, socket.assigns.current_user) do
+      {:ok, _person} ->
+        {:noreply, 
+         socket
+         |> put_flash(:info, "Person deleted successfully")
+         |> reload_people_data()}
+      
+      {:error, reason} ->
+        {:noreply, 
+         socket
+         |> put_flash(:error, "Failed to delete person: #{format_error(reason)}")}
+    end
+  end
+
+  def handle_event("search", %{"search" => search_term}, socket) do
+    case PeopleService.search_people(search_term, socket.assigns.current_user) do
+      {:ok, {clients, employees}} ->
+        {:noreply, 
+         socket
+         |> assign(:clients, clients)
+         |> assign(:employees, employees)}
+      
+      {:error, reason} ->
+        {:noreply, 
+         socket
+         |> put_flash(:error, "Search failed: #{format_error(reason)}")}
+    end
+  end
+
+  def handle_event("filter_by_business", %{"business_id" => business_id}, socket) do
+    case PeopleService.filter_people_by_business(business_id, socket.assigns.current_user) do
+      {:ok, {clients, employees}} ->
+        {:noreply, 
+         socket
+         |> assign(:clients, clients)
+         |> assign(:employees, employees)}
+      
+      {:error, reason} ->
+        {:noreply, 
+         socket
+         |> put_flash(:error, "Filter failed: #{format_error(reason)}")}
+    end
+  end
+
+  def handle_event("bulk_import", _params, socket) do
+    {:noreply, push_patch(socket, to: "/people/bulk-import")}
+  end
+
+  def handle_event("export_contacts", _params, socket) do
+    case PeopleService.export_contacts(socket.assigns.current_user) do
+      {:ok, download_url} ->
+        {:noreply, 
+         socket
+         |> put_flash(:info, "Contacts exported successfully")
+         |> push_event("download", %{url: download_url})}
+      
+      {:error, reason} ->
+        {:noreply, 
+         socket
+         |> put_flash(:error, "Export failed: #{format_error(reason)}")}
+    end
+  end
+
+  def handle_event("manage_permissions", _params, socket) do
+    {:noreply, push_patch(socket, to: "/permissions")}
   end
 
   def handle_event(_event, _params, socket) do
@@ -432,8 +525,75 @@ defmodule RivaAshWeb.PeopleManagementLive do
   end
 
   # Helper functions
+  defp load_people_data(socket, user) do
+    case PeopleService.get_user_people(user) do
+      {:ok, {businesses, clients, employees, system_users_count}} ->
+        socket =
+          socket
+          |> assign(:current_user, user)
+          |> assign(:page_title, get_page_title())
+          |> assign(:businesses, businesses)
+          |> assign(:clients, clients)
+          |> assign(:employees, employees)
+          |> assign(:system_users_count, system_users_count)
+          |> assign(:view_mode, "clients")
+          |> assign(:selected_person, nil)
+          |> assign(:show_person_form, false)
+          |> assign(:filters, %{})
+          |> assign(:loading, false)
+        
+        {:ok, socket}
+      
+      {:error, reason} ->
+        {:error, reason}
+    end
+  end
+
+  defp reload_people_data(socket) do
+    case PeopleService.get_user_people(socket.assigns.current_user) do
+      {:ok, {businesses, clients, employees, system_users_count}} ->
+        socket
+        |> assign(:businesses, businesses)
+        |> assign(:clients, clients)
+        |> assign(:employees, employees)
+        |> assign(:system_users_count, system_users_count)
+      
+      {:error, _reason} ->
+        socket
+    end
+  end
+
+  defp get_page_title do
+    Application.get_env(:riva_ash, :people_management_page_title, "People Management")
+  end
+
   defp count_active_clients(clients) do
-    # Placeholder - would check recent activity
-    length(clients)
+    Enum.count(clients, &(&1.status == :active))
+  end
+
+  defp format_date(nil), do: "Never"
+  defp format_date(date) do
+    case Calendar.strftime(date, "%Y-%m-%d") do
+      {:ok, formatted} -> formatted
+      {:error, _} -> "Invalid date"
+    end
+  end
+
+  defp format_error(reason) do
+    case reason do
+      %Ash.Error.Invalid{errors: errors} -> 
+        errors |> Enum.map(&format_validation_error/1) |> Enum.join(", ")
+      %Ash.Error.Forbidden{} -> "You don't have permission to perform this action"
+      %Ash.Error.NotFound{} -> "Person not found"
+      _ -> "An unexpected error occurred"
+    end
+  end
+
+  defp format_validation_error(error) do
+    case error do
+      {message, _} -> message
+      message when is_binary(message) -> message
+      _ -> "Invalid input"
+    end
   end
 end

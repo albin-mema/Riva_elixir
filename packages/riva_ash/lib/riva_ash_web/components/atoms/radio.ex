@@ -18,7 +18,20 @@ defmodule RivaAshWeb.Components.Atoms.Radio do
   attr(:class, :string, default: "")
   attr(:rest, :global)
 
-  def radio(assigns) do
+  def radio(assigns) when is_map(assigns) do
+    assigns
+    |> validate_required_attributes()
+    |> render_radio()
+  end
+
+  defp validate_required_attributes(assigns) when is_map(assigns) do
+    case Map.get(assigns, :value) do
+      nil -> raise ArgumentError, "value is required for radio component"
+      _ -> assigns
+    end
+  end
+
+  defp render_radio(assigns) do
     ~H"""
     <!-- Radio implementation will go here -->
     <div>
@@ -38,7 +51,21 @@ defmodule RivaAshWeb.Components.Atoms.Radio do
   attr(:class, :string, default: "")
   attr(:rest, :global)
 
-  def radio_group(assigns) do
+  def radio_group(assigns) when is_map(assigns) do
+    assigns
+    |> validate_radio_group_attributes()
+    |> render_radio_group()
+  end
+
+  defp validate_radio_group_attributes(assigns) when is_map(assigns) do
+    case Map.get(assigns, :options) do
+      nil -> raise ArgumentError, "options are required for radio_group component"
+      [] -> raise ArgumentError, "options cannot be empty for radio_group component"
+      _ -> assigns
+    end
+  end
+
+  defp render_radio_group(assigns) do
     ~H"""
     <!-- Radio group implementation will go here -->
     <div {@rest}>

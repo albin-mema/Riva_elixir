@@ -23,6 +23,7 @@ defmodule RivaAshWeb.LiveViewRoutesTest do
       %{user: user, business: business, token: token}
     end
 
+    @spec test_dashboard_route :: :ok
     test "dashboard route", %{token: token} do
       conn = build_conn() |> log_in_user(token)
 
@@ -30,6 +31,7 @@ defmodule RivaAshWeb.LiveViewRoutesTest do
       assert html =~ "Dashboard"
     end
 
+    @spec test_businesses_routes :: :ok
     test "businesses routes", %{token: token} do
       conn = build_conn() |> log_in_user(token)
 
@@ -42,6 +44,7 @@ defmodule RivaAshWeb.LiveViewRoutesTest do
       assert html =~ "New Business"
     end
 
+    @spec test_employees_routes :: :ok
     test "employees routes", %{token: token} do
       conn = build_conn() |> log_in_user(token)
 
@@ -49,6 +52,7 @@ defmodule RivaAshWeb.LiveViewRoutesTest do
       assert html =~ "Employees"
     end
 
+    @spec test_clients_routes :: :ok
     test "clients routes", %{token: token} do
       conn = build_conn() |> log_in_user(token)
 
@@ -61,6 +65,7 @@ defmodule RivaAshWeb.LiveViewRoutesTest do
       assert html =~ "New Client"
     end
 
+    @spec test_items_routes :: :ok
     test "items routes", %{token: token} do
       conn = build_conn() |> log_in_user(token)
 
@@ -73,6 +78,7 @@ defmodule RivaAshWeb.LiveViewRoutesTest do
       assert html =~ "New Item"
     end
 
+    @spec test_item_holds_routes :: :ok
     test "item-holds routes", %{token: token} do
       conn = build_conn() |> log_in_user(token)
 
@@ -85,6 +91,7 @@ defmodule RivaAshWeb.LiveViewRoutesTest do
       assert html =~ "New Item Hold"
     end
 
+    @spec test_item_positions_routes :: :ok
     test "item-positions routes", %{token: token} do
       conn = build_conn() |> log_in_user(token)
 
@@ -97,6 +104,7 @@ defmodule RivaAshWeb.LiveViewRoutesTest do
       assert html =~ "New Item Position"
     end
 
+    @spec test_item_schedules_routes :: :ok
     test "item-schedules routes", %{token: token} do
       conn = build_conn() |> log_in_user(token)
 
@@ -109,6 +117,7 @@ defmodule RivaAshWeb.LiveViewRoutesTest do
       assert html =~ "New Item Schedule"
     end
 
+    @spec test_item_types_routes :: :ok
     test "item-types routes", %{token: token} do
       conn = build_conn() |> log_in_user(token)
 
@@ -121,6 +130,7 @@ defmodule RivaAshWeb.LiveViewRoutesTest do
       assert html =~ "New Item Type"
     end
 
+    @spec test_layouts_routes :: :ok
     test "layouts routes", %{token: token} do
       conn = build_conn() |> log_in_user(token)
 
@@ -133,6 +143,7 @@ defmodule RivaAshWeb.LiveViewRoutesTest do
       assert html =~ "New Layout"
     end
 
+    @spec test_payments_routes :: :ok
     test "payments routes", %{token: token} do
       conn = build_conn() |> log_in_user(token)
 
@@ -145,6 +156,7 @@ defmodule RivaAshWeb.LiveViewRoutesTest do
       assert html =~ "New Payment"
     end
 
+    @spec test_plots_routes :: :ok
     test "plots routes", %{token: token} do
       conn = build_conn() |> log_in_user(token)
 
@@ -157,6 +169,7 @@ defmodule RivaAshWeb.LiveViewRoutesTest do
       assert html =~ "New Plot"
     end
 
+    @spec test_pricings_routes :: :ok
     test "pricings routes", %{token: token} do
       conn = build_conn() |> log_in_user(token)
 
@@ -169,6 +182,7 @@ defmodule RivaAshWeb.LiveViewRoutesTest do
       assert html =~ "New Pricing"
     end
 
+    @spec test_recurring_reservation_instances_routes :: :ok
     test "recurring-reservation-instances routes", %{token: token} do
       conn = build_conn() |> log_in_user(token)
 
@@ -181,6 +195,7 @@ defmodule RivaAshWeb.LiveViewRoutesTest do
       assert html =~ "New Recurring Reservation Instance"
     end
 
+    @spec test_reservations_routes :: :ok
     test "reservations routes", %{token: token} do
       conn = build_conn() |> log_in_user(token)
 
@@ -193,6 +208,7 @@ defmodule RivaAshWeb.LiveViewRoutesTest do
       assert html =~ "New Reservation"
     end
 
+    @spec test_sections_routes :: :ok
     test "sections routes", %{token: token} do
       conn = build_conn() |> log_in_user(token)
 
@@ -205,6 +221,7 @@ defmodule RivaAshWeb.LiveViewRoutesTest do
       assert html =~ "New Section"
     end
 
+    @spec test_users_routes :: :ok
     test "users routes", %{token: token} do
       conn = build_conn() |> log_in_user(token)
 
@@ -217,6 +234,7 @@ defmodule RivaAshWeb.LiveViewRoutesTest do
       assert html =~ "New User"
     end
 
+    @spec test_tokens_routes :: :ok
     test "tokens routes", %{token: token} do
       conn = build_conn() |> log_in_user(token)
 
@@ -229,6 +247,7 @@ defmodule RivaAshWeb.LiveViewRoutesTest do
       assert html =~ "New Token"
     end
 
+    @spec test_recurring_reservations_routes :: :ok
     test "recurring-reservations routes", %{token: token} do
       conn = build_conn() |> log_in_user(token)
 
@@ -241,6 +260,7 @@ defmodule RivaAshWeb.LiveViewRoutesTest do
       assert html =~ "New Recurring Reservation"
     end
 
+    @spec test_availability_exceptions_routes :: :ok
     test "availability-exceptions routes", %{token: token} do
       conn = build_conn() |> log_in_user(token)
 
@@ -253,6 +273,7 @@ defmodule RivaAshWeb.LiveViewRoutesTest do
       assert html =~ "New Availability Exception"
     end
 
+    @spec test_error_routes :: :ok
     test "error routes" do
       conn = build_conn()
 
@@ -267,6 +288,7 @@ defmodule RivaAshWeb.LiveViewRoutesTest do
   end
 
   # Helper to authenticate a user in tests
+  @spec log_in_user(conn :: Plug.Conn.t(), token :: String.t()) :: Plug.Conn.t()
   defp log_in_user(conn, token) do
     conn
     |> init_test_session(%{"user_token" => token})

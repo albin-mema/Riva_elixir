@@ -5,6 +5,7 @@ defmodule RivaAsh.Reactors.ExampleReactorTest do
   alias RivaAsh.Resources.{Business, Section, Item}
 
   describe "ExampleReactor" do
+    @spec test_successfully_creates_business_section_and_item :: :ok
     test "successfully creates business, section, and item" do
       inputs = %{
         business_name: "Test Business",
@@ -35,6 +36,7 @@ defmodule RivaAsh.Reactors.ExampleReactorTest do
       assert business.description == "A test business for reactor demo"
     end
 
+    @spec test_handles_failure_and_rolls_back_properly :: :ok
     test "handles failure and rolls back properly" do
       inputs = %{
         business_name: "Test Business",
@@ -58,6 +60,7 @@ defmodule RivaAsh.Reactors.ExampleReactorTest do
   end
 
   describe "using reactor via resource action" do
+    @spec test_can_run_reactor_through_business_create_complete_setup_action :: :ok
     test "can run reactor through Business.create_complete_setup action" do
       inputs = %{
         business_name: "Action Business",

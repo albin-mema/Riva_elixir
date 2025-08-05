@@ -8,6 +8,7 @@ defmodule RivaAsh.AvailabilityPropertyTest do
   # Initial lightweight property-based scaffold to exercise Availability invariants.
   # This does not hit DB-backed items; it ensures function robustness against random windows.
 
+  @spec property_availability_check_handles_random_hourly_windows_without_crashing :: :ok
   property "availability check handles random hourly windows without crashing" do
     check all hour <- StreamData.integer(0..20),
               day_offset <- StreamData.integer(0..5) do

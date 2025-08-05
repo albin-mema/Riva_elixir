@@ -8,6 +8,7 @@ defmodule RivaAshWeb.HealthControllerTest do
 
   describe "GET /health" do
     @describetag :controller
+    @spec test_returns_200_json_with_status_ok_healthy :: :ok
     test "returns 200 JSON with status ok/healthy", %{conn: conn} do
       conn = get(conn, ~p"/health")
       assert conn.status in [200, 503]
@@ -31,6 +32,7 @@ defmodule RivaAshWeb.HealthControllerTest do
 
   describe "GET /health/db (if present)" do
     @describetag :controller
+    @spec test_returns_database_status_ok_shape_if_route_exists :: :ok
     test "returns database status ok shape if route exists", %{conn: conn} do
       # If this route is not defined, it should be 404; otherwise assert shape
       conn = get(conn, "/health/db")

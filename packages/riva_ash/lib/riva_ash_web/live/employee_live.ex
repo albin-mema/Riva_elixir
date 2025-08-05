@@ -1,5 +1,18 @@
 defmodule RivaAshWeb.EmployeeLive do
+  @moduledoc """
+  LiveView for managing Employees.
+  
+  This LiveView follows Phoenix/Ash/Elixir patterns:
+  - Uses AuthHelpers for authentication and business scoping
+  - Delegates business logic to Employee context
+  - Handles UI state and user interactions
+  - Uses proper Ash error handling
+  - Implements CRUD operations through Ash actions
+  """
+
   use RivaAshWeb, :live_view
+
+  alias RivaAsh.Employees
   alias RivaAsh.ErrorHelpers
 
   require Ash.Query
@@ -11,35 +24,33 @@ defmodule RivaAshWeb.EmployeeLive do
   import RivaAshWeb.Components.Organisms.PageHeader
   import RivaAshWeb.Components.Organisms.EmployeeForm
   import RivaAshWeb.Components.Molecules.ConfirmDialog
+  import RivaAshWeb.Live.AuthHelpers
 
   alias RivaAsh.Resources.Employee
   alias RivaAsh.Resources.Business
 
   @impl true
   def mount(_params, session, socket) do
-    case ErrorHelpers.required(get_current_user_from_session(session), :user_not_authenticated) do
-      {:ok, user} ->
-        socket
-        |> assign(:current_user, user)
-        |> assign(:businesses, list_user_businesses(user))
-        |> assign(:form, AshPhoenix.Form.for_create(Employee, :create, actor: user) |> to_form())
-        |> assign(:show_form, false)
-        |> assign(:editing_employee, nil)
-        |> assign(:loading, false)
-        |> assign(:is_admin, user.role == :admin)
-        |> assign(:page_title, "Employee Management")
-        |> assign(:show_confirm_delete_modal, false)
-        |> assign(:employee_to_delete, nil)
-        |> ErrorHelpers.success()
+    case mount_business_scoped(
+           socket,
+           session,
+           Employee,
+           [:business_id],
+           "Employee Management"
+         ) do
+      {:ok, socket} ->
+        {:ok,
+         socket
+         |> assign(:form, AshPhoenix.Form.for_create(Employee, :create, actor: socket.assigns.current_user) |> to_form())
+         |> assign(:show_form, false)
+         |> assign(:editing_employee, nil)
+         |> assign(:loading, false)
+         |> assign(:is_admin, socket.assigns.current_user.role == :admin)
+         |> assign(:show_confirm_delete_modal, false)
+         |> assign(:employee_to_delete, nil)}
 
-      {:error, :user_not_authenticated} ->
-        socket
-        |> put_flash(:error, "You must be logged in to access this page.")
-        |> redirect(to: "/sign-in")
-        |> ErrorHelpers.success()
-
-      {:error, reason} ->
-        ErrorHelpers.failure(reason)
+      {:error, _} = error ->
+        {:ok, error}
     end
   end
 
@@ -47,23 +58,20 @@ defmodule RivaAshWeb.EmployeeLive do
   def handle_params(params, _uri, socket) do
     user = socket.assigns.current_user
 
-    # Use Flop to handle pagination, sorting, and filtering
-    case list_employees_with_flop(user, params) do
+    # Use Flop to handle pagination, sorting, and filtering through business logic
+    case Employees.list_employees(user, params) do
       {employees, meta} ->
-        socket
-        |> assign(:employees, employees)
-        |> assign(:meta, meta)
-        |> then(&{:noreply, &1})
+        {:noreply,
+         socket
+         |> assign(:employees, employees)
+         |> assign(:meta, meta)}
 
-      # This case should ideally not be hit if list_employees_with_flop always returns {employees, meta}
-      _ ->
-        socket =
-          socket
-          |> assign(:employees, [])
-          |> assign(:meta, %{})
-          |> put_flash(:error, "Failed to load employees")
-
-        {:noreply, socket}
+      {:error, reason} ->
+        {:noreply,
+         socket
+         |> assign(:employees, [])
+         |> assign(:meta, %{})
+         |> put_flash(:error, "Failed to load employees: #{reason}")}
     end
   end
 
@@ -161,7 +169,7 @@ defmodule RivaAshWeb.EmployeeLive do
               </:col>
 
               <:col :let={employee} label="Status">
-                <.badge variant={if employee.is_active, do: "success", else: "secondary"}>
+                <.badge variant={if employee.is_active, do: "default", else: "secondary"}>
                   <%= if employee.is_active, do: "Active", else: "Inactive" %>
                 </.badge>
               </:col>
@@ -275,11 +283,9 @@ defmodule RivaAshWeb.EmployeeLive do
 
     # Submit the form with the correct parameters
     result = AshPhoenix.Form.submit(socket.assigns.form, params: params, actor: user)
-    IO.puts("DEBUG: Form submission result: #{inspect(result)}")
 
     case result do
       {:ok, employee} ->
-        IO.puts("DEBUG: Employee created successfully: #{inspect(employee)}")
         action_text = if socket.assigns.editing_employee, do: "updated", else: "created"
 
         socket =
@@ -297,8 +303,6 @@ defmodule RivaAshWeb.EmployeeLive do
         {:noreply, socket}
 
       {:error, form} ->
-        IO.puts("DEBUG: Form submission failed: #{inspect(form.errors)}")
-
         socket =
           socket
           |> assign(:loading, false)
@@ -312,7 +316,7 @@ defmodule RivaAshWeb.EmployeeLive do
   def handle_event("edit_employee", %{"id" => id}, socket) do
     user = socket.assigns.current_user
 
-    case Employee.by_id(id, actor: user) do
+    case Employees.get_employee(user, id) do
       {:ok, employee} ->
         form =
           AshPhoenix.Form.for_update(employee, :update, actor: user)
@@ -326,9 +330,17 @@ defmodule RivaAshWeb.EmployeeLive do
 
         {:noreply, socket}
 
-      {:error, _reason} ->
-        socket = put_flash(socket, :error, "Employee not found.")
-        {:noreply, socket}
+      {:error, %Ash.Error.Forbidden{}} ->
+        {:noreply,
+         socket
+         |> put_flash(:error, "You don't have permission to edit this employee")
+         |> push_patch(to: ~p"/employees")}
+
+      {:error, reason} ->
+        {:noreply,
+         socket
+         |> put_flash(:error, "Failed to load employee: #{reason}")
+         |> push_patch(to: ~p"/employees")}
     end
   end
 
@@ -336,7 +348,7 @@ defmodule RivaAshWeb.EmployeeLive do
   def handle_event("prepare_delete_employee", %{"id" => id}, socket) do
     user = socket.assigns.current_user
 
-    case Employee.by_id(id, actor: user) do
+    case Employees.get_employee(user, id) do
       {:ok, employee} ->
         socket =
           socket
@@ -346,9 +358,17 @@ defmodule RivaAshWeb.EmployeeLive do
 
         {:noreply, socket}
 
-      {:error, _reason} ->
-        socket = put_flash(socket, :error, "Employee not found.")
-        {:noreply, socket}
+      {:error, %Ash.Error.Forbidden{}} ->
+        {:noreply,
+         socket
+         |> put_flash(:error, "You don't have permission to delete this employee")
+         |> push_patch(to: ~p"/employees")}
+
+      {:error, reason} ->
+        {:noreply,
+         socket
+         |> put_flash(:error, "Failed to load employee: #{reason}")
+         |> push_patch(to: ~p"/employees")}
     end
   end
 
@@ -359,340 +379,39 @@ defmodule RivaAshWeb.EmployeeLive do
     # Hide modal immediately
     socket = assign(socket, :show_confirm_delete_modal, false)
 
-    case Employee.by_id(id, actor: user) do
+    case Employees.delete_employee(user, id) do
       {:ok, employee} ->
-        case employee |> Ash.destroy(actor: user) do
-          :ok ->
-            socket =
-              socket
-              |> put_flash(
-                :info,
-                "Employee \"#{employee.first_name} #{employee.last_name}\" deleted successfully!"
-              )
-              |> push_patch(to: ~p"/employees")
+        {:noreply,
+         socket
+         |> put_flash(
+           :info,
+           "Employee \"#{employee.first_name} #{employee.last_name}\" deleted successfully!"
+         )
+         |> push_patch(to: ~p"/employees")}
 
-            {:noreply, socket}
+      {:error, %Ash.Error.Forbidden{}} ->
+        {:noreply,
+         socket
+         |> put_flash(:error, "You don't have permission to delete this employee")
+         |> push_patch(to: ~p"/employees")}
 
-          {:error, _reason} ->
-            socket = put_flash(socket, :error, "Failed to delete employee.")
-            {:noreply, socket}
-        end
-
-      {:error, _reason} ->
-        socket = put_flash(socket, :error, "Employee not found.")
-        {:noreply, socket}
+      {:error, reason} ->
+        {:noreply,
+         socket
+         |> put_flash(:error, "Failed to delete employee: #{reason}")
+         |> push_patch(to: ~p"/employees")}
     end
+  end
+
+  def handle_event(_event, _params, socket) do
+    {:noreply, socket}
   end
 
   # Helper Functions
 
-  defp list_employees_with_flop(user, params) do
-    # Get employees as a list
-    employees = load_employees_simple(user)
-
-    # Validate Flop parameters first
-    case Flop.validate(params, for: Employee) do
-      {:ok, flop} ->
-        # Apply manual sorting and pagination to the list
-        {paginated_employees, meta} = apply_flop_to_list(employees, flop)
-        {paginated_employees, meta}
-
-      {:error, meta} ->
-        # Return empty results with error meta
-        {[], meta}
-    end
-  end
-
-  defp apply_flop_to_list(employees, flop) do
-    # Apply sorting
-    sorted_employees = apply_sorting(employees, flop)
-
-    # Apply pagination
-    total_count = length(sorted_employees)
-    {paginated_employees, pagination_info} = apply_pagination(sorted_employees, flop)
-
-    # Build meta information
-    meta = build_meta(flop, total_count, pagination_info)
-
-    {paginated_employees, meta}
-  end
-
-  defp apply_sorting(employees, %Flop{order_by: nil}), do: employees
-  defp apply_sorting(employees, %Flop{order_by: []}), do: employees
-
-  defp apply_sorting(employees, %Flop{order_by: order_by, order_directions: order_directions}) do
-    # Default to :asc if no directions provided
-    directions = order_directions || Enum.map(order_by, fn _ -> :asc end)
-
-    # Zip order_by and directions, pad directions with :asc if needed
-    order_specs =
-      Enum.zip_with([order_by, directions], fn [field, direction] -> {field, direction} end)
-
-    Enum.sort(employees, fn emp1, emp2 ->
-      compare_employees(emp1, emp2, order_specs)
-    end)
-  end
-
-  defp compare_employees(_emp1, _emp2, []), do: true
-
-  defp compare_employees(emp1, emp2, [{field, direction} | rest]) do
-    val1 = get_field_value(emp1, field)
-    val2 = get_field_value(emp2, field)
-
-    case {val1, val2} do
-      {same, same} -> compare_employees(emp1, emp2, rest)
-      {nil, _} -> direction == :desc
-      {_, nil} -> direction == :asc
-      {v1, v2} when direction == :asc -> v1 <= v2
-      {v1, v2} when direction == :desc -> v1 >= v2
-    end
-  end
-
-  defp get_field_value(employee, field) do
-    case field do
-      :first_name -> employee.first_name
-      :last_name -> employee.last_name
-      :email -> employee.email
-      :role -> employee.role
-      :hire_date -> employee.hire_date
-      :inserted_at -> employee.inserted_at
-      :is_active -> employee.is_active
-      :business_id -> employee.business_id
-      _ -> nil
-    end
-  end
-
-  defp apply_pagination(employees, flop) do
-    total_count = length(employees)
-
-    cond do
-      # Page-based pagination
-      flop.page && flop.page_size ->
-        page = max(flop.page, 1)
-        page_size = flop.page_size
-        offset = (page - 1) * page_size
-
-        paginated = employees |> Enum.drop(offset) |> Enum.take(page_size)
-
-        pagination_info = %{
-          type: :page,
-          page: page,
-          page_size: page_size,
-          offset: offset,
-          total_count: total_count
-        }
-
-        {paginated, pagination_info}
-
-      # Offset-based pagination
-      flop.offset && flop.limit ->
-        offset = max(flop.offset, 0)
-        limit = flop.limit
-
-        paginated = employees |> Enum.drop(offset) |> Enum.take(limit)
-
-        pagination_info = %{
-          type: :offset,
-          offset: offset,
-          limit: limit,
-          total_count: total_count
-        }
-
-        {paginated, pagination_info}
-
-      # Limit only
-      flop.limit ->
-        limit = flop.limit
-        paginated = Enum.take(employees, limit)
-
-        pagination_info = %{
-          type: :limit,
-          limit: limit,
-          total_count: total_count
-        }
-
-        {paginated, pagination_info}
-
-      # No pagination
-      true ->
-        pagination_info = %{
-          type: :none,
-          total_count: total_count
-        }
-
-        {employees, pagination_info}
-    end
-  end
-
-  defp build_meta(flop, total_count, pagination_info) do
-    case pagination_info.type do
-      :page ->
-        page = pagination_info.page
-        page_size = pagination_info.page_size
-        total_pages = ceil(total_count / page_size)
-
-        %Flop.Meta{
-          current_page: page,
-          current_offset: pagination_info.offset,
-          flop: flop,
-          has_next_page?: page < total_pages,
-          has_previous_page?: page > 1,
-          next_page: if(page < total_pages, do: page + 1, else: nil),
-          previous_page: if(page > 1, do: page - 1, else: nil),
-          page_size: page_size,
-          total_count: total_count,
-          total_pages: total_pages,
-          opts: []
-        }
-
-      :offset ->
-        offset = pagination_info.offset
-        limit = pagination_info.limit
-        current_page = div(offset, limit) + 1
-        total_pages = ceil(total_count / limit)
-
-        %Flop.Meta{
-          current_page: current_page,
-          current_offset: offset,
-          flop: flop,
-          has_next_page?: offset + limit < total_count,
-          has_previous_page?: offset > 0,
-          next_offset: if(offset + limit < total_count, do: offset + limit, else: nil),
-          previous_offset: if(offset > 0, do: max(0, offset - limit), else: nil),
-          page_size: limit,
-          total_count: total_count,
-          total_pages: total_pages,
-          opts: []
-        }
-
-      _ ->
-        %Flop.Meta{
-          current_page: 1,
-          current_offset: 0,
-          flop: flop,
-          has_next_page?: false,
-          has_previous_page?: false,
-          page_size: total_count,
-          total_count: total_count,
-          total_pages: 1,
-          opts: []
-        }
-    end
-  end
-
-  defp load_employees_simple(user) do
-    try do
-      IO.puts("DEBUG: Loading employees for user: #{inspect(user.email)} (role: #{user.role})")
-
-      if user.role == "admin" do
-        # Admins can see all employees - use authorize?: false to bypass permission issues
-        IO.puts("DEBUG: User is admin, loading all employees")
-
-        case Employee.read(authorize?: false) do
-          {:ok, employees} ->
-            IO.puts("DEBUG: Successfully loaded #{length(employees)} employees")
-            employees
-
-          error ->
-            IO.puts("DEBUG: Error loading employees: #{inspect(error)}")
-            []
-        end
-      else
-        # Regular users can only see employees from their businesses
-        IO.puts("DEBUG: User is not admin, loading businesses first")
-        user_business_ids = list_user_businesses_simple(user) |> Enum.map(& &1.id)
-        IO.puts("DEBUG: User has access to business IDs: #{inspect(user_business_ids)}")
-
-        case Employee.read(authorize?: false) do
-          {:ok, all_employees} ->
-            IO.puts("DEBUG: Loaded #{length(all_employees)} total employees")
-
-            filtered_employees =
-              Enum.filter(all_employees, fn emp -> emp.business_id in user_business_ids end)
-
-            IO.puts(
-              "DEBUG: Filtered to #{length(filtered_employees)} employees for user's businesses"
-            )
-
-            filtered_employees
-
-          error ->
-            IO.puts("DEBUG: Error loading employees: #{inspect(error)}")
-            []
-        end
-      end
-    rescue
-      error ->
-        IO.puts("DEBUG: Exception in load_employees_simple: #{inspect(error)}")
-        []
-    end
-  end
-
-  defp list_user_businesses_simple(user) do
-    try do
-      IO.puts("DEBUG: Loading businesses for user: #{inspect(user.email)} (role: #{user.role})")
-
-      if user.role == :admin do
-        # Admins can see all businesses
-        IO.puts("DEBUG: User is admin, loading all businesses")
-
-        case Business.read(authorize?: false) do
-          {:ok, businesses} ->
-            IO.puts("DEBUG: Successfully loaded #{length(businesses)} businesses")
-            businesses
-
-          error ->
-            IO.puts("DEBUG: Error loading businesses: #{inspect(error)}")
-            []
-        end
-      else
-        # Regular users can only see their own businesses
-        IO.puts("DEBUG: User is not admin, loading only owned businesses")
-
-        case Business.read(authorize?: false) do
-          {:ok, all_businesses} ->
-            filtered_businesses =
-              Enum.filter(all_businesses, fn business -> business.owner_id == user.id end)
-
-            IO.puts("DEBUG: Successfully loaded #{length(filtered_businesses)} owned businesses")
-            filtered_businesses
-
-          error ->
-            IO.puts("DEBUG: Error loading businesses for filtering: #{inspect(error)}")
-            []
-        end
-      end
-    rescue
-      error ->
-        IO.puts("DEBUG: Exception in list_user_businesses_simple: #{inspect(error)}")
-        []
-    end
-  end
-
-  defp list_user_businesses(user) do
-    list_user_businesses_simple(user)
-  end
-
-  defp get_current_user_from_session(session) do
-    user_token = session["user_token"]
-
-    if user_token do
-      with {:ok, user_id} <-
-             Phoenix.Token.verify(RivaAshWeb.Endpoint, "user_auth", user_token, max_age: 86_400)
-             |> ErrorHelpers.to_result(),
-           {:ok, user} <- Ash.get(RivaAsh.Accounts.User, user_id) |> ErrorHelpers.to_result() do
-        ErrorHelpers.success(user)
-      else
-        _ -> ErrorHelpers.failure(:not_authenticated)
-      end
-    else
-      ErrorHelpers.failure(:not_authenticated)
-    end
-  end
-
   # Helper function for badge variants based on role
-  defp role_variant("admin"), do: "destructive"
-  defp role_variant("manager"), do: "default"
-  defp role_variant("staff"), do: "secondary"
+  defp role_variant(:admin), do: "destructive"
+  defp role_variant(:manager), do: "default"
+  defp role_variant(:staff), do: "secondary"
   defp role_variant(_), do: "secondary"
 end

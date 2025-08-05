@@ -12,35 +12,22 @@ defmodule RivaAshWeb.LayoutLive do
   import RivaAshWeb.Components.Atoms.Button
 
   alias RivaAsh.Resources.Layout
-  alias RivaAsh.Resources.Business
+  alias RivaAsh.Layout.LayoutService
+  alias RivaAsh.Live.AuthHelpers
 
   @impl true
   def mount(_params, session, socket) do
-    case get_current_user_from_session(session) do
+    case AuthHelpers.get_current_user_from_session(session) do
       {:ok, user} ->
-        try do
-          # Get user's businesses first
-          businesses = Business.read!(actor: user)
-          business_ids = Enum.map(businesses, & &1.id)
-
-          # Get layouts for user's businesses
-          layouts = Layout.read!(actor: user, filter: [business_id: [in: business_ids]])
-
-          socket =
-            socket
-            |> assign(:current_user, user)
-            |> assign(:page_title, "Layouts")
-            |> assign(:layouts, layouts)
-            # Placeholder for pagination/metadata
-            |> assign(:meta, %{})
-
-          {:ok, socket}
-        rescue
-          error in [Ash.Error.Forbidden, Ash.Error.Invalid] ->
+        case load_layouts_data(socket, user) do
+          {:ok, socket} ->
+            {:ok, socket}
+          {:error, reason} ->
+            Logger.error("Failed to load layouts: #{inspect(reason)}")
             {:ok, redirect(socket, to: "/access-denied")}
         end
 
-      {:error, :not_authenticated} ->
+      {:error, _} ->
         {:ok, redirect(socket, to: "/sign-in")}
     end
   end
@@ -65,16 +52,38 @@ defmodule RivaAshWeb.LayoutLive do
           <%= layout.name %>
         </:col>
         <:col :let={layout} label="Description">
-          <%= layout.description %>
+          <%= truncate_text(layout.description, 100) %>
         </:col>
-        <:col :let={layout} label="Width">
-          <%= layout.width %>
+        <:col :let={layout} label="Business">
+          <%= if layout.business do %>
+            <%= layout.business.name %>
+          <% else %>
+            <span class="text-gray-500">Unknown Business</span>
+          <% end %>
         </:col>
-        <:col :let={layout} label="Height">
-          <%= layout.height %>
+        <:col :let={layout} label="Dimensions">
+          <%= layout.width %> × <%= layout.height %>
+        </:col>
+        <:col :let={layout} label="Status">
+          <span class={[
+            "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium",
+            case layout.status do
+              :active -> "bg-green-100 text-green-800"
+              :inactive -> "bg-gray-100 text-gray-800"
+              _ -> "bg-gray-100 text-gray-800"
+            end
+          ]}>
+            <%= String.capitalize(to_string(layout.status)) %>
+          </span>
         </:col>
         <:col :let={layout} label="Actions">
-          <.button phx-click="edit_layout" phx-value-id={layout.id} class="bg-green-600 hover:bg-green-700">Edit</.button>
+          <%= if layout.status == :active do %>
+            <.button phx-click="edit_layout" phx-value-id={layout.id} class="bg-green-600 hover:bg-green-700">Edit</.button>
+            <.button phx-click="deactivate_layout" phx-value-id={layout.id} class="bg-yellow-600 hover:bg-yellow-700">Deactivate</.button>
+          <% else %>
+            <.button phx-click="activate_layout" phx-value-id={layout.id} class="bg-green-600 hover:bg-green-700">Activate</.button>
+            <.button phx-click="view_layout" phx-value-id={layout.id} variant="secondary">View</.button>
+          <% end %>
           <.button phx-click="delete_layout" phx-value-id={layout.id} class="bg-red-600 hover:bg-red-700">Delete</.button>
         </:col>
       </.data_table>
@@ -91,33 +100,114 @@ defmodule RivaAshWeb.LayoutLive do
     {:noreply, push_patch(socket, to: "/layouts/#{id}/edit")}
   end
 
+  def handle_event("view_layout", %{"id" => id}, socket) do
+    {:noreply, push_patch(socket, to: "/layouts/#{id}")}
+  end
+
+  def handle_event("activate_layout", %{"id" => id}, socket) do
+    case LayoutService.activate_layout(id, socket.assigns.current_user) do
+      {:ok, _layout} ->
+        {:noreply, 
+         socket
+         |> put_flash(:info, "Layout activated successfully")
+         |> reload_layouts()}
+      
+      {:error, reason} ->
+        {:noreply, 
+         socket
+         |> put_flash(:error, "Failed to activate layout: #{format_error(reason)}")}
+    end
+  end
+
+  def handle_event("deactivate_layout", %{"id" => id}, socket) do
+    case LayoutService.deactivate_layout(id, socket.assigns.current_user) do
+      {:ok, _layout} ->
+        {:noreply, 
+         socket
+         |> put_flash(:info, "Layout deactivated successfully")
+         |> reload_layouts()}
+      
+      {:error, reason} ->
+        {:noreply, 
+         socket
+         |> put_flash(:error, "Failed to deactivate layout: #{format_error(reason)}")}
+    end
+  end
+
   def handle_event("delete_layout", %{"id" => id}, socket) do
-    # Placeholder for delete logic
-    IO.puts("Deleting layout with ID: #{id}")
-    {:noreply, socket}
+    case LayoutService.delete_layout(id, socket.assigns.current_user) do
+      {:ok, _layout} ->
+        {:noreply, 
+         socket
+         |> put_flash(:info, "Layout deleted successfully")
+         |> reload_layouts()}
+      
+      {:error, reason} ->
+        {:noreply, 
+         socket
+         |> put_flash(:error, "Failed to delete layout: #{format_error(reason)}")}
+    end
   end
 
   def handle_event(_event, _params, socket) do
     {:noreply, socket}
   end
 
-  # Private helper functions
-  defp get_current_user_from_session(session) do
-    user_token = session["user_token"]
+  # Helper functions
+  defp load_layouts_data(socket, user) do
+    case LayoutService.get_user_layouts(user) do
+      {:ok, {layouts, meta}} ->
+        socket =
+          socket
+          |> assign(:current_user, user)
+          |> assign(:page_title, get_page_title())
+          |> assign(:layouts, layouts)
+          |> assign(:meta, meta)
+          |> assign(:loading, false)
+        
+        {:ok, socket}
+      
+      {:error, reason} ->
+        {:error, reason}
+    end
+  end
 
-    if user_token do
-      with {:ok, user_id} <-
-             Phoenix.Token.verify(RivaAshWeb.Endpoint, "user_auth", user_token, max_age: 86_400)
-             |> RivaAsh.ErrorHelpers.to_result(),
-           {:ok, user} <-
-             Ash.get(RivaAsh.Accounts.User, user_id, domain: RivaAsh.Accounts)
-             |> RivaAsh.ErrorHelpers.to_result() do
-        RivaAsh.ErrorHelpers.success(user)
-      else
-        _ -> RivaAsh.ErrorHelpers.failure(:not_authenticated)
-      end
-    else
-      RivaAsh.ErrorHelpers.failure(:not_authenticated)
+  defp reload_layouts(socket) do
+    case LayoutService.get_user_layouts(socket.assigns.current_user) do
+      {:ok, {layouts, meta}} ->
+        assign(socket, :layouts, layouts)
+        |> assign(:meta, meta)
+      
+      {:error, _reason} ->
+        socket
+    end
+  end
+
+  defp get_page_title do
+    Application.get_env(:riva_ash, :layouts_page_title, "Layouts")
+  end
+
+  defp truncate_text(nil, _length), do: "N/A"
+  defp truncate_text(text, length) when byte_size(text) <= length, do: text
+  defp truncate_text(text, length) do
+    String.slice(text, 0, length) <> "..."
+  end
+
+  defp format_error(reason) do
+    case reason do
+      %Ash.Error.Invalid{errors: errors} -> 
+        errors |> Enum.map(&format_validation_error/1) |> Enum.join(", ")
+      %Ash.Error.Forbidden{} -> "You don't have permission to perform this action"
+      %Ash.Error.NotFound{} -> "Layout not found"
+      _ -> "An unexpected error occurred"
+    end
+  end
+
+  defp format_validation_error(error) do
+    case error do
+      {message, _} -> message
+      message when is_binary(message) -> message
+      _ -> "Invalid input"
     end
   end
 end

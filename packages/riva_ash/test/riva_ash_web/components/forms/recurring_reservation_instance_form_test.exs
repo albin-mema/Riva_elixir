@@ -19,6 +19,7 @@ defmodule RivaAshWeb.Components.Forms.RecurringReservationInstanceFormTest do
   import RivaAshWeb.Components.Forms.RecurringReservationInstanceForm
 
   describe "RecurringReservationInstanceForm component" do
+    @spec test_renders_form_for_creating_new_instance :: :ok
     test "renders form for creating new instance" do
       assigns = %{}
 
@@ -63,6 +64,7 @@ defmodule RivaAshWeb.Components.Forms.RecurringReservationInstanceFormTest do
       refute html =~ "Edit Instance"
     end
 
+    @spec test_renders_form_for_editing_existing_instance :: :ok
     test "renders form for editing existing instance" do
       assigns = %{}
 
@@ -109,6 +111,7 @@ defmodule RivaAshWeb.Components.Forms.RecurringReservationInstanceFormTest do
       assert html =~ "Failed At"
     end
 
+    @spec test_renders_form_with_loading_state :: :ok
     test "renders form with loading state" do
       assigns = %{}
 
@@ -148,6 +151,7 @@ defmodule RivaAshWeb.Components.Forms.RecurringReservationInstanceFormTest do
       assert html =~ "loading"
     end
 
+    @spec test_renders_form_with_recurring_reservations_select :: :ok
     test "renders form with recurring reservations select" do
       assigns = %{}
 
@@ -192,6 +196,7 @@ defmodule RivaAshWeb.Components.Forms.RecurringReservationInstanceFormTest do
       assert html =~ "rr-2"
     end
 
+    @spec test_renders_form_with_reservations_select_when_editing :: :ok
     test "renders form with reservations select when editing" do
       assigns = %{}
 
@@ -237,6 +242,7 @@ defmodule RivaAshWeb.Components.Forms.RecurringReservationInstanceFormTest do
       assert html =~ "No reservation"
     end
 
+    @spec test_renders_form_with_field_errors :: :ok
     test "renders form with field errors" do
       assigns = %{}
 
@@ -297,6 +303,7 @@ defmodule RivaAshWeb.Components.Forms.RecurringReservationInstanceFormTest do
   end
 
   describe "Property-based tests for RecurringReservationInstanceForm component" do
+    @spec test_form_renders_with_random_boolean_values_for_editing_and_loading :: :ok
     property "form renders with random boolean values for editing and loading" do
       check all(
               editing <- boolean(),
@@ -352,6 +359,7 @@ defmodule RivaAshWeb.Components.Forms.RecurringReservationInstanceFormTest do
       end
     end
 
+    @spec test_form_renders_with_random_lists_of_recurring_reservations :: :ok
     property "form renders with random lists of recurring reservations" do
       check all(
               recurring_reservations <- list_of(map(:string, :string)),
@@ -396,6 +404,7 @@ defmodule RivaAshWeb.Components.Forms.RecurringReservationInstanceFormTest do
       end
     end
 
+    @spec test_form_renders_with_random_lists_of_reservations_when_editing :: :ok
     property "form renders with random lists of reservations when editing" do
       check all(
               reservations <- list_of(map(:string, :string)),
@@ -445,6 +454,7 @@ defmodule RivaAshWeb.Components.Forms.RecurringReservationInstanceFormTest do
   end
 
   describe "Component accessibility" do
+    @spec test_form_includes_proper_aria_attributes_for_accessibility :: :ok
     test "form includes proper ARIA attributes for accessibility" do
       assigns = %{}
 
@@ -505,6 +515,7 @@ defmodule RivaAshWeb.Components.Forms.RecurringReservationInstanceFormTest do
       assert html =~ "for=\"status\""
     end
 
+    @spec test_form_includes_proper_aria_attributes_when_fields_have_errors :: :ok
     test "form includes proper ARIA attributes when fields have errors" do
       assigns = %{}
 
@@ -568,6 +579,7 @@ defmodule RivaAshWeb.Components.Forms.RecurringReservationInstanceFormTest do
   end
 
   describe "Component error handling" do
+    @spec test_form_handles_nil_form_gracefully :: :ok
     test "form handles nil form gracefully" do
       assigns = %{}
 
@@ -589,6 +601,7 @@ defmodule RivaAshWeb.Components.Forms.RecurringReservationInstanceFormTest do
       assert is_binary(html)
     end
 
+    @spec test_form_handles_empty_recurring_reservations_list_gracefully :: :ok
     test "form handles empty recurring reservations list gracefully" do
       assigns = %{}
 
@@ -628,6 +641,7 @@ defmodule RivaAshWeb.Components.Forms.RecurringReservationInstanceFormTest do
       assert html =~ "scheduled_date"
     end
 
+    @spec test_form_handles_nil_recurring_reservations_gracefully :: :ok
     test "form handles nil recurring reservations gracefully" do
       assigns = %{}
 

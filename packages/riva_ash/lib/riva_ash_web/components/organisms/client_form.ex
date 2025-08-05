@@ -20,21 +20,34 @@ defmodule RivaAshWeb.Components.Organisms.ClientForm do
   attr(:class, :string, default: "")
   attr(:rest, :global)
 
+  @spec client_form(assigns :: map()) :: Phoenix.LiveView.Rendered.t()
   def client_form(assigns) do
+    # Render client form using functional composition
+    assigns
+    |> Map.put_new(:container_class, build_container_class(assigns.class))
+    |> Map.put_new(:form_class, build_form_class())
+    |> Map.put_new(:registration_class, build_registration_class(assigns.show_registration_fields))
+    |> Map.put_new(:actions_class, build_actions_class())
+    |> render_client_form_component()
+  end
+
+  # Private helper for client form rendering
+  @spec render_client_form_component(assigns :: map()) :: Phoenix.LiveView.Rendered.t()
+  defp render_client_form_component(assigns) do
     ~H"""
     <!-- Client form implementation will go here -->
-    <form phx-submit={@on_submit} phx-change={@on_change} {@rest}>
+    <form phx-submit={@on_submit} phx-change={@on_change} {@rest} class={@form_class}>
       <.form_field field={@form[:first_name]} label="First Name" required />
       <.form_field field={@form[:last_name]} label="Last Name" required />
       <.form_field field={@form[:email]} label="Email" type="email" />
       <.form_field field={@form[:phone]} label="Phone" type="tel" />
       
-      <div :if={@show_registration_fields}>
+      <div class={@registration_class}>
         <.toggle field={@form[:is_registered]} label="Register as permanent client" />
         <.form_field :if={@form[:is_registered].value} field={@form[:password]} label="Password" type="password" />
       </div>
       
-      <div>
+      <div class={@actions_class}>
         <.button type="submit" loading={@loading}>
           <%= if @editing, do: "Update Client", else: "Create Client" %>
         </.button>
@@ -42,5 +55,29 @@ defmodule RivaAshWeb.Components.Organisms.ClientForm do
       </div>
     </form>
     """
+  end
+
+  # Helper function to build container classes
+  @spec build_container_class(String.t()) :: String.t()
+  defp build_container_class(class) do
+    class
+  end
+
+  # Helper function to build form classes
+  @spec build_form_class() :: String.t()
+  defp build_form_class() do
+    ""
+  end
+
+  # Helper function to build registration classes
+  @spec build_registration_class(boolean()) :: String.t()
+  defp build_registration_class(show_registration_fields) do
+    if show_registration_fields, do: "", else: "hidden"
+  end
+
+  # Helper function to build actions classes
+  @spec build_actions_class() :: String.t()
+  defp build_actions_class() do
+    ""
   end
 end

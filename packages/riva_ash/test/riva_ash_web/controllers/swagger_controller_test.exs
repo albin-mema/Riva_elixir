@@ -6,6 +6,7 @@ defmodule RivaAshWeb.SwaggerControllerTest do
   import Phoenix.ConnTest
   import Plug.Conn
 
+  @spec test_get_swagger_json_includes_info_paths_components :: :ok
   test "GET /swagger.json includes info, paths, components", %{conn: conn} do
     conn = get(conn, ~p"/swagger.json")
     assert conn.status == 200
@@ -17,6 +18,7 @@ defmodule RivaAshWeb.SwaggerControllerTest do
     assert Map.has_key?(json, "components")
   end
 
+  @spec test_returns_404_for_missing_spec_chunk :: :ok
   test "returns 404 for missing spec chunk", %{conn: conn} do
     conn = get(conn, ~p"/swagger/unknown.json")
     assert conn.status in [404, 400]

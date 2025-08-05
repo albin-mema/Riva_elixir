@@ -19,28 +19,79 @@ defmodule RivaAshWeb.Components.UI.Input do
   attr :class, :string, default: ""
   attr :rest, :global
 
+  @spec input(assigns :: map()) :: Phoenix.LiveView.Rendered.t()
   def input(assigns) do
-    # Handle form field integration
-    assigns =
-      case assigns.field do
-        nil -> assigns
-        field -> assign(assigns, :value, assigns.value || field.value)
-      end
+    # Render input using functional composition
+    assigns
+    |> handle_form_field_integration()
+    |> Map.put_new(:input_class, input_class(assigns))
+    |> Map.put_new(:wrapper_class, build_wrapper_class(assigns.field))
+    |> Map.put_new(:error_class, build_error_class(assigns.field))
+    |> Map.put_new(:required_class, build_required_class(assigns.required))
+    |> render_input_component()
+  end
 
-    assigns = assign(assigns, :input_class, input_class(assigns))
-
+  # Private helper for input rendering
+  @spec render_input_component(assigns :: map()) :: Phoenix.LiveView.Rendered.t()
+  defp render_input_component(assigns) do
     ~H"""
-    <input
-      type={@type}
-      class={@input_class}
-      value={@value}
-      placeholder={@placeholder}
-      disabled={@disabled}
-      readonly={@readonly}
-      required={@required}
-      {@rest}
-    />
+    <div class={@wrapper_class}>
+      <input
+        type={@type}
+        class={@input_class}
+        value={@value}
+        placeholder={@placeholder}
+        disabled={@disabled}
+        readonly={@readonly}
+        required={@required}
+        {@rest}
+      />
+      <%= if has_error?(@field) do %>
+        <p class={@error_class}>
+          <%= error_message(@field) %>
+        </p>
+      <% end %>
+    </div>
     """
+  end
+
+  # Helper function to handle form field integration
+  @spec handle_form_field_integration(map()) :: map()
+  defp handle_form_field_integration(assigns) do
+    case assigns.field do
+      nil -> assigns
+      field -> Map.put(assigns, :value, assigns.value || field.value)
+    end
+  end
+
+  # Helper function to build wrapper classes
+  @spec build_wrapper_class(Phoenix.HTML.FormField.t() | nil) :: String.t()
+  defp build_wrapper_class(field) do
+    if field, do: "relative w-full", else: "w-full"
+  end
+
+  # Helper function to build error classes
+  @spec build_error_class(Phoenix.HTML.FormField.t() | nil) :: String.t()
+  defp build_error_class(field) do
+    if has_error?(field), do: "text-sm text-destructive mt-1", else: "hidden"
+  end
+
+  # Helper function to build required classes
+  @spec build_required_class(boolean()) :: String.t()
+  defp build_required_class(required) do
+    if required, do: "required", else: ""
+  end
+
+  # Helper function to check if field has errors
+  @spec has_error?(Phoenix.HTML.FormField.t() | nil) :: boolean()
+  defp has_error?(field) do
+    field && field.errors && length(field.errors) > 0
+  end
+
+  # Helper function to get error message
+  @spec error_message(Phoenix.HTML.FormField.t()) :: String.t()
+  defp error_message(field) do
+    field.errors |> List.first() |> elem(1)
   end
 
   defp input_class(assigns) do

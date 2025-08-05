@@ -18,7 +18,20 @@ defmodule RivaAshWeb.Components.Atoms.Toggle do
   attr(:class, :string, default: "")
   attr(:rest, :global)
 
-  def toggle(assigns) do
+  def toggle(assigns) when is_map(assigns) do
+    assigns
+    |> validate_toggle_attributes()
+    |> render_toggle()
+  end
+
+  defp validate_toggle_attributes(assigns) when is_map(assigns) do
+    case {Map.get(assigns, :value), Map.get(assigns, :checked)} do
+      {nil, _} -> raise ArgumentError, "value is required for toggle component"
+      {_, _} -> assigns
+    end
+  end
+
+  defp render_toggle(assigns) do
     ~H"""
     <!-- Toggle implementation will go here -->
     <div>

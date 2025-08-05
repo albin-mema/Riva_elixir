@@ -18,12 +18,23 @@ defmodule RivaAshWeb.Components.UI.Checkbox do
   attr :class, :string, default: ""
   attr :rest, :global
 
+  @spec checkbox(assigns :: map()) :: Phoenix.LiveView.Rendered.t()
   def checkbox(assigns) do
-    assigns = assign(assigns, :checkbox_class, checkbox_class(assigns))
-    assigns = assign(assigns, :label_class, label_class(assigns))
+    # Render checkbox using functional composition
+    assigns
+    |> Map.put_new(:checkbox_class, checkbox_class(assigns))
+    |> Map.put_new(:label_class, label_class(assigns))
+    |> Map.put_new(:container_class, build_container_class(assigns.label))
+    |> Map.put_new(:description_class, build_description_class(assigns.description))
+    |> Map.put_new(:label_wrapper_class, build_label_wrapper_class(assigns.description))
+    |> render_checkbox_component()
+  end
 
+  # Private helper for checkbox rendering
+  @spec render_checkbox_component(assigns :: map()) :: Phoenix.LiveView.Rendered.t()
+  defp render_checkbox_component(assigns) do
     ~H"""
-    <div class={"flex items-start gap-2 " <> @class}>
+    <div class={@container_class}>
       <input
         type="checkbox"
         class={@checkbox_class}
@@ -33,12 +44,12 @@ defmodule RivaAshWeb.Components.UI.Checkbox do
         {@rest}
       />
       <%= if @label do %>
-        <div class="flex flex-col">
+        <div class={@label_wrapper_class}>
           <label class={@label_class}>
             <%= @label %>
           </label>
           <%= if @description do %>
-            <p class="mt-1 text-muted-foreground text-sm">
+            <p class={@description_class}>
               <%= @description %>
             </p>
           <% end %>
@@ -46,6 +57,24 @@ defmodule RivaAshWeb.Components.UI.Checkbox do
       <% end %>
     </div>
     """
+  end
+
+  # Helper function to build container classes
+  @spec build_container_class(String.t() | nil) :: String.t()
+  defp build_container_class(label) do
+    if label, do: "flex items-start gap-2", else: "flex justify-center"
+  end
+
+  # Helper function to build description classes
+  @spec build_description_class(String.t() | nil) :: String.t()
+  defp build_description_class(description) do
+    if description, do: "mt-1 text-muted-foreground text-sm", else: "hidden"
+  end
+
+  # Helper function to build label wrapper classes
+  @spec build_label_wrapper_class(String.t() | nil) :: String.t()
+  defp build_label_wrapper_class(description) do
+    if description, do: "flex flex-col", else: "flex items-center"
   end
 
   defp checkbox_class(assigns) do

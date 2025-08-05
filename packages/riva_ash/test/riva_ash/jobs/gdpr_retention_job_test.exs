@@ -18,6 +18,7 @@ defmodule RivaAsh.Jobs.GDPRRetentionJobTest do
   end
 
   describe "respects boundary times" do
+    @spec test_only_older_than_threshold_gets_processed :: :ok
     test "only older-than-threshold gets processed" do
       base = ~U[2025-01-01 00:00:00Z]
       threshold_seconds = 86_400 * 30 # 30 days assumed in policy for example
@@ -46,6 +47,7 @@ defmodule RivaAsh.Jobs.GDPRRetentionJobTest do
   end
 
   describe "idempotent re-run" do
+    @spec test_second_run_does_not_duplicate_effects :: :ok
     test "second run does not duplicate effects" do
       base = ~U[2025-01-01 00:00:00Z]
 

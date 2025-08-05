@@ -10,10 +10,11 @@ defmodule RivaAshWeb.PricingLive do
   import RivaAshWeb.Live.AuthHelpers
 
   alias RivaAsh.Resources.Pricing
+  alias RivaAsh.Pricing.PricingService
 
   @impl true
   def mount(_params, session, socket) do
-    mount_business_scoped(socket, session, Pricing, :business_id, "Pricing")
+    mount_business_scoped(socket, session, Pricing, :business_id, get_page_title())
   end
 
   @impl true
@@ -36,10 +37,22 @@ defmodule RivaAshWeb.PricingLive do
           <%= pricing.name %>
         </:col>
         <:col :let={pricing} label="Amount">
-          <%= pricing.amount %>
+          <%= format_currency(pricing.amount) %>
         </:col>
         <:col :let={pricing} label="Duration">
           <%= pricing.duration %>
+        </:col>
+        <:col :let={pricing} label="Status">
+          <span class={[
+            "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium",
+            case pricing.status do
+              :active -> "bg-green-100 text-green-800"
+              :inactive -> "bg-gray-100 text-gray-800"
+              _ -> "bg-gray-100 text-gray-800"
+            end
+          ]}>
+            <%= String.capitalize(to_string(pricing.status)) %>
+          </span>
         </:col>
         <:col :let={pricing} label="Actions">
           <.button phx-click="edit_pricing" phx-value-id={pricing.id} class="bg-green-600 hover:bg-green-700">Edit</.button>
@@ -60,12 +73,67 @@ defmodule RivaAshWeb.PricingLive do
   end
 
   def handle_event("delete_pricing", %{"id" => id}, socket) do
-    # Placeholder for delete logic
-    IO.puts("Deleting pricing with ID: #{id}")
-    {:noreply, socket}
+    case PricingService.delete_pricing(id, socket.assigns.current_user) do
+      {:ok, _pricing} ->
+        {:noreply,
+         socket
+         |> put_flash(:info, "Pricing deleted successfully")
+         |> reload_pricing_data()}
+      
+      {:error, reason} ->
+        {:noreply,
+         socket
+         |> put_flash(:error, "Failed to delete pricing: #{format_error(reason)}")}
+    end
   end
 
   def handle_event(_event, _params, socket) do
     {:noreply, socket}
+  end
+
+  # Private helper functions
+  defp reload_pricing_data(socket) do
+    case PricingService.get_user_pricings(socket.assigns.current_user) do
+      {:ok, {pricings, meta}} ->
+        socket
+        |> assign(:pricings, pricings)
+        |> assign(:meta, meta)
+      
+      {:error, _reason} ->
+        socket
+    end
+  end
+
+  defp get_page_title do
+    Application.get_env(:riva_ash, __MODULE__, [])[:page_title] || "Pricing"
+  end
+
+  defp format_currency(amount) when is_number(amount) do
+    case Application.get_env(:riva_ash, :currency, "USD") do
+      "USD" -> "$#{:erlang.float_to_binary(amount, decimals: 2)}"
+      "EUR" -> "€#{:erlang.float_to_binary(amount, decimals: 2)}"
+      "GBP" -> "£#{:erlang.float_to_binary(amount, decimals: 2)}"
+      currency -> "#{currency}#{:erlang.float_to_binary(amount, decimals: 2)}"
+    end
+  end
+
+  defp format_currency(amount), do: amount
+
+  defp format_error(reason) do
+    case reason do
+      %Ash.Error.Invalid{errors: errors} ->
+        errors |> Enum.map(&format_validation_error/1) |> Enum.join(", ")
+      %Ash.Error.Forbidden{} -> "You don't have permission to perform this action"
+      %Ash.Error.NotFound{} -> "Pricing not found"
+      _ -> "An unexpected error occurred"
+    end
+  end
+
+  defp format_validation_error(error) do
+    case error do
+      {message, _} -> message
+      message when is_binary(message) -> message
+      _ -> "Invalid input"
+    end
   end
 end

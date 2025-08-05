@@ -10,6 +10,7 @@ defmodule RivaAshWeb.RecurringReservationLive do
   import RivaAshWeb.Live.AuthHelpers
 
   alias RivaAsh.Resources.RecurringReservation
+  alias RivaAsh.Reservation.ReservationService
 
   @impl true
   def mount(_params, session, socket) do
@@ -18,7 +19,7 @@ defmodule RivaAshWeb.RecurringReservationLive do
       session,
       RecurringReservation,
       [:item, :section, :plot, :business_id],
-      "Recurring Reservations"
+      get_page_title()
     )
   end
 
@@ -38,20 +39,33 @@ defmodule RivaAshWeb.RecurringReservationLive do
         meta={@meta}
         path="/recurring-reservations"
       >
-        <:col :let={rr} label="Client ID" field={:client_id} sortable>
-          <%= rr.client_id %>
+        <:col :let={rr} label="Client" field={:client_id} sortable>
+          <%= if rr.client, do: rr.client.name, else: "N/A" %>
         </:col>
-        <:col :let={rr} label="Item ID" field={:item_id} sortable>
-          <%= rr.item_id %>
+        <:col :let={rr} label="Item" field={:item_id} sortable>
+          <%= if rr.item, do: rr.item.name, else: "N/A" %>
         </:col>
         <:col :let={rr} label="Frequency">
           <%= rr.frequency %>
         </:col>
         <:col :let={rr} label="Start Date">
-          <%= rr.start_date %>
+          <%= format_date(rr.start_date) %>
         </:col>
         <:col :let={rr} label="End Date">
-          <%= rr.end_date %>
+          <%= format_date(rr.end_date) %>
+        </:col>
+        <:col :let={rr} label="Status">
+          <span class={[
+            "inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium",
+            case rr.status do
+              :active -> "bg-green-100 text-green-800"
+              :inactive -> "bg-gray-100 text-gray-800"
+              :completed -> "bg-blue-100 text-blue-800"
+              _ -> "bg-gray-100 text-gray-800"
+            end
+          ]}>
+            <%= String.capitalize(to_string(rr.status)) %>
+          </span>
         </:col>
         <:col :let={rr} label="Actions">
           <.button phx-click="edit_recurring_reservation" phx-value-id={rr.id} class="bg-green-600 hover:bg-green-700">Edit</.button>
@@ -72,12 +86,64 @@ defmodule RivaAshWeb.RecurringReservationLive do
   end
 
   def handle_event("delete_recurring_reservation", %{"id" => id}, socket) do
-    # Placeholder for delete logic
-    IO.puts("Deleting recurring reservation with ID: #{id}")
-    {:noreply, socket}
+    case ReservationService.delete_recurring_reservation(id, socket.assigns.current_user) do
+      {:ok, _recurring_reservation} ->
+        {:noreply,
+         socket
+         |> put_flash(:info, "Recurring reservation deleted successfully")
+         |> reload_recurring_reservations()}
+      
+      {:error, reason} ->
+        {:noreply,
+         socket
+         |> put_flash(:error, "Failed to delete recurring reservation: #{format_error(reason)}")}
+    end
   end
 
   def handle_event(_event, _params, socket) do
     {:noreply, socket}
+  end
+
+  # Private helper functions
+  defp reload_recurring_reservations(socket) do
+    case ReservationService.get_user_recurring_reservations(socket.assigns.current_user) do
+      {:ok, {recurring_reservations, meta}} ->
+        socket
+        |> assign(:recurring_reservations, recurring_reservations)
+        |> assign(:meta, meta)
+      
+      {:error, _reason} ->
+        socket
+    end
+  end
+
+  defp get_page_title do
+    Application.get_env(:riva_ash, __MODULE__, [])[:page_title] || "Recurring Reservations"
+  end
+
+  defp format_date(nil), do: "N/A"
+  defp format_date(date) do
+    case Calendar.strftime(date, "%Y-%m-%d") do
+      {:ok, formatted} -> formatted
+      {:error, _} -> "Invalid date"
+    end
+  end
+
+  defp format_error(reason) do
+    case reason do
+      %Ash.Error.Invalid{errors: errors} ->
+        errors |> Enum.map(&format_validation_error/1) |> Enum.join(", ")
+      %Ash.Error.Forbidden{} -> "You don't have permission to perform this action"
+      %Ash.Error.NotFound{} -> "Recurring reservation not found"
+      _ -> "An unexpected error occurred"
+    end
+  end
+
+  defp format_validation_error(error) do
+    case error do
+      {message, _} -> message
+      message when is_binary(message) -> message
+      _ -> "Invalid input"
+    end
   end
 end

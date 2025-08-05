@@ -7,6 +7,7 @@ defmodule RivaAshWeb.Components.UI.ButtonComponentTest do
 
   @moduledoc false
 
+  @spec test_renders_default_button_with_inner_content :: :ok
   test "renders default button with inner content" do
     assigns = %{}
     html =
@@ -19,6 +20,7 @@ defmodule RivaAshWeb.Components.UI.ButtonComponentTest do
     assert html =~ "bg-primary"
   end
 
+  @spec test_renders_destructive_variant_and_loading_spinner :: :ok
   test "renders destructive variant and loading spinner" do
     assigns = %{}
     html =
@@ -31,6 +33,7 @@ defmodule RivaAshWeb.Components.UI.ButtonComponentTest do
     assert html =~ "animate-spin"
   end
 
+  @spec test_respects_size_mappings :: :ok
   test "respects size mappings" do
     assigns = %{}
     html_sm =

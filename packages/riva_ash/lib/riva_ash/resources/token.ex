@@ -13,6 +13,11 @@ defmodule RivaAsh.Accounts.Token do
     domain(RivaAsh.Domain)
   end
 
+  # Private helper functions for Single Level of Abstraction
+  defp configure_token_domain() do
+    domain(RivaAsh.Domain)
+  end
+
   # If using policies, add authorization for the token resource
   # policies do
   #   policy always() do

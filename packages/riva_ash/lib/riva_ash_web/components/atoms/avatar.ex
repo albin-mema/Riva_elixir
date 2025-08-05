@@ -1,13 +1,27 @@
 defmodule RivaAshWeb.Components.Atoms.Avatar do
   @moduledoc """
   Avatar component for users and businesses with fallbacks.
+  
+  Follows functional core, imperative shell pattern with comprehensive type safety.
   """
   use Phoenix.Component
   import RivaAshWeb.Components.Atoms.Icon
 
+  @type assigns :: map()
+  @type size :: String.t()
+  @type shape :: String.t()
+  @type status :: String.t() | nil
+
   @doc """
   Renders an avatar with image or initials fallback.
+  
+  ## Examples
+    
+      <.avatar src="/path/to/image.jpg" alt="User" />
+      <.avatar initials="JD" name="John Doe" size="lg" />
+      <.avatar status="online" />
   """
+  @spec avatar(assigns :: assigns()) :: Phoenix.LiveView.Rendered.t()
   attr(:src, :string, default: nil)
   attr(:alt, :string, default: "")
   attr(:initials, :string, default: nil)
@@ -19,35 +33,55 @@ defmodule RivaAshWeb.Components.Atoms.Avatar do
   attr(:rest, :global)
 
   def avatar(assigns) do
-    assigns = assign(assigns, :avatar_class, avatar_class(assigns))
-
-    ~H"""
-    <div class={@avatar_class} {@rest}>
-      <%= if @src do %>
-        <img src={@src} alt={@alt} class="w-full h-full object-cover" />
-      <% else %>
-        <%= if @initials do %>
-          <span class={initials_class(assigns)}><%= @initials %></span>
-        <% else %>
-          <.icon name={:user} size={icon_size(@size)} class="text-muted-foreground" />
-        <% end %>
-      <% end %>
-
-      <%= if @status do %>
-        <div class={status_indicator_class(@status, @size)}></div>
-      <% end %>
-    </div>
-    """
+    with {:ok, validated_assigns} <- validate_assigns(assigns),
+         avatar_class <- build_avatar_class(validated_assigns) do
+      assigns = validated_assigns |> assign(:avatar_class, avatar_class)
+      render_avatar(assigns)
+    else
+      {:error, reason} -> render_error(reason)
+    end
   end
 
-  defp avatar_class(assigns) do
+  # Functional Core: Pure validation functions
+  @spec validate_assigns(assigns :: assigns()) :: {:ok, assigns()} | {:error, String.t()}
+  defp validate_assigns(assigns) do
+    with :ok <- validate_src_or_initials(assigns),
+         :ok <- validate_status(assigns) do
+      {:ok, assigns}
+    end
+  end
+
+  @spec validate_src_or_initials(assigns :: assigns()) :: :ok | {:error, String.t()}
+  defp validate_src_or_initials(assigns) do
+    if is_nil(assigns.src) and is_nil(assigns.initials) and is_nil(assigns.name) do
+      {:error, "Avatar must have either src, initials, or name"}
+    else
+      :ok
+    end
+  end
+
+  @spec validate_status(assigns :: assigns()) :: :ok | {:error, String.t()}
+  defp validate_status(assigns) do
+    if assigns.status and not assigns.status in ~w(online away busy offline) do
+      {:error, "Invalid status. Must be one of: online, away, busy, offline"}
+    else
+      :ok
+    end
+  end
+
+  # Functional Core: Pure class building functions
+  @spec build_avatar_class(assigns :: assigns()) :: String.t()
+  defp build_avatar_class(assigns) do
     base = "relative inline-flex items-center justify-center overflow-hidden bg-muted"
     size = size_classes(assigns.size)
     shape = shape_classes(assigns.shape)
-
-    Enum.join([base, size, shape, assigns.class], " ")
+    
+    [base, size, shape, assigns.class]
+    |> Enum.reject(&(&1 == ""))
+    |> Enum.join(" ")
   end
 
+  @spec size_classes(size :: String.t()) :: String.t()
   defp size_classes(size) do
     case size do
       "xs" -> "h-6 w-6 text-xs"
@@ -60,6 +94,7 @@ defmodule RivaAshWeb.Components.Atoms.Avatar do
     end
   end
 
+  @spec shape_classes(shape :: String.t()) :: String.t()
   defp shape_classes(shape) do
     case shape do
       "circle" -> "rounded-full"
@@ -69,18 +104,23 @@ defmodule RivaAshWeb.Components.Atoms.Avatar do
     end
   end
 
+  @spec initials_class(assigns :: assigns()) :: String.t()
   defp initials_class(_assigns) do
     "font-medium text-foreground select-none"
   end
 
+  @spec status_indicator_class(status :: String.t(), size :: String.t()) :: String.t()
   defp status_indicator_class(status, size) do
     base = "absolute border-2 border-background rounded-full"
     position = status_position(size)
     color = status_color(status)
 
-    Enum.join([base, position, color], " ")
+    [base, position, color]
+    |> Enum.reject(&(&1 == ""))
+    |> Enum.join(" ")
   end
 
+  @spec status_position(size :: String.t()) :: String.t()
   defp status_position(size) do
     case size do
       "xs" -> "bottom-0 right-0 h-2 w-2"
@@ -93,6 +133,7 @@ defmodule RivaAshWeb.Components.Atoms.Avatar do
     end
   end
 
+  @spec status_color(status :: String.t()) :: String.t()
   defp status_color(status) do
     case status do
       "online" -> "bg-green-500"
@@ -103,6 +144,7 @@ defmodule RivaAshWeb.Components.Atoms.Avatar do
     end
   end
 
+  @spec icon_size(size :: String.t()) :: String.t()
   defp icon_size(size) do
     case size do
       "xs" -> "xs"
@@ -113,5 +155,51 @@ defmodule RivaAshWeb.Components.Atoms.Avatar do
       "2xl" -> "xl"
       _ -> "md"
     end
+  end
+
+  # Imperative Shell: Rendering functions
+  defp render_avatar(assigns) do
+    ~H"""
+    <div class={@avatar_class} {@rest}>
+      <%= render_avatar_content(assigns) %>
+      <%= render_status_indicator(assigns) %>
+    </div>
+    """
+  end
+
+  defp render_avatar_content(assigns) do
+    cond do
+      assigns.src ->
+        ~H"""
+        <img src={@src} alt={@alt} class="w-full h-full object-cover" />
+        """
+      assigns.initials ->
+        ~H"""
+        <span class={initials_class(assigns)}><%= @initials %></span>
+        """
+      true ->
+        ~H"""
+        <.icon name={:user} size={icon_size(@size)} class="text-muted-foreground" />
+        """
+    end
+  end
+
+  defp render_status_indicator(assigns) do
+    if assigns.status do
+      ~H"""
+      <div class={status_indicator_class(@status, @size)}></div>
+      """
+    end
+  end
+
+  defp render_error(reason) do
+    # In a real implementation, you might want to log this error
+    # and render a fallback avatar or error state
+    IO.puts("Avatar error: #{reason}")
+    ~H"""
+    <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative">
+      <span class="block sm:inline">Error: <%= reason %></span>
+    </div>
+    """
   end
 end
