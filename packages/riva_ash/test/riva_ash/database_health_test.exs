@@ -11,7 +11,7 @@ defmodule RivaAsh.DatabaseHealthTest do
       # This would need mocking for failure scenario
       # For now, test the interface
       assert result = DatabaseHealth.check_connection()
-      assert result in [:ok, {:error, _reason}]
+      assert result == :ok or match?({:error, _}, result)
     end
   end
 

@@ -162,7 +162,7 @@ defmodule RivaAshWeb.RouteEnumerationTest do
     # Skip routes with parameters for now (they need special handling)
     if String.contains?(path, ":") do
       IO.puts("  SKIP #{verb} #{path} (has parameters)")
-      return
+      :ok
     end
 
     try do

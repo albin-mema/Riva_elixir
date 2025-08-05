@@ -1,7 +1,7 @@
 defmodule RivaAshWeb.AuthenticationFlowTest do
   use RivaAshWeb.FeatureCase, async: true
+  use RivaAshWeb, :verified_routes
   import Phoenix.LiveViewTest
-  import PhoenixTest
   alias RivaAsh.Accounts.User
   alias RivaAsh.Accounts
 
@@ -287,7 +287,7 @@ defmodule RivaAshWeb.AuthenticationFlowTest do
   # and more realistic user interaction patterns.
 
   describe "Browser-Style Authentication Tests (PhoenixTest)" do
-    import PhoenixTest
+    # PhoenixTest removed; keep test logic intact by using LiveViewTest/ConnTest APIs where possible.
 
     setup do
       # Create a test user for login tests using Ash

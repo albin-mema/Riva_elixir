@@ -15,7 +15,6 @@ defmodule RivaAshWeb.StorybookPropertyTest do
   
   use ExUnit.Case, async: false
   use ExUnitProperties
-  use PhoenixTest.Playwright.Case, headless: true
   
   import Phoenix.LiveViewTest
   import RivaAsh.StorybookTesting.PropertyGenerators
