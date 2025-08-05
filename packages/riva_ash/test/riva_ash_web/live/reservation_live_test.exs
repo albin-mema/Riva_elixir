@@ -1,5 +1,9 @@
 defmodule RivaAshWeb.ReservationLiveTest do
   use RivaAshWeb.ConnCase, async: false
+  use RivaAshWeb, :verified_routes
+  import Phoenix.LiveViewTest
+  use RivaAshWeb, :verified_routes
+  import Phoenix.LiveViewTest
 
   import Phoenix.LiveViewTest
   import RivaAsh.Test.LiveViewHelpers

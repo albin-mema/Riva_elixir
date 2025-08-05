@@ -1,6 +1,7 @@
 defmodule RivaAshWeb.BusinessLiveTest do
   use RivaAshWeb.ConnCase, async: false
   # Minimal test fix: enable ~p verified routes and LiveView helper assertions
+  use RivaAshWeb, :verified_routes
   import Phoenix.LiveViewTest
   import RivaAsh.Factory
   import RivaAshWeb, only: [verified_routes: 0]

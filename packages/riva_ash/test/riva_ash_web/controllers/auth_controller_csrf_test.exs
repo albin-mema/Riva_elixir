@@ -1,8 +1,9 @@
 defmodule RivaAshWeb.AuthControllerCsrfTest do
   use RivaAshWeb.ConnCase, async: false
+  use RivaAshWeb, :verified_routes
 
-  @describetag :controller
   describe "CSRF guard for login" do
+    @describetag :controller
     test "POST /sign-in without CSRF token is rejected", %{conn: conn} do
       # Build a bare connection without fetching CSRF token
       params = %{"email" => "user@example.com", "password" => "badpass"}

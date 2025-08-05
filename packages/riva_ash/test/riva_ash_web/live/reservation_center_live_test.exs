@@ -2,6 +2,7 @@ defmodule RivaAshWeb.ReservationCenterLiveTest do
   use RivaAshWeb.ConnCase, async: true
 
   # Enable live/3 and ~p via LiveViewTest and verified routes
+  use RivaAshWeb, :verified_routes
   import Phoenix.LiveViewTest
   import RivaAsh.Test.LiveViewHelpers
   use RivaAshWeb, :verified_routes

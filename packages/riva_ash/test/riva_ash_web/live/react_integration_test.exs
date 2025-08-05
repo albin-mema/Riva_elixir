@@ -1,5 +1,7 @@
 defmodule RivaAshWeb.ReactIntegrationTest do
   use RivaAshWeb.ConnCase
+  use RivaAshWeb, :verified_routes
+  import Phoenix.LiveViewTest
   use ExUnitProperties
   import Phoenix.LiveViewTest
   import RivaAsh.TestHelpers

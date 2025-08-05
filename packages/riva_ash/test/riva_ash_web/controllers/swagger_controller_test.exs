@@ -1,11 +1,10 @@
 defmodule RivaAshWeb.SwaggerControllerTest do
   use RivaAshWeb.ConnCase, async: true
+  use RivaAshWeb, :verified_routes
 
   # Enable ~p sigil via verified routes; ConnTest/Plug.Conn for helpers
   import Phoenix.ConnTest
   import Plug.Conn
-  import RivaAshWeb, only: [verified_routes: 0]
-  verified_routes()
 
   test "GET /swagger.json includes info, paths, components", %{conn: conn} do
     conn = get(conn, ~p"/swagger.json")

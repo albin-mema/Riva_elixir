@@ -1,17 +1,16 @@
 defmodule RivaAshWeb.PaymentLiveTest do
   # Ensure ConnCase and LiveView helpers are available for ~p and rendered/1
   use RivaAshWeb.ConnCase, async: true
+  # Use VerifiedRoutes to enable ~p sigil consistently in tests
+  use RivaAshWeb, :verified_routes
 
   import Phoenix.LiveViewTest
   import RivaAsh.Test.LiveViewHelpers
   import RivaAsh.Test.TimeHelpers
+  # Safe to import ~H if this file ever adds HEEx snippets
+  import Phoenix.Component, only: [sigil_H: 2]
   alias RivaAsh.Factory
   alias RivaAsh.Resources.{Reservation, Payment}
-
-  # Ensure ~p verified routes are available. If ConnCase already injects verified_routes/0,
-  # this is harmless; otherwise it provides the ~p sigil for path generation.
-  import RivaAshWeb, only: [verified_routes: 0]
-  verified_routes()
 
   defp login_conn(conn) do
     ctx = Factory.insert(:business_context)

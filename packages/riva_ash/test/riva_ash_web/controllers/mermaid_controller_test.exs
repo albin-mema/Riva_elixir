@@ -1,10 +1,9 @@
 defmodule RivaAshWeb.MermaidControllerTest do
   use RivaAshWeb.ConnCase, async: true
+  use RivaAshWeb, :verified_routes
 
   # Enable ~p sigil via verified routes; ConnTest gives get/2, response/2
   import Phoenix.ConnTest
-  import RivaAshWeb, only: [verified_routes: 0]
-  verified_routes()
 
   test "GET /mermaid/domain returns mermaid syntax", %{conn: conn} do
     conn = get(conn, ~p"/mermaid/domain")

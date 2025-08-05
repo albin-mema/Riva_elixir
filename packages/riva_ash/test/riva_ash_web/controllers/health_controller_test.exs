@@ -1,5 +1,6 @@
 defmodule RivaAshWeb.HealthControllerTest do
   use RivaAshWeb.ConnCase, async: false
+  use RivaAshWeb, :verified_routes
   # Enable ~p verified routes and ConnTest helpers for ~p/get/json_response
   import Phoenix.ConnTest
   import RivaAshWeb, only: [verified_routes: 0]
