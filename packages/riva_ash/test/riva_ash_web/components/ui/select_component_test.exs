@@ -1,5 +1,7 @@
 defmodule RivaAshWeb.Components.UI.SelectComponentTest do
   use RivaAshWeb.ConnCase, async: true
+  import Phoenix.Component, only: [sigil_H: 2]
+  import Phoenix.LiveViewTest
 
   import Phoenix.LiveViewTest
   import Phoenix.Component

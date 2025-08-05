@@ -3,6 +3,7 @@ defmodule RivaAshWeb.Components.UI.ButtonTest do
   # Enable ~H sigil for HEEx and component rendering
   import Phoenix.Component
   import Phoenix.LiveViewTest
+  import Phoenix.LiveViewTest
   import RivaAshWeb.Components.UI.Button
 
   describe "button/1" do

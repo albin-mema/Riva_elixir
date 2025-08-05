@@ -1,5 +1,7 @@
 defmodule RivaAshWeb.Components.Interactive.TimeSlotPickerTest do
   use RivaAshWeb.ConnCase, async: false
+  import Phoenix.Component, only: [sigil_H: 2]
+  import Phoenix.LiveViewTest
   import Phoenix.Component
   import Phoenix.LiveViewTest
   alias RivaAshWeb.Components.Interactive.TimeSlotPicker

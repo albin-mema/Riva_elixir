@@ -1,7 +1,10 @@
 defmodule RivaAshWeb.Components.UI.ButtonPropertyTest do
   use RivaAshWeb.ConnCase, async: true
+  import Phoenix.Component, only: [sigil_H: 2]
+  import Phoenix.LiveViewTest
   use ExUnitProperties
   import Phoenix.LiveViewTest
+  import Phoenix.Component, only: [sigil_H: 2]
   import RivaAshWeb.Components.UI.Button
 
   describe "button/1 property-based tests" do

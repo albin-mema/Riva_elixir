@@ -1,5 +1,7 @@
 defmodule RivaAshWeb.Components.Forms.RecurringReservationInstanceFormTest do
   @moduledoc """
+  import Phoenix.Component, only: [sigil_H: 2]
+  import Phoenix.LiveViewTest
   Property-based and unit tests for the RecurringReservationInstanceForm component.
   Tests component rendering, attribute validation, and form interaction logic.
   """

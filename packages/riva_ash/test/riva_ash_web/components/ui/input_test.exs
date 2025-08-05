@@ -1,6 +1,9 @@
 defmodule RivaAshWeb.Components.UI.InputTest do
   use RivaAshWeb.ConnCase, async: true
+  import Phoenix.Component, only: [sigil_H: 2]
   import Phoenix.LiveViewTest
+  import Phoenix.LiveViewTest
+  import Phoenix.Component, only: [sigil_H: 2]
   import RivaAshWeb.Components.UI.Input
 
   describe "input/1" do
