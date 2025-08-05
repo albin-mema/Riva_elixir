@@ -75,4 +75,4 @@ config :live_debugger,
   secret_key_base: "EuaQggrb3gfhrDAQUZqTsTMUt7zf9voCI2frB3kuyBabOCHiEue48mXJiMtL7QLj",
   signing_salt: "live_debugger_salt",
   adapter: Bandit.PhoenixAdapter,
-  server: false
+  server: true
