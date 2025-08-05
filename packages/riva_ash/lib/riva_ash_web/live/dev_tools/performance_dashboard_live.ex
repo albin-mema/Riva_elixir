@@ -1,7 +1,7 @@
 defmodule RivaAshWeb.DevTools.PerformanceDashboardLive do
   @moduledoc """
   Performance monitoring dashboard for development.
-  
+
   Features:
   - Real-time response time tracking
   - Query count monitoring
@@ -64,23 +64,23 @@ defmodule RivaAshWeb.DevTools.PerformanceDashboardLive do
 
     @impl true
     def handle_info({:telemetry_event, event, measurements, metadata}, socket) do
-      socket = 
+      socket =
         case event do
           [:phoenix, :endpoint, :stop] ->
             handle_endpoint_stop(socket, measurements, metadata)
-          
+
           [:phoenix, :router_dispatch, :stop] ->
             handle_router_dispatch_stop(socket, measurements, metadata)
-          
+
           [:ash, :query, :stop] ->
             handle_ash_query_stop(socket, measurements, metadata)
-          
+
           [:ash, :action, :stop] ->
             handle_ash_action_stop(socket, measurements, metadata)
-          
+
           [:ecto, :repo, :query] ->
             handle_ecto_query(socket, measurements, metadata)
-          
+
           _ ->
             socket
         end
@@ -123,14 +123,14 @@ defmodule RivaAshWeb.DevTools.PerformanceDashboardLive do
                   <h1 class="text-2xl font-bold text-gray-900">Performance Dashboard</h1>
                   <p class="text-gray-600 mt-1">Real-time performance monitoring and metrics</p>
                 </div>
-                
+
                 <div class="flex items-center space-x-4">
                   <select phx-change="change_timeframe" class="rounded border-gray-300">
                     <option value="5m" selected={@selected_timeframe == "5m"}>Last 5 minutes</option>
                     <option value="1h" selected={@selected_timeframe == "1h"}>Last hour</option>
                     <option value="24h" selected={@selected_timeframe == "24h"}>Last 24 hours</option>
                   </select>
-                  
+
                   <div class="flex items-center">
                     <div class="w-3 h-3 bg-green-500 rounded-full animate-pulse mr-2"></div>
                     <span class="text-sm text-gray-600">Live</span>
@@ -213,7 +213,7 @@ defmodule RivaAshWeb.DevTools.PerformanceDashboardLive do
                       Clear All
                     </button>
                   </div>
-                  
+
                   <div class="space-y-2">
                     <%= for alert <- @alerts do %>
                       <div class="bg-red-50 border border-red-200 rounded-lg p-4">
@@ -310,7 +310,7 @@ defmodule RivaAshWeb.DevTools.PerformanceDashboardLive do
                     Clear
                   </button>
                 </div>
-                
+
                 <%= if @slow_queries != [] do %>
                   <div class="bg-yellow-50 rounded-lg overflow-hidden">
                     <div class="overflow-x-auto">
@@ -363,5 +363,25 @@ defmodule RivaAshWeb.DevTools.PerformanceDashboardLive do
 
     # Helper functions
     defp get_page_title, do: Application.get_env(:riva_ash, __MODULE__, [])[:page_title] || "Performance Dashboard"
+
+    # Telemetry event handlers
+    defp handle_telemetry_event(_event, _measurements, _metadata, _config), do: :ok
+
+    defp handle_endpoint_stop(socket, _measurements, _metadata), do: socket
+
+    defp handle_router_dispatch_stop(socket, _measurements, _metadata), do: socket
+
+    defp handle_ash_query_stop(socket, _measurements, _metadata), do: socket
+
+    defp handle_ash_action_stop(socket, _measurements, _metadata), do: socket
+
+    defp handle_ecto_query(socket, _measurements, _metadata), do: socket
+
+    # Data update functions
+    defp update_memory_usage(socket), do: socket
+
+    defp update_connection_count(socket), do: socket
+
+    defp cleanup_old_data(socket), do: socket
   end
 end

@@ -1,12 +1,12 @@
 defmodule RivaAshWeb.Router do
   @moduledoc """
   Phoenix router configuration for Riva Ash web interface.
-  
+
   Defines all HTTP routes, WebSocket connections, and pipeline configurations
   for the application. This router provides a comprehensive routing structure
   that includes API endpoints, LiveView interfaces, authentication flows,
   and development tools.
-  
+
   The router is organized into logical sections:
   - API routes for JSON:API and GraphQL
   - Public routes for authentication and general access
@@ -39,18 +39,12 @@ defmodule RivaAshWeb.Router do
   @type controller_action :: atom()
   @type live_view_module :: atom()
 
-  @doc """
-  Pipeline configuration for different request types.
-  
-  Defines processing pipelines that can be applied to route scopes
-  to provide consistent request handling, authentication, and response formatting.
-  """
-  @spec pipeline(pipeline_name()) :: (Plug.Conn.t(), any() -> Plug.Conn.t())
-  defp pipeline(:api) do
+  # Pipeline configuration for different request types
+  pipeline :api do
     plug(:accepts, ["json"])
   end
 
-  defp pipeline(:browser) do
+  pipeline :browser do
     plug(:accepts, ["html"])
     plug(:fetch_session)
     plug(:fetch_live_flash)
@@ -60,11 +54,11 @@ defmodule RivaAshWeb.Router do
     plug(AuthHelpers, :fetch_current_user)
   end
 
-  defp pipeline(:authenticated_layout) do
+  pipeline :authenticated_layout do
     plug(:put_root_layout, html: {RivaAshWeb.Layouts, :authenticated})
   end
 
-  defp pipeline(:browser_no_layout) do
+  pipeline :browser_no_layout do
     plug(:accepts, ["html"])
     plug(:fetch_session)
     plug(:fetch_live_flash)
@@ -74,7 +68,7 @@ defmodule RivaAshWeb.Router do
     plug(AuthHelpers, :fetch_current_user)
   end
 
-  defp pipeline(:require_authenticated_user) do
+  pipeline :require_authenticated_user do
     plug(AuthHelpers, :require_authenticated_user)
   end
 
@@ -274,7 +268,7 @@ defmodule RivaAshWeb.Router do
 
   @doc """
   Validates the router configuration for common issues.
-  
+
   Performs runtime validation of the router configuration to ensure
   proper route ordering, pipeline usage, and configuration consistency.
   """

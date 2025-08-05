@@ -34,10 +34,10 @@ defmodule RivaAshWeb.Layouts do
 
   @doc """
   Renders the root layout with proper configuration and error handling.
-  
+
   ## Parameters
   - assigns: Map containing template assigns
-  
+
   ## Returns
   - Rendered HTML template
   """
@@ -50,10 +50,10 @@ defmodule RivaAshWeb.Layouts do
 
   @doc """
   Renders the app layout with proper configuration and error handling.
-  
+
   ## Parameters
   - assigns: Map containing template assigns
-  
+
   ## Returns
   - Rendered HTML template
   """
@@ -68,10 +68,10 @@ defmodule RivaAshWeb.Layouts do
 
   @doc """
   Builds layout configuration from assigns.
-  
+
   ## Parameters
   - assigns: Map containing template assigns
-  
+
   ## Returns
   - Layout configuration struct
   """
@@ -87,10 +87,10 @@ defmodule RivaAshWeb.Layouts do
 
   @doc """
   Extracts page title from assigns with fallback to default.
-  
+
   ## Parameters
   - assigns: Map containing template assigns
-  
+
   ## Returns
   - Page title string
   """
@@ -107,22 +107,29 @@ defmodule RivaAshWeb.Layouts do
 
   @doc """
   Renders the root HTML layout with proper structure.
-  
+
   ## Parameters
   - config: Layout configuration struct
-  
+
   ## Returns
   - Rendered HTML template
   """
   @spec render_root_layout(layout_config()) :: Phoenix.LiveView.Rendered.t()
   defp render_root_layout(config) do
+    assigns = %{
+      css_class: config.css_class,
+      page_title: config.page_title,
+      body_class: config.body_class,
+      inner_content: config.inner_content
+    }
+
     ~H"""
     <!DOCTYPE html>
     <html lang="en" class={@css_class}>
       <head>
         <meta charset="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <meta name="csrf-token" content={get_csrf_token()} />
+        <meta name="csrf-token" content={safe_get_csrf_token()} />
         <title><%= @page_title %></title>
         <link phx-track-static rel="stylesheet" href={~p"/assets/app.css"} />
         <script defer phx-track-static type="text/javascript" src={~p"/assets/app.js"}>
@@ -137,15 +144,20 @@ defmodule RivaAshWeb.Layouts do
 
   @doc """
   Renders the app layout with proper structure.
-  
+
   ## Parameters
   - config: Layout configuration struct
-  
+
   ## Returns
   - Rendered HTML template
   """
   @spec render_app_layout(layout_config()) :: Phoenix.LiveView.Rendered.t()
   defp render_app_layout(config) do
+    assigns = %{
+      flash: config.flash,
+      inner_content: config.inner_content
+    }
+
     ~H"""
     <main class="px-4 py-20 sm:px-6 lg:px-8">
       <div class="mx-auto max-w-2xl">
@@ -158,12 +170,12 @@ defmodule RivaAshWeb.Layouts do
 
   @doc """
   Safely gets CSRF token with error handling.
-  
+
   ## Returns
   - CSRF token string or empty string on error
   """
-  @spec get_csrf_token() :: String.t()
-  defp get_csrf_token() do
+  @spec safe_get_csrf_token() :: String.t()
+  defp safe_get_csrf_token() do
     case Controller.get_csrf_token() do
       token when is_binary(token) -> token
       _ -> ""

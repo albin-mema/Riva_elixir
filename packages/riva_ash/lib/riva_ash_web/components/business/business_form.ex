@@ -1,15 +1,15 @@
 defmodule RivaAshWeb.Components.Business.BusinessForm do
   @moduledoc """
   Reusable business form component for creating and editing businesses.
-  
+
   This component follows the functional core, imperative shell pattern,
   with pure functions for data transformation and stateless operations,
   while the LiveView component handles the imperative UI state management.
-  
+
   ## Styleguide Compliance
-  
+
   This module follows the Riva Ash styleguide principles:
-  
+
   - **Functional Programming**: Uses pure functions, pattern matching, and pipelines
   - **Type Safety**: Comprehensive type specifications with @spec annotations
   - **Single Level of Abstraction**: Each function has a clear, focused responsibility
@@ -19,7 +19,8 @@ defmodule RivaAshWeb.Components.Business.BusinessForm do
   - **Phoenix/Ash Integration**: Follows Phoenix LiveView and Ash framework patterns
   """
   use Phoenix.Component
-  
+  import Phoenix.HTML
+
   # Import UI components
   import SaladUI.Button
   import SaladUI.Card
@@ -32,7 +33,7 @@ defmodule RivaAshWeb.Components.Business.BusinessForm do
   @public_search_border_color Application.compile_env(:riva_ash, :public_search_border_color, "border-blue-200")
   @public_search_text_color Application.compile_env(:riva_ash, :public_search_text_color, "text-blue-900")
   @public_search_description_color Application.compile_env(:riva_ash, :public_search_description_color, "text-blue-700")
-  
+
   @location_bg_color Application.compile_env(:riva_ash, :location_bg_color, "bg-green-50")
   @location_border_color Application.compile_env(:riva_ash, :location_border_color, "border-green-200")
   @location_text_color Application.compile_env(:riva_ash, :location_text_color, "text-green-900")
@@ -51,11 +52,11 @@ defmodule RivaAshWeb.Components.Business.BusinessForm do
         on_change="validate_business"
         on_cancel="cancel_form"
       />
-  
+
   ## Type Information
 
   This component accepts the following attributes:
-  
+
     - `form`: A form struct containing the business data
     - `editing`: Boolean indicating if this is an edit operation (default: false)
     - `loading`: Boolean indicating if the form is in a loading state (default: false)
@@ -81,9 +82,9 @@ defmodule RivaAshWeb.Components.Business.BusinessForm do
 
   @doc """
   Renders field errors for a form field.
-  
+
   ## Type Information
-  
+
   This function accepts:
     - `field`: A form field struct containing validation errors
   """
@@ -102,9 +103,9 @@ defmodule RivaAshWeb.Components.Business.BusinessForm do
 
   @doc """
   Validates component assigns.
-  
+
   ## Type Information
-  
+
   @spec validate_assigns(map()) :: map()
   """
   defp validate_assigns(assigns) when is_map(assigns) do
@@ -122,9 +123,9 @@ defmodule RivaAshWeb.Components.Business.BusinessForm do
 
   @doc """
   Validates field assigns.
-  
+
   ## Type Information
-  
+
   @spec validate_field_assigns(map()) :: map()
   """
   defp validate_field_assigns(assigns) when is_map(assigns) do
@@ -142,14 +143,14 @@ defmodule RivaAshWeb.Components.Business.BusinessForm do
 
   @doc """
   Validates form structure.
-  
+
   ## Type Information
-  
+
   @spec validate_form_structure(map()) :: :ok | {:error, String.t()}
   """
   defp validate_form_structure(form) when is_map(form) do
     required_fields = [:name, :description, :is_public_searchable]
-    
+
     case Enum.all?(required_fields, &Map.has_key?(form, &1)) do
       true -> :ok
       false -> {:error, "Missing required form fields"}
@@ -162,9 +163,9 @@ defmodule RivaAshWeb.Components.Business.BusinessForm do
 
   @doc """
   Validates field structure.
-  
+
   ## Type Information
-  
+
   @spec validate_field_structure(map()) :: :ok | {:error, String.t()}
   """
   defp validate_field_structure(field) when is_map(field) do
@@ -180,9 +181,9 @@ defmodule RivaAshWeb.Components.Business.BusinessForm do
 
   @doc """
   Renders the main form structure.
-  
+
   ## Type Information
-  
+
   @spec render_form(map()) :: Phoenix.LiveView.Rendered.t()
   """
   defp render_form(assigns) do
@@ -203,11 +204,11 @@ defmodule RivaAshWeb.Components.Business.BusinessForm do
           phx-change={@on_change}
           class="space-y-6"
         >
-          <%= render_name_field(@form[:name]) %>
-          <%= render_description_field(@form[:description]) %>
-          <%= render_public_search_settings(@form) %>
-          <%= render_location_information(@form) %>
-          <%= render_form_actions(@editing, @loading, @on_cancel) %>
+          <.render_name_field name_field={@form[:name]} />
+          <.render_description_field description_field={@form[:description]} />
+          <.render_public_search_settings form={@form} public_search_bg_color={@public_search_bg_color} public_search_border_color={@public_search_border_color} public_search_text_color={@public_search_text_color} public_search_description_color={@public_search_description_color} />
+          <.render_location_information form={@form} location_bg_color={@location_bg_color} location_border_color={@location_border_color} location_text_color={@location_text_color} location_description_color={@location_description_color} />
+          <.render_form_actions editing={@editing} loading={@loading} on_cancel={@on_cancel} />
         </.form>
       </.card_content>
     </.card>
@@ -216,9 +217,9 @@ defmodule RivaAshWeb.Components.Business.BusinessForm do
 
   @doc """
   Renders field errors.
-  
+
   ## Type Information
-  
+
   @spec render_field_errors(map()) :: Phoenix.LiveView.Rendered.t()
   """
   defp render_field_errors(assigns) do
@@ -235,9 +236,9 @@ defmodule RivaAshWeb.Components.Business.BusinessForm do
 
   @doc """
   Generates form title based on editing state.
-  
+
   ## Type Information
-  
+
   @spec form_title(boolean()) :: String.t()
   """
   defp form_title(true), do: "Edit Business"
@@ -245,9 +246,9 @@ defmodule RivaAshWeb.Components.Business.BusinessForm do
 
   @doc """
   Generates form description based on editing state.
-  
+
   ## Type Information
-  
+
   @spec form_description(boolean()) :: String.t()
   """
   defp form_description(true), do: "Update the business information below."
@@ -255,55 +256,55 @@ defmodule RivaAshWeb.Components.Business.BusinessForm do
 
   @doc """
   Renders the name field section.
-  
+
   ## Type Information
-  
+
   @spec render_name_field(map()) :: Phoenix.LiveView.Rendered.t()
   """
-  defp render_name_field(name_field) do
+  defp render_name_field(assigns) do
     ~H"""
     <div class="space-y-2">
       <.label for="name">Business Name *</.label>
       <.input
-        field={name_field}
+        field={@name_field}
         type="text"
         placeholder="Enter business name"
         required
       />
-      <.field_errors field={name_field} />
+      <.field_errors field={@name_field} />
     </div>
     """
   end
 
   @doc """
   Renders the description field section.
-  
+
   ## Type Information
-  
+
   @spec render_description_field(map()) :: Phoenix.LiveView.Rendered.t()
   """
-  defp render_description_field(description_field) do
+  defp render_description_field(assigns) do
     ~H"""
     <div class="space-y-2">
       <.label for="description">Description</.label>
       <.textarea
-        field={description_field}
+        field={@description_field}
         placeholder="Enter business description (optional)"
         rows="4"
       />
-      <.field_errors field={description_field} />
+      <.field_errors field={@description_field} />
     </div>
     """
   end
 
   @doc """
   Renders public search settings section.
-  
+
   ## Type Information
-  
+
   @spec render_public_search_settings(map()) :: Phoenix.LiveView.Rendered.t()
   """
-  defp render_public_search_settings(form) do
+  defp render_public_search_settings(assigns) do
     ~H"""
     <div class={["space-y-4 p-4", @public_search_bg_color, "rounded-lg border", @public_search_border_color]}>
       <h3 class={["text-lg font-medium", @public_search_text_color]}>Public Search Settings</h3>
@@ -313,9 +314,9 @@ defmodule RivaAshWeb.Components.Business.BusinessForm do
         <input
           type="checkbox"
           id="is_public_searchable"
-          name={form[:is_public_searchable].name}
+          name={@form[:is_public_searchable].name}
           value="true"
-          checked={form[:is_public_searchable].value}
+          checked={@form[:is_public_searchable].value}
           class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
         />
         <.label for="is_public_searchable" class="text-sm font-medium text-gray-700">
@@ -326,12 +327,12 @@ defmodule RivaAshWeb.Components.Business.BusinessForm do
       <div class="space-y-2">
         <.label for="public_description">Public Description</.label>
         <.textarea
-          field={form[:public_description]}
+          field={@form[:public_description]}
           placeholder="Enter a public-facing description for search results (optional)"
           rows="3"
         />
         <p class="text-xs text-gray-500">This description will be shown to unregistered users in search results. Leave empty to use the main description.</p>
-        <.field_errors field={form[:public_description]} />
+        <.field_errors field={@form[:public_description]} />
       </div>
     </div>
     """
@@ -339,31 +340,31 @@ defmodule RivaAshWeb.Components.Business.BusinessForm do
 
   @doc """
   Renders location information section.
-  
+
   ## Type Information
-  
+
   @spec render_location_information(map()) :: Phoenix.LiveView.Rendered.t()
   """
-  defp render_location_information(form) do
+  defp render_location_information(assigns) do
     ~H"""
     <div class={["space-y-4 p-4", @location_bg_color, "rounded-lg border", @location_border_color]}>
       <h3 class={["text-lg font-medium", @location_text_color]}>Location Information</h3>
       <p class={["text-sm", @location_description_color]}>Help customers find you by providing location details.</p>
 
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <%= render_city_field(form[:city]) %>
-        <%= render_country_field(form[:country]) %>
+        <.render_city_field city_field={@form[:city]} />
+        <.render_country_field country_field={@form[:country]} />
       </div>
 
       <div class="space-y-2">
         <.label for="address">Full Address</.label>
         <.textarea
-          field={form[:address]}
+          field={@form[:address]}
           placeholder="Enter complete address (optional)"
           rows="2"
         />
         <p class="text-xs text-gray-500">This helps with local search and customer directions.</p>
-        <.field_errors field={form[:address]} />
+        <.field_errors field={@form[:address]} />
       </div>
     </div>
     """
@@ -371,70 +372,70 @@ defmodule RivaAshWeb.Components.Business.BusinessForm do
 
   @doc """
   Renders city field.
-  
+
   ## Type Information
-  
+
   @spec render_city_field(map()) :: Phoenix.LiveView.Rendered.t()
   """
-  defp render_city_field(city_field) do
+  defp render_city_field(assigns) do
     ~H"""
     <div class="space-y-2">
       <.label for="city">City</.label>
       <.input
-        field={city_field}
+        field={@city_field}
         type="text"
         placeholder="Enter city name"
       />
-      <.field_errors field={city_field} />
+      <.field_errors field={@city_field} />
     </div>
     """
   end
 
   @doc """
   Renders country field.
-  
+
   ## Type Information
-  
+
   @spec render_country_field(map()) :: Phoenix.LiveView.Rendered.t()
   """
-  defp render_country_field(country_field) do
+  defp render_country_field(assigns) do
     ~H"""
     <div class="space-y-2">
       <.label for="country">Country</.label>
       <.input
-        field={country_field}
+        field={@country_field}
         type="text"
         placeholder="Enter country name"
       />
-      <.field_errors field={country_field} />
+      <.field_errors field={@country_field} />
     </div>
     """
   end
 
   @doc """
   Renders form actions (submit and cancel buttons).
-  
+
   ## Type Information
-  
-  @spec render_form_actions(boolean(), boolean(), String.t()) :: Phoenix.LiveView.Rendered.t()
+
+  @spec render_form_actions(map()) :: Phoenix.LiveView.Rendered.t()
   """
-  defp render_form_actions(editing, loading, on_cancel) do
+  defp render_form_actions(assigns) do
     ~H"""
     <div class="flex gap-3 pt-4">
       <.button
         type="submit"
         variant="default"
-        disabled={loading}
+        disabled={@loading}
         class="flex items-center gap-2"
       >
-        <span :if={loading} class="animate-spin">⏳</span>
-        <%= submit_button_text(editing) %>
+        <span :if={@loading} class="animate-spin">⏳</span>
+        <%= submit_button_text(@editing) %>
       </.button>
 
       <.button
         type="button"
         variant="outline"
-        phx-click={on_cancel}
+        phx-click={@on_cancel}
       >
         Cancel
       </.button>
@@ -444,9 +445,9 @@ defmodule RivaAshWeb.Components.Business.BusinessForm do
 
   @doc """
   Generates submit button text based on editing state.
-  
+
   ## Type Information
-  
+
   @spec submit_button_text(boolean()) :: String.t()
   """
   defp submit_button_text(true), do: "Update Business"
@@ -454,9 +455,9 @@ defmodule RivaAshWeb.Components.Business.BusinessForm do
 
   @doc """
   Checks if a field has errors.
-  
+
   ## Type Information
-  
+
   @spec has_errors?(map()) :: boolean()
   """
   defp has_errors?(%{errors: errors}) when is_list(errors), do: length(errors) > 0
@@ -464,16 +465,14 @@ defmodule RivaAshWeb.Components.Business.BusinessForm do
 
   @doc """
   Renders error list as HTML paragraphs.
-  
+
   ## Type Information
-  
-  @spec render_error_list(list()) :: Phoenix.LiveView.Rendered.t()
+
+  @spec render_error_list(list()) :: list()
   """
   defp render_error_list(errors) when is_list(errors) do
     for error <- errors do
-      ~H"""
-      <p>• <%= error %></p>
-      """
+      raw("<p>• #{Phoenix.HTML.html_escape(error)}</p>")
     end
   end
 
@@ -487,14 +486,14 @@ defmodule RivaAshWeb.Components.Business.BusinessForm do
 
   @doc """
   Validates required assigns.
-  
+
   ## Type Information
-  
+
   @spec validate_required(map(), list()) :: :ok | {:error, String.t()}
   """
   defp validate_required(assigns, required_keys) when is_map(assigns) and is_list(required_keys) do
     missing_keys = required_keys -- Map.keys(assigns)
-    
+
     case length(missing_keys) do
       0 -> :ok
       _ -> {:error, "Missing required keys: #{Enum.join(missing_keys, ", ")}"}

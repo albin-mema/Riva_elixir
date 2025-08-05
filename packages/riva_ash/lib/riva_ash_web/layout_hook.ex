@@ -1,7 +1,7 @@
 defmodule RivaAshWeb.LayoutHook do
   @moduledoc """
   A module that provides layout handling for LiveViews.
-  
+
   This module ensures that authenticated LiveViews use the appropriate
   layout by automatically setting the layout attribute during compilation.
   It provides a clean way to manage layout consistency across the
@@ -9,18 +9,18 @@ defmodule RivaAshWeb.LayoutHook do
   """
 
   @type opts :: keyword()
-  @type module :: atom()
+  @type module_name :: atom()
 
   @doc """
   Macro hook that sets up automatic layout assignment for LiveViews.
-  
+
   When used in a LiveView module, this macro automatically sets the
   authenticated layout as the default, ensuring consistent UI structure
   across all authenticated views.
-  
+
   ## Parameters
     - `_opts`: Configuration options (currently unused but reserved for future)
-  
+
   ## Usage
       defmodule MyLiveView do
         use RivaAshWeb, :live_view
@@ -38,14 +38,14 @@ defmodule RivaAshWeb.LayoutHook do
 
   @doc """
   Compilation hook that ensures layout consistency.
-  
+
   This macro runs before module compilation and ensures that if no
   explicit layout is set, the authenticated layout is used as a fallback.
   This prevents accidental layout omissions and maintains UI consistency.
-  
+
   ## Parameters
     - `_env`: The compilation environment (unused but required by the hook)
-  
+
   ## Behavior
     - Checks if the module has an explicit @layout attribute
     - If no layout is set, automatically assigns the authenticated layout
@@ -63,13 +63,13 @@ defmodule RivaAshWeb.LayoutHook do
 
   @doc """
   Validates that a module has properly configured layout settings.
-  
+
   Provides runtime validation to ensure that LiveView modules have
   appropriate layout configuration for proper rendering.
-  
+
   ## Parameters
     - `module`: The module to validate for layout configuration
-  
+
   ## Returns
     `:ok` if layout is properly configured
     `{:error, reason}` if layout configuration is missing or invalid
@@ -94,13 +94,13 @@ defmodule RivaAshWeb.LayoutHook do
 
   @doc """
   Retrieves the configured layout for a given module.
-  
+
   Extracts the layout configuration from a module's attributes
   for use in dynamic layout resolution or debugging.
-  
+
   ## Parameters
     - `module`: The module to retrieve layout configuration from
-  
+
   ## Returns
     The layout tuple `{layout_module, layout_function}` or `nil` if not configured
   """

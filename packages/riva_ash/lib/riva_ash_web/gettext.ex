@@ -19,7 +19,7 @@ defmodule RivaAshWeb.Gettext do
       dgettext("errors", "Here is the error message to translate")
 
   See the [Gettext Docs](https://hexdocs.pm/gettext) for detailed usage.
-  
+
   This module provides enhanced internationalization support with
   locale management, fallback handling, and configuration-driven
   locale selection for the Riva Ash application.
@@ -35,7 +35,7 @@ defmodule RivaAshWeb.Gettext do
 
   @doc """
   Returns the gettext backend identifier for the application.
-  
+
   This is used by Gettext to identify the translation files
   and compiled message catalogs for this application.
   """
@@ -44,7 +44,7 @@ defmodule RivaAshWeb.Gettext do
 
   @doc """
   Returns the default locale for the application.
-  
+
   Falls back to "en" (English) if no default locale is configured
   in the application environment.
   """
@@ -53,7 +53,7 @@ defmodule RivaAshWeb.Gettext do
 
   @doc """
   Returns the list of supported locales for the application.
-  
+
   Defaults to English ("en") and Albanian ("sq") if no specific
   locales are configured in the application environment.
   """
@@ -62,7 +62,7 @@ defmodule RivaAshWeb.Gettext do
 
   @doc """
   Retrieves the current active locale from the Gettext backend.
-  
+
   Returns the locale that is currently set for translation operations.
   """
   @spec get_locale() :: locale()
@@ -72,13 +72,13 @@ defmodule RivaAshWeb.Gettext do
 
   @doc """
   Sets the current locale for translation operations.
-  
+
   Updates the active locale in the Gettext backend. This affects
   all subsequent translation operations until the locale is changed.
-  
+
   ## Parameters
     - `locale`: The locale code to set (e.g., "en", "sq")
-  
+
   ## Returns
     `:ok` when the locale is successfully set
   """
@@ -89,18 +89,18 @@ defmodule RivaAshWeb.Gettext do
 
   @doc """
   Executes a function with a temporarily set locale.
-  
+
   Sets the specified locale, executes the provided function, and then
   restores the original locale. This is useful for localized operations
   without permanently changing the global locale state.
-  
+
   ## Parameters
     - `locale`: The locale to use for the function execution
     - `func`: A zero-arity function to execute with the specified locale
-  
+
   ## Returns
     The result of the function execution
-  
+
   ## Example
       with_locale("sq", fn ->
         gettext("Welcome")  # Will be translated to Albanian
@@ -118,6 +118,6 @@ defmodule RivaAshWeb.Gettext do
   # Configure the Gettext backend with application-specific settings
   use Gettext.Backend,
     otp_app: :riva_ash,
-    default_locale: default_locale(),
-    supported_locales: supported_locales()
+    default_locale: Application.compile_env(:riva_ash, :default_locale, "en"),
+    supported_locales: Application.compile_env(:riva_ash, :supported_locales, ["en", "sq"])
 end

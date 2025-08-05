@@ -2,7 +2,7 @@ defmodule RivaAsh.Resources.ItemSchedule do
   @moduledoc """
   Represents recurring availability schedules for items.
   Defines when items are available on a weekly recurring basis.
-  
+
   This resource manages weekly recurring schedules for item availability,
   supporting both available and blocked time periods for each day of the week.
   """
@@ -251,15 +251,15 @@ defmodule RivaAsh.Resources.ItemSchedule do
       public?(true)
       description("Duration of this schedule window in minutes")
     end
-  
+
     # Helper functions for business logic and data validation
-  
+
     @doc """
     Checks if the item schedule is currently active (not archived).
-    
+
     ## Parameters
     - item_schedule: The item schedule record to check
-    
+
     ## Returns
     - `true` if the schedule is active, `false` otherwise
     """
@@ -271,25 +271,25 @@ defmodule RivaAsh.Resources.ItemSchedule do
         _ -> false
       end
     end
-  
+
     @doc """
     Checks if the item is available during this schedule.
-    
+
     ## Parameters
     - item_schedule: The item schedule record to check
-    
+
     ## Returns
     - `true` if available, `false` if blocked
     """
     @spec is_available?(t()) :: boolean()
     def is_available?(item_schedule), do: item_schedule.is_available
-  
+
     @doc """
     Gets the day name for the schedule.
-    
+
     ## Parameters
     - item_schedule: The item schedule record
-    
+
     ## Returns
     - String with the day name
     """
@@ -306,13 +306,13 @@ defmodule RivaAsh.Resources.ItemSchedule do
         _ -> "Unknown"
       end
     end
-  
+
     @doc """
     Checks if the schedule is for a weekday.
-    
+
     ## Parameters
     - item_schedule: The item schedule record to check
-    
+
     ## Returns
     - `true` if weekday, `false` if weekend
     """
@@ -320,13 +320,13 @@ defmodule RivaAsh.Resources.ItemSchedule do
     def is_weekday?(item_schedule) do
       item_schedule.day_of_week >= 1 and item_schedule.day_of_week <= 5
     end
-  
+
     @doc """
     Checks if the schedule is for a weekend.
-    
+
     ## Parameters
     - item_schedule: The item schedule record to check
-    
+
     ## Returns
     - `true` if weekend, `false` if weekday
     """
@@ -334,13 +334,13 @@ defmodule RivaAsh.Resources.ItemSchedule do
     def is_weekend?(item_schedule) do
       item_schedule.day_of_week == 0 or item_schedule.day_of_week == 6
     end
-  
+
     @doc """
     Gets the duration of the schedule in minutes.
-    
+
     ## Parameters
     - item_schedule: The item schedule record
-    
+
     ## Returns
     - Integer with duration in minutes
     """
@@ -349,7 +349,7 @@ defmodule RivaAsh.Resources.ItemSchedule do
       # Calculate the difference between end_time and start_time in minutes
       start_seconds = Time.to_second_after_midnight(item_schedule.start_time)
       end_seconds = Time.to_second_after_midnight(item_schedule.end_time)
-      
+
       # Handle overnight schedules
       if end_seconds < start_seconds do
         end_seconds + 24 * 3600 - start_seconds
@@ -358,13 +358,13 @@ defmodule RivaAsh.Resources.ItemSchedule do
       end
       |> div(60)
     end
-  
+
     @doc """
     Gets the formatted duration of the schedule.
-    
+
     ## Parameters
     - item_schedule: The item schedule record
-    
+
     ## Returns
     - String with formatted duration
     """
@@ -372,13 +372,13 @@ defmodule RivaAsh.Resources.ItemSchedule do
     def formatted_duration(item_schedule) do
       duration_minutes(item_schedule) |> format_duration_minutes()
     end
-  
+
     @doc """
     Formats the time range for display.
-    
+
     ## Parameters
     - item_schedule: The item schedule record
-    
+
     ## Returns
     - String with formatted time range
     """
@@ -386,14 +386,14 @@ defmodule RivaAsh.Resources.ItemSchedule do
     def formatted_time_range(item_schedule) do
       "#{Time.to_string(item_schedule.start_time)} - #{Time.to_string(item_schedule.end_time)}"
     end
-  
+
     @doc """
     Checks if the schedule covers a specific time.
-    
+
     ## Parameters
     - item_schedule: The item schedule record to check
     - time: Time to check against
-    
+
     ## Returns
     - `true` if the time is within the schedule, `false` otherwise
     """
@@ -402,7 +402,7 @@ defmodule RivaAsh.Resources.ItemSchedule do
       start_seconds = Time.to_second_after_midnight(item_schedule.start_time)
       end_seconds = Time.to_second_after_midnight(item_schedule.end_time)
       target_seconds = Time.to_second_after_midnight(time)
-      
+
       # Handle overnight schedules
       if end_seconds < start_seconds do
         target_seconds >= start_seconds or target_seconds <= end_seconds
@@ -410,14 +410,14 @@ defmodule RivaAsh.Resources.ItemSchedule do
         target_seconds >= start_seconds and target_seconds <= end_seconds
       end
     end
-  
+
     @doc """
     Checks if the schedule overlaps with another schedule.
-    
+
     ## Parameters
     - item_schedule: The item schedule record to check
     - other_schedule: Another item schedule record to compare against
-    
+
     ## Returns
     - `true` if overlapping, `false` otherwise
     """
@@ -432,13 +432,13 @@ defmodule RivaAsh.Resources.ItemSchedule do
         false
       end
     end
-  
+
     @doc """
     Validates that the item schedule has all required relationships.
-    
+
     ## Parameters
     - item_schedule: The item schedule record to validate
-    
+
     ## Returns
     - `{:ok, item_schedule}` if valid
     - `{:error, reason}` if invalid
@@ -448,18 +448,18 @@ defmodule RivaAsh.Resources.ItemSchedule do
       cond do
         is_nil(item_schedule.item) ->
           {:error, "Item relationship is missing"}
-        
+
         true ->
           {:ok, item_schedule}
       end
     end
-  
+
     @doc """
     Gets the item name associated with this schedule.
-    
+
     ## Parameters
     - item_schedule: The item schedule record
-    
+
     ## Returns
     - String with the item name
     """
@@ -470,13 +470,13 @@ defmodule RivaAsh.Resources.ItemSchedule do
         _ -> "Unknown item"
       end
     end
-  
+
     @doc """
     Formats the complete schedule information for display.
-    
+
     ## Parameters
     - item_schedule: The item schedule record
-    
+
     ## Returns
     - String with complete schedule information
     """
@@ -494,13 +494,13 @@ defmodule RivaAsh.Resources.ItemSchedule do
           "Archived schedule for #{item_name(item_schedule)}"
       end
     end
-  
+
     @doc """
     Checks if the schedule is valid (start time before end time).
-    
+
     ## Parameters
     - item_schedule: The item schedule record to check
-    
+
     ## Returns
     - `true` if valid, `false` otherwise
     """
@@ -508,17 +508,17 @@ defmodule RivaAsh.Resources.ItemSchedule do
     def is_valid?(item_schedule) do
       start_seconds = Time.to_second_after_midnight(item_schedule.start_time)
       end_seconds = Time.to_second_after_midnight(item_schedule.end_time)
-      
+
       # Allow overnight schedules (end time before start time)
       start_seconds != end_seconds
     end
-  
+
     @doc """
     Gets the next occurrence of this schedule.
-    
+
     ## Parameters
     - item_schedule: The item schedule record
-    
+
     ## Returns
     - `{:ok, DateTime.t()}` with the next occurrence, or `{:error, reason}`
     """
@@ -528,7 +528,7 @@ defmodule RivaAsh.Resources.ItemSchedule do
            true <- is_active?(item_schedule) do
         # Get the current date and time
         now = DateTime.utc_now()
-        
+
         # Calculate the next occurrence
         days_until_next = case item_schedule.day_of_week do
           0 -> # Sunday
@@ -539,23 +539,23 @@ defmodule RivaAsh.Resources.ItemSchedule do
           _ ->
             case now.weekday do
               day when day < item_schedule.day_of_week -> item_schedule.day_of_week - day
-              _ -> 7 - (day - item_schedule.day_of_week)
+              _ -> 7 - (now.weekday - item_schedule.day_of_week)
             end
         end
-        
+
         # Create the next occurrence datetime
         next_date = Date.add(now, days_until_next)
         next_datetime = DateTime.new!(next_date, item_schedule.start_time, "Etc/UTC")
-        
+
         {:ok, next_datetime}
       else
         false -> {:error, "Invalid schedule"}
         false -> {:error, "Schedule is not active"}
       end
     end
-  
+
     # Private helper functions
-  
+
     defp format_duration_minutes(minutes) when minutes < 60, do: "#{minutes} minutes"
     defp format_duration_minutes(minutes) when minutes == 60, do: "1 hour"
     defp format_duration_minutes(minutes) when minutes < 1440, do: "#{div(minutes, 60)} hours"

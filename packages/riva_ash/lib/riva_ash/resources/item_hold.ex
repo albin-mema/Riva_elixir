@@ -333,21 +333,22 @@ defmodule RivaAsh.Resources.ItemHold do
       # If we can't check, allow the operation
       {:error, _} -> :ok
     end
-  
-    # Helper functions for business logic and data validation
-  
-    @doc """
-    Checks if the item hold is currently active.
-    
-    ## Parameters
-    - item_hold: The item hold record to check
-    
-    ## Returns
-    - `true` if the hold is active, `false` otherwise
-    """
-    @spec is_active?(t()) :: boolean()
-    def is_active?(item_hold) do
-      with %{is_active: true, archived_at: nil} <- item_hold do
+  end
+
+  # Helper functions for business logic and data validation
+
+  @doc """
+  Checks if the item hold is currently active.
+
+  ## Parameters
+  - item_hold: The item hold record to check
+
+  ## Returns
+  - `true` if the hold is active, `false` otherwise
+  """
+  @spec is_active?(t()) :: boolean()
+  def is_active?(item_hold) do
+    with %{is_active: true, archived_at: nil} <- item_hold do
         # Check if the hold has expired
         case DateTime.compare(item_hold.expires_at, DateTime.utc_now()) do
           :gt -> true
@@ -357,13 +358,13 @@ defmodule RivaAsh.Resources.ItemHold do
         _ -> false
       end
     end
-  
+
     @doc """
     Checks if the item hold has expired.
-    
+
     ## Parameters
     - item_hold: The item hold record to check
-    
+
     ## Returns
     - `true` if the hold has expired, `false` otherwise
     """
@@ -378,13 +379,13 @@ defmodule RivaAsh.Resources.ItemHold do
         _ -> false
       end
     end
-  
+
     @doc """
     Gets the remaining time until the hold expires.
-    
+
     ## Parameters
     - item_hold: The item hold record
-    
+
     ## Returns
     - `{:ok, seconds}` with remaining seconds, or `{:error, reason}` if invalid
     """
@@ -398,13 +399,13 @@ defmodule RivaAsh.Resources.ItemHold do
         {:error, reason} -> {:error, reason}
       end
     end
-  
+
     @doc """
     Formats the remaining time in a human-readable format.
-    
+
     ## Parameters
     - item_hold: The item hold record
-    
+
     ## Returns
     - String with formatted remaining time or "Expired"
     """
@@ -413,21 +414,21 @@ defmodule RivaAsh.Resources.ItemHold do
       case remaining_time(item_hold) do
         {:ok, seconds} when seconds > 0 ->
           format_duration(seconds)
-        
+
         {:ok, _} ->
           "Expired"
-        
+
         {:error, _} ->
           "Invalid hold"
       end
     end
-  
+
     @doc """
     Gets the duration of the hold in minutes.
-    
+
     ## Parameters
     - item_hold: The item hold record
-    
+
     ## Returns
     - Integer with duration in minutes
     """
@@ -435,13 +436,13 @@ defmodule RivaAsh.Resources.ItemHold do
     def duration_minutes(item_hold) do
       DateTime.diff(item_hold.reserved_until, item_hold.reserved_from, :second) |> div(60)
     end
-  
+
     @doc """
     Gets the hold duration in a human-readable format.
-    
+
     ## Parameters
     - item_hold: The item hold record
-    
+
     ## Returns
     - String with formatted duration
     """
@@ -449,15 +450,15 @@ defmodule RivaAsh.Resources.ItemHold do
     def formatted_duration(item_hold) do
       duration_minutes(item_hold) |> format_duration_minutes()
     end
-  
+
     @doc """
     Checks if the hold is for the specified time range.
-    
+
     ## Parameters
     - item_hold: The item hold record
     - start_time: Start time to check against
     - end_time: End time to check against
-    
+
     ## Returns
     - `true` if the hold overlaps with the specified time range, `false` otherwise
     """
@@ -466,13 +467,13 @@ defmodule RivaAsh.Resources.ItemHold do
       DateTime.compare(item_hold.reserved_until, start_time) == :gt and
         DateTime.compare(item_hold.reserved_from, end_time) == :lt
     end
-  
+
     @doc """
     Releases the hold by marking it as inactive.
-    
+
     ## Parameters
     - item_hold: The item hold record to release
-    
+
     ## Returns
     - `{:ok, updated_hold}` if successful
     - `{:error, reason}` if failed
@@ -484,14 +485,14 @@ defmodule RivaAsh.Resources.ItemHold do
         {:error, reason} -> {:error, "Failed to release hold: #{inspect(reason)}"}
       end
     end
-  
+
     @doc """
     Extends the hold duration by the specified number of minutes.
-    
+
     ## Parameters
     - item_hold: The item hold record to extend
     - additional_minutes: Number of minutes to add
-    
+
     ## Returns
     - `{:ok, updated_hold}` if successful
     - `{:error, reason}` if failed
@@ -503,17 +504,17 @@ defmodule RivaAsh.Resources.ItemHold do
         {:error, reason} -> {:error, "Failed to extend hold: #{inspect(reason)}"}
       end
     end
-  
+
     def extend(_item_hold, additional_minutes) do
       {:error, "Additional minutes must be positive"}
     end
-  
+
     @doc """
     Validates that the hold has all required relationships.
-    
+
     ## Parameters
     - item_hold: The item hold record to validate
-    
+
     ## Returns
     - `{:ok, item_hold}` if valid
     - `{:error, reason}` if invalid
@@ -523,21 +524,21 @@ defmodule RivaAsh.Resources.ItemHold do
       cond do
         is_nil(item_hold.item) ->
           {:error, "Item relationship is missing"}
-        
+
         is_nil(item_hold.client) ->
           {:error, "Client relationship is missing"}
-        
+
         true ->
           {:ok, item_hold}
       end
     end
-  
+
     @doc """
     Checks if the hold can be extended.
-    
+
     ## Parameters
     - item_hold: The item hold record to check
-    
+
     ## Returns
     - `true` if the hold can be extended, `false` otherwise
     """
@@ -551,13 +552,13 @@ defmodule RivaAsh.Resources.ItemHold do
         _ -> false
       end
     end
-  
+
     @doc """
     Gets the maximum extension time for the hold.
-    
+
     ## Parameters
     - item_hold: The item hold record
-    
+
     ## Returns
     - Integer with maximum additional minutes allowed
     """
@@ -571,13 +572,13 @@ defmodule RivaAsh.Resources.ItemHold do
         _ -> 0
       end
     end
-  
+
     @doc """
     Formats the hold information for display.
-    
+
     ## Parameters
     - item_hold: The item hold record
-    
+
     ## Returns
     - String with formatted hold information
     """
@@ -593,17 +594,17 @@ defmodule RivaAsh.Resources.ItemHold do
           "Hold on '#{item_hold.item.name}' has expired"
       end
     end
-  
+
     # Private helper functions
-  
+
     defp format_duration(seconds) when seconds < 60, do: "#{seconds} seconds"
     defp format_duration(seconds) when seconds < 3600, do: "#{div(seconds, 60)} minutes"
     defp format_duration(seconds), do: "#{div(seconds, 3600)} hours"
-  
+
     defp format_duration_minutes(minutes) when minutes < 60, do: "#{minutes} minutes"
     defp format_duration_minutes(minutes) when minutes == 60, do: "1 hour"
     defp format_duration_minutes(minutes), do: "#{div(minutes, 60)} hours"
-  
+
     defp display_name(client) do
       case client do
         %{first_name: first, last_name: last} when is_binary(first) and is_binary(last) ->
@@ -615,5 +616,4 @@ defmodule RivaAsh.Resources.ItemHold do
         _ -> "Unknown client"
       end
     end
-  end
 end

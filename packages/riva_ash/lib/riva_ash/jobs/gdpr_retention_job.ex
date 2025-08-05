@@ -164,20 +164,22 @@ defmodule RivaAsh.Jobs.GDPRRetentionJob do
 
   @spec handle_cleanup_result(job_result(), integer(), String.t(), state()) :: {:noreply, state()}
   defp handle_cleanup_result({:ok, cleanup_data}, start_time, schedule, state) do
-    cleanup_data
+    updated_state = cleanup_data
     |> extract_cleanup_metrics()
     |> update_state_with_results(state)
     |> log_successful_cleanup(start_time)
     |> handle_compliance_alerts()
-    |> schedule_next_run(schedule)
+
+    schedule_next_run(schedule)
+    {:noreply, updated_state}
   end
 
   defp handle_cleanup_result({:error, reason}, _start_time, _schedule, state) do
     reason
     |> log_cleanup_failure()
     |> send_failure_alert()
-    |> schedule_retry()
 
+    schedule_retry()
     {:noreply, state}
   end
 
@@ -257,9 +259,8 @@ defmodule RivaAsh.Jobs.GDPRRetentionJob do
 
   @spec has_compliance_issues?(map()) :: boolean()
   defp has_compliance_issues?(results) do
-    results
-    |> calculate_total_processed()
-    |> exceeds_threshold?()
+    total_processed = calculate_total_processed(results)
+    exceeds_threshold?(total_processed, results)
   end
 
   @spec calculate_total_processed(map()) :: integer()
@@ -269,8 +270,8 @@ defmodule RivaAsh.Jobs.GDPRRetentionJob do
     |> Enum.sum()
   end
 
-  @spec exceeds_threshold?(integer()) :: boolean()
-  defp exceeds_threshold?(total_processed) do
+  @spec exceeds_threshold?(integer(), map()) :: boolean()
+  defp exceeds_threshold?(total_processed, results) do
     total_processed > 1000 or Map.get(results, :errors, 0) > 0
   end
 
@@ -292,12 +293,13 @@ defmodule RivaAsh.Jobs.GDPRRetentionJob do
     # send_notification(:compliance_team, :gdpr_alert, alert_data)
   end
 
-  @spec send_failure_alert(term()) :: :ok
+  @spec send_failure_alert(term()) :: term()
   defp send_failure_alert(error) do
     error
     |> build_failure_alert()
     |> log_failure_alert()
-    |> schedule_retry()
+
+    error
   end
 
   @spec build_failure_alert(term()) :: map()

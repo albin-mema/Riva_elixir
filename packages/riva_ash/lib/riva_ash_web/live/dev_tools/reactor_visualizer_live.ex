@@ -429,5 +429,19 @@ defmodule RivaAshWeb.DevTools.ReactorVisualizerLive do
 
     # Helper functions
     defp get_page_title, do: Application.get_env(:riva_ash, __MODULE__, [])[:page_title] || "Reactor Flow Visualizer"
+
+    # Reactor execution functions
+    defp execute_reactor_with_tracking(_reactor, _inputs) do
+      {:ok, %{result: "Mock execution result"}}
+    end
+
+    # Rendering functions
+    defp render_text_flow(assigns) do
+      ~H"""
+      <div class="text-sm text-gray-600">
+        <p>Text flow visualization for reactor: <%= @reactor %></p>
+      </div>
+      """
+    end
   end
 end

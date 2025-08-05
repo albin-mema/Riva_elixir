@@ -1,7 +1,7 @@
 defmodule RivaAshWeb.DevTools.AshInspectorLive do
   @moduledoc """
   Development tool for inspecting Ash queries, policies, and authorization decisions in real-time.
-  
+
   Features:
   - Live query monitoring
   - Policy evaluation breakdown
@@ -59,23 +59,23 @@ defmodule RivaAshWeb.DevTools.AshInspectorLive do
 
     @impl true
     def handle_info({:telemetry_event, event, measurements, metadata}, socket) do
-      socket = 
+      socket =
         case event do
           [:ash, :query, :start] ->
             add_query_start(socket, measurements, metadata)
-          
+
           [:ash, :query, :stop] ->
             update_query_stop(socket, measurements, metadata)
-          
+
           [:ash, :policy, :evaluation] ->
             add_policy_evaluation(socket, measurements, metadata)
-          
+
           [:ash, :action, :start] ->
             add_action_start(socket, measurements, metadata)
-          
+
           [:ash, :action, :stop] ->
             update_action_stop(socket, measurements, metadata)
-          
+
           _ ->
             socket
         end
@@ -118,7 +118,7 @@ defmodule RivaAshWeb.DevTools.AshInspectorLive do
                 >
                   Queries (<%= length(@queries) %>)
                 </button>
-                
+
                 <button
                   phx-click="change_tab"
                   phx-value-tab="policies"
@@ -129,7 +129,7 @@ defmodule RivaAshWeb.DevTools.AshInspectorLive do
                 >
                   Policies (<%= length(@policies) %>)
                 </button>
-                
+
                 <button
                   phx-click="change_tab"
                   phx-value-tab="actions"
@@ -153,7 +153,7 @@ defmodule RivaAshWeb.DevTools.AshInspectorLive do
                     <option value="Reservation">Reservation</option>
                     <option value="Client">Client</option>
                   </select>
-                  
+
                   <select phx-change="filter_action" class="rounded border-gray-300">
                     <option value="all">All Actions</option>
                     <option value="read">Read</option>
@@ -162,7 +162,7 @@ defmodule RivaAshWeb.DevTools.AshInspectorLive do
                     <option value="destroy">Destroy</option>
                   </select>
                 </div>
-                
+
                 <button
                   phx-click="clear_logs"
                   class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700"
@@ -206,14 +206,14 @@ defmodule RivaAshWeb.DevTools.AshInspectorLive do
                 </div>
               </div>
             </div>
-            
+
             <%= if query.filter do %>
               <div class="mt-2">
                 <span class="text-sm font-medium text-gray-700">Filter:</span>
                 <pre class="text-xs bg-white p-2 rounded mt-1 overflow-x-auto"><%= inspect(query.filter, pretty: true) %></pre>
               </div>
             <% end %>
-            
+
             <%= if query.error do %>
               <div class="mt-2 p-2 bg-red-100 border border-red-300 rounded">
                 <span class="text-sm font-medium text-red-700">Error:</span>
@@ -222,7 +222,7 @@ defmodule RivaAshWeb.DevTools.AshInspectorLive do
             <% end %>
           </div>
         <% end %>
-        
+
         <%= if @queries == [] do %>
           <div class="text-center text-gray-500 py-8">
             No queries recorded yet. Interact with your application to see Ash queries here.
@@ -253,14 +253,14 @@ defmodule RivaAshWeb.DevTools.AshInspectorLive do
               </div>
               <div class="text-sm text-gray-500"><%= policy.timestamp %></div>
             </div>
-            
+
             <%= if policy.actor do %>
               <div class="mt-2">
                 <span class="text-sm font-medium text-gray-700">Actor:</span>
                 <span class="text-sm text-gray-600 ml-1"><%= inspect(policy.actor) %></span>
               </div>
             <% end %>
-            
+
             <%= if policy.policies do %>
               <div class="mt-2">
                 <span class="text-sm font-medium text-gray-700">Policy Breakdown:</span>
@@ -284,7 +284,7 @@ defmodule RivaAshWeb.DevTools.AshInspectorLive do
             <% end %>
           </div>
         <% end %>
-        
+
         <%= if @policies == [] do %>
           <div class="text-center text-gray-500 py-8">
             No policy evaluations recorded yet.
@@ -315,14 +315,14 @@ defmodule RivaAshWeb.DevTools.AshInspectorLive do
                 </div>
               </div>
             </div>
-            
+
             <%= if action.input do %>
               <div class="mt-2">
                 <span class="text-sm font-medium text-gray-700">Input:</span>
                 <pre class="text-xs bg-white p-2 rounded mt-1 overflow-x-auto"><%= inspect(action.input, pretty: true, limit: :infinity) %></pre>
               </div>
             <% end %>
-            
+
             <%= if action.error do %>
               <div class="mt-2 p-2 bg-red-100 border border-red-300 rounded">
                 <span class="text-sm font-medium text-red-700">Error:</span>
@@ -331,7 +331,7 @@ defmodule RivaAshWeb.DevTools.AshInspectorLive do
             <% end %>
           </div>
         <% end %>
-        
+
         <%= if @actions == [] do %>
           <div class="text-center text-gray-500 py-8">
             No actions recorded yet.
@@ -343,5 +343,23 @@ defmodule RivaAshWeb.DevTools.AshInspectorLive do
 
     # Helper functions
     defp get_page_title, do: Application.get_env(:riva_ash, __MODULE__, [])[:page_title] || "Ash Inspector"
+
+    # Telemetry event handlers
+    defp handle_telemetry_event(_event, _measurements, _metadata, _config), do: :ok
+
+    defp add_query_start(socket, _measurements, _metadata), do: socket
+
+    defp update_query_stop(socket, _measurements, _metadata), do: socket
+
+    defp add_policy_evaluation(socket, _measurements, _metadata), do: socket
+
+    defp add_action_start(socket, _measurements, _metadata), do: socket
+
+    defp update_action_stop(socket, _measurements, _metadata), do: socket
+
+    # Filter functions
+    defp filter_queries(queries, _resource_filter, _action_filter), do: queries
+
+    defp filter_actions(actions, _resource_filter, _action_filter), do: actions
   end
 end

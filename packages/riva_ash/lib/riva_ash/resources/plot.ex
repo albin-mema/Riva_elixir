@@ -235,10 +235,10 @@ defmodule RivaAsh.Resources.Plot do
 
   @doc """
   Checks if the plot is currently active (not archived).
-  
+
   ## Parameters
   - plot: The plot record to check
-  
+
   ## Returns
   - `true` if the plot is active, `false` otherwise
   """
@@ -253,10 +253,10 @@ defmodule RivaAsh.Resources.Plot do
 
   @doc """
   Checks if the plot has a valid area measurement.
-  
+
   ## Parameters
   - plot: The plot record to check
-  
+
   ## Returns
   - `true` if has valid area, `false` otherwise
   """
@@ -271,10 +271,10 @@ defmodule RivaAsh.Resources.Plot do
 
   @doc """
   Gets the area unit description as a human-readable string.
-  
+
   ## Parameters
   - plot: The plot record
-  
+
   ## Returns
   - String with area unit description
   """
@@ -293,10 +293,10 @@ defmodule RivaAsh.Resources.Plot do
 
   @doc """
   Gets the formatted total area.
-  
+
   ## Parameters
   - plot: The plot record
-  
+
   ## Returns
   - String with formatted total area or "No area specified"
   """
@@ -311,10 +311,10 @@ defmodule RivaAsh.Resources.Plot do
 
   @doc """
   Gets the formatted address.
-  
+
   ## Parameters
   - plot: The plot record
-  
+
   ## Returns
   - String with formatted address or "No address specified"
   """
@@ -329,10 +329,10 @@ defmodule RivaAsh.Resources.Plot do
 
   @doc """
   Gets the section count for this plot.
-  
+
   ## Parameters
   - plot: The plot record
-  
+
   ## Returns
   - Integer with section count
   """
@@ -347,10 +347,10 @@ defmodule RivaAsh.Resources.Plot do
 
   @doc """
   Checks if this plot has any sections.
-  
+
   ## Parameters
   - plot: The plot record to check
-  
+
   ## Returns
   - `true` if sections exist, `false` otherwise
   """
@@ -359,10 +359,10 @@ defmodule RivaAsh.Resources.Plot do
 
   @doc """
   Gets the layout count for this plot.
-  
+
   ## Parameters
   - plot: The plot record
-  
+
   ## Returns
   - Integer with layout count
   """
@@ -377,10 +377,10 @@ defmodule RivaAsh.Resources.Plot do
 
   @doc """
   Checks if this plot has any layouts.
-  
+
   ## Parameters
   - plot: The plot record to check
-  
+
   ## Returns
   - `true` if layouts exist, `false` otherwise
   """
@@ -389,10 +389,10 @@ defmodule RivaAsh.Resources.Plot do
 
   @doc """
   Validates that the plot has all required relationships.
-  
+
   ## Parameters
   - plot: The plot record to validate
-  
+
   ## Returns
   - `{:ok, plot}` if valid
   - `{:error, reason}` if invalid
@@ -402,7 +402,7 @@ defmodule RivaAsh.Resources.Plot do
     cond do
       is_nil(plot.business) ->
         {:error, "Business relationship is missing"}
-      
+
       true ->
         {:ok, plot}
     end
@@ -410,10 +410,10 @@ defmodule RivaAsh.Resources.Plot do
 
   @doc """
   Gets the business name for this plot.
-  
+
   ## Parameters
   - plot: The plot record
-  
+
   ## Returns
   - String with business name
   """
@@ -427,10 +427,10 @@ defmodule RivaAsh.Resources.Plot do
 
   @doc """
   Formats the complete plot information for display.
-  
+
   ## Parameters
   - plot: The plot record
-  
+
   ## Returns
   - String with complete plot information
   """
@@ -451,10 +451,10 @@ defmodule RivaAsh.Resources.Plot do
 
   @doc """
   Checks if the plot can be deleted.
-  
+
   ## Parameters
   - plot: The plot record to check
-  
+
   ## Returns
   - `true` if can be deleted, `false` otherwise
   """
@@ -465,10 +465,10 @@ defmodule RivaAsh.Resources.Plot do
 
   @doc """
   Gets the deletion reason for a plot.
-  
+
   ## Parameters
   - plot: The plot record to check
-  
+
   ## Returns
   - String with deletion reason or nil if can be deleted
   """
@@ -477,13 +477,13 @@ defmodule RivaAsh.Resources.Plot do
     cond do
       not is_active?(plot) ->
         "Plot is already archived"
-      
+
       has_sections?(plot) ->
         "Cannot delete plot with sections"
-      
+
       has_layouts?(plot) ->
         "Cannot delete plot with layouts"
-      
+
       true ->
         nil
     end
@@ -491,10 +491,10 @@ defmodule RivaAsh.Resources.Plot do
 
   @doc """
   Validates the plot data.
-  
+
   ## Parameters
   - plot: The plot record to validate
-  
+
   ## Returns
   - `{:ok, plot}` if valid
   - `{:error, reason}` if invalid
@@ -504,13 +504,13 @@ defmodule RivaAsh.Resources.Plot do
     cond do
       String.trim(plot.name) == "" ->
         {:error, "Name cannot be empty"}
-      
+
       not has_valid_area?(plot) and not is_nil(plot.total_area) ->
         {:error, "Total area must be greater than or equal to 0"}
-      
+
       not is_nil(plot.area_unit) and String.trim(plot.area_unit) == "" ->
         {:error, "Area unit cannot be empty"}
-      
+
       true ->
         {:ok, plot}
     end
@@ -518,10 +518,10 @@ defmodule RivaAsh.Resources.Plot do
 
   @doc """
   Gets the plot name with business prefix.
-  
+
   ## Parameters
   - plot: The plot record
-  
+
   ## Returns
   - String with formatted plot name
   """
@@ -532,10 +532,10 @@ defmodule RivaAsh.Resources.Plot do
 
   @doc """
   Checks if the plot has coordinates.
-  
+
   ## Parameters
   - plot: The plot record to check
-  
+
   ## Returns
   - `true` if has coordinates, `false` otherwise
   """
@@ -544,10 +544,10 @@ defmodule RivaAsh.Resources.Plot do
 
   @doc """
   Gets the coordinate information as a formatted string.
-  
+
   ## Parameters
   - plot: The plot record
-  
+
   ## Returns
   - String with coordinate information or "No coordinates specified"
   """
@@ -568,11 +568,11 @@ defmodule RivaAsh.Resources.Plot do
 
   @doc """
   Gets all active plots for a business.
-  
+
   ## Parameters
   - plots: List of plot records
   - business_id: The business ID to filter by
-  
+
   ## Returns
   - List of active plots for the business
   """
@@ -585,11 +585,11 @@ defmodule RivaAsh.Resources.Plot do
 
   @doc """
   Gets all inactive plots for a business.
-  
+
   ## Parameters
   - plots: List of plot records
   - business_id: The business ID to filter by
-  
+
   ## Returns
   - List of inactive plots for the business
   """
@@ -599,7 +599,6 @@ defmodule RivaAsh.Resources.Plot do
     |> Enum.filter(&(&1.business_id == business_id))
     |> Enum.filter(&(not is_active?(&1)))
   end
-end
 
   relationships do
     belongs_to :business, RivaAsh.Resources.Business do

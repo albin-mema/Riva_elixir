@@ -33,9 +33,8 @@ defmodule RivaAshWeb.CoreComponents do
   slot(:inner_block, doc: "the optional inner block that renders the flash message")
 
   def flash(assigns) do
-    assigns
-    |> build_flash_classes()
-    |> render_flash_component()
+    classes = build_flash_classes(assigns)
+    render_flash_component(classes, assigns)
   end
 
   @doc """
@@ -75,10 +74,10 @@ defmodule RivaAshWeb.CoreComponents do
 
   @doc """
   Builds CSS classes for flash components based on kind.
-  
+
   ## Parameters
   - assigns: Map containing component assigns
-  
+
   ## Returns
   - List of CSS classes
   """
@@ -100,11 +99,11 @@ defmodule RivaAshWeb.CoreComponents do
 
   @doc """
   Renders the flash component with proper structure.
-  
+
   ## Parameters
   - classes: List of CSS classes
   - assigns: Map containing component assigns
-  
+
   ## Returns
   - Rendered HTML template
   """
@@ -130,10 +129,10 @@ defmodule RivaAshWeb.CoreComponents do
 
   @doc """
   Renders flash title section with appropriate icon.
-  
+
   ## Parameters
   - assigns: Map containing component assigns
-  
+
   ## Returns
   - Rendered HTML template
   """
@@ -152,36 +151,8 @@ defmodule RivaAshWeb.CoreComponents do
     end
   end
 
-  @doc """
-  Shows the flash group with standard titles and content.
 
-  ## Examples
 
-      <.flash_group flash={@flash} />
-  """
-  attr(:flash, :map, required: true, doc: "the map of flash messages")
-  attr(:id, :string, default: "flash-group", doc: "the optional id of flash container")
-
-  def flash_group(assigns) do
-    ~H"""
-    <div id={@id}>
-      <.flash kind={:info} title="Success!" flash={@flash} id="flash-info" />
-      <.flash kind={:error} title="Error!" flash={@flash} id="flash-error" />
-    </div>
-    """
-  end
-
-  @doc """
-  Renders a simple icon.
-  """
-  attr(:name, :string, required: true)
-  attr(:class, :string, default: nil)
-
-  def icon(%{name: "hero-" <> _} = assigns) do
-    ~H"""
-    <span class={[@name, @class]} />
-    """
-  end
 
   defp hide(js, selector) do
     JS.hide(js,

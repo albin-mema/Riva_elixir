@@ -407,33 +407,34 @@ defmodule RivaAsh.Resources.ItemPosition do
         # If we can't check, allow the operation
         :ok
     end
-  
-    # Helper functions for business logic and data validation
-  
-    @doc """
-    Checks if the item position is currently active (not archived).
-    
-    ## Parameters
-    - item_position: The item position record to check
-    
-    ## Returns
-    - `true` if the position is active, `false` otherwise
-    """
-    @spec is_active?(t()) :: boolean()
-    def is_active?(item_position) do
-      with %{archived_at: nil} <- item_position do
-        true
-      else
-        _ -> false
-      end
+  end
+
+  # Helper functions for business logic and data validation
+
+  @doc """
+  Checks if the item position is currently active (not archived).
+
+  ## Parameters
+  - item_position: The item position record to check
+
+  ## Returns
+  - `true` if the position is active, `false` otherwise
+  """
+  @spec is_active?(t()) :: boolean()
+  def is_active?(item_position) do
+    with %{archived_at: nil} <- item_position do
+      true
+    else
+      _ -> false
     end
-  
+  end
+
     @doc """
     Checks if the item position uses grid-based positioning.
-    
+
     ## Parameters
     - item_position: The item position record to check
-    
+
     ## Returns
     - `true` if using grid positioning, `false` otherwise
     """
@@ -441,13 +442,13 @@ defmodule RivaAsh.Resources.ItemPosition do
     def is_grid_positioned?(item_position) do
       not (is_nil(item_position.grid_row) or is_nil(item_position.grid_column))
     end
-  
+
     @doc """
     Checks if the item position uses free-form positioning.
-    
+
     ## Parameters
     - item_position: The item position record to check
-    
+
     ## Returns
     - `true` if using free-form positioning, `false` otherwise
     """
@@ -455,13 +456,13 @@ defmodule RivaAsh.Resources.ItemPosition do
     def is_free_form_positioned?(item_position) do
       not (is_nil(item_position.x_coordinate) or is_nil(item_position.y_coordinate))
     end
-  
+
     @doc """
     Gets the position type as an atom.
-    
+
     ## Parameters
     - item_position: The item position record
-    
+
     ## Returns
     - `:grid`, `:free_form`, or `:none`
     """
@@ -473,13 +474,13 @@ defmodule RivaAsh.Resources.ItemPosition do
         true -> :none
       end
     end
-  
+
     @doc """
     Gets the formatted position information.
-    
+
     ## Parameters
     - item_position: The item position record
-    
+
     ## Returns
     - String with formatted position information
     """
@@ -488,21 +489,21 @@ defmodule RivaAsh.Resources.ItemPosition do
       case position_type(item_position) do
         :grid ->
           "Grid position: Row #{item_position.grid_row}, Column #{item_position.grid_column}"
-        
+
         :free_form ->
           "Free-form position: X #{item_position.x_coordinate}, Y #{item_position.y_coordinate}"
-        
+
         :none ->
           "No position specified"
       end
     end
-  
+
     @doc """
     Gets the formatted dimensions information.
-    
+
     ## Parameters
     - item_position: The item position record
-    
+
     ## Returns
     - String with formatted dimensions information
     """
@@ -511,24 +512,24 @@ defmodule RivaAsh.Resources.ItemPosition do
       cond do
         not is_nil(item_position.width) and not is_nil(item_position.height) ->
           "#{item_position.width} x #{item_position.height}"
-        
+
         not is_nil(item_position.width) ->
           "Width: #{item_position.width}"
-        
+
         not is_nil(item_position.height) ->
           "Height: #{item_position.height}"
-        
+
         true ->
           "No dimensions specified"
       end
     end
-  
+
     @doc """
     Gets the formatted rotation information.
-    
+
     ## Parameters
     - item_position: The item position record
-    
+
     ## Returns
     - String with formatted rotation information
     """
@@ -539,25 +540,25 @@ defmodule RivaAsh.Resources.ItemPosition do
         rotation -> "#{rotation}°"
       end
     end
-  
+
     @doc """
     Checks if the item is visible in the layout.
-    
+
     ## Parameters
     - item_position: The item position record to check
-    
+
     ## Returns
     - `true` if visible, `false` otherwise
     """
     @spec is_visible?(t()) :: boolean()
     def is_visible?(item_position), do: item_position.is_visible
-  
+
     @doc """
     Gets the z-index information for layering.
-    
+
     ## Parameters
     - item_position: The item position record
-    
+
     ## Returns
     - String with z-index information
     """
@@ -565,14 +566,14 @@ defmodule RivaAsh.Resources.ItemPosition do
     def z_index_info(item_position) do
       "Z-index: #{item_position.z_index}"
     end
-  
+
     @doc """
     Checks if the item position overlaps with another position.
-    
+
     ## Parameters
     - item_position: The item position record to check
     - other_position: Another item position record to compare against
-    
+
     ## Returns
     - `true` if overlapping, `false` otherwise
     """
@@ -584,7 +585,7 @@ defmodule RivaAsh.Resources.ItemPosition do
         height1 = item_position.height || 1
         width2 = other_position.width || 1
         height2 = other_position.height || 1
-  
+
         # Check if rectangles overlap
         not (item_position.grid_row + height1 - 1 < other_position.grid_row or
                other_position.grid_row + height2 - 1 < item_position.grid_row or
@@ -594,13 +595,13 @@ defmodule RivaAsh.Resources.ItemPosition do
         false
       end
     end
-  
+
     @doc """
     Validates that the item position has all required relationships.
-    
+
     ## Parameters
     - item_position: The item position record to validate
-    
+
     ## Returns
     - `{:ok, item_position}` if valid
     - `{:error, reason}` if invalid
@@ -610,21 +611,21 @@ defmodule RivaAsh.Resources.ItemPosition do
       cond do
         is_nil(item_position.item) ->
           {:error, "Item relationship is missing"}
-        
+
         is_nil(item_position.layout) ->
           {:error, "Layout relationship is missing"}
-        
+
         true ->
           {:ok, item_position}
       end
     end
-  
+
     @doc """
     Gets the item name associated with this position.
-    
+
     ## Parameters
     - item_position: The item position record
-    
+
     ## Returns
     - String with the item name
     """
@@ -635,13 +636,13 @@ defmodule RivaAsh.Resources.ItemPosition do
         _ -> "Unknown item"
       end
     end
-  
+
     @doc """
     Gets the layout name associated with this position.
-    
+
     ## Parameters
     - item_position: The item position record
-    
+
     ## Returns
     - String with the layout name
     """
@@ -652,13 +653,13 @@ defmodule RivaAsh.Resources.ItemPosition do
         _ -> "Unknown layout"
       end
     end
-  
+
     @doc """
     Formats the complete item position information for display.
-    
+
     ## Parameters
     - item_position: The item position record
-    
+
     ## Returns
     - String with complete position information
     """
@@ -676,13 +677,13 @@ defmodule RivaAsh.Resources.ItemPosition do
           "Archived position for #{item_name(item_position)}"
       end
     end
-  
+
     @doc """
     Calculates the total area occupied by the item in the layout.
-    
+
     ## Parameters
     - item_position: The item position record
-    
+
     ## Returns
     - Decimal with the total area, or 0 if no dimensions specified
     """
@@ -695,13 +696,13 @@ defmodule RivaAsh.Resources.ItemPosition do
         _ -> Decimal.new(0)
       end
     end
-  
+
     @doc """
     Checks if the item position has valid dimensions.
-    
+
     ## Parameters
     - item_position: The item position record to check
-    
+
     ## Returns
     - `true` if dimensions are valid, `false` otherwise
     """
@@ -710,26 +711,25 @@ defmodule RivaAsh.Resources.ItemPosition do
       cond do
         is_nil(item_position.width) and is_nil(item_position.height) ->
           true
-        
+
         not is_nil(item_position.width) and Decimal.compare(item_position.width, Decimal.new(0)) == :lt ->
           false
-        
+
         not is_nil(item_position.height) and Decimal.compare(item_position.height, Decimal.new(0)) == :lt ->
           false
-        
+
         true ->
           true
       end
     end
-  
+
     # Private helper functions
-  
+
     defp format_decimal(nil), do: "N/A"
     defp format_decimal(decimal), do: Decimal.to_string(decimal)
-  
+
     defp format_rotation(0), do: "No rotation"
     defp format_rotation(degrees), do: "#{Decimal.to_string(degrees)}°"
-  end
 
   # Helper function to get layout dimensions
   defp get_layout_dimensions(layout_id) do

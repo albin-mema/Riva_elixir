@@ -84,7 +84,9 @@ defmodule RivaAshWeb.UIDemoController do
       {:ok, catalog} ->
         json(conn, catalog)
       {:error, reason} ->
-        json(conn, %{error: reason}, :internal_server_error)
+        conn
+        |> put_status(:internal_server_error)
+        |> json(%{error: reason})
     end
   end
 

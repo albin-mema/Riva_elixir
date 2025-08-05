@@ -1,7 +1,7 @@
 defmodule RivaAsh.Resources.AvailabilityException do
   @moduledoc """
   Represents exceptions to regular item schedules.
-  
+
   Availability exceptions allow for temporary changes to an item's regular availability,
   such as maintenance periods, holidays, special events, or one-time availability changes.
   """
@@ -11,7 +11,7 @@ defmodule RivaAsh.Resources.AvailabilityException do
     data_layer: AshPostgres.DataLayer,
     extensions: [AshJsonApi.Resource, AshArchival.Resource, AshPaperTrail.Resource]
 
-  @type t :: %__MODULE__{
+  @type t :: %RivaAsh.Resources.AvailabilityException{
           id: String.t(),
           date: Date.t(),
           start_time: Time.t() | nil,
@@ -138,10 +138,11 @@ defmodule RivaAsh.Resources.AvailabilityException do
   Determines if the availability exception is currently active.
   """
   @spec is_active?(t()) :: boolean()
-  def is_active?(%__MODULE__{date: date, start_time: start_time, end_time: end_time}) do
+  def is_active?(exception) when is_struct(exception) do
+    %{date: date, start_time: start_time, end_time: end_time} = exception
     today = Date.utc_today()
     now = Time.utc_now()
-    
+
     case Date.compare(date, today) do
       :eq ->
         case {start_time, end_time} do
@@ -158,19 +159,26 @@ defmodule RivaAsh.Resources.AvailabilityException do
   Returns 0 for all-day exceptions (when start_time and end_time are nil).
   """
   @spec duration_minutes(t()) :: integer()
-  def duration_minutes(%__MODULE__{start_time: nil, end_time: nil}), do: 0
-  def duration_minutes(%__MODULE__{start_time: start_time, end_time: end_time}) do
-    start_seconds = Time.to_second_after_midnight(start_time)
-    end_seconds = Time.to_second_after_midnight(end_time)
-    end_seconds - start_seconds
+  def duration_minutes(exception) when is_struct(exception) do
+    %{start_time: start_time, end_time: end_time} = exception
+
+    case {start_time, end_time} do
+      {nil, nil} -> 0
+      {start_time, end_time} ->
+        start_seconds = Time.to_second_after_midnight(start_time)
+        end_seconds = Time.to_second_after_midnight(end_time)
+        end_seconds - start_seconds
+    end
   end
 
   @doc """
   Determines if the exception is for all-day (no specific start/end times).
   """
   @spec is_all_day?(t()) :: boolean()
-  def is_all_day?(%__MODULE__{start_time: nil, end_time: nil}), do: true
-  def is_all_day?(%__MODULE__{}), do: false
+  def is_all_day?(exception) when is_struct(exception) do
+    %{start_time: start_time, end_time: end_time} = exception
+    start_time == nil and end_time == nil
+  end
 
   @doc """
   Gets a human-readable description of the exception type.

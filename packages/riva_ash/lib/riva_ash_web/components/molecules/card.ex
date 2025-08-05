@@ -4,40 +4,40 @@ defmodule RivaAshWeb.Components.Molecules.Card do
 
   Delegates container rendering to the canonical design-system Card while
   preserving the header/body/footer API for molecules.
-  
+
   Provides a flexible container with configurable variants, padding, and
   optional header/footer sections for consistent content organization.
-  
+
   ## Styleguide Compliance
-  
+
   This component follows the Riva Ash styleguide principles:
-  
+
   ### Functional Programming Patterns
   - Uses pipeline operator (`|>`) for data transformation
   - Implements pure functions with no side effects
   - Uses pattern matching for data validation and processing
   - Follows single level of abstraction principle
-  
+
   ### Type Safety
   - Comprehensive type specifications using `@type` and `@spec`
   - Strong typing for all function parameters and return values
   - Type validation through pattern matching
-  
+
   ### Error Handling
   - Uses result tuples (`:ok | {:error, String.t()}`) for consistent error handling
   - Early validation with guard clauses
   - Clear error messages for invalid inputs
-  
+
   ### Code Abstraction
   - Separates concerns into focused helper functions
   - Extracts validation logic into dedicated functions
   - Uses functional composition for complex operations
-  
+
   ### Phoenix/Ash Patterns
   - Follows Phoenix LiveView component conventions
   - Uses proper attribute validation and building
   - Implements functional core, imperative shell pattern
-  
+
   ### LiveView Component Patterns
   - Uses proper slot and attribute handling
   - Implements accessibility features
@@ -169,8 +169,8 @@ defmodule RivaAshWeb.Components.Molecules.Card do
     assigns = %{header: header, padding: padding}
 
     ~H"""
-    <div class={build_header_class(@padding)}>
-      <%= render_slot(@header) %>
+    <div class={build_header_class(padding)}>
+      <%= render_slot(header) %>
     </div>
     """
   end

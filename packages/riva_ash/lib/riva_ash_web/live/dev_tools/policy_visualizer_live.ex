@@ -1,7 +1,7 @@
 defmodule RivaAshWeb.DevTools.PolicyVisualizerLive do
   @moduledoc """
   Advanced policy decision tree visualizer.
-  
+
   Features:
   - Interactive policy decision trees
   - Real-time policy evaluation
@@ -131,14 +131,14 @@ defmodule RivaAshWeb.DevTools.PolicyVisualizerLive do
                     >
                       Simulate Policy Evaluation
                     </button>
-                    
+
                     <button
                       phx-click="reset_simulation"
                       class="bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700"
                     >
                       Reset
                     </button>
-                    
+
                     <button
                       phx-click="generate_mermaid"
                       class="bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700"
@@ -146,7 +146,7 @@ defmodule RivaAshWeb.DevTools.PolicyVisualizerLive do
                       Show Decision Tree
                     </button>
                   </div>
-                  
+
                   <%= if @evaluation_result do %>
                     <div class="flex items-center">
                       <span class="text-sm text-gray-600 mr-2">Result:</span>
@@ -216,7 +216,7 @@ defmodule RivaAshWeb.DevTools.PolicyVisualizerLive do
                               </span>
                               <h4 class="font-semibold text-gray-900"><%= step.policy_name %></h4>
                             </div>
-                            
+
                             <div class="flex items-center space-x-2">
                               <span class={[
                                 "px-2 py-1 rounded text-xs font-medium",
@@ -229,20 +229,20 @@ defmodule RivaAshWeb.DevTools.PolicyVisualizerLive do
                               ]}>
                                 <%= step.result %>
                               </span>
-                              
+
                               <%= if step.duration do %>
                                 <span class="text-xs text-gray-500"><%= step.duration %>ms</span>
                               <% end %>
                             </div>
                           </div>
-                          
+
                           <%= if step.condition do %>
                             <div class="mt-2">
                               <span class="text-sm font-medium text-gray-700">Condition:</span>
                               <pre class="text-xs bg-white p-2 rounded mt-1 overflow-x-auto"><%= step.condition %></pre>
                             </div>
                           <% end %>
-                          
+
                           <%= if step.reason do %>
                             <div class="mt-2">
                               <span class="text-sm font-medium text-gray-700">Reason:</span>
@@ -264,12 +264,12 @@ defmodule RivaAshWeb.DevTools.PolicyVisualizerLive do
                         <div class="text-2xl font-bold text-blue-900"><%= @evaluation_result.performance.total_time %>ms</div>
                         <div class="text-sm text-blue-600">Total Evaluation Time</div>
                       </div>
-                      
+
                       <div class="bg-green-50 rounded-lg p-4">
                         <div class="text-2xl font-bold text-green-900"><%= @evaluation_result.performance.policies_evaluated %></div>
                         <div class="text-sm text-green-600">Policies Evaluated</div>
                       </div>
-                      
+
                       <div class="bg-purple-50 rounded-lg p-4">
                         <div class="text-2xl font-bold text-purple-900"><%= @evaluation_result.performance.cache_hits %></div>
                         <div class="text-sm text-purple-600">Cache Hits</div>
@@ -295,9 +295,9 @@ defmodule RivaAshWeb.DevTools.PolicyVisualizerLive do
 
     defp render_policy_node(node, trace, depth) do
       trace_result = get_trace_result(node.name, trace)
-      
+
       assigns = %{node: node, trace_result: trace_result, depth: depth, trace: trace}
-      
+
       ~H"""
       <div class={["policy-node", "ml-#{@depth * 4}", "mb-2"]}>
         <div class={[
@@ -318,14 +318,14 @@ defmodule RivaAshWeb.DevTools.PolicyVisualizerLive do
               _ -> "bg-gray-400"
             end
           ]}></div>
-          
+
           <div class="flex-1">
             <div class="font-medium text-gray-900"><%= @node.name %></div>
             <%= if @node.description do %>
               <div class="text-sm text-gray-600"><%= @node.description %></div>
             <% end %>
           </div>
-          
+
           <%= if @trace_result do %>
             <div class={[
               "px-2 py-1 rounded text-xs font-medium",
@@ -340,7 +340,7 @@ defmodule RivaAshWeb.DevTools.PolicyVisualizerLive do
             </div>
           <% end %>
         </div>
-        
+
         <%= if @node.children && @node.children != [] do %>
           <div class="mt-2">
             <%= for child <- @node.children do %>
@@ -353,7 +353,11 @@ defmodule RivaAshWeb.DevTools.PolicyVisualizerLive do
     end
 
     # Helper functions
-    # Helper functions
     defp get_page_title, do: Application.get_env(:riva_ash, __MODULE__, [])[:page_title] || "Policy Decision Tree Visualizer"
+
+    # Policy trace functions
+    defp get_trace_result(_node_name, _trace) do
+      %{result: :allowed, reason: "Mock trace result"}
+    end
   end
 end
