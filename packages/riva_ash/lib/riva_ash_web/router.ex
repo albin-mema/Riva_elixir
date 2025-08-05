@@ -116,6 +116,20 @@ defmodule RivaAshWeb.Router do
     get("/health", RivaAshWeb.HealthController, :check)
   end
 
+  # Development tools (only in dev environment)
+  if Mix.env() == :dev do
+    scope "/dev" do
+      pipe_through(:browser)
+      live("/", RivaAshWeb.DevTools.DevToolsHomeLive, :index)
+      live("/ash-inspector", RivaAshWeb.DevTools.AshInspectorLive, :index)
+      live("/business-context", RivaAshWeb.DevTools.BusinessContextLive, :index)
+      live("/reactor-visualizer", RivaAshWeb.DevTools.ReactorVisualizerLive, :index)
+      live("/test-data-generator", RivaAshWeb.DevTools.TestDataGeneratorLive, :index)
+      live("/performance-dashboard", RivaAshWeb.DevTools.PerformanceDashboardLive, :index)
+
+    end
+  end
+
   # ERD diagram (available at both /erd and /admin/erd)
   scope "/" do
     pipe_through(:browser)
