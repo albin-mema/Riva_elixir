@@ -174,19 +174,24 @@ mix test.watch
 
 ## Code Quality Standards
 
-### 1. Error Handling
+### 1. Code Style and Structure
+- **Single Level of Abstraction**: Functions should operate at one level of abstraction, reading like prose
+- **Testable Functions**: When splitting long functions, ensure each part can be tested in isolation
+- **See**: [Style Guide](./docs/styleguide.md) for detailed coding standards
+
+### 2. Error Handling
 - Use Ash's built-in error handling patterns
 - Implement proper error boundaries in LiveView
 - Return meaningful error messages to users
 - Log errors appropriately for debugging
 
-### 2. Performance Considerations
+### 3. Performance Considerations
 - Use Ash's built-in query optimization
 - Implement proper pagination with Flop
 - Avoid N+1 queries through proper loading
 - Use database indexes for frequently queried fields
 
-### 3. Security Best Practices
+### 4. Security Best Practices
 - Always validate user input
 - Use Ash policies for authorization
 - Sanitize data before display
@@ -287,42 +292,60 @@ Ash.Resource.Info.actions(Resource)
 ### 2. Context-Specific Documentation
 
 **For New Contributors:**
-- Start with [Contributing Guide](./documentation/CONTRIBUTING.md)
-- Follow [Setup Guide](./documentation/SETUP_GUIDE.md) for environment setup
-- Review [Development Workflow](./documentation/DEVELOPMENT_WORKFLOW.md)
+- Start with [Contributing Guide](./docs/CONTRIBUTING.md)
+- Follow [Setup Guide](./docs/SETUP_GUIDE.md) for environment setup
+- Review [Development Workflow](./docs/DEVELOPMENT_WORKFLOW.md)
+- Check [Development Setup](./docs/DEVELOPMENT_SETUP.md) for detailed setup instructions
 
 **For Feature Development:**
 - Reference [Architectural Patterns](./packages/riva_ash/patterns.md) for implementation guidance
-- Use [Testing Guide](./packages/riva_ash/docs/testing_guide.md) for comprehensive testing
-- Follow [UI Guidelines](./documentation/ui-guidelines.md) for component development
+- Use [Testing Guidelines](./docs/testing-guidelines.md) for comprehensive testing strategies
+- Follow [UI Guidelines](./docs/ui-guidelines.md) for component development
+- Review [Style Guide](./docs/styleguide.md) for code quality standards
 
 **For System Understanding:**
-- Review [Architecture Guidelines](./documentation/architecture-guidelines.md)
-- Check [Reservation System Assessment](./documentation/RESERVATION_SYSTEM_ASSESSMENT.md)
-- Examine [User Actions](./documentation/USER_ACTIONS.md) specifications
+- Review [Architecture Guidelines](./docs/architecture-guidelines.md)
+- Check [Reservation System Assessment](./docs/RESERVATION_SYSTEM_ASSESSMENT.md)
+- Examine [User Actions](./docs/USER_ACTIONS.md) specifications
+- See [Component Migration Guide](./docs/component-migration-guide.md) for migration patterns
 
 **For Integration Work:**
-- See [Timex Integration](./documentation/TIMEX_INTEGRATION.md) for time handling
-- Check existing test files for usage examples
-- Consult Storybook for UI component documentation
+- See [Timex Integration](./docs/TIMEX_INTEGRATION.md) for time handling
+- Check [Development Tools](./docs/devtools.md) for available tooling
+- Review [Storybook Structure](./docs/storybook-structure.md) for UI documentation
+- Consult [Production Deployment](./docs/production-deployment.md) for deployment guidelines
 
 ## Detailed Guidelines
 
 For more detailed guidelines, please refer to the following documents based on your needs:
 
 ### Core Development
-- [Architecture Guidelines](./documentation/architecture-guidelines.md) - Architectural patterns and design principles
-- [Testing Guidelines](./documentation/testing-guidelines.md) - Comprehensive testing strategies and requirements
-- [UI Guidelines](./documentation/ui-guidelines.md) - UI component development and atomic design patterns
+- [Architecture Guidelines](./docs/architecture-guidelines.md) - Architectural patterns and design principles
+- [Testing Guidelines](./docs/testing-guidelines.md) - Comprehensive testing strategies and requirements
+- [UI Guidelines](./docs/ui-guidelines.md) - UI component development and atomic design patterns
+- [Style Guide](./docs/styleguide.md) - Code quality standards and abstraction principles
 
 ### Getting Started
-- [Setup Guide](./documentation/SETUP_GUIDE.md) - Complete environment setup with troubleshooting
-- [Development Workflow](./documentation/DEVELOPMENT_WORKFLOW.md) - Development process and best practices
-- [Contributing Guide](./documentation/CONTRIBUTING.md) - Comprehensive contribution guidelines
+- [Setup Guide](./docs/SETUP_GUIDE.md) - Complete environment setup with troubleshooting
+- [Development Setup](./docs/DEVELOPMENT_SETUP.md) - Detailed setup instructions
+- [Development Workflow](./docs/DEVELOPMENT_WORKFLOW.md) - Development process and best practices
+- [Contributing Guide](./docs/CONTRIBUTING.md) - Comprehensive contribution guidelines
 
 ### Technical Deep Dive
 - [Architectural Patterns](./packages/riva_ash/patterns.md) - Detailed implementation patterns with examples
 - [Testing Guide](./packages/riva_ash/docs/testing_guide.md) - In-depth testing strategies and tools
+- [Component Migration Guide](./docs/component-migration-guide.md) - Migration patterns and strategies
+
+### Tools and Deployment
+- [Development Tools](./docs/devtools.md) - Available development and debugging tools
+- [Storybook Structure](./docs/storybook-structure.md) - UI component documentation structure
+- [Production Deployment](./docs/production-deployment.md) - Deployment guidelines and best practices
+
+### System Documentation
+- [Reservation System Assessment](./docs/RESERVATION_SYSTEM_ASSESSMENT.md) - System analysis and requirements
+- [User Actions](./docs/USER_ACTIONS.md) - User interaction specifications
+- [Timex Integration](./docs/TIMEX_INTEGRATION.md) - Time handling and integration patterns
+- [TODO UI](./docs/todo-ui.md) - UI development tasks and priorities
 
 ## Example Implementations
 
