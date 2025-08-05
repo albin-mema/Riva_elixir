@@ -58,6 +58,18 @@ ExUnit.configure(
   ]
 )
 
+# Recursively require all support helpers (idempotent)
+support_dir = Path.expand("support", __DIR__)
+support_files = Path.wildcard(Path.join(support_dir, "**/*.ex"))
+
+Enum.each(support_files, fn file ->
+  try do
+    Code.require_file(file)
+  rescue
+    e -> IO.puts("Skipping #{file}: #{Exception.message(e)}")
+  end
+end)
+
 # Print test configuration
 IO.puts("""
 Starting RivaAsh unit tests (no database)...

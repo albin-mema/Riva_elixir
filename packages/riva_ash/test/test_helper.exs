@@ -1,6 +1,9 @@
 # test_helper.exs - Simplified for modern Elixir/Phoenix
 ExUnit.start(formatters: [ExUnit.CLIFormatter])
 
+# Also load unit_test_helper to ensure all support helpers are available
+Code.require_file("unit_test_helper.exs", __DIR__)
+
 # Common tags registry (available to suite)
 ExUnit.configure(exclude: [:performance], timeout: 60_000)
 
