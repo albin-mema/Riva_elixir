@@ -135,6 +135,9 @@ defmodule RivaAsh.Resources.Client do
     define(:by_business_and_email, args: [:business_id, :email], action: :by_business_and_email)
     define(:registered, action: :registered)
     define(:unregistered, action: :unregistered)
+    define(:search_people, args: [:search_term, :business_ids], action: :search_people)
+    define(:by_business_filtered, args: [:business_id], action: :by_business_filtered)
+    define(:for_user_businesses, args: [:business_ids], action: :for_user_businesses)
   end
 
   actions do
@@ -355,6 +358,35 @@ defmodule RivaAsh.Resources.Client do
 
     read :unregistered do
       filter(expr(is_registered == false))
+    end
+
+    # Search clients by name, email, or phone (from PeopleService)
+    read :search_people do
+      argument(:search_term, :string, allow_nil?: false)
+      argument(:business_ids, {:array, :uuid}, allow_nil?: false)
+
+      filter(expr(business_id in ^arg(:business_ids)))
+      filter(expr(
+        contains(name, ^arg(:search_term)) or
+        contains(email, ^arg(:search_term)) or
+        contains(phone, ^arg(:search_term))
+      ))
+
+      prepare(build(load: [:business]))
+    end
+
+    # Filter clients by specific business (from PeopleService)
+    read :by_business_filtered do
+      argument(:business_id, :uuid, allow_nil?: false)
+      filter(expr(business_id == ^arg(:business_id)))
+      prepare(build(load: [:business]))
+    end
+
+    # Get all clients for user's businesses (from PeopleService)
+    read :for_user_businesses do
+      argument(:business_ids, {:array, :uuid}, allow_nil?: false)
+      filter(expr(business_id in ^arg(:business_ids)))
+      prepare(build(load: [:business]))
     end
   end
 
@@ -597,33 +629,7 @@ defmodule RivaAsh.Resources.Client do
     :crypto.strong_rand_bytes(32) |> Base.url_encode64(padding: false)
   end
 
-  @spec apply_business_filter(Ash.Query.t(), String.t() | nil) :: Ash.Query.t()
-  defp apply_business_filter(query, nil), do: query
 
-  defp apply_business_filter(query, business_id) do
-    Ash.Query.filter(query, expr(business_id == ^business_id))
-  end
-
-  @spec apply_registration_filter(Ash.Query.t(), boolean() | nil) :: Ash.Query.t()
-  defp apply_registration_filter(query, nil), do: query
-
-  defp apply_registration_filter(query, is_registered) do
-    Ash.Query.filter(query, expr(is_registered == ^is_registered))
-  end
-
-  @spec apply_email_filter(Ash.Query.t(), String.t() | nil) :: Ash.Query.t()
-  defp apply_email_filter(query, nil), do: query
-
-  defp apply_email_filter(query, email) do
-    Ash.Query.filter(query, expr(email == ^email))
-  end
-
-  @spec apply_verification_filter(Ash.Query.t(), boolean() | nil) :: Ash.Query.t()
-  defp apply_verification_filter(query, nil), do: query
-
-  defp apply_verification_filter(query, email_verified) do
-    Ash.Query.filter(query, expr(email_verified == ^email_verified))
-  end
 
   relationships do
     belongs_to :business, RivaAsh.Resources.Business do

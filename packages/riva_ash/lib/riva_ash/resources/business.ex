@@ -114,6 +114,9 @@ defmodule RivaAsh.Resources.Business do
     define(:inactive, action: :inactive)
     define(:with_sections, action: :with_sections)
     define(:with_employees, action: :with_employees)
+    define(:public_search, action: :public_search)
+    define(:available_cities, action: :available_cities)
+    define(:available_countries, action: :available_countries)
   end
 
   actions do
@@ -192,13 +195,32 @@ defmodule RivaAsh.Resources.Business do
       argument(:country, :string, allow_nil?: true)
 
       prepare(fn query, _context ->
-        query
-        |> apply_search_filter(Ash.Query.get_argument(query, :search_term))
-        |> apply_location_filter(
-          Ash.Query.get_argument(query, :city),
-          Ash.Query.get_argument(query, :country)
-        )
-        |> apply_active_filter()
+        search_term = Ash.Query.get_argument(query, :search_term)
+        city = Ash.Query.get_argument(query, :city)
+        country = Ash.Query.get_argument(query, :country)
+
+        query = if search_term && search_term != "" do
+          Ash.Query.filter(query, expr(
+            contains(name, ^search_term) or
+            contains(public_description, ^search_term) or
+            contains(city, ^search_term) or
+            contains(address, ^search_term)
+          ))
+        else
+          query
+        end
+
+        query = if city && city != "" do
+          Ash.Query.filter(query, expr(contains(city, ^city)))
+        else
+          query
+        end
+
+        if country && country != "" do
+          Ash.Query.filter(query, expr(contains(country, ^country)))
+        else
+          query
+        end
       end)
     end
 
@@ -210,6 +232,28 @@ defmodule RivaAsh.Resources.Business do
     read :with_employees do
       # Load employees through sections (if needed) or directly if relationship exists
       # For now, this is a placeholder that can be enhanced
+    end
+
+    # Get available cities for search filters (from SearchService)
+    read :available_cities do
+      filter(expr(is_public_searchable == true and is_nil(archived_at)))
+
+      prepare(fn query, _context ->
+        query
+        |> Ash.Query.select([:city])
+        |> Ash.Query.filter(expr(not is_nil(city) and city != ""))
+      end)
+    end
+
+    # Get available countries for search filters (from SearchService)
+    read :available_countries do
+      filter(expr(is_public_searchable == true and is_nil(archived_at)))
+
+      prepare(fn query, _context ->
+        query
+        |> Ash.Query.select([:country])
+        |> Ash.Query.filter(expr(not is_nil(country) and country != ""))
+      end)
     end
 
     action :create_complete_setup, :struct do
@@ -411,44 +455,5 @@ defmodule RivaAsh.Resources.Business do
   end
 
   # Private helper functions for search filtering
-  @spec apply_search_filter(Ash.Query.t(), String.t() | nil) :: Ash.Query.t()
-  defp apply_search_filter(query, nil), do: query
 
-  defp apply_search_filter(query, "") do
-    query
-  end
-
-  defp apply_search_filter(query, search_term) do
-    search_pattern = "%#{search_term}%"
-
-    Ash.Query.filter(
-      query,
-      or: [
-        expr(name(like(^search_pattern))),
-        expr(public_description(like(^search_pattern))),
-        expr(city(like(^search_pattern))),
-        expr(address(like(^search_pattern)))
-      ]
-    )
-  end
-
-  @spec apply_location_filter(Ash.Query.t(), String.t() | nil, String.t() | nil) :: Ash.Query.t()
-  defp apply_location_filter(query, nil, _country), do: query
-
-  defp apply_location_filter(query, "", _country), do: query
-
-  defp apply_location_filter(query, city, nil) do
-    Ash.Query.filter(query, expr(city(like("%#{city}%"))))
-  end
-
-  defp apply_location_filter(query, city, country) do
-    query
-    |> Ash.Query.filter(expr(city(like("%#{city}%"))))
-    |> Ash.Query.filter(expr(country(like("%#{country}%"))))
-  end
-
-  @spec apply_active_filter(Ash.Query.t()) :: Ash.Query.t()
-  defp apply_active_filter(query) do
-    Ash.Query.filter(query, expr(is_active == true and is_nil(archived_at)))
-  end
 end

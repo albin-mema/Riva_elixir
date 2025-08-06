@@ -146,6 +146,10 @@ defmodule RivaAsh.Resources.Payment do
     define(:overdue, action: :overdue)
     define(:mark_as_paid, action: :mark_as_paid)
     define(:process_refund, action: :process_refund)
+    define(:process_payment, action: :process_payment)
+    define(:cancel_payment, action: :cancel_payment)
+    define(:for_user_business, args: [:business_id], action: :for_user_business)
+    define(:search_payments, args: [:search_term, :business_id], action: :search_payments)
   end
 
   actions do
@@ -237,6 +241,65 @@ defmodule RivaAsh.Resources.Payment do
       validate(compare(:refund_amount, less_than_or_equal_to: :amount_paid),
         message: "Refund amount cannot exceed amount paid"
       )
+    end
+
+    # Process payment (from PaymentService)
+    update :process_payment do
+      accept([:amount_paid, :payment_method, :payment_date, :transaction_reference])
+      require_atomic?(false)
+
+      # Only allow processing pending payments
+      validate(fn changeset, _ ->
+        if Ash.Changeset.get_data(changeset, :status) == :pending do
+          :ok
+        else
+          {:error, field: :status, message: "Only pending payments can be processed"}
+        end
+      end)
+
+      change(set_attribute(:status, :paid))
+      change(set_attribute(:payment_date, &DateTime.utc_now/0))
+
+      validate(present(:amount_paid), message: "Amount paid is required")
+      validate(compare(:amount_paid, greater_than: 0), message: "Amount paid must be greater than 0")
+    end
+
+    # Cancel payment (from PaymentService)
+    update :cancel_payment do
+      accept([:notes])
+      require_atomic?(false)
+
+      # Only allow cancelling pending payments
+      validate(fn changeset, _ ->
+        if Ash.Changeset.get_data(changeset, :status) == :pending do
+          :ok
+        else
+          {:error, field: :status, message: "Only pending payments can be cancelled"}
+        end
+      end)
+
+      change(set_attribute(:status, :cancelled))
+    end
+
+    # Get user payments with pagination (from PaymentService)
+    read :for_user_business do
+      argument(:business_id, :uuid, allow_nil?: false)
+      filter(expr(business_id == ^arg(:business_id)))
+      prepare(build(load: [:business, :reservation], sort: [inserted_at: :desc]))
+    end
+
+    # Search payments (from PaymentService)
+    read :search_payments do
+      argument(:search_term, :string, allow_nil?: false)
+      argument(:business_id, :uuid, allow_nil?: false)
+
+      filter(expr(business_id == ^arg(:business_id)))
+      filter(expr(
+        contains(transaction_reference, ^arg(:search_term)) or
+        contains(notes, ^arg(:search_term))
+      ))
+
+      prepare(build(load: [:business, :reservation]))
     end
   end
 

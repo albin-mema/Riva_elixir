@@ -115,7 +115,24 @@ defmodule RivaAsh.Resources.Item do
     end
   end
 
-  standard_graphql(:item)
+  graphql do
+    type(:item)
+
+    queries do
+      get(:get_item, :read)
+      list(:list_items, :read)
+      list(:active_items, :active)
+      list(:inactive_items, :inactive)
+      list(:items_by_business, :by_business)
+      list(:available_items, :available_now)
+    end
+
+    mutations do
+      create(:create_item, :create)
+      update(:update_item, :update)
+      destroy(:delete_item, :destroy)
+    end
+  end
 
   code_interface do
     define(:create, action: :create)
@@ -133,6 +150,9 @@ defmodule RivaAsh.Resources.Item do
     define(:with_schedules, action: :with_schedules)
     define(:available_now, action: :available_now)
     define(:available_for_date, args: [:date], action: :available_for_date)
+    define(:public_search, action: :public_search)
+    define(:for_user_businesses, args: [:business_ids], action: :for_user_businesses)
+    define(:with_status_counts, args: [:business_ids], action: :with_status_counts)
   end
 
   actions do
@@ -320,6 +340,20 @@ defmodule RivaAsh.Resources.Item do
         end
       end)
     end
+
+    # Get items for user's businesses (from InventoryService)
+    read :for_user_businesses do
+      argument(:business_ids, {:array, :uuid}, allow_nil?: false)
+      filter(expr(business_id in ^arg(:business_ids)))
+      prepare(build(load: [:business, :section], calculate: [:current_status]))
+    end
+
+    # Get items with status counts (from InventoryService)
+    read :with_status_counts do
+      argument(:business_ids, {:array, :uuid}, allow_nil?: false)
+      filter(expr(business_id in ^arg(:business_ids)))
+      prepare(build(calculate: [:current_status]))
+    end
   end
 
   attributes do
@@ -448,6 +482,23 @@ defmodule RivaAsh.Resources.Item do
           )
       )
     )
+
+    # Calculate current status (from InventoryService)
+    calculate(
+      :current_status,
+      :atom,
+      expr(
+        cond do
+          not is_active or not is_nil(archived_at) -> :inactive
+          exists(reservations, status == :confirmed and reserved_from <= now() and reserved_until >= now()) -> :occupied
+          exists(item_holds, status == :active and start_time <= now() and (is_nil(end_time) or end_time >= now())) -> :hold
+          true -> :available
+        end
+      )
+    ) do
+      public?(true)
+      description("Current status of the item: available, occupied, hold, or inactive")
+    end
   end
 
   validations do
@@ -768,58 +819,5 @@ defmodule RivaAsh.Resources.Item do
   defp format_minutes(minutes) when minutes < 1440, do: "#{div(minutes, 60)} hours"
   defp format_minutes(minutes), do: "#{div(minutes, 1440)} days"
 
-  # Private helper functions for search filtering
-  @spec apply_search_filter(Ash.Query.t(), String.t() | nil) :: Ash.Query.t()
-  defp apply_search_filter(query, nil), do: query
 
-  defp apply_search_filter(query, "") do
-    query
-  end
-
-  defp apply_search_filter(query, search_term) do
-    search_pattern = "%#{search_term}%"
-    Ash.Query.filter(
-      query,
-      expr(
-        ilike(name, ^search_pattern) or
-          ilike(public_description, ^search_pattern) or
-          ilike(business.name, ^search_pattern) or
-          ilike(business.public_description, ^search_pattern)
-      )
-    )
-  end
-
-  @spec apply_business_filter(Ash.Query.t(), String.t() | nil) :: Ash.Query.t()
-  defp apply_business_filter(query, nil), do: query
-
-  defp apply_business_filter(query, business_id) do
-    Ash.Query.filter(query, expr(business_id == ^business_id))
-  end
-
-  @spec apply_active_filter(Ash.Query.t()) :: Ash.Query.t()
-  defp apply_active_filter(query) do
-    Ash.Query.filter(query, expr(is_active == true and is_nil(archived_at)))
-  end
-
-  @spec apply_availability_filter(Ash.Query.t(), Date.t() | nil) :: Ash.Query.t()
-  defp apply_availability_filter(query, nil), do: query
-
-  defp apply_availability_filter(query, date) do
-    Ash.Query.filter(
-      query,
-      expr(
-        is_active == true and
-          is_nil(archived_at) and
-          not exists(
-            reservations,
-            status in [:confirmed, :pending] and
-              fragment(
-                "DATE(reserved_from) <= ? AND DATE(reserved_until) >= ?",
-                ^date,
-                ^date
-              )
-          )
-      )
-    )
-  end
 end

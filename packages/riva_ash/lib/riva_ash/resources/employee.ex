@@ -114,6 +114,9 @@ defmodule RivaAsh.Resources.Employee do
     define(:by_email, args: [:email], action: :by_email)
     define(:by_business, args: [:business_id], action: :by_business)
     define(:by_role, args: [:role], action: :by_role)
+    define(:search_people, args: [:search_term, :business_ids], action: :search_people)
+    define(:by_business_filtered, args: [:business_id], action: :by_business_filtered)
+    define(:for_user_businesses, args: [:business_ids], action: :for_user_businesses)
   end
 
   actions do
@@ -181,6 +184,36 @@ defmodule RivaAsh.Resources.Employee do
       accept([])
       require_atomic?(false)
       change(set_attribute(:is_active, true))
+    end
+
+    # Search employees by name, email, or phone (from PeopleService)
+    read :search_people do
+      argument(:search_term, :string, allow_nil?: false)
+      argument(:business_ids, {:array, :uuid}, allow_nil?: false)
+
+      filter(expr(business_id in ^arg(:business_ids)))
+      filter(expr(
+        contains(first_name, ^arg(:search_term)) or
+        contains(last_name, ^arg(:search_term)) or
+        contains(email, ^arg(:search_term)) or
+        contains(phone, ^arg(:search_term))
+      ))
+
+      prepare(build(load: [:business], calculate: [:name]))
+    end
+
+    # Filter employees by specific business (from PeopleService)
+    read :by_business_filtered do
+      argument(:business_id, :uuid, allow_nil?: false)
+      filter(expr(business_id == ^arg(:business_id)))
+      prepare(build(load: [:business]))
+    end
+
+    # Get all employees for user's businesses (from PeopleService)
+    read :for_user_businesses do
+      argument(:business_ids, {:array, :uuid}, allow_nil?: false)
+      filter(expr(business_id in ^arg(:business_ids)))
+      prepare(build(load: [:business]))
     end
   end
 
@@ -250,6 +283,13 @@ defmodule RivaAsh.Resources.Employee do
 
     create_timestamp(:inserted_at)
     update_timestamp(:updated_at)
+  end
+
+  calculations do
+    calculate :name, :string, expr(first_name <> " " <> last_name) do
+      public?(true)
+      description("Full name combining first and last name")
+    end
   end
 
   relationships do
