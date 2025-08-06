@@ -16,17 +16,17 @@ defmodule RivaAsh.ItemType.TypeService do
   Get all item types for the current user with pagination.
   """
   def get_user_types(user) do
-    try do
-      query = 
-        ItemType
-        |> Query.filter(business_id: user.business_id)
-        |> Query.sort(:name)
-        |> Query.load([:business, :item_count])
+    query =
+      ItemType
+      |> Query.filter(business_id: user.business_id)
+      |> Query.sort(:name)
+      |> Query.load([:business, :item_count])
 
+    try do
       case Ash.read(query, page: [limit: 20, offset: 0]) do
         {:ok, item_types} ->
           # Get total count for pagination
-          count_query = 
+          count_query =
             ItemType
             |> Query.filter(business_id: user.business_id)
             |> Query.aggregate(:count, :id)
@@ -39,12 +39,14 @@ defmodule RivaAsh.ItemType.TypeService do
                 current_page: 1,
                 total_pages: ceil(total_count / 20)
               }
+
               {:ok, {item_types, meta}}
+
             {:error, reason} ->
               Logger.error("Failed to count item types: #{inspect(reason)}")
               {:error, reason}
           end
-        
+
         {:error, reason} ->
           Logger.error("Failed to get user item types: #{inspect(reason)}")
           {:error, reason}
@@ -61,14 +63,17 @@ defmodule RivaAsh.ItemType.TypeService do
   """
   def create_type(attrs, user) do
     try do
-      case Ash.create(ItemType, 
-           attributes: Map.merge(attrs, %{
-             business_id: user.business_id,
-             status: :active
-           }),
-           authorize?: true) do
+      case Ash.create(ItemType,
+             attributes:
+               Map.merge(attrs, %{
+                 business_id: user.business_id,
+                 status: :active
+               }),
+             authorize?: true
+           ) do
         {:ok, item_type} ->
           {:ok, item_type}
+
         {:error, reason} ->
           Logger.error("Failed to create item type: #{inspect(reason)}")
           {:error, reason}
@@ -91,6 +96,7 @@ defmodule RivaAsh.ItemType.TypeService do
             case Ash.update(item_type, attributes: attrs, authorize?: true) do
               {:ok, updated_item_type} ->
                 {:ok, updated_item_type}
+
               {:error, reason} ->
                 Logger.error("Failed to update item type: #{inspect(reason)}")
                 {:error, reason}
@@ -98,7 +104,7 @@ defmodule RivaAsh.ItemType.TypeService do
           else
             {:error, :forbidden}
           end
-        
+
         {:error, reason} ->
           Logger.error("Failed to get item type for update: #{inspect(reason)}")
           {:error, reason}
@@ -121,6 +127,7 @@ defmodule RivaAsh.ItemType.TypeService do
             case Ash.destroy(item_type, authorize?: true) do
               {:ok, deleted_item_type} ->
                 {:ok, deleted_item_type}
+
               {:error, reason} ->
                 Logger.error("Failed to delete item type: #{inspect(reason)}")
                 {:error, reason}
@@ -128,7 +135,7 @@ defmodule RivaAsh.ItemType.TypeService do
           else
             {:error, :forbidden}
           end
-        
+
         {:error, reason} ->
           Logger.error("Failed to get item type for deletion: #{inspect(reason)}")
           {:error, reason}
@@ -151,6 +158,7 @@ defmodule RivaAsh.ItemType.TypeService do
             case Ash.update(item_type, attributes: %{status: :active}, authorize?: true) do
               {:ok, updated_item_type} ->
                 {:ok, updated_item_type}
+
               {:error, reason} ->
                 Logger.error("Failed to activate item type: #{inspect(reason)}")
                 {:error, reason}
@@ -158,7 +166,7 @@ defmodule RivaAsh.ItemType.TypeService do
           else
             {:error, :forbidden}
           end
-        
+
         {:error, reason} ->
           Logger.error("Failed to get item type for activation: #{inspect(reason)}")
           {:error, reason}
@@ -181,6 +189,7 @@ defmodule RivaAsh.ItemType.TypeService do
             case Ash.update(item_type, attributes: %{status: :inactive}, authorize?: true) do
               {:ok, updated_item_type} ->
                 {:ok, updated_item_type}
+
               {:error, reason} ->
                 Logger.error("Failed to deactivate item type: #{inspect(reason)}")
                 {:error, reason}
@@ -188,7 +197,7 @@ defmodule RivaAsh.ItemType.TypeService do
           else
             {:error, :forbidden}
           end
-        
+
         {:error, reason} ->
           Logger.error("Failed to get item type for deactivation: #{inspect(reason)}")
           {:error, reason}
@@ -212,7 +221,7 @@ defmodule RivaAsh.ItemType.TypeService do
           else
             {:error, :forbidden}
           end
-        
+
         {:error, reason} ->
           Logger.error("Failed to get item type: #{inspect(reason)}")
           {:error, reason}
@@ -231,30 +240,34 @@ defmodule RivaAsh.ItemType.TypeService do
     _errors = []
 
     # Validate name
-    name_errors = 
+    name_errors =
       case attrs do
         %{name: name} when is_binary(name) and byte_size(name) > 0 ->
           []
+
         _ ->
           ["Name is required"]
       end
 
     # Validate business_id
-    business_id_errors = 
+    business_id_errors =
       case attrs do
         %{business_id: business_id} when is_binary(business_id) and byte_size(business_id) > 0 ->
           []
+
         _ ->
           ["Business ID is required"]
       end
 
     # Validate description (optional but if provided, should be reasonable length)
-    description_errors = 
+    description_errors =
       case attrs do
         %{description: description} when is_binary(description) and byte_size(description) <= 2000 ->
           []
+
         %{description: description} when is_binary(description) ->
           ["Description must be less than 2000 characters"]
+
         _ ->
           []
       end
@@ -271,15 +284,19 @@ defmodule RivaAsh.ItemType.TypeService do
   Check if an item type name is already taken in the business.
   """
   def name_taken?(name, business_id) do
-    try do
-      query = 
-        ItemType
-        |> Query.filter(business_id: business_id, name: name)
-        |> Query.limit(1)
+    query =
+      ItemType
+      |> Query.filter(business_id: business_id, name: name)
+      |> Query.limit(1)
 
+    try do
       case Ash.read(query) do
-        {:ok, []} -> false
-        {:ok, [_ | _]} -> true
+        {:ok, []} ->
+          false
+
+        {:ok, [_ | _]} ->
+          true
+
         {:error, reason} ->
           Logger.error("Failed to check name uniqueness: #{inspect(reason)}")
           false
@@ -295,35 +312,34 @@ defmodule RivaAsh.ItemType.TypeService do
   Get item type statistics for a business.
   """
   def get_type_stats(business_id) do
+    # Get total count
+    total_count_query =
+      ItemType
+      |> Query.filter(business_id: business_id)
+      |> Query.aggregate(:count, :id)
+
+    # Get active count
+    active_count_query =
+      ItemType
+      |> Query.filter(business_id: business_id, status: :active)
+      |> Query.aggregate(:count, :id)
+
+    # Get inactive count
+    inactive_count_query =
+      ItemType
+      |> Query.filter(business_id: business_id, status: :inactive)
+      |> Query.aggregate(:count, :id)
+
     try do
-      # Get total count
-      total_count_query = 
-        ItemType
-        |> Query.filter(business_id: business_id)
-        |> Query.aggregate(:count, :id)
-
-      # Get active count
-      active_count_query = 
-        ItemType
-        |> Query.filter(business_id: business_id, status: :active)
-        |> Query.aggregate(:count, :id)
-
-      # Get inactive count
-      inactive_count_query = 
-        ItemType
-        |> Query.filter(business_id: business_id, status: :inactive)
-        |> Query.aggregate(:count, :id)
-
       with {:ok, [%{count: total_count}]} <- Ash.read(total_count_query),
            {:ok, [%{count: active_count}]} <- Ash.read(active_count_query),
            {:ok, [%{count: inactive_count}]} <- Ash.read(inactive_count_query) do
-        
         stats = %{
           total_count: total_count,
           active_count: active_count,
           inactive_count: inactive_count
         }
-        
+
         {:ok, stats}
       else
         {:error, reason} ->

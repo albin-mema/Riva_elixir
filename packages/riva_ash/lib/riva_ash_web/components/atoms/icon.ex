@@ -2,7 +2,7 @@ defmodule RivaAshWeb.Components.Atoms.Icon do
   @moduledoc """
   Icon component that provides a consistent interface for rendering icons.
   Uses the heroicons library for Phoenix LiveView.
-  
+
   Follows functional core, imperative shell pattern with comprehensive type safety.
   """
   use Phoenix.Component
@@ -80,7 +80,7 @@ defmodule RivaAshWeb.Components.Atoms.Icon do
   defp build_icon_class(assigns) do
     size_classes = size_class(assigns.size)
     variant_classes = variant_class(assigns.variant)
-    
+
     [size_classes, variant_classes, assigns.class]
     |> Enum.reject(&(&1 == ""))
     |> Enum.join(" ")
@@ -175,6 +175,7 @@ defmodule RivaAshWeb.Components.Atoms.Icon do
     # In a real implementation, you might want to log this error
     # and render a fallback icon or error state
     IO.puts("Icon error: #{reason}")
+
     ~H"""
     <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative">
       <span class="block sm:inline">Error: <%= reason %></span>

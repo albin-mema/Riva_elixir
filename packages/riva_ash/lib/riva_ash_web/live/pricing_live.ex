@@ -79,7 +79,7 @@ defmodule RivaAshWeb.PricingLive do
          socket
          |> put_flash(:info, "Pricing deleted successfully")
          |> reload_pricing_data()}
-      
+
       {:error, reason} ->
         {:noreply,
          socket
@@ -98,14 +98,14 @@ defmodule RivaAshWeb.PricingLive do
         socket
         |> assign(:pricings, pricings)
         |> assign(:meta, meta)
-      
+
       {:error, _reason} ->
         socket
     end
   end
 
   defp get_page_title do
-    Application.get_env(:riva_ash, __MODULE__, [])[:page_title] || "Pricing"
+    Application.get_env(:riva_ash, __MODULE__, []) |> get_in([:page_title]) || "Pricing"
   end
 
   defp format_currency(amount) when is_number(amount) do
@@ -122,10 +122,16 @@ defmodule RivaAshWeb.PricingLive do
   defp format_error(reason) do
     case reason do
       %Ash.Error.Invalid{errors: errors} ->
-        errors |> Enum.map(&format_validation_error/1) |> Enum.join(", ")
-      %Ash.Error.Forbidden{} -> "You don't have permission to perform this action"
-      %Ash.Error.NotFound{} -> "Pricing not found"
-      _ -> "An unexpected error occurred"
+        Enum.map_join(errors, ", ", &format_validation_error/1)
+
+      %Ash.Error.Forbidden{} ->
+        "You don't have permission to perform this action"
+
+      %Ash.Error.NotFound{} ->
+        "Pricing not found"
+
+      _ ->
+        "An unexpected error occurred"
     end
   end
 

@@ -13,7 +13,12 @@ defmodule RivaAshWeb.Components.UI.Button do
   Supports multiple variants, sizes, and states as defined in the design system.
   """
   attr :type, :string, default: "button", doc: "The button type (button, submit, reset)"
-  attr :variant, :string, default: "default", values: ~w(default destructive outline secondary ghost link), doc: "The button style variant"
+
+  attr :variant, :string,
+    default: "default",
+    values: ~w(default destructive outline secondary ghost link),
+    doc: "The button style variant"
+
   attr :size, :string, default: "default", values: ~w(default sm lg), doc: "The button size"
   attr :loading, :boolean, default: false, doc: "Whether the button is in a loading state"
   attr :class, :string, default: "", doc: "Additional CSS classes to apply"
@@ -60,13 +65,13 @@ defmodule RivaAshWeb.Components.UI.Button do
   # Helper function to build spinner classes
   @spec build_spinner_class(boolean()) :: String.t()
   defp build_spinner_class(loading) do
-    if loading, do: "mr-2 h-4 w-4 animate-spin", else: "hidden"
+    if loading, "mr-2 h-4 w-4 animate-spin", "hidden"
   end
 
   # Helper function to build content classes
   @spec build_content_class(boolean()) :: String.t()
   defp build_content_class(loading) do
-    if loading, do: "inline-block", else: ""
+    if loading, "inline-block", ""
   end
 
   # Helper function to build disabled state
@@ -76,11 +81,12 @@ defmodule RivaAshWeb.Components.UI.Button do
   end
 
   defp button_class(assigns) do
-    base = "inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none ring-offset-background"
+    base =
+      "inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none ring-offset-background"
 
     variant = variant_classes(assigns.variant)
     size = size_classes(assigns.size)
-    loading = if assigns.loading, do: "opacity-50 pointer-events-none", else: ""
+    loading = if assigns.loading, "opacity-50 pointer-events-none", ""
 
     Enum.join([base, variant, size, loading, assigns.class], " ")
   end

@@ -19,15 +19,15 @@ defmodule RivaAsh.GDPR.DataSubjectRights do
 
   require Logger
 
-  @config Application.get_env(:riva_ash, :gdpr, %{})
+  @config Application.compile_env(:riva_ash, :gdpr, %{})
   @allowed_correction_fields Map.get(@config, :allowed_correction_fields, [:name, :email, :phone])
   @valid_processing_purposes Map.get(@config, :valid_processing_purposes, [
-    "marketing",
-    "analytics",
-    "profiling",
-    "automated_decision_making",
-    "legitimate_interest_processing"
-  ])
+                               "marketing",
+                               "analytics",
+                               "profiling",
+                               "automated_decision_making",
+                               "legitimate_interest_processing"
+                             ])
 
   @doc """
   Export all personal data for a data subject in a portable format.
@@ -38,7 +38,7 @@ defmodule RivaAsh.GDPR.DataSubjectRights do
   Returns data in JSON format that can be easily imported by other systems.
   """
   @spec export_personal_data(String.t(), atom()) :: {:ok, String.t()} | {:error, term()}
-  def export_personal_data(user_id, format \\ :json) when is_binary(user_id) do
+  def export_personal_data(user_id, format) when is_binary(user_id) do
     Logger.info("GDPR: Starting data export for user #{user_id}")
 
     with {:ok, user} <- get_user(user_id),
@@ -52,9 +52,6 @@ defmodule RivaAsh.GDPR.DataSubjectRights do
     end
   end
 
-  def export_personal_data(_user_id, _format) do
-    {:error, "User ID must be a string"}
-  end
 
   defp handle_export_success(data, user_id) do
     formatted_data = data
@@ -76,7 +73,7 @@ defmodule RivaAsh.GDPR.DataSubjectRights do
   after the legal retention period.
   """
   @spec request_data_deletion(String.t(), String.t()) :: {:ok, String.t()} | {:error, term()}
-  def request_data_deletion(user_id, reason \\ "user_request") when is_binary(user_id) do
+  def request_data_deletion(user_id, _reason) when is_binary(user_id) do
     Logger.info("GDPR: Starting deletion request for user #{user_id}")
 
     with {:ok, user} <- get_user(user_id),
@@ -90,9 +87,6 @@ defmodule RivaAsh.GDPR.DataSubjectRights do
     end
   end
 
-  def request_data_deletion(_user_id, _reason) do
-    {:error, "User ID must be a string"}
-  end
 
   defp handle_deletion_success(user_id) do
     log_data_subject_request(user_id, "data_deletion", "initiated")
@@ -360,9 +354,7 @@ defmodule RivaAsh.GDPR.DataSubjectRights do
   end
 
   defp log_data_subject_request(user_id, request_type, status, details \\ nil) do
-    Logger.info(
-      "GDPR Request: user=#{user_id}, type=#{request_type}, status=#{status}, details=#{inspect(details)}"
-    )
+    Logger.info("GDPR Request: user=#{user_id}, type=#{request_type}, status=#{status}, details=#{inspect(details)}")
 
     # This should also be stored in a dedicated audit table for GDPR requests
     # to maintain compliance records
@@ -379,37 +371,8 @@ defmodule RivaAsh.GDPR.DataSubjectRights do
           audit_trail: [map()]
         }
 
-  @spec collect_personal_data(User.t()) :: {:ok, export_data()} | {:error, term()}
-  defp collect_personal_data(user) do
-    data = %{
-      user_profile: extract_user_data(user),
-      businesses: extract_business_data(user.id),
-      employee_records: extract_employee_data(user.id),
-      client_records: extract_client_data(user.id),
-      reservations: extract_reservation_data(user.id),
-      consent_records: extract_consent_data(user.id),
-      audit_trail: extract_audit_data(user.id)
-    }
 
-    {:ok, data}
-  end
 
-  @spec format_export_data(export_data(), atom()) :: String.t()
-  defp format_export_data(data, :json) do
-    %{
-      export_date: DateTime.utc_now(),
-      data_subject_id: data.user_profile.id,
-      format: "JSON",
-      data: data
-    }
-    |> Jason.encode!(pretty: true)
-  end
-
-  @spec format_export_data(export_data(), atom()) :: String.t()
-  defp format_export_data(data, _format) do
-    # Default to JSON for other formats
-    format_export_data(data, :json)
-  end
 
   @spec handle_rectification_success(String.t(), User.t()) :: {:ok, User.t()}
   defp handle_rectification_success(user_id, updated_user) do

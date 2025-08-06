@@ -31,7 +31,8 @@ defmodule RivaAshWeb.Components.Atoms.FileUpload do
   attr(:accept, :list, default: [])
   attr(:multiple, :boolean, default: false)
   attr(:max_files, :integer, default: 1)
-  attr(:max_file_size, :integer, default: 10_485_760) # 10MB default
+  # 10MB default
+  attr(:max_file_size, :integer, default: 10_485_760)
   attr(:disabled, :boolean, default: false)
   attr(:required, :boolean, default: false)
   attr(:drag_drop, :boolean, default: true)
@@ -51,13 +52,15 @@ defmodule RivaAshWeb.Components.Atoms.FileUpload do
   @spec build_file_upload_attrs(assigns :: assigns()) :: assigns()
   defp build_file_upload_attrs(assigns) do
     default_max_size = Application.get_env(:riva_ash, :file_upload_max_size, 10_485_760)
-    default_accept = Application.get_env(:riva_ash, :file_upload_accept, [
-      "image/jpeg",
-      "image/png",
-      "image/gif",
-      "application/pdf",
-      "text/plain"
-    ])
+
+    default_accept =
+      Application.get_env(:riva_ash, :file_upload_accept, [
+        "image/jpeg",
+        "image/png",
+        "image/gif",
+        "application/pdf",
+        "text/plain"
+      ])
 
     assigns
     |> Map.put_new(:max_file_size, default_max_size)
@@ -98,7 +101,7 @@ defmodule RivaAshWeb.Components.Atoms.FileUpload do
   defp validate_mime_type(type) do
     valid_types = [
       "image/jpeg",
-      "image/png", 
+      "image/png",
       "image/gif",
       "image/webp",
       "application/pdf",
@@ -141,7 +144,7 @@ defmodule RivaAshWeb.Components.Atoms.FileUpload do
           required={@required}
           class="hidden"
         />
-        
+
         <div class="file-upload-content">
           <.icon name={:upload} class="mx-auto h-12 w-12 text-gray-400" />
           <div class="text-center">
@@ -153,7 +156,7 @@ defmodule RivaAshWeb.Components.Atoms.FileUpload do
             </p>
             <p class="text-xs text-gray-500 mt-1">
               <%= build_file_size_text(@max_file_size) %>
-              <%= if @multiple, do: " • Up to #{@max_files} files", else: "" %>
+              <%= if @multiple, " • Up to #{@max_files} files", "" %>
             </p>
           </div>
         </div>
@@ -179,20 +182,22 @@ defmodule RivaAshWeb.Components.Atoms.FileUpload do
   @spec build_drop_zone_class(String.t(), String.t(), boolean()) :: String.t()
   defp build_drop_zone_class(size, variant, disabled) do
     base_classes = "relative border-2 border-dashed rounded-lg cursor-pointer transition-colors duration-200"
-    
-    size_classes = case size do
-      "sm" -> "p-4"
-      "lg" -> "p-6"
-      _ -> "p-5"
-    end
 
-    variant_classes = case variant do
-      "error" -> "border-red-300 bg-red-50 hover:border-red-400"
-      "success" -> "border-green-300 bg-green-50 hover:border-green-400"
-      _ -> "border-gray-300 bg-gray-50 hover:border-gray-400"
-    end
+    size_classes =
+      case size do
+        "sm" -> "p-4"
+        "lg" -> "p-6"
+        _ -> "p-5"
+      end
 
-    disabled_classes = if disabled, do: "opacity-50 cursor-not-allowed border-gray-200", else: ""
+    variant_classes =
+      case variant do
+        "error" -> "border-red-300 bg-red-50 hover:border-red-400"
+        "success" -> "border-green-300 bg-green-50 hover:border-green-400"
+        _ -> "border-gray-300 bg-gray-50 hover:border-gray-400"
+      end
+
+    disabled_classes = if disabled, "opacity-50 cursor-not-allowed border-gray-200", ""
 
     "#{base_classes} #{size_classes} #{variant_classes} #{disabled_classes}"
   end
@@ -202,10 +207,13 @@ defmodule RivaAshWeb.Components.Atoms.FileUpload do
     cond do
       max_size >= 100_000_000 ->
         "#{div(max_size, 100_000_000)}GB max"
+
       max_size >= 1_000_000 ->
         "#{div(max_size, 1_000_000)}MB max"
+
       max_size >= 1_000 ->
         "#{div(max_size, 1_000)}KB max"
+
       true ->
         "#{max_size}B max"
     end
@@ -219,7 +227,7 @@ defmodule RivaAshWeb.Components.Atoms.FileUpload do
         <div class="flex items-center space-x-3">
           <.icon name={:document} class="h-5 w-5 text-gray-400" />
           <span class="text-sm font-medium text-gray-900 truncate">
-            <%= String.slice(value, 0..30) <> if String.length(value) > 30, do: "...", else: "" %>
+            <%= String.slice(value, 0..30) <> if String.length(value) > 30, "...", "" %>
           </span>
         </div>
         <button type="button" class="text-red-600 hover:text-red-800">

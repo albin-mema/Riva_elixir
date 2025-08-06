@@ -1,7 +1,7 @@
 defmodule RivaAshWeb.DevTools.TestDataGeneratorLive do
   @moduledoc """
   Generate realistic test data for development and testing.
-  
+
   Features:
   - One-click user creation
   - Complete business setup
@@ -39,7 +39,7 @@ defmodule RivaAshWeb.DevTools.TestDataGeneratorLive do
     def handle_event("select_template", %{"template" => template}, socket) do
       template_atom = String.to_existing_atom(template)
       options = get_template_options(template_atom)
-      
+
       socket =
         socket
         |> assign(:selected_template, template_atom)
@@ -50,17 +50,20 @@ defmodule RivaAshWeb.DevTools.TestDataGeneratorLive do
 
     def handle_event("update_option", %{"field" => field, "value" => value}, socket) do
       field_atom = String.to_existing_atom(field)
-      
+
       # Parse value based on field type
-      parsed_value = case field_atom do
-        field when field in [:count, :businesses_count, :items_per_business, :clients_count, :reservations_count] ->
-          String.to_integer(value)
-        field when field in [:with_reservations, :with_employees, :with_items] ->
-          value == "true"
-        _ ->
-          value
-      end
-      
+      parsed_value =
+        case field_atom do
+          field when field in [:count, :businesses_count, :items_per_business, :clients_count, :reservations_count] ->
+            String.to_integer(value)
+
+          field when field in [:with_reservations, :with_employees, :with_items] ->
+            value == "true"
+
+          _ ->
+            value
+        end
+
       options = Map.put(socket.assigns.generation_options, field_atom, parsed_value)
       {:noreply, assign(socket, :generation_options, options)}
     end
@@ -87,9 +90,9 @@ defmodule RivaAshWeb.DevTools.TestDataGeneratorLive do
     def handle_info(:start_generation, socket) do
       template = socket.assigns.selected_template
       options = socket.assigns.generation_options
-      
+
       task = Task.async(fn -> generate_template_data(template, options) end)
-      
+
       socket =
         socket
         |> assign(:generation_task, task)
@@ -99,7 +102,7 @@ defmodule RivaAshWeb.DevTools.TestDataGeneratorLive do
 
     def handle_info({:quick_generate, type}, socket) do
       task = Task.async(fn -> quick_generate_data(type) end)
-      
+
       socket =
         socket
         |> assign(:generation_task, task)
@@ -113,7 +116,7 @@ defmodule RivaAshWeb.DevTools.TestDataGeneratorLive do
         message: message,
         type: :info
       }
-      
+
       log = [log_entry | socket.assigns.generation_log]
       {:noreply, assign(socket, :generation_log, Enum.take(log, 50))}
     end
@@ -124,9 +127,9 @@ defmodule RivaAshWeb.DevTools.TestDataGeneratorLive do
         message: "Error: #{error}",
         type: :error
       }
-      
+
       log = [log_entry | socket.assigns.generation_log]
-      
+
       socket =
         socket
         |> assign(:generation_log, Enum.take(log, 50))
@@ -138,7 +141,7 @@ defmodule RivaAshWeb.DevTools.TestDataGeneratorLive do
 
     def handle_info({ref, result}, socket) when is_reference(ref) do
       Process.demonitor(ref, [:flush])
-      
+
       case result do
         {:ok, summary} ->
           log_entry = %{
@@ -146,9 +149,9 @@ defmodule RivaAshWeb.DevTools.TestDataGeneratorLive do
             message: "Generation completed: #{summary}",
             type: :success
           }
-          
+
           log = [log_entry | socket.assigns.generation_log]
-          
+
           socket =
             socket
             |> assign(:generation_log, Enum.take(log, 50))
@@ -156,7 +159,7 @@ defmodule RivaAshWeb.DevTools.TestDataGeneratorLive do
             |> load_current_stats()
 
           {:noreply, socket}
-          
+
         {:error, error} ->
           handle_info({:generation_error, inspect(error)}, socket)
       end
@@ -203,7 +206,7 @@ defmodule RivaAshWeb.DevTools.TestDataGeneratorLive do
                     </svg>
                     <span class="text-sm font-medium">New User</span>
                   </button>
-                  
+
                   <button
                     phx-click="quick_generate"
                     phx-value-type="business"
@@ -215,7 +218,7 @@ defmodule RivaAshWeb.DevTools.TestDataGeneratorLive do
                     </svg>
                     <span class="text-sm font-medium">New Business</span>
                   </button>
-                  
+
                   <button
                     phx-click="quick_generate"
                     phx-value-type="client"
@@ -227,7 +230,7 @@ defmodule RivaAshWeb.DevTools.TestDataGeneratorLive do
                     </svg>
                     <span class="text-sm font-medium">New Client</span>
                   </button>
-                  
+
                   <button
                     phx-click="quick_generate"
                     phx-value-type="reservation"
@@ -252,8 +255,8 @@ defmodule RivaAshWeb.DevTools.TestDataGeneratorLive do
                       phx-value-template={template.key}
                       class={[
                         "p-4 border rounded-lg text-left transition-colors",
-                        if(@selected_template == template.key, 
-                          do: "border-blue-500 bg-blue-50", 
+                        if(@selected_template == template.key,
+                          do: "border-blue-500 bg-blue-50",
                           else: "border-gray-300 hover:border-gray-400")
                       ]}
                     >
@@ -321,7 +324,7 @@ defmodule RivaAshWeb.DevTools.TestDataGeneratorLive do
                     Clear Log
                   </button>
                 </div>
-                
+
                 <div class="bg-gray-900 rounded-lg p-4 h-64 overflow-y-auto">
                   <%= if @generation_log == [] do %>
                     <p class="text-gray-400 text-sm">No generation activity yet...</p>
@@ -455,16 +458,20 @@ defmodule RivaAshWeb.DevTools.TestDataGeneratorLive do
 
     defp generate_template_data(template, options) do
       send(self(), {:generation_log, "Starting #{template} generation with options: #{inspect(options)}"})
-      
+
       case template do
         :complete_business ->
           generate_complete_business(options)
+
         :reservation_scenario ->
           generate_reservation_scenario(options)
+
         :user_management ->
           generate_user_management(options)
+
         :bulk_data ->
           generate_bulk_data(options)
+
         _ ->
           {:error, "Unknown template"}
       end
@@ -472,17 +479,22 @@ defmodule RivaAshWeb.DevTools.TestDataGeneratorLive do
 
     defp quick_generate_data(:user) do
       send(self(), {:generation_log, "Creating new user..."})
-      
+
       user_attrs = %{
         email: "user_#{:rand.uniform(10000)}@example.com",
-        name: Enum.random(["Alice", "Bob", "Charlie", "Diana", "Eve"]) <> " " <> Enum.random(["Smith", "Johnson", "Brown", "Davis", "Wilson"]),
+        name:
+          Enum.random(["Alice", "Bob", "Charlie", "Diana", "Eve"]) <>
+            " " <> Enum.random(["Smith", "Johnson", "Brown", "Davis", "Wilson"]),
         password: "password123",
         role: Enum.random(["user", "admin", "manager"])
       }
 
-      case User |> Ash.Changeset.for_create(:register_with_password, user_attrs) |> Ash.create(domain: RivaAsh.Accounts) do
+      case User
+           |> Ash.Changeset.for_create(:register_with_password, user_attrs)
+           |> Ash.create(domain: RivaAsh.Accounts) do
         {:ok, user} ->
           {:ok, "Created user: #{user.email}"}
+
         {:error, error} ->
           {:error, "Failed to create user: #{inspect(error)}"}
       end
@@ -490,7 +502,7 @@ defmodule RivaAshWeb.DevTools.TestDataGeneratorLive do
 
     defp quick_generate_data(:business) do
       send(self(), {:generation_log, "Creating new business..."})
-      
+
       # This would use your BusinessSetupFlow reactor
       business_attrs = %{
         name: "Business #{:rand.uniform(1000)}",
@@ -500,6 +512,7 @@ defmodule RivaAshWeb.DevTools.TestDataGeneratorLive do
       case Business |> Ash.Changeset.for_create(:create, business_attrs) |> Ash.create(domain: RivaAsh.Domain) do
         {:ok, business} ->
           {:ok, "Created business: #{business.name}"}
+
         {:error, error} ->
           {:error, "Failed to create business: #{inspect(error)}"}
       end
@@ -507,7 +520,7 @@ defmodule RivaAshWeb.DevTools.TestDataGeneratorLive do
 
     defp quick_generate_data(:client) do
       send(self(), {:generation_log, "Creating new client..."})
-      
+
       client_attrs = %{
         email: "client_#{:rand.uniform(10000)}@example.com",
         first_name: Enum.random(["John", "Jane", "Mike", "Sarah", "Tom"]),
@@ -518,6 +531,7 @@ defmodule RivaAshWeb.DevTools.TestDataGeneratorLive do
       case Client |> Ash.Changeset.for_create(:create, client_attrs) |> Ash.create(domain: RivaAsh.Domain) do
         {:ok, client} ->
           {:ok, "Created client: #{client.first_name} #{client.last_name}"}
+
         {:error, error} ->
           {:error, "Failed to create client: #{inspect(error)}"}
       end

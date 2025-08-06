@@ -1,7 +1,7 @@
 defmodule RivaAshWeb.DevTools.BusinessContextLive do
   @moduledoc """
   Development tool for inspecting business context, permissions, and user state.
-  
+
   Shows:
   - Current user and role
   - Active business context
@@ -79,7 +79,7 @@ defmodule RivaAshWeb.DevTools.BusinessContextLive do
                   >
                     User Context
                   </button>
-                  
+
                   <button
                     phx-click="change_tab"
                     phx-value-tab="business"
@@ -90,7 +90,7 @@ defmodule RivaAshWeb.DevTools.BusinessContextLive do
                   >
                     Business Context
                   </button>
-                  
+
                   <button
                     phx-click="change_tab"
                     phx-value-tab="permissions"
@@ -101,7 +101,7 @@ defmodule RivaAshWeb.DevTools.BusinessContextLive do
                   >
                     Permissions
                   </button>
-                  
+
                   <button
                     phx-click="change_tab"
                     phx-value-tab="session"
@@ -113,7 +113,7 @@ defmodule RivaAshWeb.DevTools.BusinessContextLive do
                     Session Data
                   </button>
                 </nav>
-                
+
                 <button
                   phx-click="refresh_context"
                   class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 text-sm"
@@ -147,23 +147,23 @@ defmodule RivaAshWeb.DevTools.BusinessContextLive do
         <%= if @current_user do %>
           <div class="bg-green-50 border border-green-200 rounded-lg p-4">
             <h3 class="text-lg font-semibold text-green-800 mb-3">Authenticated User</h3>
-            
+
             <div class="grid grid-cols-2 gap-4">
               <div>
                 <span class="text-sm font-medium text-gray-700">ID:</span>
                 <span class="text-sm text-gray-900 ml-2 font-mono"><%= @current_user.id %></span>
               </div>
-              
+
               <div>
                 <span class="text-sm font-medium text-gray-700">Email:</span>
                 <span class="text-sm text-gray-900 ml-2"><%= @current_user.email %></span>
               </div>
-              
+
               <div>
                 <span class="text-sm font-medium text-gray-700">Name:</span>
                 <span class="text-sm text-gray-900 ml-2"><%= @current_user.name || "Not set" %></span>
               </div>
-              
+
               <div>
                 <span class="text-sm font-medium text-gray-700">Role:</span>
                 <span class={[
@@ -179,7 +179,7 @@ defmodule RivaAshWeb.DevTools.BusinessContextLive do
                 </span>
               </div>
             </div>
-            
+
             <div class="mt-4">
               <span class="text-sm font-medium text-gray-700">Calculations:</span>
               <div class="mt-2 space-y-1">
@@ -192,7 +192,7 @@ defmodule RivaAshWeb.DevTools.BusinessContextLive do
                     <%= @current_user.role == "admin" %>
                   </span>
                 </div>
-                
+
                 <div class="flex items-center">
                   <span class="text-sm text-gray-600">Is Superadmin:</span>
                   <span class={[
@@ -211,27 +211,27 @@ defmodule RivaAshWeb.DevTools.BusinessContextLive do
             <p class="text-sm text-yellow-700">No user is currently authenticated in this session.</p>
           </div>
         <% end %>
-        
+
         <%= if @current_user do %>
           <div class="bg-white border border-gray-200 rounded-lg p-4">
             <h4 class="text-md font-semibold text-gray-800 mb-3">User Actions Available</h4>
-            
+
             <div class="space-y-2">
               <div class="flex items-center justify-between p-2 bg-gray-50 rounded">
                 <span class="text-sm text-gray-700">Can read own profile</span>
                 <span class="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">✓ Allowed</span>
               </div>
-              
+
               <div class="flex items-center justify-between p-2 bg-gray-50 rounded">
                 <span class="text-sm text-gray-700">Can update own profile</span>
                 <span class="text-xs bg-green-100 text-green-800 px-2 py-1 rounded">✓ Allowed</span>
               </div>
-              
+
               <div class="flex items-center justify-between p-2 bg-gray-50 rounded">
                 <span class="text-sm text-gray-700">Can change role</span>
                 <span class="text-xs bg-red-100 text-red-800 px-2 py-1 rounded">✗ Forbidden</span>
               </div>
-              
+
               <div class="flex items-center justify-between p-2 bg-gray-50 rounded">
                 <span class="text-sm text-gray-700">Can delete account</span>
                 <span class={[
@@ -253,7 +253,7 @@ defmodule RivaAshWeb.DevTools.BusinessContextLive do
       <div class="space-y-6">
         <div class="bg-white border border-gray-200 rounded-lg p-4">
           <h3 class="text-lg font-semibold text-gray-800 mb-4">Business Access</h3>
-          
+
           <%= if @businesses != [] do %>
             <div class="space-y-3">
               <%= for business <- @businesses do %>
@@ -265,7 +265,7 @@ defmodule RivaAshWeb.DevTools.BusinessContextLive do
                     </div>
                     <span class="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">Owner</span>
                   </div>
-                  
+
                   <div class="mt-3 grid grid-cols-2 gap-4 text-sm">
                     <div>
                       <span class="text-gray-600">ID:</span>
@@ -283,10 +283,10 @@ defmodule RivaAshWeb.DevTools.BusinessContextLive do
             <p class="text-gray-500 text-center py-4">No businesses accessible to current user.</p>
           <% end %>
         </div>
-        
+
         <div class="bg-white border border-gray-200 rounded-lg p-4">
           <h3 class="text-lg font-semibold text-gray-800 mb-4">Employee Roles</h3>
-          
+
           <%= if @employees != [] do %>
             <div class="space-y-2">
               <%= for employee <- @employees do %>
@@ -324,7 +324,7 @@ defmodule RivaAshWeb.DevTools.BusinessContextLive do
       <div class="space-y-6">
         <div class="bg-white border border-gray-200 rounded-lg p-4">
           <h3 class="text-lg font-semibold text-gray-800 mb-4">Resource Permissions Matrix</h3>
-          
+
           <%= if @current_user do %>
             <div class="overflow-x-auto">
               <table class="min-w-full divide-y divide-gray-200">
@@ -371,7 +371,7 @@ defmodule RivaAshWeb.DevTools.BusinessContextLive do
       <div class="space-y-6">
         <div class="bg-white border border-gray-200 rounded-lg p-4">
           <h3 class="text-lg font-semibold text-gray-800 mb-4">Session Information</h3>
-          
+
           <div class="bg-gray-50 rounded p-4">
             <pre class="text-sm text-gray-800 overflow-x-auto"><%= inspect(@session_data, pretty: true, limit: :infinity) %></pre>
           </div>
@@ -392,6 +392,6 @@ defmodule RivaAshWeb.DevTools.BusinessContextLive do
     end
 
     # Helper functions
-    defp get_page_title, do: Application.get_env(:riva_ash, __MODULE__, [])[:page_title] || "Business Context Inspector"
+    defp get_page_title, do: Application.get_env(:riva_ash, __MODULE__, []) |> get_in([:page_title]) || "Business Context Inspector"
   end
 end

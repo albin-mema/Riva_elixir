@@ -2,40 +2,40 @@ defmodule RivaAshWeb.Components.Molecules.FormField do
   @moduledoc """
   FormField component that combines label, input, and error messages.
   A molecule component that provides a complete form field experience.
-  
+
   Supports various input types including text, textarea, select, and checkbox
   with consistent validation states, error handling, and accessibility features.
-  
+
   ## Styleguide Compliance
-  
+
   This component follows the Riva Ash styleguide principles:
-  
+
   ### Functional Programming Patterns
   - Uses pipeline operator (`|>`) for data transformation
   - Implements pure functions with no side effects
   - Uses pattern matching for data validation and processing
   - Follows single level of abstraction principle
-  
+
   ### Type Safety
   - Comprehensive type specifications using `@type` and `@spec`
   - Strong typing for all function parameters and return values
   - Type validation through pattern matching
-  
+
   ### Error Handling
   - Uses result tuples (`:ok | {:error, String.t()}`) for consistent error handling
   - Early validation with guard clauses
   - Clear error messages for invalid inputs
-  
+
   ### Code Abstraction
   - Separates concerns into focused helper functions
   - Extracts validation logic into dedicated functions
   - Uses functional composition for complex operations
-  
+
   ### Phoenix/Ash Patterns
   - Follows Phoenix LiveView component conventions
   - Uses proper attribute validation and building
   - Implements functional core, imperative shell pattern
-  
+
   ### LiveView Component Patterns
   - Uses proper slot and attribute handling
   - Implements accessibility features
@@ -89,30 +89,63 @@ defmodule RivaAshWeb.Components.Molecules.FormField do
       />
   """
   @spec form_field(assigns :: assigns()) :: Phoenix.LiveView.Rendered.t()
-  attr(:field, Phoenix.HTML.FormField, required: true,
-    doc: "Phoenix form field with validation and errors")
-  attr(:label, :string, default: nil,
-    doc: "Label text for the field")
-  attr(:type, :atom, default: :text,
+  attr(:field, Phoenix.HTML.FormField,
+    required: true,
+    doc: "Phoenix form field with validation and errors"
+  )
+
+  attr(:label, :string,
+    default: nil,
+    doc: "Label text for the field"
+  )
+
+  attr(:type, :atom,
+    default: :text,
     values: ~w(text email password number tel url)a,
-    doc: "Input type")
-  attr(:placeholder, :string, default: "",
-    doc: "Placeholder text for the input")
-  attr(:helper_text, :string, default: nil,
-    doc: "Helper text displayed below the input")
-  attr(:required, :boolean, default: false,
-    doc: "Whether the field is required")
-  attr(:disabled, :boolean, default: false,
-    doc: "Whether the field is disabled")
-  attr(:readonly, :boolean, default: false,
-    doc: "Whether the field is readonly")
-  attr(:icon, :atom, default: nil,
-    doc: "Icon to display in the input field")
-  attr(:icon_position, :atom, default: :left,
+    doc: "Input type"
+  )
+
+  attr(:placeholder, :string,
+    default: "",
+    doc: "Placeholder text for the input"
+  )
+
+  attr(:helper_text, :string,
+    default: nil,
+    doc: "Helper text displayed below the input"
+  )
+
+  attr(:required, :boolean,
+    default: false,
+    doc: "Whether the field is required"
+  )
+
+  attr(:disabled, :boolean,
+    default: false,
+    doc: "Whether the field is disabled"
+  )
+
+  attr(:readonly, :boolean,
+    default: false,
+    doc: "Whether the field is readonly"
+  )
+
+  attr(:icon, :atom,
+    default: nil,
+    doc: "Icon to display in the input field"
+  )
+
+  attr(:icon_position, :atom,
+    default: :left,
     values: ~w(left right)a,
-    doc: "Position of the icon")
-  attr(:class, :string, default: "",
-    doc: "Additional CSS classes for the field wrapper")
+    doc: "Position of the icon"
+  )
+
+  attr(:class, :string,
+    default: "",
+    doc: "Additional CSS classes for the field wrapper"
+  )
+
   attr(:rest, :global)
 
   @impl true
@@ -154,6 +187,7 @@ defmodule RivaAshWeb.Components.Molecules.FormField do
       {:error, "field.errors must be a list"}
     end
   end
+
   defp validate_field(_), do: {:error, "field must be a valid Phoenix.HTML.FormField"}
 
   @spec validate_icon_position(icon_position() | String.t()) :: :ok | {:error, String.t()}
@@ -178,10 +212,10 @@ defmodule RivaAshWeb.Components.Molecules.FormField do
     ~H"""
     <div class={build_field_wrapper_class(@class)}>
       <%= render_form_field_label(@label, @required, @field) %>
-      
+
       <div class="relative">
         <%= render_form_field_icon(@icon, @icon_position) %>
-        
+
         <UIInput.input
           type={@type}
           field={@field}
@@ -200,8 +234,10 @@ defmodule RivaAshWeb.Components.Molecules.FormField do
     """
   end
 
-  @spec render_form_field_label(String.t() | nil, boolean(), Phoenix.HTML.FormField.t()) :: Phoenix.LiveView.Rendered.t()
+  @spec render_form_field_label(String.t() | nil, boolean(), Phoenix.HTML.FormField.t()) ::
+          Phoenix.LiveView.Rendered.t()
   defp render_form_field_label(nil, _required, _field), do: ""
+
   defp render_form_field_label(label, required, field) do
     assigns = %{label: label, required: required, field: field}
 
@@ -214,6 +250,7 @@ defmodule RivaAshWeb.Components.Molecules.FormField do
 
   @spec render_form_field_icon(atom(), icon_position() | String.t()) :: Phoenix.LiveView.Rendered.t()
   defp render_form_field_icon(nil, _position), do: ""
+
   defp render_form_field_icon(icon, "left") do
     assigns = %{icon: icon}
 
@@ -223,14 +260,17 @@ defmodule RivaAshWeb.Components.Molecules.FormField do
     </div>
     """
   end
+
   defp render_form_field_icon(icon, :left) do
     assigns = %{icon: icon}
+
     ~H"""
     <div class="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none">
       <UIIcon.icon name={@icon} size="sm" class="text-muted-foreground" />
     </div>
     """
   end
+
   defp render_form_field_icon(icon, :right) do
     assigns = %{icon: icon}
 
@@ -255,6 +295,7 @@ defmodule RivaAshWeb.Components.Molecules.FormField do
 
   @spec render_form_field_helper_text(String.t() | nil, Phoenix.HTML.FormField.t()) :: Phoenix.LiveView.Rendered.t()
   defp render_form_field_helper_text(nil, _field), do: ""
+
   defp render_form_field_helper_text(helper_text, field) do
     if field.errors == [] do
       assigns = %{helper_text: helper_text}
@@ -294,13 +335,16 @@ defmodule RivaAshWeb.Components.Molecules.FormField do
   @spec build_field_wrapper_class(String.t()) :: String.t()
   defp build_field_wrapper_class(class) do
     # Build field wrapper classes using functional composition
-    classes = [
-      "form-field-wrapper",
-      "space-y-1",
-      class
-    ]
-    |> Enum.reject(&(&1 == "")) # Remove empty strings
-    |> Enum.join(" ") # Join with spaces
+    classes =
+      [
+        "form-field-wrapper",
+        "space-y-1",
+        class
+      ]
+      # Remove empty strings
+      |> Enum.reject(&(&1 == ""))
+      # Join with spaces
+      |> Enum.join(" ")
 
     classes
   end
@@ -309,24 +353,51 @@ defmodule RivaAshWeb.Components.Molecules.FormField do
   Renders a textarea form field.
   """
   @spec textarea_field(assigns :: map()) :: Phoenix.LiveView.Rendered.t()
-  attr(:field, Phoenix.HTML.FormField, required: true,
-    doc: "Phoenix form field with validation and errors")
-  attr(:label, :string, default: nil,
-    doc: "Label text for the field")
-  attr(:placeholder, :string, default: "",
-    doc: "Placeholder text for the textarea")
-  attr(:helper_text, :string, default: nil,
-    doc: "Helper text displayed below the textarea")
-  attr(:required, :boolean, default: false,
-    doc: "Whether the field is required")
-  attr(:disabled, :boolean, default: false,
-    doc: "Whether the field is disabled")
-  attr(:readonly, :boolean, default: false,
-    doc: "Whether the field is readonly")
-  attr(:rows, :integer, default: 4,
-    doc: "Number of rows for the textarea")
-  attr(:class, :string, default: "",
-    doc: "Additional CSS classes for the field wrapper")
+  attr(:field, Phoenix.HTML.FormField,
+    required: true,
+    doc: "Phoenix form field with validation and errors"
+  )
+
+  attr(:label, :string,
+    default: nil,
+    doc: "Label text for the field"
+  )
+
+  attr(:placeholder, :string,
+    default: "",
+    doc: "Placeholder text for the textarea"
+  )
+
+  attr(:helper_text, :string,
+    default: nil,
+    doc: "Helper text displayed below the textarea"
+  )
+
+  attr(:required, :boolean,
+    default: false,
+    doc: "Whether the field is required"
+  )
+
+  attr(:disabled, :boolean,
+    default: false,
+    doc: "Whether the field is disabled"
+  )
+
+  attr(:readonly, :boolean,
+    default: false,
+    doc: "Whether the field is readonly"
+  )
+
+  attr(:rows, :integer,
+    default: 4,
+    doc: "Number of rows for the textarea"
+  )
+
+  attr(:class, :string,
+    default: "",
+    doc: "Additional CSS classes for the field wrapper"
+  )
+
   attr(:rest, :global)
 
   def textarea_field(assigns) do
@@ -379,22 +450,46 @@ defmodule RivaAshWeb.Components.Molecules.FormField do
   Renders a select form field.
   """
   @spec select_field(assigns :: map()) :: Phoenix.LiveView.Rendered.t()
-  attr(:field, Phoenix.HTML.FormField, required: true,
-    doc: "Phoenix form field with validation and errors")
-  attr(:label, :string, default: nil,
-    doc: "Label text for the field")
-  attr(:options, :list, required: true,
-    doc: "List of options with :label and :value keys")
-  attr(:prompt, :string, default: nil,
-    doc: "Prompt text shown when no option is selected")
-  attr(:helper_text, :string, default: nil,
-    doc: "Helper text displayed below the select")
-  attr(:required, :boolean, default: false,
-    doc: "Whether the field is required")
-  attr(:disabled, :boolean, default: false,
-    doc: "Whether the field is disabled")
-  attr(:class, :string, default: "",
-    doc: "Additional CSS classes for the field wrapper")
+  attr(:field, Phoenix.HTML.FormField,
+    required: true,
+    doc: "Phoenix form field with validation and errors"
+  )
+
+  attr(:label, :string,
+    default: nil,
+    doc: "Label text for the field"
+  )
+
+  attr(:options, :list,
+    required: true,
+    doc: "List of options with :label and :value keys"
+  )
+
+  attr(:prompt, :string,
+    default: nil,
+    doc: "Prompt text shown when no option is selected"
+  )
+
+  attr(:helper_text, :string,
+    default: nil,
+    doc: "Helper text displayed below the select"
+  )
+
+  attr(:required, :boolean,
+    default: false,
+    doc: "Whether the field is required"
+  )
+
+  attr(:disabled, :boolean,
+    default: false,
+    doc: "Whether the field is disabled"
+  )
+
+  attr(:class, :string,
+    default: "",
+    doc: "Additional CSS classes for the field wrapper"
+  )
+
   attr(:rest, :global)
 
   def select_field(assigns) do
@@ -424,13 +519,14 @@ defmodule RivaAshWeb.Components.Molecules.FormField do
       false -> {:error, "All options must have :label and :value keys"}
     end
   end
+
   defp validate_options(_), do: {:error, "options must be a list"}
 
   @spec valid_option?(map()) :: boolean()
   defp valid_option?(option) do
-    is_map(option) and 
-    is_binary(option[:label]) and 
-    (is_binary(option[:value]) or is_integer(option[:value]))
+    is_map(option) and
+      is_binary(option[:label]) and
+      (is_binary(option[:value]) or is_integer(option[:value]))
   end
 
   @spec render_select_field(assigns :: map()) :: Phoenix.LiveView.Rendered.t()
@@ -458,16 +554,31 @@ defmodule RivaAshWeb.Components.Molecules.FormField do
   Renders a checkbox form field.
   """
   @spec checkbox_field(assigns :: map()) :: Phoenix.LiveView.Rendered.t()
-  attr(:field, Phoenix.HTML.FormField, required: true,
-    doc: "Phoenix form field with validation and errors")
-  attr(:label, :string, required: true,
-    doc: "Label text for the checkbox")
-  attr(:helper_text, :string, default: nil,
-    doc: "Helper text displayed below the checkbox")
-  attr(:disabled, :boolean, default: false,
-    doc: "Whether the field is disabled")
-  attr(:class, :string, default: "",
-    doc: "Additional CSS classes for the field wrapper")
+  attr(:field, Phoenix.HTML.FormField,
+    required: true,
+    doc: "Phoenix form field with validation and errors"
+  )
+
+  attr(:label, :string,
+    required: true,
+    doc: "Label text for the checkbox"
+  )
+
+  attr(:helper_text, :string,
+    default: nil,
+    doc: "Helper text displayed below the checkbox"
+  )
+
+  attr(:disabled, :boolean,
+    default: false,
+    doc: "Whether the field is disabled"
+  )
+
+  attr(:class, :string,
+    default: "",
+    doc: "Additional CSS classes for the field wrapper"
+  )
+
   attr(:rest, :global)
 
   def checkbox_field(assigns) do

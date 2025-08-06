@@ -55,15 +55,16 @@ defmodule RivaAshWeb.PropertyBasedBrowserExampleTest do
       alias RivaAsh.PropertyTesting.RouteEnumerator
 
       # Get all public routes that don't require parameters
-      public_routes = RouteEnumerator.public_routes()
-      |> Enum.filter(fn route -> not route.requires_params end)
-      |> Enum.map(& &1.path)
-      |> Enum.filter(fn path ->
-        # Filter out routes that are not suitable for browser navigation
-        not String.contains?(path, "*") and
-        not String.ends_with?(path, ".json") and
-        not String.starts_with?(path, "/api")
-      end)
+      public_routes =
+        RouteEnumerator.public_routes()
+        |> Enum.filter(fn route -> not route.requires_params end)
+        |> Enum.map(& &1.path)
+        |> Enum.filter(fn path ->
+          # Filter out routes that are not suitable for browser navigation
+          not String.contains?(path, "*") and
+            not String.ends_with?(path, ".json") and
+            not String.starts_with?(path, "/api")
+        end)
 
       IO.puts("🗺️  Testing #{length(public_routes)} public routes without parameters")
 
@@ -86,6 +87,7 @@ defmodule RivaAshWeb.PropertyBasedBrowserExampleTest do
               {:visit_failed, _path, _error} ->
                 # This might be expected for some routes
                 :ok
+
               _ ->
                 :ok
             end
@@ -125,9 +127,7 @@ defmodule RivaAshWeb.PropertyBasedBrowserExampleTest do
             IO.puts("✅ Auth flow completed for user: #{name}")
 
           {:error, {reason, step, state}} ->
-            IO.puts(
-              "❌ Auth flow failed: #{inspect(reason)} at #{inspect(step)} in state #{state}"
-            )
+            IO.puts("❌ Auth flow failed: #{inspect(reason)} at #{inspect(step)} in state #{state}")
 
             # Only fail on unexpected errors
             if reason not in [:register_failed, :login_failed] do
@@ -143,16 +143,17 @@ defmodule RivaAshWeb.PropertyBasedBrowserExampleTest do
       alias RivaAsh.PropertyTesting.RouteEnumerator
 
       # Get authenticated routes that don't require parameters
-      auth_routes = RouteEnumerator.authenticated_routes()
-      |> Enum.filter(fn route -> not route.requires_params end)
-      |> Enum.map(& &1.path)
-      |> Enum.filter(fn path ->
-        # Filter out routes that are not suitable for browser navigation
-        not String.contains?(path, "*") and
-        not String.ends_with?(path, ".json") and
-        not String.starts_with?(path, "/api") and
-        not String.contains?(path, "sign-out")
-      end)
+      auth_routes =
+        RouteEnumerator.authenticated_routes()
+        |> Enum.filter(fn route -> not route.requires_params end)
+        |> Enum.map(& &1.path)
+        |> Enum.filter(fn path ->
+          # Filter out routes that are not suitable for browser navigation
+          not String.contains?(path, "*") and
+            not String.ends_with?(path, ".json") and
+            not String.starts_with?(path, "/api") and
+            not String.contains?(path, "sign-out")
+        end)
 
       IO.puts("🔐 Testing #{length(auth_routes)} authenticated routes without parameters")
 
@@ -167,12 +168,13 @@ defmodule RivaAshWeb.PropertyBasedBrowserExampleTest do
         # Flow: register, login, then visit the authenticated route
         flow = [
           {:visit, %{path: "/register"}},
-          {:register, %{
-            name: "Test User",
-            email: email,
-            password: password,
-            password_confirmation: password
-          }},
+          {:register,
+           %{
+             name: "Test User",
+             email: email,
+             password: password,
+             password_confirmation: password
+           }},
           {:visit, %{path: "/sign-in"}},
           {:login, %{email: email, password: password}},
           {:visit, %{path: route}}
@@ -191,12 +193,15 @@ defmodule RivaAshWeb.PropertyBasedBrowserExampleTest do
               {:visit_failed, _path, _error} ->
                 # This might be expected for some routes
                 :ok
+
               {:register_failed, _} ->
                 # Registration might fail due to duplicate emails
                 :ok
+
               {:login_failed, _} ->
                 # Login might fail
                 :ok
+
               _ ->
                 :ok
             end
@@ -261,10 +266,11 @@ defmodule RivaAshWeb.PropertyBasedBrowserExampleTest do
       all_routes = RouteEnumerator.enumerate_routes()
 
       # Test public routes first
-      public_routes = Map.get(all_routes, :public, [])
-      |> Enum.filter(fn route -> not route.requires_params end)
-      |> Enum.map(& &1.path)
-      |> Enum.filter(&is_navigable_path?/1)
+      public_routes =
+        Map.get(all_routes, :public, [])
+        |> Enum.filter(fn route -> not route.requires_params end)
+        |> Enum.map(& &1.path)
+        |> Enum.filter(&navigable_path?/1)
 
       IO.puts("🌐 Testing #{length(public_routes)} public routes")
 
@@ -274,16 +280,18 @@ defmodule RivaAshWeb.PropertyBasedBrowserExampleTest do
         case BrowserExecutor.execute_flow(flow, conn: conn, screenshots: false) do
           {:ok, _result} ->
             IO.puts("  ✅ Public route #{route} accessible")
+
           {:error, reason} ->
             IO.puts("  ❌ Public route #{route} failed: #{inspect(reason)}")
         end
       end)
 
       # Test authenticated routes with login
-      auth_routes = Map.get(all_routes, :authenticated, [])
-      |> Enum.filter(fn route -> not route.requires_params end)
-      |> Enum.map(& &1.path)
-      |> Enum.filter(&is_navigable_path?/1)
+      auth_routes =
+        Map.get(all_routes, :authenticated, [])
+        |> Enum.filter(fn route -> not route.requires_params end)
+        |> Enum.map(& &1.path)
+        |> Enum.filter(&navigable_path?/1)
 
       if length(auth_routes) > 0 do
         IO.puts("🔐 Testing #{length(auth_routes)} authenticated routes")
@@ -295,12 +303,13 @@ defmodule RivaAshWeb.PropertyBasedBrowserExampleTest do
         # Register and login once
         auth_flow = [
           {:visit, %{path: "/register"}},
-          {:register, %{
-            name: "Comprehensive Test User",
-            email: email,
-            password: password,
-            password_confirmation: password
-          }},
+          {:register,
+           %{
+             name: "Comprehensive Test User",
+             email: email,
+             password: password,
+             password_confirmation: password
+           }},
           {:visit, %{path: "/sign-in"}},
           {:login, %{email: email, password: password}}
         ]
@@ -316,6 +325,7 @@ defmodule RivaAshWeb.PropertyBasedBrowserExampleTest do
               case BrowserExecutor.execute_flow(visit_flow, conn: auth_context.conn, screenshots: false) do
                 {:ok, _result} ->
                   IO.puts("    ✅ Authenticated route #{route} accessible")
+
                 {:error, reason} ->
                   IO.puts("    ❌ Authenticated route #{route} failed: #{inspect(reason)}")
               end
@@ -384,9 +394,7 @@ defmodule RivaAshWeb.PropertyBasedBrowserExampleTest do
           assert is_map(data)
         end)
 
-        IO.puts(
-          "✅ Generated valid flow: #{inspect(Enum.map(flow, fn {action, _} -> action end))}"
-        )
+        IO.puts("✅ Generated valid flow: #{inspect(Enum.map(flow, fn {action, _} -> action end))}")
       end
     end
   end
@@ -416,17 +424,17 @@ defmodule RivaAshWeb.PropertyBasedBrowserExampleTest do
   end
 
   # Helper functions
-  @spec is_navigable_path?(path :: String.t()) :: boolean()
-  defp is_navigable_path?(path) do
+  @spec navigable_path?(path :: String.t()) :: boolean()
+  defp navigable_path?(path) do
     # Filter out routes that are not suitable for browser navigation
     not String.contains?(path, "*") and
-    not String.ends_with?(path, ".json") and
-    not String.ends_with?(path, ".xml") and
-    not String.ends_with?(path, ".csv") and
-    not String.starts_with?(path, "/api") and
-    not String.contains?(path, "sign-out") and
-    not String.contains?(path, "/auth/") and
-    not String.contains?(path, "/oauth") and
-    path != "/*path"
+      not String.ends_with?(path, ".json") and
+      not String.ends_with?(path, ".xml") and
+      not String.ends_with?(path, ".csv") and
+      not String.starts_with?(path, "/api") and
+      not String.contains?(path, "sign-out") and
+      not String.contains?(path, "/auth/") and
+      not String.contains?(path, "/oauth") and
+      path != "/*path"
   end
 end

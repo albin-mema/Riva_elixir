@@ -19,6 +19,7 @@ defmodule RivaAshWeb.ItemScheduleLive do
         case load_item_schedules_data(socket, user) do
           {:ok, socket} ->
             {:ok, socket}
+
           {:error, reason} ->
             Logger.error("Failed to load item schedules: #{inspect(reason)}")
             {:ok, redirect(socket, to: "/access-denied")}
@@ -116,13 +117,13 @@ defmodule RivaAshWeb.ItemScheduleLive do
   def handle_event("activate_item_schedule", %{"id" => id}, socket) do
     case ScheduleService.activate_schedule(id, socket.assigns.current_user) do
       {:ok, _item_schedule} ->
-        {:noreply, 
+        {:noreply,
          socket
          |> put_flash(:info, "Item schedule activated successfully")
          |> reload_item_schedules()}
-      
+
       {:error, reason} ->
-        {:noreply, 
+        {:noreply,
          socket
          |> put_flash(:error, "Failed to activate item schedule: #{format_error(reason)}")}
     end
@@ -131,13 +132,13 @@ defmodule RivaAshWeb.ItemScheduleLive do
   def handle_event("deactivate_item_schedule", %{"id" => id}, socket) do
     case ScheduleService.deactivate_schedule(id, socket.assigns.current_user) do
       {:ok, _item_schedule} ->
-        {:noreply, 
+        {:noreply,
          socket
          |> put_flash(:info, "Item schedule deactivated successfully")
          |> reload_item_schedules()}
-      
+
       {:error, reason} ->
-        {:noreply, 
+        {:noreply,
          socket
          |> put_flash(:error, "Failed to deactivate item schedule: #{format_error(reason)}")}
     end
@@ -146,13 +147,13 @@ defmodule RivaAshWeb.ItemScheduleLive do
   def handle_event("delete_item_schedule", %{"id" => id}, socket) do
     case ScheduleService.delete_schedule(id, socket.assigns.current_user) do
       {:ok, _item_schedule} ->
-        {:noreply, 
+        {:noreply,
          socket
          |> put_flash(:info, "Item schedule deleted successfully")
          |> reload_item_schedules()}
-      
+
       {:error, reason} ->
-        {:noreply, 
+        {:noreply,
          socket
          |> put_flash(:error, "Failed to delete item schedule: #{format_error(reason)}")}
     end
@@ -173,9 +174,9 @@ defmodule RivaAshWeb.ItemScheduleLive do
           |> assign(:item_schedules, item_schedules)
           |> assign(:meta, meta)
           |> assign(:loading, false)
-        
+
         {:ok, socket}
-      
+
       {:error, reason} ->
         {:error, reason}
     end
@@ -186,7 +187,7 @@ defmodule RivaAshWeb.ItemScheduleLive do
       {:ok, {item_schedules, meta}} ->
         assign(socket, :item_schedules, item_schedules)
         |> assign(:meta, meta)
-      
+
       {:error, _reason} ->
         socket
     end
@@ -197,16 +198,19 @@ defmodule RivaAshWeb.ItemScheduleLive do
   end
 
   defp format_datetime(nil), do: "N/A"
+
   defp format_datetime(datetime) do
     case DateTime.from_naive(datetime, "Etc/UTC") do
-      {:ok, datetime} -> 
+      {:ok, datetime} ->
         Calendar.strftime(datetime, "%Y-%m-%d %H:%M:%S")
-      {:error, _} -> 
+
+      {:error, _} ->
         "Invalid date"
     end
   end
 
   defp format_day_of_week(nil), do: "N/A"
+
   defp format_day_of_week(day) when is_integer(day) do
     case day do
       0 -> "Sunday"
@@ -219,15 +223,22 @@ defmodule RivaAshWeb.ItemScheduleLive do
       _ -> "Unknown"
     end
   end
+
   defp format_day_of_week(day) when is_binary(day), do: day
 
   defp format_error(reason) do
     case reason do
-      %Ash.Error.Invalid{errors: errors} -> 
-        errors |> Enum.map(&format_validation_error/1) |> Enum.join(", ")
-      %Ash.Error.Forbidden{} -> "You don't have permission to perform this action"
-      %Ash.Error.NotFound{} -> "Item schedule not found"
-      _ -> "An unexpected error occurred"
+      %Ash.Error.Invalid{errors: errors} ->
+        Enum.map_join(errors, ", ", &format_validation_error/1)
+
+      %Ash.Error.Forbidden{} ->
+        "You don't have permission to perform this action"
+
+      %Ash.Error.NotFound{} ->
+        "Item schedule not found"
+
+      _ ->
+        "An unexpected error occurred"
     end
   end
 

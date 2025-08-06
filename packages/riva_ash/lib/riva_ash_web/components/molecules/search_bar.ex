@@ -1,40 +1,40 @@
 defmodule RivaAshWeb.Components.Molecules.SearchBar do
   @moduledoc """
   Search bar component with filters and suggestions.
-  
+
   Provides a comprehensive search interface with loading states,
   clear functionality, and optional filter controls.
-  
+
   ## Styleguide Compliance
-  
+
   This component follows the Riva Ash styleguide principles:
-  
+
   ### Functional Programming Patterns
   - Uses pipeline operator (`|>`) for data transformation
   - Implements pure functions with no side effects
   - Uses pattern matching for data validation and processing
   - Follows single level of abstraction principle
-  
+
   ### Type Safety
   - Comprehensive type specifications using `@type` and `@spec`
   - Strong typing for all function parameters and return values
   - Type validation through pattern matching
-  
+
   ### Error Handling
   - Uses result tuples (`:ok | {:error, String.t()}`) for consistent error handling
   - Early validation with guard clauses
   - Clear error messages for invalid inputs
-  
+
   ### Code Abstraction
   - Separates concerns into focused helper functions
   - Extracts validation logic into dedicated functions
   - Uses functional composition for complex operations
-  
+
   ### Phoenix/Ash Patterns
   - Follows Phoenix LiveView component conventions
   - Uses proper attribute validation and building
   - Implements functional core, imperative shell pattern
-  
+
   ### LiveView Component Patterns
   - Uses proper slot and attribute handling
   - Implements accessibility features
@@ -62,9 +62,9 @@ defmodule RivaAshWeb.Components.Molecules.SearchBar do
 
   @doc """
   Renders a search bar with optional filters.
-  
+
   ## Examples
-  
+
       <.search_bar
         value={@search_query}
         placeholder="Search users..."
@@ -72,7 +72,7 @@ defmodule RivaAshWeb.Components.Molecules.SearchBar do
         on_clear="clear_search"
         loading={@loading}
       />
-      
+
       <.search_bar
         value={@search_query}
         placeholder="Search products..."
@@ -85,24 +85,51 @@ defmodule RivaAshWeb.Components.Molecules.SearchBar do
       />
   """
   @spec search_bar(assigns :: assigns()) :: Phoenix.LiveView.Rendered.t()
-  attr(:value, :string, default: "",
-    doc: "Current search value")
-  attr(:placeholder, :string, default: "Search...",
-    doc: "Placeholder text for the search input")
-  attr(:show_filters, :boolean, default: false,
-    doc: "Whether to show the filters button")
-  attr(:filters, :list, default: [],
-    doc: "List of filter options with :label, :value, and :type keys")
-  attr(:suggestions, :list, default: [],
-    doc: "List of suggestion options with :label and :value keys")
-  attr(:loading, :boolean, default: false,
-    doc: "Whether to show loading state")
-  attr(:on_search, :string, required: true,
-    doc: "Event handler for search input changes")
-  attr(:on_clear, :string, default: nil,
-    doc: "Event handler for clear button")
-  attr(:class, :string, default: "",
-    doc: "Additional CSS classes for the container")
+  attr(:value, :string,
+    default: "",
+    doc: "Current search value"
+  )
+
+  attr(:placeholder, :string,
+    default: "Search...",
+    doc: "Placeholder text for the search input"
+  )
+
+  attr(:show_filters, :boolean,
+    default: false,
+    doc: "Whether to show the filters button"
+  )
+
+  attr(:filters, :list,
+    default: [],
+    doc: "List of filter options with :label, :value, and :type keys"
+  )
+
+  attr(:suggestions, :list,
+    default: [],
+    doc: "List of suggestion options with :label and :value keys"
+  )
+
+  attr(:loading, :boolean,
+    default: false,
+    doc: "Whether to show loading state"
+  )
+
+  attr(:on_search, :string,
+    required: true,
+    doc: "Event handler for search input changes"
+  )
+
+  attr(:on_clear, :string,
+    default: nil,
+    doc: "Event handler for clear button"
+  )
+
+  attr(:class, :string,
+    default: "",
+    doc: "Additional CSS classes for the container"
+  )
+
   attr(:rest, :global)
 
   @impl true
@@ -149,6 +176,7 @@ defmodule RivaAshWeb.Components.Molecules.SearchBar do
       false -> {:error, "All filters must have :label, :value, and :type keys"}
     end
   end
+
   defp validate_filters(_), do: :ok
 
   @spec validate_suggestions(list(map())) :: :ok | {:error, String.t()}
@@ -158,21 +186,22 @@ defmodule RivaAshWeb.Components.Molecules.SearchBar do
       false -> {:error, "All suggestions must have :label and :value keys"}
     end
   end
+
   defp validate_suggestions(_), do: :ok
 
   @spec valid_filter_option?(map()) :: boolean()
   defp valid_filter_option?(filter) do
     is_map(filter) and
-    is_binary(filter[:label]) and
-    is_binary(filter[:value]) and
-    is_binary(filter[:type])
+      is_binary(filter[:label]) and
+      is_binary(filter[:value]) and
+      is_binary(filter[:type])
   end
 
   @spec valid_suggestion?(map()) :: boolean()
   defp valid_suggestion?(suggestion) do
     is_map(suggestion) and
-    is_binary(suggestion[:label]) and
-    is_binary(suggestion[:value])
+      is_binary(suggestion[:label]) and
+      is_binary(suggestion[:value])
   end
 
   @spec render_search_bar(assigns :: assigns()) :: Phoenix.LiveView.Rendered.t()
@@ -193,7 +222,7 @@ defmodule RivaAshWeb.Components.Molecules.SearchBar do
         <div class="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none">
           <UIIcon.icon name={:magnifying_glass} size="sm" class="text-muted-foreground" />
         </div>
-        
+
         <UIInput.input
           placeholder={@placeholder}
           value={@value}
@@ -201,7 +230,7 @@ defmodule RivaAshWeb.Components.Molecules.SearchBar do
           phx-change={@on_search}
           phx-debounce={@debounce_time}
         />
-        
+
         <%= if should_show_clear_button?(@value, @on_clear) do %>
           <button
             type="button"

@@ -42,7 +42,7 @@ defmodule RivaAsh.Policies.OwnershipCheck do
   @spec match?(actor(), context(), opts()) :: check_result()
   def match?(actor, context, opts) do
     Logger.debug("Starting ownership check for actor: #{inspect(actor)}")
-    
+
     with :ok <- validate_actor(actor),
          :ok <- validate_context(context),
          field <- extract_field(opts),
@@ -99,6 +99,7 @@ defmodule RivaAsh.Policies.OwnershipCheck do
     Logger.debug("Validating actor with ID: #{actor_id}")
     :ok
   end
+
   defp validate_actor(_actor) do
     Logger.debug("Actor validation failed: missing or invalid ID")
     :error
@@ -109,6 +110,7 @@ defmodule RivaAsh.Policies.OwnershipCheck do
     Logger.debug("Context validation passed: resource present")
     :ok
   end
+
   defp validate_context(_context) do
     Logger.debug("Context validation failed: missing resource")
     :error
@@ -130,7 +132,7 @@ defmodule RivaAsh.Policies.OwnershipCheck do
   @spec check_ownership(actor(), map(), field()) :: boolean()
   defp check_ownership(%{id: actor_id}, record, field) when is_binary(actor_id) do
     Logger.debug("Checking ownership for actor ID: #{actor_id}, field: #{field}")
-    
+
     record
     |> Map.get(field)
     |> match_actor_id?(actor_id)

@@ -42,7 +42,7 @@ defmodule RivaAsh.Booking do
   The transaction will be rolled back if any step fails.
   """
   @spec create_booking(map()) ::
-        {:ok, %{client: map(), reservation: map()}} | {:error, map()}
+          {:ok, %{client: map(), reservation: map()}} | {:error, map()}
   def create_booking(booking_params) when is_map(booking_params) do
     require Logger
 
@@ -88,7 +88,7 @@ defmodule RivaAsh.Booking do
   end
 
   @spec handle_transaction_result({:ok, map()} | {:error, any(), any(), map()}) ::
-        {:ok, %{client: map(), reservation: map()}} | {:error, map()}
+          {:ok, %{client: map(), reservation: map()}} | {:error, map()}
   defp handle_transaction_result({:ok, %{client: client, reservation: reservation}}) do
     {:ok, %{client: client, reservation: reservation}}
   end
@@ -110,7 +110,7 @@ defmodule RivaAsh.Booking do
   - `{:error, map}` on failure, where map contains :code and :message
   """
   @spec confirm_booking(String.t(), boolean(), map()) ::
-        {:ok, %{client: map(), reservation: map()}} | {:error, map()}
+          {:ok, %{client: map(), reservation: map()}} | {:error, map()}
   def confirm_booking(reservation_id, register_client \\ false, client_updates \\ %{})
       when is_binary(reservation_id) and is_boolean(register_client) and is_map(client_updates) do
     with {:ok, reservation} <- get_reservation_with_client(reservation_id),
@@ -123,7 +123,7 @@ defmodule RivaAsh.Booking do
   end
 
   @spec get_reservation_with_client(String.t()) ::
-        {:ok, map()} | {:error, map()}
+          {:ok, map()} | {:error, map()}
   defp get_reservation_with_client(reservation_id) when is_binary(reservation_id) do
     Reservation.by_id(reservation_id, domain: Domain, load: [:client])
     |> case do
@@ -133,7 +133,7 @@ defmodule RivaAsh.Booking do
   end
 
   @spec maybe_register_client(map(), boolean(), map()) ::
-        {:ok, map()} | {:error, map()}
+          {:ok, map()} | {:error, map()}
   defp maybe_register_client(client, false, _client_updates), do: {:ok, client}
 
   defp maybe_register_client(client, true, client_updates) when is_map(client_updates) do
@@ -152,7 +152,7 @@ defmodule RivaAsh.Booking do
   end
 
   @spec confirm_reservation(map()) ::
-        {:ok, map()} | {:error, map()}
+          {:ok, map()} | {:error, map()}
   defp confirm_reservation(reservation) do
     Reservation.update(reservation, %{status: :confirmed}, domain: Domain)
     |> case do
@@ -175,7 +175,7 @@ defmodule RivaAsh.Booking do
   - `{:error, map}` on failure, where map contains :code and :message
   """
   @spec get_availability(String.t(), Date.t(), non_neg_integer(), map()) ::
-        {:ok, list(map())} | {:error, map()}
+          {:ok, list(map())} | {:error, map()}
   def get_availability(
         item_id,
         date,
@@ -194,7 +194,7 @@ defmodule RivaAsh.Booking do
   end
 
   @spec get_existing_reservations(String.t(), Date.t()) ::
-        {:ok, list(map())} | {:error, map()}
+          {:ok, list(map())} | {:error, map()}
   defp get_existing_reservations(item_id, date) when is_binary(item_id) and is_struct(date, Date) do
     start_of_day = DateTime.new!(date, ~T[00:00:00], "Etc/UTC")
     end_of_day = DateTime.new!(date, ~T[23:59:59], "Etc/UTC")
@@ -222,7 +222,7 @@ defmodule RivaAsh.Booking do
   # Private functions with comprehensive specs
 
   @spec find_or_create_client(map(), boolean()) ::
-        {:ok, map()} | {:error, map()}
+          {:ok, map()} | {:error, map()}
   defp find_or_create_client(%{email: email} = params, register_immediately)
        when is_binary(email) and email != "" and is_boolean(register_immediately) do
     Client
@@ -252,7 +252,7 @@ defmodule RivaAsh.Booking do
   end
 
   @spec find_or_create_client(map(), boolean()) ::
-        {:ok, map()} | {:error, map()}
+          {:ok, map()} | {:error, map()}
   defp find_or_create_client(params, register_immediately) when is_boolean(register_immediately) do
     # Create unregistered client without email
     Client.create(Map.put(params, :is_registered, register_immediately))
@@ -271,7 +271,7 @@ defmodule RivaAsh.Booking do
   end
 
   @spec create_reservation(map()) ::
-        {:ok, map()} | {:error, map()}
+          {:ok, map()} | {:error, map()}
   defp create_reservation(params) when is_map(params) do
     Reservation.create(params)
     |> case do
@@ -296,7 +296,6 @@ defmodule RivaAsh.Booking do
   # defp check_item_availability(item_id, reserved_from, reserved_until) do
   #   # Logic moved to RivaAsh.Validations
   # end
-
 
   @spec generate_time_slots(Date.t(), non_neg_integer(), map()) :: list(map())
   defp generate_time_slots(date, duration_minutes, %{start: start_hour, end: end_hour}) do

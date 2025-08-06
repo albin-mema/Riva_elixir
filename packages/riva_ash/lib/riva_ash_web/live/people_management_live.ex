@@ -20,6 +20,7 @@ defmodule RivaAshWeb.PeopleManagementLive do
         case load_people_data(socket, user) do
           {:ok, socket} ->
             {:ok, socket}
+
           {:error, reason} ->
             Logger.error("Failed to load people data: #{inspect(reason)}")
             {:ok, redirect(socket, to: "/access-denied")}
@@ -435,33 +436,37 @@ defmodule RivaAshWeb.PeopleManagementLive do
   end
 
   def handle_event("edit_person", %{"id" => id, "type" => type}, socket) do
-    path = case type do
-      "client" -> "/clients/#{id}/edit"
-      "employee" -> "/employees/#{id}/edit"
-      _ -> "/people/#{id}/edit"
-    end
+    path =
+      case type do
+        "client" -> "/clients/#{id}/edit"
+        "employee" -> "/employees/#{id}/edit"
+        _ -> "/people/#{id}/edit"
+      end
+
     {:noreply, push_patch(socket, to: path)}
   end
 
   def handle_event("view_history", %{"id" => id, "type" => type}, socket) do
-    path = case type do
-      "client" -> "/clients/#{id}/history"
-      "employee" -> "/employees/#{id}/history"
-      _ -> "/people/#{id}/history"
-    end
+    path =
+      case type do
+        "client" -> "/clients/#{id}/history"
+        "employee" -> "/employees/#{id}/history"
+        _ -> "/people/#{id}/history"
+      end
+
     {:noreply, push_patch(socket, to: path)}
   end
 
   def handle_event("delete_person", %{"id" => id, "type" => type}, socket) do
     case PeopleService.delete_person(id, type, socket.assigns.current_user) do
       {:ok, _person} ->
-        {:noreply, 
+        {:noreply,
          socket
          |> put_flash(:info, "Person deleted successfully")
          |> reload_people_data()}
-      
+
       {:error, reason} ->
-        {:noreply, 
+        {:noreply,
          socket
          |> put_flash(:error, "Failed to delete person: #{format_error(reason)}")}
     end
@@ -470,13 +475,13 @@ defmodule RivaAshWeb.PeopleManagementLive do
   def handle_event("search", %{"search" => search_term}, socket) do
     case PeopleService.search_people(search_term, socket.assigns.current_user) do
       {:ok, {clients, employees}} ->
-        {:noreply, 
+        {:noreply,
          socket
          |> assign(:clients, clients)
          |> assign(:employees, employees)}
-      
+
       {:error, reason} ->
-        {:noreply, 
+        {:noreply,
          socket
          |> put_flash(:error, "Search failed: #{format_error(reason)}")}
     end
@@ -485,13 +490,13 @@ defmodule RivaAshWeb.PeopleManagementLive do
   def handle_event("filter_by_business", %{"business_id" => business_id}, socket) do
     case PeopleService.filter_people_by_business(business_id, socket.assigns.current_user) do
       {:ok, {clients, employees}} ->
-        {:noreply, 
+        {:noreply,
          socket
          |> assign(:clients, clients)
          |> assign(:employees, employees)}
-      
+
       {:error, reason} ->
-        {:noreply, 
+        {:noreply,
          socket
          |> put_flash(:error, "Filter failed: #{format_error(reason)}")}
     end
@@ -504,13 +509,13 @@ defmodule RivaAshWeb.PeopleManagementLive do
   def handle_event("export_contacts", _params, socket) do
     case PeopleService.export_contacts(socket.assigns.current_user) do
       {:ok, download_url} ->
-        {:noreply, 
+        {:noreply,
          socket
          |> put_flash(:info, "Contacts exported successfully")
          |> push_event("download", %{url: download_url})}
-      
+
       {:error, reason} ->
-        {:noreply, 
+        {:noreply,
          socket
          |> put_flash(:error, "Export failed: #{format_error(reason)}")}
     end
@@ -541,9 +546,9 @@ defmodule RivaAshWeb.PeopleManagementLive do
           |> assign(:show_person_form, false)
           |> assign(:filters, %{})
           |> assign(:loading, false)
-        
+
         {:ok, socket}
-      
+
       {:error, reason} ->
         {:error, reason}
     end
@@ -557,7 +562,7 @@ defmodule RivaAshWeb.PeopleManagementLive do
         |> assign(:clients, clients)
         |> assign(:employees, employees)
         |> assign(:system_users_count, system_users_count)
-      
+
       {:error, _reason} ->
         socket
     end
@@ -572,6 +577,7 @@ defmodule RivaAshWeb.PeopleManagementLive do
   end
 
   defp format_date(nil), do: "Never"
+
   defp format_date(date) do
     case Calendar.strftime(date, "%Y-%m-%d") do
       {:ok, formatted} -> formatted
@@ -581,11 +587,17 @@ defmodule RivaAshWeb.PeopleManagementLive do
 
   defp format_error(reason) do
     case reason do
-      %Ash.Error.Invalid{errors: errors} -> 
-        errors |> Enum.map(&format_validation_error/1) |> Enum.join(", ")
-      %Ash.Error.Forbidden{} -> "You don't have permission to perform this action"
-      %Ash.Error.NotFound{} -> "Person not found"
-      _ -> "An unexpected error occurred"
+      %Ash.Error.Invalid{errors: errors} ->
+        Enum.map_join(errors, ", ", &format_validation_error/1)
+
+      %Ash.Error.Forbidden{} ->
+        "You don't have permission to perform this action"
+
+      %Ash.Error.NotFound{} ->
+        "Person not found"
+
+      _ ->
+        "An unexpected error occurred"
     end
   end
 

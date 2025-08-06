@@ -164,11 +164,12 @@ defmodule RivaAsh.Jobs.GDPRRetentionJob do
 
   @spec handle_cleanup_result(job_result(), integer(), String.t(), state()) :: {:noreply, state()}
   defp handle_cleanup_result({:ok, cleanup_data}, start_time, schedule, state) do
-    updated_state = cleanup_data
-    |> extract_cleanup_metrics()
-    |> update_state_with_results(state)
-    |> log_successful_cleanup(start_time)
-    |> handle_compliance_alerts()
+    updated_state =
+      cleanup_data
+      |> extract_cleanup_metrics()
+      |> update_state_with_results(state)
+      |> log_successful_cleanup(start_time)
+      |> handle_compliance_alerts()
 
     schedule_next_run(schedule)
     {:noreply, updated_state}
@@ -195,19 +196,13 @@ defmodule RivaAsh.Jobs.GDPRRetentionJob do
 
   @spec log_successful_cleanup({integer(), map(), map()}, integer()) :: :ok
   defp log_successful_cleanup({execution_time, results, _report}, _start_time) do
-    Logger.info("GDPR: Retention cleanup completed successfully",
-      extra: %{
-        execution_time_ms: execution_time,
-        results: results
-      }
-    )
+    Logger.info("GDPR: Retention cleanup completed successfully in #{execution_time}ms")
   end
 
   @spec log_cleanup_failure(term()) :: term()
   defp log_cleanup_failure(reason) do
-    Logger.error("GDPR: Retention cleanup failed",
-      extra: %{error: inspect(reason)}
-    )
+    Logger.error("GDPR: Retention cleanup failed: #{inspect(reason)}")
+
     reason
   end
 
@@ -230,23 +225,17 @@ defmodule RivaAsh.Jobs.GDPRRetentionJob do
 
   @spec merge_results(state(), map(), integer(), map()) :: state()
   defp merge_results(state, results, execution_time, report) do
-    %{state |
-      stats: Map.merge(results, %{
-        execution_time_ms: execution_time,
-        report: report
-      })
+    %{
+      state
+      | stats:
+          Map.merge(results, %{
+            execution_time_ms: execution_time,
+            report: report
+          })
     }
   end
 
-  @spec log_successful_cleanup(integer(), map()) :: :ok
-  defp log_successful_cleanup(execution_time, results) do
-    Logger.info("GDPR: Retention cleanup completed successfully",
-      extra: %{
-        execution_time_ms: execution_time,
-        results: results
-      }
-    )
-  end
+  # Removed duplicate log_successful_cleanup/2 - already defined at line 197
 
   @spec handle_compliance_alerts(map()) :: :ok
   defp handle_compliance_alerts(results) do
@@ -287,7 +276,7 @@ defmodule RivaAsh.Jobs.GDPRRetentionJob do
 
   @spec send_compliance_alert(map()) :: :ok
   defp send_compliance_alert(alert_data) do
-    Logger.warning("GDPR: Compliance issues detected during retention cleanup", extra: alert_data)
+    Logger.warning("GDPR: Compliance issues detected during retention cleanup: #{inspect(alert_data)}")
 
     # This could integrate with your notification system
     # send_notification(:compliance_team, :gdpr_alert, alert_data)
@@ -315,7 +304,7 @@ defmodule RivaAsh.Jobs.GDPRRetentionJob do
 
   @spec log_failure_alert(map()) :: map()
   defp log_failure_alert(alert_data) do
-    Logger.error("GDPR: Critical failure in retention cleanup job", extra: alert_data)
+    Logger.error("GDPR: Critical failure in retention cleanup job: #{inspect(alert_data)}")
     alert_data
   end
 

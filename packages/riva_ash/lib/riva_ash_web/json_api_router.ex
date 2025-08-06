@@ -1,7 +1,7 @@
 defmodule RivaAshWeb.JsonApiRouter do
   @moduledoc """
   JSON:API router configuration for the Riva Ash application.
-  
+
   This module configures the JSON:API interface using AshJsonApi,
   providing a RESTful API interface that adheres to the JSON:API
   specification for data interchange.
@@ -16,7 +16,7 @@ defmodule RivaAshWeb.JsonApiRouter do
 
   @doc """
   Custom configuration for JSON:API behavior.
-  
+
   Provides additional configuration options for the JSON:API router
   to enhance security, performance, and developer experience.
   """
@@ -25,20 +25,20 @@ defmodule RivaAshWeb.JsonApiRouter do
     [
       # Enable JSON:API versioning for backward compatibility
       json_api_version: "1.0",
-      
+
       # Configure pagination settings
       page_size: Application.get_env(:riva_ash, :json_api_page_size, 20),
       max_page_size: Application.get_env(:riva_ash, :json_api_max_page_size, 100),
-      
+
       # Enable field selection for performance optimization
       allow_field_selection: true,
-      
+
       # Enable filtering for flexible data querying
       allow_filtering: true,
-      
+
       # Enable sorting for ordered results
       allow_sorting: true,
-      
+
       # Configure rate limiting for API protection
       rate_limit: Application.get_env(:riva_ash, :json_api_rate_limit, {100, 60_000})
     ]
@@ -46,7 +46,7 @@ defmodule RivaAshWeb.JsonApiRouter do
 
   @doc """
   Pipeline configuration for JSON:API requests.
-  
+
   Defines the middleware pipeline that processes all JSON:API requests
   to provide common functionality like authentication, validation,
   and response formatting.
@@ -56,13 +56,13 @@ defmodule RivaAshWeb.JsonApiRouter do
     [
       # Request validation and JSON:API compliance checking
       RivaAshWeb.Plugs.JsonApiValidator,
-      
+
       # Authentication and authorization middleware
       RivaAshWeb.Plugs.RequireAuthentication,
-      
+
       # Request logging for monitoring and debugging
       RivaAshWeb.Plugs.RequestLogger,
-      
+
       # Performance monitoring for API endpoints
       RivaAshWeb.Plugs.PerformanceMonitor
     ]
@@ -70,7 +70,7 @@ defmodule RivaAshWeb.JsonApiRouter do
 
   @doc """
   Error handling for JSON:API responses.
-  
+
   Provides standardized error formatting that complies with the
   JSON:API specification for error responses.
   """
@@ -111,7 +111,7 @@ defmodule RivaAshWeb.JsonApiRouter do
 
   @doc """
   OpenAPI documentation configuration.
-  
+
   Configures the OpenAPI documentation endpoint for the JSON:API
   to provide interactive API documentation and client SDK generation.
   """

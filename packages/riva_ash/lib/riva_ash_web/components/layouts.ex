@@ -26,9 +26,9 @@ defmodule RivaAshWeb.Layouts do
         }
   @type result :: {:ok, String.t()} | {:error, String.t()}
 
-  @default_app_name Application.get_env(:riva_ash, :app_name, "RivaAsh")
-  @default_body_class Application.get_env(:riva_ash, :body_class, "bg-white antialiased riva-ash-web")
-  @default_css_class Application.get_env(:riva_ash, :css_class, "scrollbar-gutter:stable")
+  @default_app_name Application.compile_env(:riva_ash, :app_name, "RivaAsh")
+  @default_body_class Application.compile_env(:riva_ash, :body_class, "bg-white antialiased riva-ash-web")
+  @default_css_class Application.compile_env(:riva_ash, :css_class, "scrollbar-gutter:stable")
 
   embed_templates("core/layouts/*")
 
@@ -175,10 +175,8 @@ defmodule RivaAshWeb.Layouts do
   - CSRF token string or empty string on error
   """
   @spec safe_get_csrf_token() :: String.t()
-  defp safe_get_csrf_token() do
-    case Controller.get_csrf_token() do
-      token when is_binary(token) -> token
-      _ -> ""
-    end
+  defp safe_get_csrf_token, do: case Controller.get_csrf_token() do
+    token when is_binary(token) -> token
+    _ -> ""
   end
 end

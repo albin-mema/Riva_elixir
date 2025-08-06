@@ -1,7 +1,7 @@
 defmodule RivaAsh.BusinessProcessSupervisor do
   @moduledoc """
   Supervisor for business process workers and background jobs.
-  
+
   This supervisor manages the lifecycle of business-critical processes
   that need to be restarted independently of the main application.
   """
@@ -25,16 +25,16 @@ defmodule RivaAsh.BusinessProcessSupervisor do
       # Reservation management processes
       RivaAsh.ReservationManager,
       RivaAsh.AvailabilityChecker,
-      
+
       # Payment processing
       RivaAsh.PaymentProcessor,
-      
+
       # Notification services
       RivaAsh.NotificationService,
-      
+
       # Background job processors
       RivaAsh.JobProcessor,
-      
+
       # Cache management
       RivaAsh.CacheManager
     ]

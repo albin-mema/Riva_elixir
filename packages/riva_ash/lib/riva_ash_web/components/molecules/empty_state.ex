@@ -2,39 +2,39 @@ defmodule RivaAshWeb.Components.Molecules.EmptyState do
   @moduledoc """
   EmptyState component for displaying when no data is available.
   A molecule component that provides a consistent empty state experience.
-  
+
   Supports multiple variants, sizes, and optional actions for different use cases.
-  
+
   ## Styleguide Compliance
-  
+
   This component follows the Riva Ash styleguide principles:
-  
+
   ### Functional Programming Patterns
   - Uses pipeline operator (`|>`) for data transformation
   - Implements pure functions with no side effects
   - Uses pattern matching for data validation and processing
   - Follows single level of abstraction principle
-  
+
   ### Type Safety
   - Comprehensive type specifications using `@type` and `@spec`
   - Strong typing for all function parameters and return values
   - Type validation through pattern matching
-  
+
   ### Error Handling
   - Uses result tuples (`:ok | {:error, String.t()}`) for consistent error handling
   - Early validation with guard clauses
   - Clear error messages for invalid inputs
-  
+
   ### Code Abstraction
   - Separates concerns into focused helper functions
   - Extracts validation logic into dedicated functions
   - Uses functional composition for complex operations
-  
+
   ### Phoenix/Ash Patterns
   - Follows Phoenix LiveView component conventions
   - Uses proper attribute validation and building
   - Implements functional core, imperative shell pattern
-  
+
   ### LiveView Component Patterns
   - Uses proper slot and attribute handling
   - Implements accessibility features
@@ -99,20 +99,38 @@ defmodule RivaAshWeb.Components.Molecules.EmptyState do
       />
   """
   @spec empty_state(assigns :: assigns()) :: Phoenix.LiveView.Rendered.t()
-  attr(:icon, :atom, required: true,
-    doc: "Icon to display in the empty state")
-  attr(:title, :string, required: true,
-    doc: "Title text for the empty state")
-  attr(:description, :string, default: nil,
-    doc: "Description text for the empty state")
-  attr(:size, :atom, default: :md,
+  attr(:icon, :atom,
+    required: true,
+    doc: "Icon to display in the empty state"
+  )
+
+  attr(:title, :string,
+    required: true,
+    doc: "Title text for the empty state"
+  )
+
+  attr(:description, :string,
+    default: nil,
+    doc: "Description text for the empty state"
+  )
+
+  attr(:size, :atom,
+    default: :md,
     values: ~w(sm md lg)a,
-    doc: "Size variant of the empty state")
-  attr(:variant, :atom, default: :default,
+    doc: "Size variant of the empty state"
+  )
+
+  attr(:variant, :atom,
+    default: :default,
     values: ~w(default bordered card)a,
-    doc: "Visual variant of the empty state")
-  attr(:class, :string, default: "",
-    doc: "Additional CSS classes for the container")
+    doc: "Visual variant of the empty state"
+  )
+
+  attr(:class, :string,
+    default: "",
+    doc: "Additional CSS classes for the container"
+  )
+
   attr(:rest, :global)
 
   slot(:action)
@@ -224,12 +242,21 @@ defmodule RivaAshWeb.Components.Molecules.EmptyState do
   A simplified empty state for inline use (e.g., in dropdowns or small containers).
   """
   @spec inline_empty_state(inline_assigns :: inline_assigns()) :: Phoenix.LiveView.Rendered.t()
-  attr(:text, :string, required: true,
-    doc: "Text to display in the inline empty state")
-  attr(:icon, :atom, default: nil,
-    doc: "Optional icon to display")
-  attr(:class, :string, default: "",
-    doc: "Additional CSS classes for the container")
+  attr(:text, :string,
+    required: true,
+    doc: "Text to display in the inline empty state"
+  )
+
+  attr(:icon, :atom,
+    default: nil,
+    doc: "Optional icon to display"
+  )
+
+  attr(:class, :string,
+    default: "",
+    doc: "Additional CSS classes for the container"
+  )
+
   attr(:rest, :global)
 
   @impl true
@@ -286,13 +313,17 @@ defmodule RivaAshWeb.Components.Molecules.EmptyState do
   @spec container_class(assigns :: assigns()) :: String.t()
   defp container_class(assigns) do
     # Build container classes using functional composition
-    classes = [
-      "flex items-center justify-center", # Base classes
-      build_variant_classes(assigns.variant),
-      assigns.class
-    ]
-    |> Enum.reject(&(&1 == "")) # Remove empty strings
-    |> Enum.join(" ") # Join with spaces
+    classes =
+      [
+        # Base classes
+        "flex items-center justify-center",
+        build_variant_classes(assigns.variant),
+        assigns.class
+      ]
+      # Remove empty strings
+      |> Enum.reject(&(&1 == ""))
+      # Join with spaces
+      |> Enum.join(" ")
 
     classes
   end

@@ -23,6 +23,7 @@ defmodule RivaAshWeb.ReservationLiveTest do
   defp valid_params() do
     # Minimal required fields confirmed by user
     attrs = Factory.reservation_attrs() |> Enum.take(1) |> hd()
+
     %{
       "client_id" => attrs.client_id,
       "item_id" => attrs.item_id,

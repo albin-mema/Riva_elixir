@@ -62,23 +62,25 @@ defmodule RivaAshWeb.Components.UI.Checkbox do
   # Helper function to build container classes
   @spec build_container_class(String.t() | nil) :: String.t()
   defp build_container_class(label) do
-    if label, do: "flex items-start gap-2", else: "flex justify-center"
+    if label, "flex items-start gap-2", "flex justify-center"
   end
 
   # Helper function to build description classes
   @spec build_description_class(String.t() | nil) :: String.t()
   defp build_description_class(description) do
-    if description, do: "mt-1 text-muted-foreground text-sm", else: "hidden"
+    if description, "mt-1 text-muted-foreground text-sm", "hidden"
   end
 
   # Helper function to build label wrapper classes
   @spec build_label_wrapper_class(String.t() | nil) :: String.t()
   defp build_label_wrapper_class(description) do
-    if description, do: "flex flex-col", else: "flex items-center"
+    if description, "flex flex-col", "flex items-center"
   end
 
   defp checkbox_class(assigns) do
-    base = "rounded border border-input bg-background focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+    base =
+      "rounded border border-input bg-background focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+
     size = size_classes(assigns.size)
     variant = variant_classes(assigns.variant)
 

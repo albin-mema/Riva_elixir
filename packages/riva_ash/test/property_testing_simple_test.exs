@@ -74,9 +74,7 @@ defmodule PropertyTestingSimpleTest do
         assert is_map(data)
       end)
 
-      IO.puts(
-        "✅ Flow generator works! Generated flow: #{inspect(Enum.map(flow, fn {action, _} -> action end))}"
-      )
+      IO.puts("✅ Flow generator works! Generated flow: #{inspect(Enum.map(flow, fn {action, _} -> action end))}")
     end
   end
 end

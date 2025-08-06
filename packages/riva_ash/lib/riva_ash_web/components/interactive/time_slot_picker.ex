@@ -1,42 +1,42 @@
 defmodule RivaAshWeb.Components.Interactive.TimeSlotPicker do
   @moduledoc """
   Interactive time slot picker component.
-  
+
   ## Styleguide Compliance
-  
+
   This component follows the Riva Ash styleguide principles:
-  
+
   ### Functional Programming
   - Uses pure functions with immutable data
   - Implements pattern matching for data validation
   - Follows the functional core, imperative shell pattern
   - Uses pipelines for data transformation
-  
+
   ### Type Safety
   - Comprehensive type specifications for all functions
   - Uses proper Elixir type annotations
   - Implements guard clauses for validation
-  
+
   ### Code Abstraction
   - Single level of abstraction principle
   - Extracted helper functions for business logic
   - Clear separation of concerns
   - Reusable utility functions
-  
+
   ### Phoenix/Ash Patterns
   - Follows Phoenix LiveView component patterns
   - Uses proper attribute handling
   - Implements consistent event handling
   - Ash-specific data structures and patterns
-  
+
   ### LiveView Component Best Practices
   - Proper use of assigns and HEEx templates
   - Consistent naming conventions
   - Clear documentation and examples
   - Accessible and semantic HTML structure
-  
+
   ## Examples
-  
+
   ```elixir
   # Basic usage
   <.time_slot_picker
@@ -44,7 +44,7 @@ defmodule RivaAshWeb.Components.Interactive.TimeSlotPicker do
     on_slot_select="select_slot"
     on_slot_deselect="deselect_slot"
   />
-  
+
   # With multiple selection and duration
   <.time_slot_picker
     available_slots={@available_slots}
@@ -61,9 +61,9 @@ defmodule RivaAshWeb.Components.Interactive.TimeSlotPicker do
 
   @doc """
   Renders a time slot picker interface.
-  
+
   ## Attributes
-  
+
   - `available_slots` (list, required): List of available time slots
   - `selected_slots` (list, optional): List of selected slot IDs
   - `on_slot_select` (string, required): Event handler for slot selection
@@ -89,9 +89,9 @@ defmodule RivaAshWeb.Components.Interactive.TimeSlotPicker do
 
   @doc """
   Renders the time slot picker component.
-  
+
   ## Examples
-  
+
       iex> time_slot_picker(%{
       ...>   available_slots: [%{id: 1, start_time: "09:00", end_time: "10:00"}],
       ...>   on_slot_select: "select_slot",
@@ -110,12 +110,12 @@ defmodule RivaAshWeb.Components.Interactive.TimeSlotPicker do
 
   @doc """
   Validates component assigns.
-  
+
   ## Examples
-  
+
       iex> validate_assigns(%{available_slots: [], on_slot_select: "select", on_slot_deselect: "deselect"})
       {:ok, %{available_slots: [], on_slot_select: "select", on_slot_deselect: "deselect"}}
-      
+
       iex> validate_assigns(%{available_slots: []})
       {:error, "on_slot_select is required"}
   """
@@ -134,21 +134,21 @@ defmodule RivaAshWeb.Components.Interactive.TimeSlotPicker do
 
   @doc """
   Validates slot data.
-  
+
   ## Examples
-  
+
       iex> validate_slot_data([%{id: 1, start_time: "09:00", end_time: "10:00"}])
       {:ok, [%{id: 1, start_time: "09:00", end_time: "10:00"}]}
-      
+
       iex> validate_slot_data([%{invalid: "data"}])
       {:error, "Invalid slot data"}
-      
+
       iex> validate_slot_data("invalid")
       {:error, "available_slots must be a list"}
   """
   @spec validate_slot_data(list(map())) :: {:ok, list(map())} | {:error, String.t()}
   defp validate_slot_data(slots) when is_list(slots) do
-    case Enum.find(slots, fn slot -> not is_valid_slot(slot) end) do
+    case Enum.find(slots, fn slot -> not valid_slot?(slot) end) do
       nil -> {:ok, slots}
       _ -> {:error, "Invalid slot data"}
     end
@@ -160,48 +160,48 @@ defmodule RivaAshWeb.Components.Interactive.TimeSlotPicker do
 
   @doc """
   Checks if slot data is valid.
-  
+
   ## Examples
-  
+
       iex> is_valid_slot(%{id: 1, start_time: "09:00", end_time: "10:00"})
       true
-      
+
       iex> is_valid_slot(%{id: 1, start_time: "09:00"})
       false
-      
+
       iex> is_valid_slot("invalid")
       false
   """
-  @spec is_valid_slot(map()) :: boolean()
-  defp is_valid_slot(slot) when is_map(slot) do
+  @spec valid_slot?(map()) :: boolean()
+  defp valid_slot?(slot) when is_map(slot) do
     Map.has_key?(slot, :id) and
-    Map.has_key?(slot, :start_time) and
-    Map.has_key?(slot, :end_time) and
-    is_integer(slot.id) and
-    slot.id > 0
+      Map.has_key?(slot, :start_time) and
+      Map.has_key?(slot, :end_time) and
+      is_integer(slot.id) and
+      slot.id > 0
   end
 
-  defp is_valid_slot(_slot) do
+  defp valid_slot?(_slot) do
     false
   end
 
   @doc """
   Validates selected slots.
-  
+
   ## Examples
-  
+
       iex> validate_selected_slots([1, 2, 3])
       {:ok, [1, 2, 3]}
-      
+
       iex> validate_selected_slots(["invalid"])
       {:error, "Invalid slot ID in selected_slots"}
-      
+
       iex> validate_selected_slots("invalid")
       {:error, "selected_slots must be a list"}
   """
   @spec validate_selected_slots(list()) :: {:ok, list()} | {:error, String.t()}
   defp validate_selected_slots(selected_slots) when is_list(selected_slots) do
-    case Enum.find(selected_slots, fn slot_id -> not is_valid_slot_id(slot_id) end) do
+    case Enum.find(selected_slots, fn slot_id -> not valid_slot_id?(slot_id) end) do
       nil -> {:ok, selected_slots}
       invalid_id -> {:error, "Invalid slot ID in selected_slots: #{inspect(invalid_id)}"}
     end
@@ -213,21 +213,21 @@ defmodule RivaAshWeb.Components.Interactive.TimeSlotPicker do
 
   @doc """
   Validates disabled slots.
-  
+
   ## Examples
-  
+
       iex> validate_disabled_slots([1, 2, 3])
       {:ok, [1, 2, 3]}
-      
+
       iex> validate_disabled_slots(["invalid"])
       {:error, "Invalid slot ID in disabled_slots"}
-      
+
       iex> validate_disabled_slots("invalid")
       {:error, "disabled_slots must be a list"}
   """
   @spec validate_disabled_slots(list()) :: {:ok, list()} | {:error, String.t()}
   defp validate_disabled_slots(disabled_slots) when is_list(disabled_slots) do
-    case Enum.find(disabled_slots, fn slot_id -> not is_valid_slot_id(slot_id) end) do
+    case Enum.find(disabled_slots, fn slot_id -> not valid_slot_id?(slot_id) end) do
       nil -> {:ok, disabled_slots}
       invalid_id -> {:error, "Invalid slot ID in disabled_slots: #{inspect(invalid_id)}"}
     end
@@ -239,41 +239,41 @@ defmodule RivaAshWeb.Components.Interactive.TimeSlotPicker do
 
   @doc """
   Checks if slot ID is valid.
-  
+
   ## Examples
-  
+
       iex> is_valid_slot_id(1)
       true
-      
+
       iex> is_valid_slot_id(0)
       false
-      
+
       iex> is_valid_slot_id(-1)
       false
-      
+
       iex> is_valid_slot_id("invalid")
       false
   """
-  @spec is_valid_slot_id(any()) :: boolean()
-  defp is_valid_slot_id(slot_id) when is_integer(slot_id) do
+  @spec valid_slot_id?(any()) :: boolean()
+  defp valid_slot_id?(slot_id) when is_integer(slot_id) do
     slot_id > 0
   end
 
-  defp is_valid_slot_id(_slot_id) do
+  defp valid_slot_id?(_slot_id) do
     false
   end
 
   @doc """
   Validates duration.
-  
+
   ## Examples
-  
+
       iex> validate_duration(60)
       {:ok, 60}
-      
+
       iex> validate_duration(0)
       {:error, "duration_minutes must be greater than 0"}
-      
+
       iex> validate_duration(-1)
       {:error, "duration_minutes must be greater than 0"}
   """
@@ -292,19 +292,19 @@ defmodule RivaAshWeb.Components.Interactive.TimeSlotPicker do
 
   @doc """
   Validates required assigns.
-  
+
   ## Examples
-  
+
       iex> validate_required(%{key: "value"}, [:key])
       {:ok, %{key: "value"}}
-      
+
       iex> validate_required(%{}, [:key])
       {:error, "key is required"}
   """
   @spec validate_required(map(), list(atom())) :: {:ok, map()} | {:error, String.t()}
   defp validate_required(assigns, required_keys) do
     missing_keys = required_keys -- Map.keys(assigns)
-    
+
     if Enum.empty?(missing_keys) do
       {:ok, assigns}
     else
@@ -314,9 +314,9 @@ defmodule RivaAshWeb.Components.Interactive.TimeSlotPicker do
 
   @doc """
   Renders the picker component.
-  
+
   ## Examples
-  
+
       iex> render_picker(%{available_slots: [], on_slot_select: "select", on_slot_deselect: "deselect"})
       %Phoenix.LiveView.Rendered{...}
   """
@@ -331,13 +331,13 @@ defmodule RivaAshWeb.Components.Interactive.TimeSlotPicker do
       <div class="slots-container">
         <div :for={slot <- @available_slots} class="slot-wrapper">
           <button
-            phx-click={if is_slot_selected(slot.id, @selected_slots), do: @on_slot_deselect, else: @on_slot_select}
+            phx-click={if slot_selected?(slot.id, @selected_slots), do: @on_slot_deselect, else: @on_slot_select}
             phx-value-slot={slot.id}
-            disabled={is_slot_disabled(slot.id, @disabled_slots)}
+            disabled={slot_disabled?(slot.id, @disabled_slots)}
             class={[
               "time-slot",
-              if(is_slot_selected(slot.id, @selected_slots), do: "selected", else: ""),
-              if(is_slot_disabled(slot.id, @disabled_slots), do: "disabled", else: "")
+              if(slot_selected?(slot.id, @selected_slots), do: "selected", else: ""),
+              if(slot_disabled?(slot.id, @disabled_slots), do: "disabled", else: "")
             ]}
           >
             <div class="slot-time">
@@ -366,52 +366,52 @@ defmodule RivaAshWeb.Components.Interactive.TimeSlotPicker do
 
   @doc """
   Checks if a slot is selected.
-  
+
   ## Examples
-  
+
       iex> is_slot_selected(1, [1, 2, 3])
       true
-      
+
       iex> is_slot_selected(4, [1, 2, 3])
       false
   """
-  @spec is_slot_selected(integer(), list(integer())) :: boolean()
-  defp is_slot_selected(slot_id, selected_slots) when is_integer(slot_id) and is_list(selected_slots) do
+  @spec slot_selected?(integer(), list(integer())) :: boolean()
+  defp slot_selected?(slot_id, selected_slots) when is_integer(slot_id) and is_list(selected_slots) do
     slot_id in selected_slots
   end
 
-  defp is_slot_selected(_slot_id, _selected_slots) do
+  defp slot_selected?(_slot_id, _selected_slots) do
     false
   end
 
   @doc """
   Checks if a slot is disabled.
-  
+
   ## Examples
-  
+
       iex> is_slot_disabled(1, [1, 2, 3])
       true
-      
+
       iex> is_slot_disabled(4, [1, 2, 3])
       false
   """
-  @spec is_slot_disabled(integer(), list(integer())) :: boolean()
-  defp is_slot_disabled(slot_id, disabled_slots) when is_integer(slot_id) and is_list(disabled_slots) do
+  @spec slot_disabled?(integer(), list(integer())) :: boolean()
+  defp slot_disabled?(slot_id, disabled_slots) when is_integer(slot_id) and is_list(disabled_slots) do
     slot_id in disabled_slots
   end
 
-  defp is_slot_disabled(_slot_id, _disabled_slots) do
+  defp slot_disabled?(_slot_id, _disabled_slots) do
     false
   end
 
   @doc """
   Gets slot display text.
-  
+
   ## Examples
-  
+
       iex> get_slot_display(1, [%{id: 1, start_time: "09:00", end_time: "10:00"}])
       "09:00 - 10:00"
-      
+
       iex> get_slot_display(999, [%{id: 1, start_time: "09:00", end_time: "10:00"}])
       "Unknown Slot"
   """

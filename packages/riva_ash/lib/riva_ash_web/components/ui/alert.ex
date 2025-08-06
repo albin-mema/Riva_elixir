@@ -44,7 +44,7 @@ defmodule RivaAshWeb.Components.UI.Alert do
   # Helper function to build title classes
   @spec build_title_class(String.t() | nil) :: String.t()
   defp build_title_class(title) do
-    if title, do: "mb-1 font-medium leading-none tracking-tight", else: "hidden"
+    if title, "mb-1 font-medium leading-none tracking-tight", "hidden"
   end
 
   # Helper function to build content classes
@@ -54,7 +54,8 @@ defmodule RivaAshWeb.Components.UI.Alert do
   end
 
   defp alert_class(assigns) do
-    base = "relative w-full rounded-lg border p-4 [&>svg]:absolute [&>svg]:text-foreground [&>svg]:left-4 [&>svg]:top-4 [&>svg+div]:translate-y-[-3px] [&:has(svg)]:pl-11"
+    base =
+      "relative w-full rounded-lg border p-4 [&>svg]:absolute [&>svg]:text-foreground [&>svg]:left-4 [&>svg]:top-4 [&>svg+div]:translate-y-[-3px] [&:has(svg)]:pl-11"
 
     variant = variant_classes(assigns.variant)
 
@@ -63,11 +64,20 @@ defmodule RivaAshWeb.Components.UI.Alert do
 
   defp variant_classes(variant) do
     case variant do
-      "default" -> "bg-background text-foreground"
-      "destructive" -> "border-destructive/50 text-destructive dark:border-destructive [&>svg]:text-destructive"
-      "success" -> "border-[var(--chart-5)]/50 text-[var(--chart-5)] dark:border-[var(--chart-5)] [&>svg]:text-[var(--chart-5)]"
-      "warning" -> "border-amber-500/50 text-amber-500 dark:border-amber-500 [&>svg]:text-amber-500"
-      _ -> "bg-background text-foreground"
+      "default" ->
+        "bg-background text-foreground"
+
+      "destructive" ->
+        "border-destructive/50 text-destructive dark:border-destructive [&>svg]:text-destructive"
+
+      "success" ->
+        "border-[var(--chart-5)]/50 text-[var(--chart-5)] dark:border-[var(--chart-5)] [&>svg]:text-[var(--chart-5)]"
+
+      "warning" ->
+        "border-amber-500/50 text-amber-500 dark:border-amber-500 [&>svg]:text-amber-500"
+
+      _ ->
+        "bg-background text-foreground"
     end
   end
 end

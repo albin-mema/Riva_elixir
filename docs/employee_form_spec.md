@@ -1,10 +1,10 @@
-# Employee Form Component Specification
+# User Form Component Specification
 
 ## Component Name
-Employee Form
+User Form
 
 ## Description
-A form component for creating and editing employee information. Provides a structured interface for users to input and update employee details including personal information, employment details, permissions, and business assignment.
+A form component for creating and editing user information. Provides a structured interface for users to input and update user details including personal information, employment details, permissions, and organization assignment.
 
 ## Props/Attributes
 | Prop | Type | Default | Description |

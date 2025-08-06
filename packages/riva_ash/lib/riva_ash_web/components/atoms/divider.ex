@@ -1,7 +1,7 @@
 defmodule RivaAshWeb.Components.Atoms.Divider do
   @moduledoc """
   Divider component for creating visual separations between content.
-  
+
   Follows functional core, imperative shell pattern with comprehensive type safety.
   """
   use Phoenix.Component
@@ -13,13 +13,13 @@ defmodule RivaAshWeb.Components.Atoms.Divider do
 
   @doc """
   Renders a divider component with different variants and styles.
-  
+
   ## Examples
-    
+
       <.divider />
-      
+
       <.divider variant="vertical" size="lg" color="primary" />
-      
+
       <.divider>
         <span class="px-2 text-sm text-gray-500">Or</span>
       </.divider>
@@ -156,6 +156,7 @@ defmodule RivaAshWeb.Components.Atoms.Divider do
     # In a real implementation, you might want to log this error
     # and render a fallback divider or error state
     IO.puts("Divider error: #{reason}")
+
     ~H"""
     <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative">
       <span class="block sm:inline">Error: <%= reason %></span>

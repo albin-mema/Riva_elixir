@@ -90,7 +90,7 @@ def setup_test_environment do
   configure_stream_data()
   configure_exunit()
   load_support_files()
-  
+
   IO.puts("✓ Test environment configured successfully")
 end
 
@@ -159,4 +159,3 @@ Enum.each(support_files, fn file ->
 end)
 
 IO.puts("✓ Test environment configured successfully")
-

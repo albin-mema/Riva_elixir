@@ -92,7 +92,7 @@ defmodule RivaAshWeb.RecurringReservationLive do
          socket
          |> put_flash(:info, "Recurring reservation deleted successfully")
          |> reload_recurring_reservations()}
-      
+
       {:error, reason} ->
         {:noreply,
          socket
@@ -111,17 +111,18 @@ defmodule RivaAshWeb.RecurringReservationLive do
         socket
         |> assign(:recurring_reservations, recurring_reservations)
         |> assign(:meta, meta)
-      
+
       {:error, _reason} ->
         socket
     end
   end
 
   defp get_page_title do
-    Application.get_env(:riva_ash, __MODULE__, [])[:page_title] || "Recurring Reservations"
+    Application.get_env(:riva_ash, __MODULE__, []) |> get_in([:page_title]) || "Recurring Reservations"
   end
 
   defp format_date(nil), do: "N/A"
+
   defp format_date(date) do
     case Calendar.strftime(date, "%Y-%m-%d") do
       {:ok, formatted} -> formatted
@@ -132,10 +133,16 @@ defmodule RivaAshWeb.RecurringReservationLive do
   defp format_error(reason) do
     case reason do
       %Ash.Error.Invalid{errors: errors} ->
-        errors |> Enum.map(&format_validation_error/1) |> Enum.join(", ")
-      %Ash.Error.Forbidden{} -> "You don't have permission to perform this action"
-      %Ash.Error.NotFound{} -> "Recurring reservation not found"
-      _ -> "An unexpected error occurred"
+        Enum.map_join(errors, ", ", &format_validation_error/1)
+
+      %Ash.Error.Forbidden{} ->
+        "You don't have permission to perform this action"
+
+      %Ash.Error.NotFound{} ->
+        "Recurring reservation not found"
+
+      _ ->
+        "An unexpected error occurred"
     end
   end
 

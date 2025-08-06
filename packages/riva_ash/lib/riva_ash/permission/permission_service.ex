@@ -19,7 +19,7 @@ defmodule RivaAsh.Permission.PermissionService do
     try do
       # Get employees for user's business
       employees = Employee.read!(actor: user, filter: [business_id: user.business_id])
-      
+
       # Get all permissions
       permissions = Permission.read!(actor: user)
 
@@ -36,6 +36,7 @@ defmodule RivaAsh.Permission.PermissionService do
       error in [Ash.Error.Forbidden, Ash.Error.Invalid] ->
         Logger.error("Failed to get user permissions data: #{inspect(error)}")
         {:error, :forbidden}
+
       error ->
         Logger.error("Unexpected error in get_user_permissions_data: #{inspect(error)}")
         {:error, :unexpected_error}
@@ -53,31 +54,33 @@ defmodule RivaAsh.Permission.PermissionService do
           if employee.business_id == user.business_id do
             # Get all permissions
             permissions = Permission.read!(actor: user)
-            
+
             # Get employee's current permissions
-            employee_permissions = EmployeePermission.read!(
-              actor: user,
-              filter: [employee_id: employee_id]
-            )
-            
+            employee_permissions =
+              EmployeePermission.read!(
+                actor: user,
+                filter: [employee_id: employee_id]
+              )
+
             current_permission_ids = Enum.map(employee_permissions, & &1.permission_id)
-            
+
             {:ok, {employee, permissions, current_permission_ids}}
           else
             {:error, :forbidden}
           end
-        
+
         {:error, reason} ->
           Logger.error("Failed to get employee: #{inspect(reason)}")
           {:error, reason}
       end
     rescue
-      error in [Ash.Error.Forbidden, Ash.Error.Invalid] ->
-        Logger.error("Failed to get employee permissions: #{inspect(error)}")
-        {:error, :forbidden}
-      error ->
-        Logger.error("Unexpected error in get_employee_permissions: #{inspect(error)}")
-        {:error, :unexpected_error}
+        error in [Ash.Error.Forbidden, Ash.Error.Invalid] ->
+          Logger.error("Failed to get employee permissions: #{inspect(error)}")
+          {:error, :forbidden}
+
+        error ->
+          Logger.error("Unexpected error in get_employee_permissions: #{inspect(error)}")
+          {:error, :unexpected_error}
     end
   end
 
@@ -86,56 +89,63 @@ defmodule RivaAsh.Permission.PermissionService do
   """
   def save_employee_permissions(employee_id, permission_ids, user) do
     try do
-      # Get employee
-      case Ash.get(Employee, employee_id, authorize?: true) do
-        {:ok, employee} ->
-          if employee.business_id == user.business_id do
-            # Remove existing permissions
-            existing_permissions = EmployeePermission.read!(
-              actor: user,
-              filter: [employee_id: employee_id]
-            )
-            
-            Enum.each(existing_permissions, fn perm ->
-              case Ash.destroy(perm, authorize?: true) do
-                {:ok, _} -> :ok
-                {:error, reason} ->
-                  Logger.error("Failed to remove existing permission: #{inspect(reason)}")
-              end
-            end)
-            
-            # Add new permissions
-            Enum.each(permission_ids, fn permission_id ->
-              case EmployeePermission.create(
-                attributes: %{
-                  employee_id: employee_id,
-                  permission_id: permission_id
-                },
-                authorize?: true
-              ) do
-                {:ok, _} -> :ok
-                {:error, reason} ->
-                  Logger.error("Failed to add permission: #{inspect(reason)}")
-              end
-            end)
-            
-            {:ok, employee}
-          else
-            {:error, :forbidden}
-          end
-        
+      with {:ok, employee} <- Ash.get(Employee, employee_id, authorize?: true),
+           true <- employee.business_id == user.business_id || {:error, :forbidden},
+           :ok <- remove_existing_permissions(employee_id, user),
+           :ok <- add_new_permissions(employee_id, permission_ids, user) do
+        {:ok, employee}
+      else
         {:error, reason} ->
           Logger.error("Failed to get employee for permission update: #{inspect(reason)}")
           {:error, reason}
+
+        {:error, :forbidden} ->
+          {:error, :forbidden}
       end
     rescue
       error in [Ash.Error.Forbidden, Ash.Error.Invalid] ->
         Logger.error("Failed to save employee permissions: #{inspect(error)}")
         {:error, :forbidden}
+
       error ->
         Logger.error("Unexpected error in save_employee_permissions: #{inspect(error)}")
         {:error, :unexpected_error}
     end
+  end
+
+  # Private helper functions
+  defp remove_existing_permissions(employee_id, user) do
+    existing_permissions =
+      EmployeePermission.read!(
+        actor: user,
+        filter: [employee_id: employee_id]
+      )
+
+    Enum.each(existing_permissions, fn perm ->
+      case Ash.destroy(perm, authorize?: true) do
+        {:ok, _} -> :ok
+        {:error, reason} -> Logger.error("Failed to remove existing permission: #{inspect(reason)}")
+      end
+    end)
+
+    :ok
+  end
+
+  defp add_new_permissions(employee_id, permission_ids, user) do
+    Enum.each(permission_ids, fn permission_id ->
+      case EmployeePermission.create(
+             attributes: %{
+               employee_id: employee_id,
+               permission_id: permission_id
+             },
+             authorize?: true
+           ) do
+        {:ok, _} -> :ok
+        {:error, reason} -> Logger.error("Failed to add permission: #{inspect(reason)}")
+      end
+    end)
+
+    :ok
   end
 
   @doc """
@@ -143,14 +153,17 @@ defmodule RivaAsh.Permission.PermissionService do
   """
   def create_permission(attrs, user) do
     try do
-      case Ash.create(Permission, 
-           attributes: Map.merge(attrs, %{
-             business_id: user.business_id,
-             status: :active
-           }),
-           authorize?: true) do
+      case Ash.create(Permission,
+             attributes:
+               Map.merge(attrs, %{
+                 business_id: user.business_id,
+                 status: :active
+               }),
+             authorize?: true
+           ) do
         {:ok, permission} ->
           {:ok, permission}
+
         {:error, reason} ->
           Logger.error("Failed to create permission: #{inspect(reason)}")
           {:error, reason}
@@ -173,6 +186,7 @@ defmodule RivaAsh.Permission.PermissionService do
             case Ash.update(permission, attributes: attrs, authorize?: true) do
               {:ok, updated_permission} ->
                 {:ok, updated_permission}
+
               {:error, reason} ->
                 Logger.error("Failed to update permission: #{inspect(reason)}")
                 {:error, reason}
@@ -180,7 +194,7 @@ defmodule RivaAsh.Permission.PermissionService do
           else
             {:error, :forbidden}
           end
-        
+
         {:error, reason} ->
           Logger.error("Failed to get permission for update: #{inspect(reason)}")
           {:error, reason}
@@ -201,23 +215,27 @@ defmodule RivaAsh.Permission.PermissionService do
         {:ok, permission} ->
           if permission.business_id == user.business_id do
             # First remove any employee permissions associated with this permission
-            employee_permissions = EmployeePermission.read!(
-              actor: user,
-              filter: [permission_id: id]
-            )
-            
+            employee_permissions =
+              EmployeePermission.read!(
+                actor: user,
+                filter: [permission_id: id]
+              )
+
             Enum.each(employee_permissions, fn perm ->
               case Ash.destroy(perm, authorize?: true) do
-                {:ok, _} -> :ok
+                {:ok, _} ->
+                  :ok
+
                 {:error, reason} ->
                   Logger.error("Failed to remove employee permission: #{inspect(reason)}")
               end
             end)
-            
+
             # Now delete the permission
             case Ash.destroy(permission, authorize?: true) do
               {:ok, deleted_permission} ->
                 {:ok, deleted_permission}
+
               {:error, reason} ->
                 Logger.error("Failed to delete permission: #{inspect(reason)}")
                 {:error, reason}
@@ -225,7 +243,7 @@ defmodule RivaAsh.Permission.PermissionService do
           else
             {:error, :forbidden}
           end
-        
+
         {:error, reason} ->
           Logger.error("Failed to get permission for deletion: #{inspect(reason)}")
           {:error, reason}
@@ -246,23 +264,27 @@ defmodule RivaAsh.Permission.PermissionService do
         {:ok, employee} ->
           if employee.business_id == user.business_id do
             # First remove any permissions associated with this employee
-            employee_permissions = EmployeePermission.read!(
-              actor: user,
-              filter: [employee_id: id]
-            )
-            
+            employee_permissions =
+              EmployeePermission.read!(
+                actor: user,
+                filter: [employee_id: id]
+              )
+
             Enum.each(employee_permissions, fn perm ->
               case Ash.destroy(perm, authorize?: true) do
-                {:ok, _} -> :ok
+                {:ok, _} ->
+                  :ok
+
                 {:error, reason} ->
                   Logger.error("Failed to remove employee permission: #{inspect(reason)}")
               end
             end)
-            
+
             # Now delete the employee
             case Ash.destroy(employee, authorize?: true) do
               {:ok, deleted_employee} ->
                 {:ok, deleted_employee}
+
               {:error, reason} ->
                 Logger.error("Failed to delete employee: #{inspect(reason)}")
                 {:error, reason}
@@ -270,7 +292,7 @@ defmodule RivaAsh.Permission.PermissionService do
           else
             {:error, :forbidden}
           end
-        
+
         {:error, reason} ->
           Logger.error("Failed to get employee for deletion: #{inspect(reason)}")
           {:error, reason}
@@ -294,7 +316,7 @@ defmodule RivaAsh.Permission.PermissionService do
           else
             {:error, :forbidden}
           end
-        
+
         {:error, reason} ->
           Logger.error("Failed to get permission: #{inspect(reason)}")
           {:error, reason}
@@ -310,76 +332,54 @@ defmodule RivaAsh.Permission.PermissionService do
   Validate permission attributes.
   """
   def validate_permission_attrs(attrs) do
-    _errors = []
+    errors =
+      []
+      |> validate_name(attrs)
+      |> validate_business_id(attrs)
+      |> validate_module(attrs)
+      |> validate_action(attrs)
+      |> validate_description(attrs)
 
-    # Validate name
-    name_errors = 
-      case attrs do
-        %{name: name} when is_binary(name) and byte_size(name) > 0 ->
-          []
-        _ ->
-          ["Name is required"]
-      end
-
-    # Validate business_id
-    business_id_errors = 
-      case attrs do
-        %{business_id: business_id} when is_binary(business_id) and byte_size(business_id) > 0 ->
-          []
-        _ ->
-          ["Business ID is required"]
-      end
-
-    # Validate module (optional)
-    module_errors = 
-      case attrs do
-        %{module: module} when is_binary(module) and byte_size(module) > 0 ->
-          []
-        _ ->
-          []
-      end
-
-    # Validate action (optional)
-    action_errors = 
-      case attrs do
-        %{action: action} when is_binary(action) and byte_size(action) > 0 ->
-          []
-        _ ->
-          []
-      end
-
-    # Validate description (optional but if provided, should be reasonable length)
-    description_errors = 
-      case attrs do
-        %{description: description} when is_binary(description) and byte_size(description) <= 2000 ->
-          []
-        %{description: description} when is_binary(description) ->
-          ["Description must be less than 2000 characters"]
-        _ ->
-          []
-      end
-
-    all_errors = name_errors ++ business_id_errors ++ module_errors ++ action_errors ++ description_errors
-
-    case all_errors do
+    case errors do
       [] -> {:ok, attrs}
       errors -> {:error, errors}
     end
   end
 
+  # Helper functions for validation
+  defp validate_name(errors, %{name: name}) when is_binary(name) and byte_size(name) > 0, do: errors
+  defp validate_name(errors, _), do: ["Name is required" | errors]
+
+  defp validate_business_id(errors, %{business_id: business_id}) when is_binary(business_id) and byte_size(business_id) > 0, do: errors
+  defp validate_business_id(errors, _), do: ["Business ID is required" | errors]
+
+  defp validate_module(errors, %{module: module}) when is_binary(module) and byte_size(module) > 0, do: errors
+  defp validate_module(errors, _), do: errors
+
+  defp validate_action(errors, %{action: action}) when is_binary(action) and byte_size(action) > 0, do: errors
+  defp validate_action(errors, _), do: errors
+
+  defp validate_description(errors, %{description: description}) when is_binary(description) and byte_size(description) <= 2000, do: errors
+  defp validate_description(errors, %{description: description}) when is_binary(description), do: ["Description must be less than 2000 characters" | errors]
+  defp validate_description(errors, _), do: errors
+
   @doc """
   Check if permission name is already taken in the business.
   """
   def name_taken?(name, business_id) do
-    try do
-      query = 
-        Permission
-        |> Query.filter(business_id: business_id, name: name)
-        |> Query.limit(1)
+    query =
+      Permission
+      |> Query.filter(business_id: business_id, name: name)
+      |> Query.limit(1)
 
+    try do
       case Ash.read(query) do
-        {:ok, []} -> false
-        {:ok, [_ | _]} -> true
+        {:ok, []} ->
+          false
+
+        {:ok, [_ | _]} ->
+          true
+
         {:error, reason} ->
           Logger.error("Failed to check name uniqueness: #{inspect(reason)}")
           false
@@ -397,25 +397,25 @@ defmodule RivaAsh.Permission.PermissionService do
   def get_permission_stats(business_id) do
     try do
       # Get total count
-      total_count_query = 
+      total_count_query =
         Permission
         |> Query.filter(business_id: business_id)
         |> Query.aggregate(:count, :id)
 
       # Get active count
-      active_count_query = 
+      active_count_query =
         Permission
         |> Query.filter(business_id: business_id, status: :active)
         |> Query.aggregate(:count, :id)
 
       # Get inactive count
-      inactive_count_query = 
+      inactive_count_query =
         Permission
         |> Query.filter(business_id: business_id, status: :inactive)
         |> Query.aggregate(:count, :id)
 
       # Get total assigned permissions
-      total_assigned_query = 
+      total_assigned_query =
         EmployeePermission
         |> Query.filter(employee: [business_id: business_id])
         |> Query.aggregate(:count, :id)
@@ -424,20 +424,19 @@ defmodule RivaAsh.Permission.PermissionService do
            {:ok, [%{count: active_count}]} <- Ash.read(active_count_query),
            {:ok, [%{count: inactive_count}]} <- Ash.read(inactive_count_query),
            {:ok, [%{count: total_assigned}]} <- Ash.read(total_assigned_query) do
-        
-        stats = %{
-          total_count: total_count,
-          active_count: active_count,
-          inactive_count: inactive_count,
-          total_assigned: total_assigned
-        }
-        
-        {:ok, stats}
-      else
-        {:error, reason} ->
-          Logger.error("Failed to get permission stats: #{inspect(reason)}")
-          {:error, reason}
-      end
+         stats = %{
+           total_count: total_count,
+           active_count: active_count,
+           inactive_count: inactive_count,
+           total_assigned: total_assigned
+         }
+
+         {:ok, stats}
+       else
+         {:error, reason} ->
+           Logger.error("Failed to get permission stats: #{inspect(reason)}")
+           {:error, reason}
+       end
     rescue
       error ->
         Logger.error("Unexpected error in get_permission_stats: #{inspect(error)}")
@@ -455,8 +454,12 @@ defmodule RivaAsh.Permission.PermissionService do
         |> Query.filter(employee_id: employee_id, permission_id: permission_id)
 
       case Ash.read(query) do
-        {:ok, []} -> false
-        {:ok, [_ | _]} -> true
+        {:ok, []} ->
+          false
+
+        {:ok, [_ | _]} ->
+          true
+
         {:error, reason} ->
           Logger.error("Failed to check permission: #{inspect(reason)}")
           false
@@ -481,6 +484,7 @@ defmodule RivaAsh.Permission.PermissionService do
       case Ash.read(query) do
         {:ok, permissions} ->
           {:ok, permissions}
+
         {:error, reason} ->
           Logger.error("Failed to get employee permissions: #{inspect(reason)}")
           {:error, reason}

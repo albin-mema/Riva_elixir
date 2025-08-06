@@ -88,20 +88,41 @@ defmodule RivaAshWeb.Components.Molecules.FilterPanel do
       />
   """
   @spec filter_panel(assigns :: assigns()) :: Phoenix.LiveView.Rendered.t()
-  attr(:filters, :list, required: true,
-    doc: "List of filter definitions with label, type, and field")
-  attr(:values, :map, default: %{},
-    doc: "Current filter values as a map")
-  attr(:on_apply, :string, required: true,
-    doc: "JavaScript command to execute when filters are applied")
-  attr(:on_clear, :string, required: true,
-    doc: "JavaScript command to execute when all filters are cleared")
-  attr(:collapsible, :boolean, default: true,
-    doc: "Whether the filter panel can be collapsed/expanded")
-  attr(:expanded, :boolean, default: false,
-    doc: "Whether the filter panel is currently expanded")
-  attr(:class, :string, default: "",
-    doc: "Additional CSS classes for the container")
+  attr(:filters, :list,
+    required: true,
+    doc: "List of filter definitions with label, type, and field"
+  )
+
+  attr(:values, :map,
+    default: %{},
+    doc: "Current filter values as a map"
+  )
+
+  attr(:on_apply, :string,
+    required: true,
+    doc: "JavaScript command to execute when filters are applied"
+  )
+
+  attr(:on_clear, :string,
+    required: true,
+    doc: "JavaScript command to execute when all filters are cleared"
+  )
+
+  attr(:collapsible, :boolean,
+    default: true,
+    doc: "Whether the filter panel can be collapsed/expanded"
+  )
+
+  attr(:expanded, :boolean,
+    default: false,
+    doc: "Whether the filter panel is currently expanded"
+  )
+
+  attr(:class, :string,
+    default: "",
+    doc: "Additional CSS classes for the container"
+  )
+
   attr(:rest, :global)
 
   @impl true
@@ -148,14 +169,15 @@ defmodule RivaAshWeb.Components.Molecules.FilterPanel do
       false -> {:error, "All filters must have :label, :type, and :field keys"}
     end
   end
+
   defp validate_filters(_), do: {:error, "filters must be a list"}
 
   @spec valid_filter?(map()) :: boolean()
   defp valid_filter?(filter) do
     is_map(filter) and
-    is_binary(filter[:label]) and
-    is_binary(filter[:type]) and
-    is_binary(filter[:field])
+      is_binary(filter[:label]) and
+      is_binary(filter[:type]) and
+      is_binary(filter[:field])
   end
 
   @spec validate_values(map()) :: :ok | {:error, String.t()}
@@ -220,13 +242,14 @@ defmodule RivaAshWeb.Components.Molecules.FilterPanel do
 
   attr(:collapsible, :boolean, required: true)
   attr(:expanded, :boolean, required: true)
+
   defp render_header(assigns) do
     ~H"""
     <div class="filter-panel-header flex items-center justify-between">
       <UIText.text variant="h6">Filters</UIText.text>
       <%= if @collapsible do %>
         <UIButton.button variant="ghost" size="sm" phx-click="toggle-filters">
-          <UIIcon.icon name={if @expanded, do: :chevron_up, else: :chevron_down} size="sm" />
+         <UIIcon.icon name={if(@expanded, :chevron_up, :chevron_down)} size="sm" />
         </UIButton.button>
       <% end %>
     </div>
@@ -236,6 +259,7 @@ defmodule RivaAshWeb.Components.Molecules.FilterPanel do
   attr(:filters, :list, required: true)
   attr(:expanded, :boolean, required: true)
   attr(:collapsible, :boolean, required: true)
+
   defp render_filters(assigns) do
     ~H"""
     <div class={["filter-panel-filters space-y-3", unless(@expanded || !@collapsible, do: "hidden")]}>
@@ -249,6 +273,7 @@ defmodule RivaAshWeb.Components.Molecules.FilterPanel do
   end
 
   attr(:filter, :map, required: true)
+
   defp render_filter(assigns) do
     ~H"""
     <div class="filter-panel-filter space-y-2">
@@ -263,6 +288,7 @@ defmodule RivaAshWeb.Components.Molecules.FilterPanel do
 
   attr(:on_apply, :string, required: true)
   attr(:on_clear, :string, required: true)
+
   defp render_actions(assigns) do
     ~H"""
     <div class="filter-panel-actions flex items-center gap-2 pt-4 border-t">

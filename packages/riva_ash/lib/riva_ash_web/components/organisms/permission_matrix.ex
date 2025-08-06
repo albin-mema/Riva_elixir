@@ -42,7 +42,7 @@ defmodule RivaAshWeb.Components.Organisms.PermissionMatrix do
           Permissions for <%= @employee.first_name %> <%= @employee.last_name %>
         </h3>
       </div>
-      
+
       <div class={@permissions_class}>
         <%= for permission <- @permissions do %>
           <div class={@checkbox_class}>
@@ -57,7 +57,7 @@ defmodule RivaAshWeb.Components.Organisms.PermissionMatrix do
           </div>
         <% end %>
       </div>
-      
+
       <div class={@actions_class}>
         <.button phx-click={@on_save} loading={@loading}>Save Permissions</.button>
         <.button variant="outline" phx-click={@on_cancel}>Cancel</.button>

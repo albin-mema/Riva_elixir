@@ -1,15 +1,15 @@
 defmodule RivaAshWeb.Components.Forms.ScheduleForm do
   @moduledoc """
   Item schedule configuration form component.
-  
+
   This component follows the functional core, imperative shell pattern,
   with pure functions for data transformation and validation, and
   the LiveView component handling UI state and side effects.
-  
+
   ## Styleguide Compliance
-  
+
   This module follows the Riva Ash styleguide principles:
-  
+
   - **Functional Programming**: Uses pure functions, pattern matching, and pipelines
   - **Type Safety**: Comprehensive type specifications with @spec annotations
   - **Single Level of Abstraction**: Each function has a clear, focused responsibility
@@ -26,34 +26,34 @@ defmodule RivaAshWeb.Components.Forms.ScheduleForm do
   import RivaAshWeb.Components.Interactive.AvailabilityGrid
 
   @type assigns :: %{
-    optional(:form) => map(),
-    optional(:item) => map(),
-    optional(:availability) => map(),
-    optional(:on_submit) => String.t(),
-    optional(:on_change) => String.t(),
-    optional(:on_availability_change) => String.t(),
-    optional(:on_cancel) => String.t(),
-    optional(:loading) => boolean(),
-    optional(:class) => String.t(),
-    optional(:rest) => any()
-  }
+          optional(:form) => map(),
+          optional(:item) => map(),
+          optional(:availability) => map(),
+          optional(:on_submit) => String.t(),
+          optional(:on_change) => String.t(),
+          optional(:on_availability_change) => String.t(),
+          optional(:on_cancel) => String.t(),
+          optional(:loading) => boolean(),
+          optional(:class) => String.t(),
+          optional(:rest) => any()
+        }
 
   @type schedule_form_data :: %{
-    schedule_type: String.t(),
-    season_start: Date.t(),
-    season_end: Date.t(),
-    advance_booking_days: integer(),
-    max_booking_duration: integer(),
-    min_booking_duration: integer(),
-    slot_duration: integer(),
-    earliest_start_time: Time.t(),
-    latest_end_time: Time.t(),
-    holiday_schedule: String.t()
-  }
+          schedule_type: String.t(),
+          season_start: Date.t(),
+          season_end: Date.t(),
+          advance_booking_days: integer(),
+          max_booking_duration: integer(),
+          min_booking_duration: integer(),
+          slot_duration: integer(),
+          earliest_start_time: Time.t(),
+          latest_end_time: Time.t(),
+          holiday_schedule: String.t()
+        }
 
   @doc """
   Renders an item schedule configuration form.
-  
+
   ## Examples
       <.schedule_form
         form={@form}
@@ -199,7 +199,7 @@ defmodule RivaAshWeb.Components.Forms.ScheduleForm do
 
   @doc """
   Validates schedule form data.
-  
+
   ## Returns
     {:ok, validated_data} | {:error, changeset}
   """
@@ -219,7 +219,7 @@ defmodule RivaAshWeb.Components.Forms.ScheduleForm do
   defp validate_required_fields(params) when is_map(params) do
     required_fields = [:schedule_type]
     missing_fields = required_fields |> Enum.filter(&is_nil(Map.get(params, &1)))
-    
+
     case missing_fields do
       [] -> :ok
       _ -> {:error, %{missing_fields: missing_fields}}
@@ -227,14 +227,17 @@ defmodule RivaAshWeb.Components.Forms.ScheduleForm do
   end
 
   defp validate_schedule_type(nil), do: {:error, %{schedule_type: "schedule type is required"}}
+
   defp validate_schedule_type(type) when is_binary(type) do
     valid_types = ["always", "custom", "seasonal"]
+
     if type in valid_types do
       :ok
     else
       {:error, %{schedule_type: "must be one of: #{Enum.join(valid_types, ", ")}"}}
     end
   end
+
   defp validate_schedule_type(_), do: {:error, %{schedule_type: "must be a string"}}
 
   defp validate_booking_rules(params) when is_map(params) do
@@ -249,32 +252,38 @@ defmodule RivaAshWeb.Components.Forms.ScheduleForm do
 
   defp validate_advance_booking_days(nil), do: {:ok, nil}
   defp validate_advance_booking_days(days) when is_integer(days) and days >= 0, do: {:ok, days}
+
   defp validate_advance_booking_days(days) when is_binary(days) do
     case Integer.parse(days) do
       {num, ""} when num >= 0 -> {:ok, num}
       _ -> {:error, %{advance_booking_days: "must be a non-negative integer"}}
     end
   end
+
   defp validate_advance_booking_days(_), do: {:error, %{advance_booking_days: "must be a non-negative integer"}}
 
   defp validate_max_booking_duration(nil), do: {:ok, nil}
   defp validate_max_booking_duration(duration) when is_integer(duration) and duration > 0, do: {:ok, duration}
+
   defp validate_max_booking_duration(duration) when is_binary(duration) do
     case Integer.parse(duration) do
       {num, ""} when num > 0 -> {:ok, num}
       _ -> {:error, %{max_booking_duration: "must be a positive integer"}}
     end
   end
+
   defp validate_max_booking_duration(_), do: {:error, %{max_booking_duration: "must be a positive integer"}}
 
   defp validate_min_booking_duration(nil), do: {:ok, nil}
   defp validate_min_booking_duration(duration) when is_integer(duration) and duration >= 0, do: {:ok, duration}
+
   defp validate_min_booking_duration(duration) when is_binary(duration) do
     case Integer.parse(duration) do
       {num, ""} when num >= 0 -> {:ok, num}
       _ -> {:error, %{min_booking_duration: "must be a non-negative integer"}}
     end
   end
+
   defp validate_min_booking_duration(_), do: {:error, %{min_booking_duration: "must be a non-negative integer"}}
 
   defp validate_time_slots(params) when is_map(params) do
@@ -288,12 +297,14 @@ defmodule RivaAshWeb.Components.Forms.ScheduleForm do
 
   defp validate_slot_duration(nil), do: {:ok, nil}
   defp validate_slot_duration(duration) when is_integer(duration) and duration > 0, do: {:ok, duration}
+
   defp validate_slot_duration(duration) when is_binary(duration) do
     case Integer.parse(duration) do
       {num, ""} when num > 0 -> {:ok, num}
       _ -> {:error, %{slot_duration: "must be a positive integer"}}
     end
   end
+
   defp validate_slot_duration(_), do: {:error, %{slot_duration: "must be a positive integer"}}
 
   defp validate_time_range(params) when is_map(params) do
@@ -311,12 +322,14 @@ defmodule RivaAshWeb.Components.Forms.ScheduleForm do
 
   defp parse_time(nil), do: {:ok, nil}
   defp parse_time(%Time{} = time), do: {:ok, time}
+
   defp parse_time(time_str) when is_binary(time_str) do
     case Time.from_iso8601(time_str) do
       {:ok, time} -> {:ok, time}
       _ -> {:error, %{time: "invalid time format"}}
     end
   end
+
   defp parse_time(_), do: {:error, %{time: "invalid time format"}}
 
   defp compare_times(nil, _), do: :ok
@@ -344,22 +357,26 @@ defmodule RivaAshWeb.Components.Forms.ScheduleForm do
 
   defp parse_date(nil), do: nil
   defp parse_date(%Date{} = date), do: date
+
   defp parse_date(date_str) when is_binary(date_str) do
     case Date.from_iso8601(date_str) do
       {:ok, date} -> date
       _ -> nil
     end
   end
+
   defp parse_date(_), do: nil
 
   defp parse_time(nil), do: nil
   defp parse_time(%Time{} = time), do: time
+
   defp parse_time(time_str) when is_binary(time_str) do
     case Time.from_iso8601(time_str) do
       {:ok, time} -> time
       _ -> nil
     end
   end
+
   defp parse_time(_), do: nil
 
   defp parse_integer(nil), do: nil

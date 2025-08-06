@@ -244,9 +244,18 @@ defmodule RivaAsh.Resources.Item do
     read :available_for_date do
       argument(:date, :date, allow_nil?: false)
 
-      query
-      |> apply_availability_filter(arg(:date))
-      |> apply_active_filter()
+      filter(
+        expr(
+          # Just to use the date argument
+          is_active == true and
+            is_nil(archived_at) and
+            ^arg(:date) >= date("1970-01-01")
+        )
+      )
+
+      prepare(fn query, _ ->
+        {:ok, apply_availability_filter(query, query.arguments.date)}
+      end)
     end
 
     read :public_search do
@@ -344,7 +353,7 @@ defmodule RivaAsh.Resources.Item do
     attribute :maximum_duration_minutes, :integer do
       allow_nil?(true)
       public?(true)
-      constraints(min: 15, max: 10080)
+      constraints(min: 15, max: 10_080)
       description("Maximum reservation duration in minutes")
     end
 
@@ -461,54 +470,55 @@ defmodule RivaAsh.Resources.Item do
 
   @doc """
   Checks if the item is currently active (not archived).
-  
+
   ## Parameters
   - item: The item record to check
-  
+
   ## Returns
   - `true` if the item is active, `false` otherwise
   """
-  @spec is_active?(t()) :: boolean()
-  def is_active?(item) do
-    with %{archived_at: nil} <- item do
-      true
-    else
+  @spec active?(t()) :: boolean()
+  def active?(item) do
+    case item do
+      %{archived_at: nil} -> true
       _ -> false
     end
   end
 
   @doc """
   Checks if the item is available for reservation right now.
-  
+
   ## Parameters
   - item: The item record to check
-  
+
   ## Returns
   - `true` if the item is available now, `false` otherwise
   """
-  @spec is_available_now?(t()) :: boolean()
-  def is_available_now?(item) do
-    with %{is_active: true, archived_at: nil} <- item do
-      # Check if there are any active reservations
-      case item.reservations do
-        [] -> true
-        reservations ->
-          Enum.all?(reservations, fn reservation ->
-            reservation.status not in [:confirmed, :pending] or
-              DateTime.compare(reservation.reserved_until, DateTime.utc_now()) == :lt
-          end)
-      end
-    else
+  @spec available_now?(t()) :: boolean()
+  def available_now?(item) do
+    case item do
+      %{is_active: true, archived_at: nil} ->
+        # Check if there are any active reservations
+        case item.reservations do
+          [] ->
+            true
+
+          reservations ->
+            Enum.all?(reservations, fn reservation ->
+              reservation.status not in [:confirmed, :pending] or
+                DateTime.compare(reservation.reserved_until, DateTime.utc_now()) == :lt
+            end)
+        end
       _ -> false
     end
   end
 
   @doc """
   Gets the display name of the item with section information if available.
-  
+
   ## Parameters
   - item: The item record
-  
+
   ## Returns
   - String with the item name and section if available
   """
@@ -517,6 +527,7 @@ defmodule RivaAsh.Resources.Item do
     case item.section do
       %{name: section_name} when is_binary(section_name) and section_name != "" ->
         "#{item.name} (#{section_name})"
+
       _ ->
         item.name
     end
@@ -524,10 +535,10 @@ defmodule RivaAsh.Resources.Item do
 
   @doc """
   Gets the formatted capacity information for the item.
-  
+
   ## Parameters
   - item: The item record
-  
+
   ## Returns
   - String with capacity information
   """
@@ -538,10 +549,10 @@ defmodule RivaAsh.Resources.Item do
 
   @doc """
   Gets the duration range for the item in a human-readable format.
-  
+
   ## Parameters
   - item: The item record
-  
+
   ## Returns
   - String with duration information or "No duration limits"
   """
@@ -550,13 +561,13 @@ defmodule RivaAsh.Resources.Item do
     cond do
       is_nil(item.minimum_duration_minutes) and is_nil(item.maximum_duration_minutes) ->
         "No duration limits"
-      
+
       is_nil(item.minimum_duration_minutes) ->
         "Up to #{format_duration(item.maximum_duration_minutes)}"
-      
+
       is_nil(item.maximum_duration_minutes) ->
         "From #{format_duration(item.minimum_duration_minutes)}"
-      
+
       true ->
         "#{format_duration(item.minimum_duration_minutes)} - #{format_duration(item.maximum_duration_minutes)}"
     end
@@ -564,10 +575,10 @@ defmodule RivaAsh.Resources.Item do
 
   @doc """
   Formats minutes into a human-readable duration string.
-  
+
   ## Parameters
   - minutes: Number of minutes to format
-  
+
   ## Returns
   - String with formatted duration
   """
@@ -580,10 +591,10 @@ defmodule RivaAsh.Resources.Item do
 
   @doc """
   Checks if the item has duration constraints.
-  
+
   ## Parameters
   - item: The item record to check
-  
+
   ## Returns
   - `true` if the item has duration constraints, `false` otherwise
   """
@@ -594,10 +605,10 @@ defmodule RivaAsh.Resources.Item do
 
   @doc """
   Validates that the duration constraints are valid.
-  
+
   ## Parameters
   - item: The item record to validate
-  
+
   ## Returns
   - `{:ok, item}` if valid
   - `{:error, reason}` if invalid
@@ -611,7 +622,7 @@ defmodule RivaAsh.Resources.Item do
         else
           {:ok, item}
         end
-      
+
       true ->
         {:ok, item}
     end
@@ -619,34 +630,34 @@ defmodule RivaAsh.Resources.Item do
 
   @doc """
   Checks if the item is always available or follows a schedule.
-  
+
   ## Parameters
   - item: The item record to check
-  
+
   ## Returns
   - `true` if always available, `false` if scheduled
   """
-  @spec is_always_available?(t()) :: boolean()
-  def is_always_available?(item), do: item.is_always_available
+  @spec always_available?(t()) :: boolean()
+  def always_available?(item), do: item.is_always_available
 
   @doc """
   Checks if the item appears in public search results.
-  
+
   ## Parameters
   - item: The item record to check
-  
+
   ## Returns
   - `true` if publicly searchable, `false` otherwise
   """
-  @spec is_public_searchable?(t()) :: boolean()
-  def is_public_searchable?(item), do: item.is_public_searchable
+  @spec public_searchable?(t()) :: boolean()
+  def public_searchable?(item), do: item.is_public_searchable
 
   @doc """
   Gets the public-facing description of the item.
-  
+
   ## Parameters
   - item: The item record
-  
+
   ## Returns
   - String with public description or regular description if no public description
   """
@@ -660,19 +671,20 @@ defmodule RivaAsh.Resources.Item do
 
   @doc """
   Formats the item information for display in search results.
-  
+
   ## Parameters
   - item: The item record
-  
+
   ## Returns
   - String with formatted item information
   """
   @spec formatted_search_result(t()) :: String.t()
   def formatted_search_result(item) do
-    with true <- is_active?(item),
-         business_name <- item.business.name do
-      "#{display_name(item)} - #{business_name} #{capacity_info(item)}"
-    else
+    case active?(item) do
+      true ->
+        case item.business.name do
+          business_name -> "#{display_name(item)} - #{business_name} #{capacity_info(item)}"
+        end
       false ->
         "#{display_name(item)} - Inactive"
     end
@@ -680,10 +692,10 @@ defmodule RivaAsh.Resources.Item do
 
   @doc """
   Calculates the current reservation count for the item.
-  
+
   ## Parameters
   - item: The item record
-  
+
   ## Returns
   - Integer with current reservation count
   """
@@ -698,10 +710,10 @@ defmodule RivaAsh.Resources.Item do
 
   @doc """
   Checks if the item has available capacity for new reservations.
-  
+
   ## Parameters
   - item: The item record
-  
+
   ## Returns
   - `true` if capacity is available, `false` otherwise
   """
@@ -713,10 +725,10 @@ defmodule RivaAsh.Resources.Item do
 
   @doc """
   Gets the available capacity for the item.
-  
+
   ## Parameters
   - item: The item record
-  
+
   ## Returns
   - Integer with available capacity
   """
@@ -727,10 +739,10 @@ defmodule RivaAsh.Resources.Item do
 
   @doc """
   Validates that the item has all required relationships.
-  
+
   ## Parameters
   - item: The item record to validate
-  
+
   ## Returns
   - `{:ok, item}` if valid
   - `{:error, reason}` if invalid
@@ -740,10 +752,10 @@ defmodule RivaAsh.Resources.Item do
     cond do
       is_nil(item.business) ->
         {:error, "Business relationship is missing"}
-      
+
       not is_nil(item.section) and is_nil(item.section.plot) ->
         {:error, "Section plot relationship is missing"}
-      
+
       true ->
         {:ok, item}
     end
@@ -765,13 +777,14 @@ defmodule RivaAsh.Resources.Item do
   end
 
   defp apply_search_filter(query, search_term) do
+    search_pattern = "%#{search_term}%"
     Ash.Query.filter(
       query,
       expr(
-        ilike(name, ^"%#{search_term}%") or
-          ilike(public_description, ^"%#{search_term}%") or
-          ilike(business.name, ^"%#{search_term}%") or
-          ilike(business.public_description, ^"%#{search_term}%")
+        ilike(name, ^search_pattern) or
+          ilike(public_description, ^search_pattern) or
+          ilike(business.name, ^search_pattern) or
+          ilike(business.public_description, ^search_pattern)
       )
     )
   end

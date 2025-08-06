@@ -57,25 +57,25 @@ defmodule RivaAshWeb.Components.UI.Select do
   # Helper function to build wrapper classes
   @spec build_wrapper_class(Phoenix.HTML.FormField.t() | nil) :: String.t()
   defp build_wrapper_class(field) do
-    if field, do: "relative w-full", else: "w-full"
+    if field, "relative w-full", "w-full"
   end
 
   # Helper function to build error classes
   @spec build_error_class(Phoenix.HTML.FormField.t() | nil) :: String.t()
   defp build_error_class(field) do
-    if has_error?(field), do: "text-sm text-destructive mt-1", else: "hidden"
+    if has_error?(field), "text-sm text-destructive mt-1", "hidden"
   end
 
   # Helper function to build required classes
   @spec build_required_class(boolean()) :: String.t()
   defp build_required_class(required) do
-    if required, do: "required", else: ""
+    if required, "required", ""
   end
 
   # Helper function to build options classes
   @spec build_options_class(boolean()) :: String.t()
   defp build_options_class(multiple) do
-    if multiple, do: "py-1", else: ""
+    if multiple, "py-1", ""
   end
 
   # Helper function to check if field has errors
@@ -91,7 +91,9 @@ defmodule RivaAshWeb.Components.UI.Select do
   end
 
   defp select_class(assigns) do
-    base = "flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+    base =
+      "flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+
     size = size_classes(assigns.size)
     variant = variant_classes(assigns.variant)
 

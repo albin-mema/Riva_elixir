@@ -4,7 +4,7 @@ defmodule RivaAshWeb.Components.Atoms.Input do
 
   Use RivaAshWeb.Components.UI.Input.input/1 directly in new code.
   This module delegates to the canonical component to maintain backward compatibility.
-  
+
   Follows functional core, imperative shell pattern with comprehensive type safety.
   """
   use Phoenix.Component
@@ -25,9 +25,9 @@ defmodule RivaAshWeb.Components.Atoms.Input do
   Renders an input component.
 
   Backwards-compatible API: maps legacy size to UI.Input API.
-  
+
   ## Examples
-    
+
       <.input type="text" placeholder="Enter your name" />
       <.input type="email" required={true} variant="error" />
       <.input type="password" size="lg" />
@@ -74,6 +74,7 @@ defmodule RivaAshWeb.Components.Atoms.Input do
   @spec validate_type(type :: String.t()) :: :ok | {:error, String.t()}
   defp validate_type(type) do
     valid_types = ~w(text email password number tel url search color date time datetime-local month week)
+
     if type in valid_types do
       :ok
     else
@@ -187,6 +188,7 @@ defmodule RivaAshWeb.Components.Atoms.Input do
     # In a real implementation, you might want to log this error
     # and render a fallback input or error state
     IO.puts("Input error: #{reason}")
+
     ~H"""
     <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative">
       <span class="block sm:inline">Error: <%= reason %></span>

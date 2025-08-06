@@ -106,7 +106,7 @@ defmodule RivaAshWeb.Gettext do
         gettext("Welcome")  # Will be translated to Albanian
       end)
   """
-  @spec with_locale(locale(), ( -> result)) :: result when result: var
+  @spec with_locale(locale(), (-> result)) :: result when result: var
   def with_locale(locale, func) when is_binary(locale) do
     original_locale = get_locale()
     put_locale(locale)

@@ -19,6 +19,7 @@ defmodule RivaAshWeb.ItemPositionLive do
         case load_item_positions_data(socket, user) do
           {:ok, socket} ->
             {:ok, socket}
+
           {:error, reason} ->
             Logger.error("Failed to load item positions: #{inspect(reason)}")
             {:ok, redirect(socket, to: "/access-denied")}
@@ -117,13 +118,13 @@ defmodule RivaAshWeb.ItemPositionLive do
   def handle_event("activate_item_position", %{"id" => id}, socket) do
     case PositionService.activate_position(id, socket.assigns.current_user) do
       {:ok, _item_position} ->
-        {:noreply, 
+        {:noreply,
          socket
          |> put_flash(:info, "Item position activated successfully")
          |> reload_item_positions()}
-      
+
       {:error, reason} ->
-        {:noreply, 
+        {:noreply,
          socket
          |> put_flash(:error, "Failed to activate item position: #{format_error(reason)}")}
     end
@@ -132,13 +133,13 @@ defmodule RivaAshWeb.ItemPositionLive do
   def handle_event("deactivate_item_position", %{"id" => id}, socket) do
     case PositionService.deactivate_position(id, socket.assigns.current_user) do
       {:ok, _item_position} ->
-        {:noreply, 
+        {:noreply,
          socket
          |> put_flash(:info, "Item position deactivated successfully")
          |> reload_item_positions()}
-      
+
       {:error, reason} ->
-        {:noreply, 
+        {:noreply,
          socket
          |> put_flash(:error, "Failed to deactivate item position: #{format_error(reason)}")}
     end
@@ -147,13 +148,13 @@ defmodule RivaAshWeb.ItemPositionLive do
   def handle_event("delete_item_position", %{"id" => id}, socket) do
     case PositionService.delete_position(id, socket.assigns.current_user) do
       {:ok, _item_position} ->
-        {:noreply, 
+        {:noreply,
          socket
          |> put_flash(:info, "Item position deleted successfully")
          |> reload_item_positions()}
-      
+
       {:error, reason} ->
-        {:noreply, 
+        {:noreply,
          socket
          |> put_flash(:error, "Failed to delete item position: #{format_error(reason)}")}
     end
@@ -174,9 +175,9 @@ defmodule RivaAshWeb.ItemPositionLive do
           |> assign(:item_positions, item_positions)
           |> assign(:meta, meta)
           |> assign(:loading, false)
-        
+
         {:ok, socket}
-      
+
       {:error, reason} ->
         {:error, reason}
     end
@@ -187,7 +188,7 @@ defmodule RivaAshWeb.ItemPositionLive do
       {:ok, {item_positions, meta}} ->
         assign(socket, :item_positions, item_positions)
         |> assign(:meta, meta)
-      
+
       {:error, _reason} ->
         socket
     end
@@ -199,11 +200,17 @@ defmodule RivaAshWeb.ItemPositionLive do
 
   defp format_error(reason) do
     case reason do
-      %Ash.Error.Invalid{errors: errors} -> 
-        errors |> Enum.map(&format_validation_error/1) |> Enum.join(", ")
-      %Ash.Error.Forbidden{} -> "You don't have permission to perform this action"
-      %Ash.Error.NotFound{} -> "Item position not found"
-      _ -> "An unexpected error occurred"
+      %Ash.Error.Invalid{errors: errors} ->
+        Enum.map_join(errors, ", ", &format_validation_error/1)
+
+      %Ash.Error.Forbidden{} ->
+        "You don't have permission to perform this action"
+
+      %Ash.Error.NotFound{} ->
+        "Item position not found"
+
+      _ ->
+        "An unexpected error occurred"
     end
   end
 

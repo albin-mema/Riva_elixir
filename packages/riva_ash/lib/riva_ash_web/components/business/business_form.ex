@@ -97,9 +97,9 @@ defmodule RivaAshWeb.Components.Business.BusinessForm do
     |> render_field_errors()
   end
 
-  #==================================================================
+  # ==================================================================
   # Private Functions - Functional Core (Pure Functions)
-  #==================================================================
+  # ==================================================================
 
   @doc """
   Validates component assigns.
@@ -230,9 +230,9 @@ defmodule RivaAshWeb.Components.Business.BusinessForm do
     """
   end
 
-  #==================================================================
+  # ==================================================================
   # Helper Functions - Data Transformation
-  #==================================================================
+  # ==================================================================
 
   @doc """
   Generates form title based on editing state.
@@ -480,9 +480,9 @@ defmodule RivaAshWeb.Components.Business.BusinessForm do
     raise ArgumentError, "Expected errors to be a list, got: #{inspect(errors)}"
   end
 
-  #==================================================================
+  # ==================================================================
   # Validation Helper Functions
-  #==================================================================
+  # ==================================================================
 
   @doc """
   Validates required assigns.
@@ -501,6 +501,7 @@ defmodule RivaAshWeb.Components.Business.BusinessForm do
   end
 
   defp validate_required(assigns, required_keys) do
-    {:error, "Expected assigns to be a map and required_keys to be a list, got: #{inspect(assigns)}, #{inspect(required_keys)}"}
+    {:error,
+     "Expected assigns to be a map and required_keys to be a list, got: #{inspect(assigns)}, #{inspect(required_keys)}"}
   end
 end

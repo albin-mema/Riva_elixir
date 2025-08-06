@@ -26,11 +26,11 @@ defmodule RivaAsh.RecurringReservations do
   - {:error, reason} if failed
   """
   @spec create_recurring_reservation(map(), boolean()) ::
-        {:ok, RecurringReservation.t()} | {:error, any()}
+          {:ok, RecurringReservation.t()} | {:error, any()}
   def create_recurring_reservation(attrs, generate_immediately \\ true) do
     with {:ok, recurring_reservation} <- create_recurring_reservation_record(attrs),
          {:ok, result} <- maybe_generate_instances(recurring_reservation, generate_immediately) do
-      {:ok, result}
+      result
     else
       {:error, reason} -> {:error, reason}
     end
@@ -52,7 +52,7 @@ defmodule RivaAsh.RecurringReservations do
          {:ok, dates} <- calculate_consecutive_dates(recurring_reservation),
          {:ok, _instances} <- create_instances_for_dates(recurring_reservation, dates),
          {:ok, result} <- update_recurring_reservation_status(recurring_reservation, :active) do
-      {:ok, result}
+      result
     else
       {:error, reason} -> {:error, "Failed to generate instances: #{inspect(reason)}"}
     end
@@ -75,7 +75,7 @@ defmodule RivaAsh.RecurringReservations do
            get_recurring_reservation(instance.recurring_reservation_id),
          {:ok, availability} <- check_availability(instance, recurring_reservation),
          {:ok, result} <- create_or_fail_reservation(instance, recurring_reservation, availability) do
-      {:ok, result}
+      result
     else
       {:error, reason} -> {:error, "Failed to process instance: #{inspect(reason)}"}
     end
@@ -92,11 +92,11 @@ defmodule RivaAsh.RecurringReservations do
   - {:error, reason} if failed
   """
   @spec process_all_instances(String.t()) ::
-        {:ok, %{successes: list(), failures: list(), total: non_neg_integer()}} | {:error, any()}
+          {:ok, %{successes: list(), failures: list(), total: non_neg_integer()}} | {:error, any()}
   def process_all_instances(recurring_reservation_id) when is_binary(recurring_reservation_id) do
     with {:ok, instances} <- get_pending_instances(recurring_reservation_id),
          {:ok, results} <- process_instances_batch(instances) do
-      {:ok, results}
+      results
     else
       {:error, reason} -> {:error, reason}
     end
@@ -114,13 +114,13 @@ defmodule RivaAsh.RecurringReservations do
   - {:error, reason} if failed
   """
   @spec cancel_recurring_reservation(String.t(), String.t() | nil) ::
-        {:ok, RecurringReservation.t()} | {:error, any()}
+          {:ok, RecurringReservation.t()} | {:error, any()}
   def cancel_recurring_reservation(recurring_reservation_id, reason \\ nil)
-      when is_binary(recurring_reservation_id) do
+       when is_binary(recurring_reservation_id) do
     with {:ok, recurring_reservation} <- get_recurring_reservation(recurring_reservation_id),
          {:ok, _} <- cancel_pending_instances(recurring_reservation_id, reason),
          {:ok, result} <- update_recurring_reservation_status(recurring_reservation, :cancelled) do
-      {:ok, result}
+      result
     else
       {:error, reason} -> {:error, reason}
     end
@@ -140,7 +140,7 @@ defmodule RivaAsh.RecurringReservations do
   def get_recurring_reservation_stats(recurring_reservation_id) when is_binary(recurring_reservation_id) do
     with {:ok, instances} <- get_recurring_reservation_instances(recurring_reservation_id),
          {:ok, stats} <- calculate_instance_stats(instances) do
-      {:ok, stats}
+      stats
     else
       {:error, reason} -> {:error, reason}
     end
@@ -156,7 +156,7 @@ defmodule RivaAsh.RecurringReservations do
   end
 
   @spec maybe_generate_instances(RecurringReservation.t(), boolean()) ::
-        {:ok, RecurringReservation.t()} | {:error, any()}
+          {:ok, RecurringReservation.t()} | {:error, any()}
   defp maybe_generate_instances(recurring_reservation, true) do
     generate_instances(recurring_reservation.id)
   end
@@ -173,20 +173,20 @@ defmodule RivaAsh.RecurringReservations do
 
   @spec get_pending_instances(String.t()) :: {:ok, list(RecurringReservationInstance.t())} | {:error, any()}
   defp get_pending_instances(recurring_reservation_id) when is_binary(recurring_reservation_id) do
-    with {:ok, instances} <- get_recurring_reservation_instances(recurring_reservation_id) do
-      pending_instances =
-        instances
-        |> Enum.filter(&(&1.status == :pending))
-        |> Enum.sort_by(& &1.sequence_number)
+    case get_recurring_reservation_instances(recurring_reservation_id) do
+      {:ok, instances} ->
+        pending_instances =
+          instances
+          |> Enum.filter(&(&1.status == :pending))
+          |> Enum.sort_by(& &1.sequence_number)
 
-      {:ok, pending_instances}
-    else
+        {:ok, pending_instances}
       {:error, reason} -> {:error, reason}
     end
   end
 
   @spec get_recurring_reservation_instances(String.t()) ::
-        {:ok, list(RecurringReservationInstance.t())} | {:error, any()}
+          {:ok, list(RecurringReservationInstance.t())} | {:error, any()}
   defp get_recurring_reservation_instances(recurring_reservation_id) do
     RecurringReservationInstance
     |> Ash.Query.for_read(:by_recurring_reservation, %{
@@ -196,7 +196,7 @@ defmodule RivaAsh.RecurringReservations do
   end
 
   @spec process_instances_batch(list(RecurringReservationInstance.t())) ::
-        {:ok, %{successes: list(), failures: list(), total: non_neg_integer()}} | {:error, any()}
+          {:ok, %{successes: list(), failures: list(), total: non_neg_integer()}} | {:error, any()}
   defp process_instances_batch(instances) do
     results =
       instances
@@ -221,19 +221,19 @@ defmodule RivaAsh.RecurringReservations do
   end
 
   @spec cancel_pending_instances(String.t(), String.t() | nil) ::
-        {:ok, :cancelled} | {:error, any()}
+          {:ok, :cancelled} | {:error, any()}
   defp cancel_pending_instances(recurring_reservation_id, reason)
-      when is_binary(recurring_reservation_id) do
+       when is_binary(recurring_reservation_id) do
     with {:ok, instances} <- get_pending_instances(recurring_reservation_id),
          {:ok, _} <- update_instances_status(instances, :skipped, reason) do
-      {:ok, :cancelled}
+      :cancelled
     else
       {:error, reason} -> {:error, reason}
     end
   end
 
   @spec update_instances_status(list(RecurringReservationInstance.t()), atom(), String.t() | nil) ::
-        {:ok, :updated} | {:error, any()}
+          {:ok, :updated} | {:error, any()}
   defp update_instances_status(instances, status, reason) when is_list(instances) and is_atom(status) do
     update_attrs = %{
       status: status,
@@ -260,7 +260,7 @@ defmodule RivaAsh.RecurringReservations do
   end
 
   @spec update_recurring_reservation_status(RecurringReservation.t(), atom()) ::
-        {:ok, RecurringReservation.t()} | {:error, any()}
+          {:ok, RecurringReservation.t()} | {:error, any()}
   defp update_recurring_reservation_status(recurring_reservation, status) when is_atom(status) do
     recurring_reservation
     |> Ash.Changeset.for_update(:update, %{status: status})
@@ -268,7 +268,7 @@ defmodule RivaAsh.RecurringReservations do
   end
 
   @spec calculate_instance_stats(list(RecurringReservationInstance.t())) ::
-        {:ok, map()} | {:error, any()}
+          {:ok, map()} | {:error, any()}
   defp calculate_instance_stats(instances) when is_list(instances) do
     stats =
       instances
@@ -286,7 +286,7 @@ defmodule RivaAsh.RecurringReservations do
          {:ok, consecutive_days} <- validate_consecutive_days(recurring_reservation.consecutive_days),
          {:ok, pattern_type} <- validate_pattern_type(recurring_reservation.pattern_type),
          {:ok, dates} <- generate_dates_for_pattern(start_date, consecutive_days, pattern_type) do
-      {:ok, dates}
+      dates
     else
       {:error, reason} -> {:error, reason}
     end
@@ -309,6 +309,7 @@ defmodule RivaAsh.RecurringReservations do
   @spec validate_pattern_type(atom()) :: {:ok, atom()} | {:error, any()}
   defp validate_pattern_type(pattern_type) when is_atom(pattern_type) do
     valid_patterns = [:all_days, :weekdays_only]
+
     if pattern_type in valid_patterns do
       {:ok, pattern_type}
     else
@@ -319,7 +320,7 @@ defmodule RivaAsh.RecurringReservations do
   defp validate_pattern_type(_), do: {:error, "Invalid pattern type"}
 
   @spec generate_dates_for_pattern(Date.t(), non_neg_integer(), atom()) ::
-        {:ok, list(Date.t())} | {:error, any()}
+          {:ok, list(Date.t())} | {:error, any()}
   defp generate_dates_for_pattern(start_date, consecutive_days, :all_days) do
     dates =
       0..(consecutive_days - 1)
@@ -348,7 +349,7 @@ defmodule RivaAsh.RecurringReservations do
 
   @spec generate_weekdays_only(Date.t(), non_neg_integer()) :: list(Date.t())
   defp generate_weekdays_only(start_date, target_days)
-      when is_struct(start_date, Date) and is_integer(target_days) and target_days >= 0 do
+       when is_struct(start_date, Date) and is_integer(target_days) and target_days >= 0 do
     Stream.iterate(start_date, &Timex.shift(&1, days: 1))
     |> Stream.filter(fn date ->
       # Monday = 1, Sunday = 7 in Timex
@@ -358,7 +359,7 @@ defmodule RivaAsh.RecurringReservations do
   end
 
   @spec create_instances_for_dates(RecurringReservation.t(), list(Date.t())) ::
-        {:ok, list(RecurringReservationInstance.t())} | {:error, any()}
+          {:ok, list(RecurringReservationInstance.t())} | {:error, any()}
   defp create_instances_for_dates(recurring_reservation, dates) when is_list(dates) do
     instances =
       dates
@@ -401,7 +402,7 @@ defmodule RivaAsh.RecurringReservations do
   end
 
   @spec check_availability(RecurringReservationInstance.t(), RecurringReservation.t()) ::
-        {:ok, map()} | {:error, any()}
+          {:ok, map()} | {:error, any()}
   defp check_availability(instance, recurring_reservation) do
     with {:ok, scheduled_date} <- validate_date(instance.scheduled_date),
          {:ok, start_time} <- validate_time(recurring_reservation.start_time),
@@ -440,7 +441,7 @@ defmodule RivaAsh.RecurringReservations do
   end
 
   @spec check_reservation_overlap(String.t(), DateTime.t(), DateTime.t()) ::
-        {:ok, atom()} | {:error, any()}
+          {:ok, atom()} | {:error, any()}
   defp check_reservation_overlap(item_id, start_datetime, end_datetime) do
     RivaAsh.Validations.check_reservation_overlap(
       item_id,
@@ -452,7 +453,7 @@ defmodule RivaAsh.RecurringReservations do
   end
 
   @spec check_item_availability(String.t(), DateTime.t(), DateTime.t()) ::
-        {:ok, atom()} | {:ok, atom(), any()} | {:error, any()}
+          {:ok, atom()} | {:ok, atom(), any()} | {:error, any()}
   defp check_item_availability(item_id, start_datetime, end_datetime) do
     RivaAsh.Validations.check_item_availability(
       item_id,
@@ -463,27 +464,30 @@ defmodule RivaAsh.RecurringReservations do
   end
 
   @spec build_availability_result(atom(), atom() | {:ok, atom(), any()}, DateTime.t(), DateTime.t()) ::
-        {:ok, map()} | {:error, any()}
+          {:ok, map()} | {:error, any()}
   defp build_availability_result(:no_overlap, {:ok, :available}, start_datetime, end_datetime) do
-    {:ok, %{
-      available: true,
-      start_datetime: start_datetime,
-      end_datetime: end_datetime
-    }}
+    {:ok,
+     %{
+       available: true,
+       start_datetime: start_datetime,
+       end_datetime: end_datetime
+     }}
   end
 
   defp build_availability_result(:no_overlap, {:ok, :unavailable, reason}, _start_datetime, _end_datetime) do
-    {:ok, %{
-      available: false,
-      reason: reason
-    }}
+    {:ok,
+     %{
+       available: false,
+       reason: reason
+     }}
   end
 
   defp build_availability_result(:no_overlap, _result, _start_datetime, _end_datetime) do
-    {:ok, %{
-      available: false,
-      reason: "Time slot conflicts with existing reservation"
-    }}
+    {:ok,
+     %{
+       available: false,
+       reason: "Time slot conflicts with existing reservation"
+     }}
   end
 
   defp build_availability_result({:error, error}, _result, _start_datetime, _end_datetime) do
@@ -495,7 +499,7 @@ defmodule RivaAsh.RecurringReservations do
   end
 
   @spec create_or_fail_reservation(RecurringReservationInstance.t(), RecurringReservation.t(), map()) ::
-        {:ok, RecurringReservationInstance.t()} | {:error, any()}
+          {:ok, RecurringReservationInstance.t()} | {:error, any()}
   defp create_or_fail_reservation(instance, recurring_reservation, availability) do
     if availability.available do
       create_reservation_for_instance(instance, recurring_reservation, availability)
@@ -505,7 +509,7 @@ defmodule RivaAsh.RecurringReservations do
   end
 
   @spec create_reservation_for_instance(RecurringReservationInstance.t(), RecurringReservation.t(), map()) ::
-        {:ok, RecurringReservationInstance.t()} | {:error, any()}
+          {:ok, RecurringReservationInstance.t()} | {:error, any()}
   defp create_reservation_for_instance(instance, recurring_reservation, availability) do
     reservation_attrs = %{
       client_id: recurring_reservation.client_id,
@@ -531,7 +535,7 @@ defmodule RivaAsh.RecurringReservations do
   end
 
   @spec mark_instance_failed(RecurringReservationInstance.t(), String.t()) ::
-        {:ok, RecurringReservationInstance.t()} | {:error, any()}
+          {:ok, RecurringReservationInstance.t()} | {:error, any()}
   defp mark_instance_failed(instance, reason) when is_binary(reason) do
     attrs = %{
       status: :failed,
@@ -545,7 +549,7 @@ defmodule RivaAsh.RecurringReservations do
   end
 
   @spec update_instance_with_reservation(RecurringReservationInstance.t(), Reservation.t()) ::
-        {:ok, RecurringReservationInstance.t()} | {:error, any()}
+          {:ok, RecurringReservationInstance.t()} | {:error, any()}
   defp update_instance_with_reservation(instance, reservation) do
     attrs = %{
       status: :confirmed,

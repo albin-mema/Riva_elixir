@@ -1,7 +1,7 @@
 defmodule RivaAshWeb.Components.Atoms.Alert do
   @moduledoc """
   Alert component for displaying important messages to users.
-  
+
   Follows functional core, imperative shell pattern with comprehensive type safety.
   """
   use Phoenix.Component
@@ -13,9 +13,9 @@ defmodule RivaAshWeb.Components.Atoms.Alert do
 
   @doc """
   Renders an alert component with different variants and sizes.
-  
+
   ## Examples
-    
+
       <.alert variant="info">This is an informational message.alert>
       <.alert variant="success" closable={true}>Success!</.alert>
       <.alert variant="warning" size="lg">Warning message</.alert>
@@ -155,6 +155,7 @@ defmodule RivaAshWeb.Components.Atoms.Alert do
     # In a real implementation, you might want to log this error
     # and render a fallback alert or error state
     IO.puts("Alert error: #{reason}")
+
     ~H"""
     <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative">
       <span class="block sm:inline">Error: <%= reason %></span>

@@ -1,10 +1,10 @@
-# Business Form Component Specification
+# Organization Form Component Specification
 
 ## Component Name
-Business Form
+Organization Form
 
 ## Description
-A form component for creating and editing business information. Provides a structured interface for users to input and update business details including name, description, location, and public visibility settings.
+A form component for creating and editing organization information. Provides a structured interface for users to input and update organization details including name, description, location, and public visibility settings.
 
 ## Props/Attributes
 | Prop | Type | Default | Description |

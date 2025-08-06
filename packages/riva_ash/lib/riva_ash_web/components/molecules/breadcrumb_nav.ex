@@ -1,40 +1,40 @@
 defmodule RivaAshWeb.Components.Molecules.BreadcrumbNav do
   @moduledoc """
   Breadcrumb navigation component.
-  
+
   Provides a navigational trail that helps users understand their location
   within the application hierarchy and allows easy navigation to parent pages.
-  
+
   ## Styleguide Compliance
-  
+
   This component follows the Riva Ash styleguide principles:
-  
+
   ### Functional Programming Patterns
   - Uses pipeline operator (`|>`) for data transformation
   - Implements pure functions with no side effects
   - Uses pattern matching for data validation and processing
   - Follows single level of abstraction principle
-  
+
   ### Type Safety
   - Comprehensive type specifications using `@type` and `@spec`
   - Strong typing for all function parameters and return values
   - Type validation through pattern matching
-  
+
   ### Error Handling
   - Uses result tuples (`:ok | {:error, String.t()}`) for consistent error handling
   - Early validation with guard clauses
   - Clear error messages for invalid inputs
-  
+
   ### Code Abstraction
   - Separates concerns into focused helper functions
   - Extracts validation logic into dedicated functions
   - Uses functional composition for complex operations
-  
+
   ### Phoenix/Ash Patterns
   - Follows Phoenix LiveView component conventions
   - Uses proper attribute validation and building
   - Implements functional core, imperative shell pattern
-  
+
   ### LiveView Component Patterns
   - Uses proper slot and attribute handling
   - Implements accessibility features
@@ -55,25 +55,40 @@ defmodule RivaAshWeb.Components.Molecules.BreadcrumbNav do
 
   @doc """
   Renders breadcrumb navigation.
-  
+
   ## Examples
-  
+
       <.breadcrumb_nav items={[
         %{label: "Dashboard", href: "/dashboard", current: false},
         %{label: "Settings", href: "/settings", current: true}
       ]} />
   """
   @spec breadcrumb_nav(assigns :: assigns()) :: Phoenix.LiveView.Rendered.t()
-  attr(:items, :list, required: true,
-    doc: "List of breadcrumb items with :label, :href, and :current keys")
-  attr(:separator, :atom, default: :chevron_right,
-    doc: "Icon name used as separator between breadcrumbs")
-  attr(:show_home, :boolean, default: true,
-    doc: "Whether to show the Home link as the first breadcrumb")
-  attr(:home_path, :string, default: "/",
-    doc: "Path for the Home link")
-  attr(:class, :string, default: "",
-    doc: "Additional CSS classes for the navigation container")
+  attr(:items, :list,
+    required: true,
+    doc: "List of breadcrumb items with :label, :href, and :current keys"
+  )
+
+  attr(:separator, :atom,
+    default: :chevron_right,
+    doc: "Icon name used as separator between breadcrumbs"
+  )
+
+  attr(:show_home, :boolean,
+    default: true,
+    doc: "Whether to show the Home link as the first breadcrumb"
+  )
+
+  attr(:home_path, :string,
+    default: "/",
+    doc: "Path for the Home link"
+  )
+
+  attr(:class, :string,
+    default: "",
+    doc: "Additional CSS classes for the navigation container"
+  )
+
   attr(:rest, :global)
 
   @impl true
@@ -124,14 +139,15 @@ defmodule RivaAshWeb.Components.Molecules.BreadcrumbNav do
       false -> {:error, "All breadcrumb items must have :label, :href, and :current keys"}
     end
   end
+
   defp validate_items(_), do: {:error, "Items must be a non-empty list"}
 
   @spec valid_breadcrumb_item?(map()) :: boolean()
   defp valid_breadcrumb_item?(item) do
     is_map(item) and
-    is_binary(item[:label]) and
-    is_binary(item[:href]) and
-    is_boolean(item[:current])
+      is_binary(item[:label]) and
+      is_binary(item[:href]) and
+      is_boolean(item[:current])
   end
 
   @spec validate_separator(atom()) :: :ok | {:error, String.t()}
@@ -157,7 +173,7 @@ defmodule RivaAshWeb.Components.Molecules.BreadcrumbNav do
             />
           </li>
         <% end %>
-        
+
         <%= for {item, index} <- Enum.with_index(@items) do %>
           <li class="breadcrumb-item">
             <%= render_breadcrumb_item(item.label, item.href, item.current, @separator, index, length(@items)) %>
@@ -170,7 +186,8 @@ defmodule RivaAshWeb.Components.Molecules.BreadcrumbNav do
 
   # Rendering functions with proper separation of concerns
 
-  @spec render_breadcrumb_item(String.t(), String.t(), boolean(), atom(), integer(), integer()) :: Phoenix.LiveView.Rendered.t()
+  @spec render_breadcrumb_item(String.t(), String.t(), boolean(), atom(), integer(), integer()) ::
+          Phoenix.LiveView.Rendered.t()
   defp render_breadcrumb_item(label, href, current, separator, index, total_items) do
     ~H"""
     <>
@@ -181,12 +198,24 @@ defmodule RivaAshWeb.Components.Molecules.BreadcrumbNav do
           <%= label %>
         </a>
       <% end %>
-      
+
       <%= if index < total_items - 1 do %>
         <.icon name={separator} class="w-4 h-4 text-muted-foreground" />
       <% end %>
     </>
     """
+  end
+
+  @spec render_breadcrumb_item(map()) :: Phoenix.LiveView.Rendered.t()
+  defp render_breadcrumb_item(%{
+         label: label,
+         href: href,
+         current: current,
+         separator: separator,
+         index: index,
+         total_items: total_items
+       }) do
+    render_breadcrumb_item(label, href, current, separator, index, total_items)
   end
 
   # Functional programming with pattern matching for immutable data

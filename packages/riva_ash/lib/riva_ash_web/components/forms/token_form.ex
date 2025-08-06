@@ -1,15 +1,15 @@
 defmodule RivaAshWeb.Components.Forms.TokenForm do
   @moduledoc """
   Form component for creating and editing API tokens using atomic design system.
-  
+
   This component follows the functional core, imperative shell pattern,
   with pure functions for data transformation and validation, and
   the LiveView component handling UI state and side effects.
-  
+
   ## Styleguide Compliance
-  
+
   This module follows the Riva Ash styleguide principles:
-  
+
   - **Functional Programming**: Uses pure functions, pattern matching, and pipelines
   - **Type Safety**: Comprehensive type specifications with @spec annotations
   - **Single Level of Abstraction**: Each function has a clear, focused responsibility
@@ -25,25 +25,25 @@ defmodule RivaAshWeb.Components.Forms.TokenForm do
   import RivaAshWeb.Components.Atoms.Button
 
   @type assigns :: %{
-    optional(:form) => map(),
-    optional(:editing) => boolean(),
-    optional(:loading) => boolean(),
-    optional(:on_submit) => String.t(),
-    optional(:on_change) => String.t(),
-    optional(:on_cancel) => String.t(),
-    optional(:users) => list(),
-    optional(:rest) => any()
-  }
+          optional(:form) => map(),
+          optional(:editing) => boolean(),
+          optional(:loading) => boolean(),
+          optional(:on_submit) => String.t(),
+          optional(:on_change) => String.t(),
+          optional(:on_cancel) => String.t(),
+          optional(:users) => list(),
+          optional(:rest) => any()
+        }
 
   @type token_form_data :: %{
-    user_id: String.t() | integer(),
-    purpose: String.t(),
-    expires_at: DateTime.t() | nil
-  }
+          user_id: String.t() | integer(),
+          purpose: String.t(),
+          expires_at: DateTime.t() | nil
+        }
 
   @doc """
   Renders a form for creating or editing tokens.
-  
+
   ## Examples
       <.token_form
         form={@form}
@@ -141,7 +141,8 @@ defmodule RivaAshWeb.Components.Forms.TokenForm do
     """
   end
 
-  @spec render_form_actions(loading :: boolean(), on_cancel :: String.t(), editing :: boolean()) :: Phoenix.LiveView.Rendered.t()
+  @spec render_form_actions(loading :: boolean(), on_cancel :: String.t(), editing :: boolean()) ::
+          Phoenix.LiveView.Rendered.t()
   defp render_form_actions(assigns) do
     ~H"""
     <div class="flex justify-end space-x-3 pt-4 border-t">
@@ -159,7 +160,7 @@ defmodule RivaAshWeb.Components.Forms.TokenForm do
 
   @doc """
   Validates token form data.
-  
+
   ## Returns
     {:ok, validated_data} | {:error, changeset}
   """
@@ -178,7 +179,7 @@ defmodule RivaAshWeb.Components.Forms.TokenForm do
   defp validate_required_fields(params) when is_map(params) do
     required_fields = [:user_id, :purpose]
     missing_fields = required_fields |> Enum.filter(&is_nil(Map.get(params, &1)))
-    
+
     case missing_fields do
       [] -> :ok
       _ -> {:error, %{missing_fields: missing_fields}}
@@ -186,6 +187,7 @@ defmodule RivaAshWeb.Components.Forms.TokenForm do
   end
 
   defp validate_user_exists(nil, _), do: {:error, %{user_id: "user is required"}}
+
   defp validate_user_exists(user_id, users) when is_list(users) do
     case Enum.find(users, fn user -> user.id == user_id end) do
       %{id: ^user_id} -> :ok
@@ -194,6 +196,7 @@ defmodule RivaAshWeb.Components.Forms.TokenForm do
   end
 
   defp validate_expiration_date(nil), do: :ok
+
   defp validate_expiration_date(expires_at) when is_binary(expires_at) do
     case DateTime.from_iso8601(expires_at <> ":00") do
       {:ok, datetime, _} ->
@@ -202,10 +205,12 @@ defmodule RivaAshWeb.Components.Forms.TokenForm do
         else
           {:error, %{expires_at: "expiration date must be in the future"}}
         end
+
       {:error, _} ->
         {:error, %{expires_at: "invalid date format"}}
     end
   end
+
   defp validate_expiration_date(_), do: :ok
 
   @doc """
@@ -226,12 +231,14 @@ defmodule RivaAshWeb.Components.Forms.TokenForm do
   defp parse_id(_), do: nil
 
   defp parse_datetime(nil), do: nil
+
   defp parse_datetime(datetime_str) when is_binary(datetime_str) do
     case DateTime.from_iso8601(datetime_str <> ":00") do
       {:ok, datetime, _} -> datetime
       {:error, _} -> nil
     end
   end
+
   defp parse_datetime(_), do: nil
 
   # UI Helper functions

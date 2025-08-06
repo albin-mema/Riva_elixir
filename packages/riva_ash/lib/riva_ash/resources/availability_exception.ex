@@ -146,11 +146,16 @@ defmodule RivaAsh.Resources.AvailabilityException do
     case Date.compare(date, today) do
       :eq ->
         case {start_time, end_time} do
-          {nil, nil} -> true  # All-day exception
+          # All-day exception
+          {nil, nil} -> true
           {start, end_time} -> Time.compare(now, start) != :lt and Time.compare(now, end_time) == :lt
         end
-      :gt -> true
-      :lt -> false
+
+      :gt ->
+        true
+
+      :lt ->
+        false
     end
   end
 
@@ -163,7 +168,9 @@ defmodule RivaAsh.Resources.AvailabilityException do
     %{start_time: start_time, end_time: end_time} = exception
 
     case {start_time, end_time} do
-      {nil, nil} -> 0
+      {nil, nil} ->
+        0
+
       {start_time, end_time} ->
         start_seconds = Time.to_second_after_midnight(start_time)
         end_seconds = Time.to_second_after_midnight(end_time)
@@ -226,9 +233,7 @@ defmodule RivaAsh.Resources.AvailabilityException do
     end
 
     attribute :exception_type, :atom do
-      constraints(
-        one_of: [:holiday, :maintenance, :special_event, :closure, :extended_hours, :other]
-      )
+      constraints(one_of: [:holiday, :maintenance, :special_event, :closure, :extended_hours, :other])
 
       default(:other)
       public?(true)

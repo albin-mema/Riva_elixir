@@ -8,7 +8,7 @@ defmodule RivaAsh.Policies.PermissionCheckTest do
   @moduledoc false
 
   property "has_permission returns a valid tuple for known permission constants" do
-    check all perm <- member_of(Constants.all_permissions()) do
+    check all(perm <- member_of(Constants.all_permissions())) do
       assert {PermissionCheck, permission: ^perm} = PermissionCheck.has_permission(perm)
     end
   end
@@ -21,7 +21,9 @@ defmodule RivaAsh.Policies.PermissionCheckTest do
 
   describe "role-action matrix (targeted)" do
     test "admin can_view_all_reservations? true" do
-      assert PermissionCheck.can_view_all_reservations() == {PermissionCheck, permission: Constants.can_view_all_reservations()}
+      assert PermissionCheck.can_view_all_reservations() ==
+               {PermissionCheck, permission: Constants.can_view_all_reservations()}
+
       # Admins always match? when actor has role :admin; unit level assertion uses tuple form
     end
 

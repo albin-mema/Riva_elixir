@@ -4,7 +4,7 @@ defmodule RivaAsh.Permissions do
 
   This module provides functions to:
   - Check if an employee has specific permissions
-  - Grant permissions to employees (with hierarchy validation)
+  - Grant permissions to employees(with hierarchy validation)
   - Revoke permissions from employees
   - Get all permissions for an employee
   - Validate permission hierarchy rules
@@ -22,7 +22,7 @@ defmodule RivaAsh.Permissions do
 
   This checks both:
   1. Direct permission assignments
-  2. Role-based permissions (admins have all permissions)
+  2. Role-based permissions(admins have all permissions)
 
   ## Examples
 
@@ -108,7 +108,7 @@ defmodule RivaAsh.Permissions do
       {:error, :insufficient_permissions}
   """
   @spec grant_permission(String.t(), String.t(), String.t(), String.t() | nil) ::
-        {:ok, :permission_granted} | {:error, any()}
+          {:ok, :permission_granted} | {:error, any()}
   def grant_permission(granter_id, employee_id, permission_name, notes \\ nil) do
     with {:ok, granter} <- Ash.get(Employee, granter_id, domain: Domain),
          {:ok, employee} <- Ash.get(Employee, employee_id, domain: Domain),
@@ -134,7 +134,7 @@ defmodule RivaAsh.Permissions do
   end
 
   @spec create_permission_record(String.t(), String.t(), String.t(), String.t() | nil) ::
-        {:ok, EmployeePermission.t()} | {:error, any()}
+          {:ok, EmployeePermission.t()} | {:error, any()}
   defp create_permission_record(employee_id, permission_id, granted_by_id, notes) do
     create_permission_assignment(employee_id, permission_id, granted_by_id, notes)
   end
@@ -145,7 +145,7 @@ defmodule RivaAsh.Permissions do
   Only the granter or someone with higher authority can revoke permissions.
   """
   @spec revoke_permission(String.t(), String.t(), String.t()) ::
-        {:ok, EmployeePermission.t()} | {:error, any()}
+          {:ok, EmployeePermission.t()} | {:error, any()}
   def revoke_permission(revoker_id, employee_id, permission_name) do
     with {:ok, revoker} <- Ash.get(Employee, revoker_id, domain: Domain),
          {:ok, _employee} <- Ash.get(Employee, employee_id, domain: Domain),
@@ -207,7 +207,7 @@ defmodule RivaAsh.Permissions do
   end
 
   @spec handle_permission_query_result({:ok, Permission.t() | nil} | {:error, any()}) ::
-        {:ok, Permission.t()} | {:error, any()}
+          {:ok, Permission.t()} | {:error, any()}
   defp handle_permission_query_result({:ok, nil}), do: {:error, :permission_not_found}
   defp handle_permission_query_result({:ok, permission}), do: {:ok, permission}
   defp handle_permission_query_result(error), do: error
@@ -244,7 +244,7 @@ defmodule RivaAsh.Permissions do
     do: {:error, :insufficient_authority}
 
   @spec create_permission_assignment(String.t(), String.t(), String.t(), String.t() | nil) ::
-        {:ok, EmployeePermission.t()} | {:error, any()}
+          {:ok, EmployeePermission.t()} | {:error, any()}
   defp create_permission_assignment(employee_id, permission_id, granted_by_id, notes) do
     EmployeePermission
     |> Ash.Changeset.for_create(:grant_permission, %{
@@ -257,7 +257,7 @@ defmodule RivaAsh.Permissions do
   end
 
   @spec find_employee_permission(String.t(), String.t()) ::
-        {:ok, EmployeePermission.t()} | {:error, any()}
+          {:ok, EmployeePermission.t()} | {:error, any()}
   defp find_employee_permission(employee_id, permission_id) do
     EmployeePermission
     |> Ash.Query.filter(expr(employee_id == ^employee_id and permission_id == ^permission_id))
@@ -270,19 +270,19 @@ defmodule RivaAsh.Permissions do
   end
 
   @spec find_permission_assignment(String.t(), String.t()) ::
-        {:ok, EmployeePermission.t()} | {:error, any()}
+          {:ok, EmployeePermission.t()} | {:error, any()}
   defp find_permission_assignment(employee_id, permission_id) do
     find_employee_permission(employee_id, permission_id)
   end
 
   @spec handle_permission_assignment_query_result({:ok, EmployeePermission.t() | nil} | {:error, any()}) ::
-        {:ok, EmployeePermission.t()} | {:error, any()}
+          {:ok, EmployeePermission.t()} | {:error, any()}
   defp handle_permission_assignment_query_result({:ok, nil}), do: {:error, :permission_not_found}
   defp handle_permission_assignment_query_result({:ok, employee_permission}), do: {:ok, employee_permission}
   defp handle_permission_assignment_query_result(error), do: error
 
   @spec validate_can_revoke_permission(Employee.t(), EmployeePermission.t()) ::
-        :ok | {:error, atom()}
+          :ok | {:error, atom()}
   defp validate_can_revoke_permission(revoker, _employee_permission) when revoker.role == "admin",
     do: :ok
 

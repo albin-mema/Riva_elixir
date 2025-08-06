@@ -1,7 +1,7 @@
 defmodule RivaAshWeb.BusinessLive do
   @moduledoc """
   LiveView for managing Businesses.
-  
+
   This LiveView follows Phoenix/Ash/Elixir patterns:
   - Uses AuthHelpers for authentication and business scoping
   - Delegates business logic to Business context
@@ -47,6 +47,7 @@ defmodule RivaAshWeb.BusinessLive do
     case Businesses.list_businesses(socket.assigns.current_user, params) do
       {businesses, meta} ->
         {:noreply, assign(socket, businesses: businesses, meta: meta)}
+
       {:error, reason} ->
         {:noreply,
          socket

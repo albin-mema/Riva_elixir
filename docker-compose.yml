@@ -3,9 +3,9 @@ version: '3.8'
 services:
   postgres:
     image: postgres:15-alpine
-    container_name: riva_elixir-postgres-1
+    container_name: reservation_system-postgres-1
     environment:
-      POSTGRES_DB: ${DB_NAME:-riva_ash_dev}
+      POSTGRES_DB: ${DB_NAME:-reservation_system_dev}
       POSTGRES_USER: ${DB_USERNAME:-postgres}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
       POSTGRES_INITDB_ARGS: "--auth-host=scram-sha-256 --auth-local=scram-sha-256"
@@ -17,7 +17,7 @@ services:
       # Initialize database with custom SQL script
       - ./packages/riva_ash/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-postgres} -d ${DB_NAME:-riva_ash_dev}"]
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-postgres} -d ${DB_NAME:-reservation_system_dev}"]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -33,16 +33,16 @@ services:
       context: ./packages/riva_ash
       dockerfile: Dockerfile
       target: app
-    container_name: riva_elixir-app-1
+    container_name: reservation_system-app-1
     depends_on:
       postgres:
         condition: service_healthy
     environment:
       - MIX_ENV=${MIX_ENV:-dev}
-      - DATABASE_URL=ecto://${DB_USERNAME:-postgres}:${DB_PASSWORD:-postgres}@${DB_HOSTNAME:-postgres}:${DB_PORT:-5432}/${DB_NAME:-riva_ash_dev}
+      - DATABASE_URL=ecto://${DB_USERNAME:-postgres}:${DB_PASSWORD:-postgres}@${DB_HOSTNAME:-postgres}:${DB_PORT:-5432}/${DB_NAME:-reservation_system_dev}
       - DB_USERNAME=${DB_USERNAME:-postgres}
       - DB_PASSWORD=${DB_PASSWORD:-postgres}
-      - DB_NAME=${DB_NAME:-riva_ash_dev}
+      - DB_NAME=${DB_NAME:-reservation_system_dev}
       - DB_HOSTNAME=${DB_HOSTNAME:-postgres}
       - DB_PORT=${DB_PORT:-5432}
       - SECRET_KEY_BASE=${SECRET_KEY_BASE}

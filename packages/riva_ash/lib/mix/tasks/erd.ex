@@ -71,6 +71,11 @@ defmodule Mix.Tasks.Erd do
     end
   end
 
+  defp open_diagram(file, format) when format not in ["svg", "mmd"] do
+    IO.puts("Generated file: #{file}")
+    IO.puts("To open automatically, use --format svg or --format mmd")
+  end
+
   defp open_diagram(file, "svg") do
     case System.find_executable("xdg-open") do
       nil ->
@@ -139,10 +144,5 @@ defmodule Mix.Tasks.Erd do
         System.cmd("xdg-open", [html_file])
         :opened
     end
-  end
-
-  defp open_diagram(file, format) when format not in ["svg", "mmd"] do
-    IO.puts("Generated file: #{file}")
-    IO.puts("To open automatically, use --format svg or --format mmd")
   end
 end

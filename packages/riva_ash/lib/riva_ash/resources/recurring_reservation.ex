@@ -70,6 +70,13 @@ defmodule RivaAsh.Resources.RecurringReservation do
   actions do
     defaults([:read, :destroy])
 
+    # Private helper functions for Single Level of Abstraction
+    defp apply_recurring_reservation_validations(changeset) do
+      changeset
+      |> validate_client_item_business_match()
+      |> validate_employee_item_business_match()
+    end
+
     update :update do
       accept([
         :client_id,
@@ -88,8 +95,8 @@ defmodule RivaAsh.Resources.RecurringReservation do
       ])
 
       primary?(true)
-      require_atomic?(false)
 
+      require_atomic?(false)
       |> apply_recurring_reservation_validations()
     end
 
@@ -108,7 +115,6 @@ defmodule RivaAsh.Resources.RecurringReservation do
       ])
 
       primary?(true)
-
       |> apply_recurring_reservation_validations()
     end
 
@@ -289,16 +295,11 @@ defmodule RivaAsh.Resources.RecurringReservation do
     end
   end
 
-  # Private helper functions for Single Level of Abstraction
-  defp apply_recurring_reservation_validations(changeset) do
-    changeset
-    |> validate_client_item_business_match()
-    |> validate_employee_item_business_match()
-  end
-
   defp build_upcoming_filter(changeset) do
     today = Date.utc_today()
-    filter(changeset,
+
+    filter(
+      changeset,
       expr(
         start_date >= ^today and
           status in ["active", "pending"]
@@ -306,15 +307,9 @@ defmodule RivaAsh.Resources.RecurringReservation do
     )
   end
 
-  defp count_instances() do
-    expr(count(instances))
-  end
+  defp count_instances, do: expr(count(instances))
 
-  defp count_confirmed_instances() do
-    expr(count(instances, query: [filter: expr(status == "confirmed")]))
-  end
+  defp count_confirmed_instances, do: expr(count(instances, query: [filter: expr(status == "confirmed")]))
 
-  defp calculate_end_date() do
-    expr(date_add(start_date, consecutive_days - 1, "day"))
-  end
+  defp calculate_end_date, do: expr(date_add(start_date, consecutive_days - 1, "day"))
 end

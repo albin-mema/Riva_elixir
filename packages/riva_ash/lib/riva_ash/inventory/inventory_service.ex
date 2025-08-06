@@ -3,16 +3,15 @@ defmodule RivaAsh.Inventory.InventoryService do
   Service for handling inventory management operations.
   Separates business logic from LiveView concerns.
   """
-  
+
   alias RivaAsh.Resources.{Business, Item, ItemType}
-  alias Ash.Query
 
   @doc """
   Gets businesses for a specific user.
-  
+
   ## Parameters
   - user: The user to get businesses for
-  
+
   ## Returns
   {:ok, [Business.t()]} | {:error, reason}
   """
@@ -26,11 +25,11 @@ defmodule RivaAsh.Inventory.InventoryService do
 
   @doc """
   Gets items for a user's businesses.
-  
+
   ## Parameters
   - user: The user to get items for
   - business_ids: List of business IDs to filter by
-  
+
   ## Returns
   {:ok, [Item.t()]} | {:error, reason}
   """
@@ -47,11 +46,11 @@ defmodule RivaAsh.Inventory.InventoryService do
 
   @doc """
   Gets item types for a user's businesses.
-  
+
   ## Parameters
   - user: The user to get item types for
   - business_ids: List of business IDs to filter by
-  
+
   ## Returns
   {:ok, [ItemType.t()]} | {:error, reason}
   """
@@ -68,10 +67,10 @@ defmodule RivaAsh.Inventory.InventoryService do
 
   @doc """
   Gets the current status of an item.
-  
+
   ## Parameters
   - item: The item to check status for
-  
+
   ## Returns
   :available | :occupied | :maintenance | :hold
   """
@@ -79,7 +78,7 @@ defmodule RivaAsh.Inventory.InventoryService do
   def get_item_status(item) do
     # This would check current reservations, holds, maintenance schedules, etc.
     # For now, we'll implement a basic version that could be extended
-    
+
     case check_maintenance_status(item) do
       :maintenance -> :maintenance
       _available -> check_reservation_status(item)
@@ -88,11 +87,11 @@ defmodule RivaAsh.Inventory.InventoryService do
 
   @doc """
   Counts items by status.
-  
+
   ## Parameters
   - items: List of items to count
   - status: The status to count (:available, :occupied, :maintenance, :hold)
-  
+
   ## Returns
   integer()
   """
@@ -103,13 +102,13 @@ defmodule RivaAsh.Inventory.InventoryService do
 
   # Private helper functions
 
-  defp check_maintenance_status(item) do
+  defp check_maintenance_status(_item) do
     # Check if item is in maintenance
     # This would query maintenance schedules, etc.
     :available
   end
 
-  defp check_reservation_status(item) do
+  defp check_reservation_status(_item) do
     # Check if item has active reservations
     # This would query reservations, holds, etc.
     :available

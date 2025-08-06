@@ -1,4 +1,11 @@
 defmodule RivaAsh.Accounts.Token do
+  @moduledoc """
+  Token resource for user authentication and session management.
+
+  This module defines the Token resource using AshAuthentication.TokenResource
+  for handling user authentication tokens and sessions.
+  """
+
   use Ash.Resource,
     domain: RivaAsh.Accounts,
     data_layer: AshPostgres.DataLayer,
@@ -12,8 +19,6 @@ defmodule RivaAsh.Accounts.Token do
   token do
     domain(RivaAsh.Domain)
   end
-
-
 
   # If using policies, add authorization for the token resource
   # policies do

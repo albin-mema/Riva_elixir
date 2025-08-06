@@ -34,6 +34,7 @@ defmodule RivaAshWeb.MermaidController do
     case generate_mermaid_diagram() do
       {:ok, mermaid_code} ->
         render_diagram_page(conn, mermaid_code)
+
       {:error, reason} ->
         render_error_page(conn, reason)
     end
@@ -56,6 +57,7 @@ defmodule RivaAshWeb.MermaidController do
         |> put_resp_content_type("text/plain")
         |> put_resp_header("content-disposition", "attachment; filename=\"riva_ash_domain.mmd\"")
         |> send_resp(200, mermaid_code)
+
       {:error, reason} ->
         conn
         |> put_status(:internal_server_error)
@@ -260,16 +262,16 @@ defmodule RivaAshWeb.MermaidController do
         // Generate diagram when page loads
         document.addEventListener('DOMContentLoaded', function() {
           const diagramCode = #{inspect(mermaid_code)};
-          
+
           try {
             const element = document.createElement('div');
             element.className = 'diagram-container';
             element.innerHTML = '<div class="mermaid">' + diagramCode + '</div>';
-            
+
             const container = document.getElementById('diagram-content');
             container.innerHTML = '';
             container.appendChild(element);
-            
+
             // Render the diagram
             mermaid.init(undefined, element.querySelector('.mermaid'));
           } catch (error) {
@@ -346,11 +348,11 @@ defmodule RivaAshWeb.MermaidController do
         <div class="error-icon">⚠️</div>
         <h1>Diagram Generation Failed</h1>
         <p>We encountered an error while trying to generate the Ash entity relationship diagram.</p>
-        
+
         <div class="error-message">
           <strong>Error:</strong> #{inspect(reason)}
         </div>
-        
+
         <div>
           <a href="/admin" class="btn">Back to Admin</a>
           <a href="/mermaid" class="btn">Try Again</a>
@@ -383,7 +385,7 @@ defmodule RivaAshWeb.MermaidController do
 
   defp read_generated_diagram do
     path = "priv/static/ash_resource_diagrams/riva_ash_domain.mmd"
-    
+
     case File.read(path) do
       {:ok, content} -> {:ok, content}
       {:error, :enoent} -> {:error, "Diagram file not found. Run mix ash.generate_resource_diagrams first."}

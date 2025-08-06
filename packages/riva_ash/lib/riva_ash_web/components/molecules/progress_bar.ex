@@ -81,24 +81,48 @@ defmodule RivaAshWeb.Components.Molecules.ProgressBar do
       />
   """
   @spec progress_bar(assigns :: assigns()) :: Phoenix.LiveView.Rendered.t()
-  attr(:value, :integer, required: true,
-    doc: "Current progress value")
-  attr(:max, :integer, default: 100,
-    doc: "Maximum value for the progress bar")
-  attr(:label, :string, default: nil,
-    doc: "Optional label for the progress bar")
-  attr(:show_percentage, :boolean, default: true,
-    doc: "Whether to show the progress percentage")
-  attr(:size, :string, default: "md",
+  attr(:value, :integer,
+    required: true,
+    doc: "Current progress value"
+  )
+
+  attr(:max, :integer,
+    default: 100,
+    doc: "Maximum value for the progress bar"
+  )
+
+  attr(:label, :string,
+    default: nil,
+    doc: "Optional label for the progress bar"
+  )
+
+  attr(:show_percentage, :boolean,
+    default: true,
+    doc: "Whether to show the progress percentage"
+  )
+
+  attr(:size, :string,
+    default: "md",
     values: ~w(sm md lg),
-    doc: "Size variant of the progress bar")
-  attr(:variant, :string, default: "default",
+    doc: "Size variant of the progress bar"
+  )
+
+  attr(:variant, :string,
+    default: "default",
     values: ~w(default success warning error),
-    doc: "Visual variant of the progress bar")
-  attr(:animated, :boolean, default: false,
-    doc: "Whether the progress bar should have animated transitions")
-  attr(:class, :string, default: "",
-    doc: "Additional CSS classes for the container")
+    doc: "Visual variant of the progress bar"
+  )
+
+  attr(:animated, :boolean,
+    default: false,
+    doc: "Whether the progress bar should have animated transitions"
+  )
+
+  attr(:class, :string,
+    default: "",
+    doc: "Additional CSS classes for the container"
+  )
+
   attr(:rest, :global)
 
   @impl true
@@ -204,6 +228,7 @@ defmodule RivaAshWeb.Components.Molecules.ProgressBar do
       show_percentage: show_percentage,
       percentage: percentage
     }
+
     ~H"""
     <div :if={@label || @show_percentage} class="progress-bar-header">
       <span :if={@label}><%= @label %></span>
@@ -212,7 +237,8 @@ defmodule RivaAshWeb.Components.Molecules.ProgressBar do
     """
   end
 
-  @spec render_progress_bar_content(integer(), integer(), integer(), size(), variant(), boolean()) :: Phoenix.LiveView.Rendered.t()
+  @spec render_progress_bar_content(integer(), integer(), integer(), size(), variant(), boolean()) ::
+          Phoenix.LiveView.Rendered.t()
   defp render_progress_bar_content(value, max, percentage, size, variant, animated) do
     assigns = %{
       value: value,
@@ -222,6 +248,7 @@ defmodule RivaAshWeb.Components.Molecules.ProgressBar do
       variant: variant,
       animated: animated
     }
+
     ~H"""
     <div class={["progress-bar-track", size_class(@size)]}>
       <div
@@ -232,6 +259,18 @@ defmodule RivaAshWeb.Components.Molecules.ProgressBar do
       </div>
     </div>
     """
+  end
+
+  @spec render_progress_bar_content(map()) :: Phoenix.LiveView.Rendered.t()
+  defp render_progress_bar_content(%{
+         value: value,
+         max: max,
+         percentage: percentage,
+         size: size,
+         variant: variant,
+         animated: animated
+       }) do
+    render_progress_bar_content(value, max, percentage, size, variant, animated)
   end
 
   @spec size_class(size()) :: String.t()

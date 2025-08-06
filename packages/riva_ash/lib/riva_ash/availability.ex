@@ -16,6 +16,10 @@ defmodule RivaAsh.Availability do
   # Only using require to avoid unused import warning
   require Ash.Query
 
+  alias RivaAsh.Resources.ItemSchedule
+  alias RivaAsh.Resources.AvailabilityException
+  alias RivaAsh.Resources.Reservation
+
   @doc """
   Check if an item is available for the given time period.
 
@@ -33,7 +37,7 @@ defmodule RivaAsh.Availability do
       {:error, :outside_business_hours}
   """
   @spec check_availability(String.t(), DateTime.t(), DateTime.t()) ::
-        {:ok, :available} | {:ok, {:partial, non_neg_integer()}} | {:error, atom() | String.t()}
+          {:ok, :available} | {:ok, {:partial, non_neg_integer()}} | {:error, atom() | String.t()}
   def check_availability(item_id, start_datetime, end_datetime) when is_binary(item_id) do
     with {:ok, item} <- get_item(item_id),
          :ok <- validate_item_active(item),
@@ -49,7 +53,7 @@ defmodule RivaAsh.Availability do
   end
 
   @spec determine_availability_status(non_neg_integer(), non_neg_integer()) ::
-        {:ok, :available} | {:ok, {:partial, non_neg_integer()}}
+          {:ok, :available} | {:ok, {:partial, non_neg_integer()}}
   defp determine_availability_status(available_capacity, total_capacity) do
     if available_capacity == total_capacity do
       {:ok, :available}
@@ -64,8 +68,9 @@ defmodule RivaAsh.Availability do
   Returns a list of available time ranges considering all constraints.
   """
   @spec get_available_slots(String.t(), Date.t(), non_neg_integer()) ::
-        {:ok, list({Time.t(), Time.t()})} | {:error, atom() | String.t()}
-  def get_available_slots(item_id, date, slot_duration_minutes \\ 60) when is_binary(item_id) and is_integer(slot_duration_minutes) and slot_duration_minutes > 0 do
+          {:ok, list({Time.t(), Time.t()})} | {:error, atom() | String.t()}
+  def get_available_slots(item_id, date, slot_duration_minutes \\ 60)
+      when is_binary(item_id) and is_integer(slot_duration_minutes) and slot_duration_minutes > 0 do
     with {:ok, item} <- get_item(item_id),
          :ok <- validate_item_active(item) do
       day_of_week = if RivaAsh.DateTimeHelpers.weekend?(date), do: 0, else: Timex.weekday(date)
@@ -84,14 +89,15 @@ defmodule RivaAsh.Availability do
     create_24_hour_slots(date, slot_duration_minutes)
   end
 
-  defp get_base_slots(_item, item_id, day_of_week, _date, slot_duration_minutes) do
-    case get_scheduled_slots(item_id, day_of_week, _date, slot_duration_minutes) do
+  defp get_base_slots(_item, item_id, day_of_week, date, slot_duration_minutes) do
+    case get_scheduled_slots(item_id, day_of_week, date, slot_duration_minutes) do
       {:ok, slots} -> slots
       {:error, _reason} -> []
     end
   end
 
-  @spec filter_and_sort_slots(list({Time.t(), Time.t()}), String.t(), Date.t(), non_neg_integer()) :: list({Time.t(), Time.t()})
+  @spec filter_and_sort_slots(list({Time.t(), Time.t()}), String.t(), Date.t(), non_neg_integer()) ::
+          list({Time.t(), Time.t()})
   defp filter_and_sort_slots(base_slots, item_id, date, capacity) do
     base_slots
     |> filter_exceptions(item_id, date)
@@ -138,7 +144,8 @@ defmodule RivaAsh.Availability do
     start_date = Timex.to_date(start_datetime)
     end_date = Timex.to_date(end_datetime)
 
-    date_range = Timex.Interval.new(from: start_date, until: end_date)
+    date_range =
+      Timex.Interval.new(from: start_date, until: end_date)
       |> Timex.Interval.with_step(days: 1)
       |> Enum.map(&Timex.to_date/1)
 
@@ -159,7 +166,7 @@ defmodule RivaAsh.Availability do
 
   @spec check_day_schedule(String.t(), integer(), DateTime.t(), DateTime.t(), Date.t()) :: boolean()
   defp check_day_schedule(item_id, day_of_week, start_datetime, end_datetime, date) do
-    case RivaAsh.Resources.ItemSchedule.by_item(item_id) do
+    case ItemSchedule.by_item(item_id) do
       {:ok, schedules} ->
         day_schedules =
           Enum.filter(schedules, &(&1.day_of_week == day_of_week && &1.is_available))
@@ -210,7 +217,7 @@ defmodule RivaAsh.Availability do
     start_date = Timex.to_date(start_datetime)
     end_date = Timex.to_date(end_datetime)
 
-    case RivaAsh.Resources.AvailabilityException.by_item(item_id) do
+    case AvailabilityException.by_item(item_id) do
       {:ok, exceptions} ->
         blocking_exceptions = find_blocking_exceptions(exceptions, start_date, end_date, start_datetime, end_datetime)
 
@@ -257,9 +264,9 @@ defmodule RivaAsh.Availability do
   end
 
   @spec check_reservation_conflicts(String.t(), DateTime.t(), DateTime.t(), non_neg_integer()) ::
-        {:ok, non_neg_integer()} | {:error, atom()}
+          {:ok, non_neg_integer()} | {:error, atom()}
   defp check_reservation_conflicts(item_id, start_datetime, end_datetime, capacity) do
-    case RivaAsh.Resources.Reservation.by_item(item_id) do
+    case Reservation.by_item(item_id) do
       {:ok, reservations} ->
         conflicting_reservations = find_conflicting_reservations(reservations, start_datetime, end_datetime)
         available_capacity = calculate_available_capacity(conflicting_reservations, capacity)
@@ -304,7 +311,8 @@ defmodule RivaAsh.Availability do
   # to determine if a day should be treated as 0 (weekend) or its Timex weekday value.
 
   @spec create_24_hour_slots(Date.t(), non_neg_integer()) :: list({Time.t(), Time.t()})
-  defp create_24_hour_slots(_date, slot_duration_minutes) when is_integer(slot_duration_minutes) and slot_duration_minutes > 0 do
+  defp create_24_hour_slots(_date, slot_duration_minutes)
+       when is_integer(slot_duration_minutes) and slot_duration_minutes > 0 do
     # Create slots from 00:00 to 23:59
     0..23
     |> Enum.flat_map(fn hour ->
@@ -319,9 +327,10 @@ defmodule RivaAsh.Availability do
   end
 
   @spec get_scheduled_slots(String.t(), integer(), Date.t(), non_neg_integer()) ::
-        {:ok, list({Time.t(), Time.t()})} | {:error, atom()}
-  defp get_scheduled_slots(item_id, day_of_week, _date, slot_duration_minutes) when is_binary(item_id) and is_integer(slot_duration_minutes) and slot_duration_minutes > 0 do
-    case RivaAsh.Resources.ItemSchedule.by_item(item_id) do
+          {:ok, list({Time.t(), Time.t()})} | {:error, atom()}
+  defp get_scheduled_slots(item_id, day_of_week, _date, slot_duration_minutes)
+       when is_binary(item_id) and is_integer(slot_duration_minutes) and slot_duration_minutes > 0 do
+    case ItemSchedule.by_item(item_id) do
       {:ok, schedules} ->
         slots =
           schedules
@@ -338,7 +347,8 @@ defmodule RivaAsh.Availability do
   end
 
   @spec generate_slots_for_schedule(map(), non_neg_integer()) :: list({Time.t(), Time.t()})
-  defp generate_slots_for_schedule(schedule, slot_duration_minutes) when is_integer(slot_duration_minutes) and slot_duration_minutes > 0 do
+  defp generate_slots_for_schedule(schedule, slot_duration_minutes)
+       when is_integer(slot_duration_minutes) and slot_duration_minutes > 0 do
     # Create a sequence of start times at regular intervals
     # from schedule.start_time to just before schedule.end_time
 
@@ -365,7 +375,8 @@ defmodule RivaAsh.Availability do
   end
 
   # Helper function to recursively generate slots
-  @spec do_generate_slots(non_neg_integer(), non_neg_integer(), non_neg_integer(), list()) :: list({non_neg_integer(), non_neg_integer()})
+  @spec do_generate_slots(non_neg_integer(), non_neg_integer(), non_neg_integer(), list()) ::
+          list({non_neg_integer(), non_neg_integer()})
   defp do_generate_slots(current, ending, duration, acc) when is_integer(duration) and duration > 0 do
     next = current + duration
 
@@ -379,7 +390,7 @@ defmodule RivaAsh.Availability do
 
   @spec filter_exceptions(list({Time.t(), Time.t()}), String.t(), Date.t()) :: list({Time.t(), Time.t()})
   defp filter_exceptions(slots, item_id, date) do
-    case RivaAsh.Resources.AvailabilityException.by_item(item_id) do
+    case AvailabilityException.by_item(item_id) do
       {:ok, exceptions} ->
         day_exceptions = Enum.filter(exceptions, &(&1.date == date && !&1.is_available))
 
@@ -406,9 +417,10 @@ defmodule RivaAsh.Availability do
     end
   end
 
-  @spec filter_reservations(list({Time.t(), Time.t()}), String.t(), Date.t(), non_neg_integer()) :: list({Time.t(), Time.t()})
+  @spec filter_reservations(list({Time.t(), Time.t()}), String.t(), Date.t(), non_neg_integer()) ::
+          list({Time.t(), Time.t()})
   defp filter_reservations(slots, item_id, date, capacity) do
-    case RivaAsh.Resources.Reservation.by_item(item_id) do
+    case Reservation.by_item(item_id) do
       {:ok, reservations} ->
         day_reservations = get_day_reservations(reservations, date)
         filter_slots_by_capacity(slots, day_reservations, date, capacity)
@@ -427,7 +439,8 @@ defmodule RivaAsh.Availability do
     end)
   end
 
-  @spec filter_slots_by_capacity(list({Time.t(), Time.t()}), list(map()), Date.t(), non_neg_integer()) :: list({Time.t(), Time.t()})
+  @spec filter_slots_by_capacity(list({Time.t(), Time.t()}), list(map()), Date.t(), non_neg_integer()) ::
+          list({Time.t(), Time.t()})
   defp filter_slots_by_capacity(slots, day_reservations, date, capacity) do
     Enum.filter(slots, fn {start_time, end_time} ->
       slot_datetime_start = DateTime.new!(date, start_time)

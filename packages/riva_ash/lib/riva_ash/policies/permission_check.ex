@@ -51,7 +51,7 @@ defmodule RivaAsh.Policies.PermissionCheck do
   @spec match?(actor(), context(), opts()) :: check_result()
   def match?(actor, _context, opts) do
     Logger.debug("Starting permission check for actor: #{inspect(actor)}")
-    
+
     with {:ok, permission} <- extract_permission(opts),
          :ok <- validate_permission(permission),
          :ok <- validate_actor(actor) do
@@ -79,9 +79,8 @@ defmodule RivaAsh.Policies.PermissionCheck do
   end
 
   def has_permission(permission) when is_binary(permission) do
-    with :ok <- validate_permission(permission) do
-      {__MODULE__, permission: permission}
-    else
+    case validate_permission(permission) do
+      :ok -> {__MODULE__, permission: permission}
       {:error, _reason} -> raise_permission_error(permission)
     end
   end
@@ -193,7 +192,7 @@ defmodule RivaAsh.Policies.PermissionCheck do
   @spec validate_permission(permission()) :: :ok | {:error, String.t()}
   defp validate_permission(permission) when is_binary(permission) do
     Logger.debug("Validating permission: #{permission}")
-    
+
     if Constants.valid_permission?(permission) do
       Logger.debug("Permission validation passed")
       :ok
@@ -215,10 +214,12 @@ defmodule RivaAsh.Policies.PermissionCheck do
     Logger.debug("Actor validation passed: has role")
     :ok
   end
+
   defp validate_actor(%{id: actor_id} = _actor) when is_binary(actor_id) do
     Logger.debug("Actor validation passed: has ID #{actor_id}")
     :ok
   end
+
   defp validate_actor(_actor) do
     Logger.debug("Actor validation failed: missing role or ID")
     :error
@@ -229,12 +230,14 @@ defmodule RivaAsh.Policies.PermissionCheck do
     Logger.debug("Admin role detected: all permissions granted")
     true
   end
+
   defp check_permission(%{id: actor_id}, permission) when is_binary(actor_id) do
     Logger.debug("Checking permission #{permission} for actor #{actor_id}")
     result = Permissions.has_permission?(actor_id, permission)
     Logger.debug("Permission check result: #{result}")
     result
   end
+
   defp check_permission(_actor, _permission) do
     Logger.debug("Permission check failed: invalid actor")
     false

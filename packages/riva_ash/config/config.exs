@@ -8,7 +8,7 @@ config :riva_ash, RivaAsh.Repo,
   password: System.get_env("DB_PASSWORD", "postgres"),
   hostname: System.get_env("DB_HOSTNAME", "localhost"),
   database: System.get_env("DB_NAME", "riva_ash_dev"),
-  port: System.get_env("DB_PORT", "5432") |> String.to_integer(),
+  port: String.to_integer(System.get_env("DB_PORT", "5432")),
   stacktrace: true,
   show_sensitive_data_on_connection_error: true,
   pool_size: Application.compile_env(:riva_ash, :db_pool_size, 10)
@@ -64,7 +64,7 @@ config :ash_authentication, :sign_in_tokens_enabled, true
 config :ash_authentication,
        :token_secret,
        System.get_env("AUTH_TOKEN_SECRET") ||
-       Application.compile_env(:riva_ash, :auth_token_secret, "default_secret_change_me_in_prod")
+         Application.compile_env(:riva_ash, :auth_token_secret, "default_secret_change_me_in_prod")
 
 # Configure AshJsonApi
 # Functional programming patterns: Use consistent boolean flags
@@ -81,7 +81,8 @@ config :ash_json_api, :domains, [RivaAsh.Domain]
 config :ash_json_api, :open_api,
   title: Application.compile_env(:riva_ash, :api_title, "Riva Ash API"),
   version: Application.compile_env(:riva_ash, :api_version, "1.0.0"),
-  description: Application.compile_env(:riva_ash, :api_description, "A simple CRUD API for managing items using Ash Framework")
+  description:
+    Application.compile_env(:riva_ash, :api_description, "A simple CRUD API for managing items using Ash Framework")
 
 # Configure AshAdmin
 # Single level of abstraction: Keep admin configuration focused

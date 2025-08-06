@@ -79,6 +79,7 @@ defmodule RivaAshWeb.Components.Atoms.TimePicker do
 
   @spec validate_time_range(String.t(), String.t()) :: :ok | {:error, String.t()}
   defp validate_time_range(nil, nil), do: :ok
+
   defp validate_time_range(min_time, max_time) do
     with {:ok, min} <- parse_time(min_time),
          {:ok, max} <- parse_time(max_time),
@@ -94,7 +95,9 @@ defmodule RivaAshWeb.Components.Atoms.TimePicker do
   @spec parse_time(String.t()) :: {:ok, Time.t()} | {:error, String.t()}
   defp parse_time(time_str) do
     case Time.from_iso8601(time_str) do
-      {:ok, time} -> {:ok, time}
+      {:ok, time} ->
+        {:ok, time}
+
       {:error, _} ->
         # Try alternative time formats
         case String.split(time_str, ":") do
@@ -102,9 +105,13 @@ defmodule RivaAshWeb.Components.Atoms.TimePicker do
             case {Integer.parse(h), Integer.parse(m)} do
               {{hour, ""}, {minute, ""}} when hour >= 0 and hour < 24 and minute >= 0 and minute < 60 ->
                 {:ok, %Time{hour: hour, minute: minute, second: 0}}
-              _ -> {:error, "Invalid time format"}
+
+              _ ->
+                {:error, "Invalid time format"}
             end
-          _ -> {:error, "Invalid time format"}
+
+          _ ->
+            {:error, "Invalid time format"}
         end
     end
   end
@@ -138,18 +145,20 @@ defmodule RivaAshWeb.Components.Atoms.TimePicker do
   @spec build_input_class(String.t(), String.t(), Phoenix.HTML.FormField.t()) :: String.t()
   defp build_input_class(size, variant, field) do
     base_classes = "w-full rounded-md border px-3 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-    
-    size_classes = case size do
-      "sm" -> "text-sm"
-      "lg" -> "text-lg"
-      _ -> "text-base"
-    end
 
-    variant_classes = case variant do
-      "error" -> "border-red-300 focus:border-red-500 focus:ring-red-500"
-      "success" -> "border-green-300 focus:border-green-500 focus:ring-green-500"
-      _ -> "border-gray-300 focus:border-blue-500 focus:ring-blue-500"
-    end
+    size_classes =
+      case size do
+        "sm" -> "text-sm"
+        "lg" -> "text-lg"
+        _ -> "text-base"
+      end
+
+    variant_classes =
+      case variant do
+        "error" -> "border-red-300 focus:border-red-500 focus:ring-red-500"
+        "success" -> "border-green-300 focus:border-green-500 focus:ring-green-500"
+        _ -> "border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+      end
 
     error_classes = if field && field.errors != [], do: "border-red-500", else: ""
 

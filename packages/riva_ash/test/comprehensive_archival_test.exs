@@ -204,12 +204,12 @@ defmodule RivaAsh.ComprehensiveArchivalTest do
 
   @doc """
   Helper function to test standard archival behavior.
-  
+
   ## Parameters
   - resource: The Ash resource module to test
   - record: The record instance to test archival behavior on
   - actor: The actor performing the archival operation
-  
+
   ## Returns
   - :ok when test passes
   """
@@ -243,10 +243,10 @@ defmodule RivaAsh.ComprehensiveArchivalTest do
 
   @doc """
   Creates a test business for archival testing.
-  
+
   ## Parameters
   - user: The user actor creating the business
-  
+
   ## Returns
   - The created business struct
   """
@@ -262,10 +262,10 @@ defmodule RivaAsh.ComprehensiveArchivalTest do
 
   @doc """
   Creates a test client for archival testing.
-  
+
   ## Parameters
   - business: The business to associate the client with
-  
+
   ## Returns
   - The created client struct
   """
@@ -283,7 +283,7 @@ defmodule RivaAsh.ComprehensiveArchivalTest do
 
   @doc """
   Creates a test permission for archival testing.
-  
+
   ## Returns
   - The created permission struct
   """
@@ -300,10 +300,10 @@ defmodule RivaAsh.ComprehensiveArchivalTest do
 
   @doc """
   Creates a test employee for archival testing.
-  
+
   ## Parameters
   - business: The business to associate the employee with
-  
+
   ## Returns
   - The created employee struct
   """
@@ -321,12 +321,12 @@ defmodule RivaAsh.ComprehensiveArchivalTest do
 
   @doc """
   Creates a test employee permission for archival testing.
-  
+
   ## Parameters
   - employee: The employee to grant permission to
   - permission: The permission to grant
   - granter: The user granting the permission
-  
+
   ## Returns
   - The created employee permission struct
   """

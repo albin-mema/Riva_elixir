@@ -41,7 +41,7 @@ defmodule RivaAshWeb.Components.Navigation.QuickActions do
           size={@size}
         />
       </div>
-      
+
       <div :if={@actions != []} class={@custom_actions_class}>
         <.action_button
           :for={action <- @actions}
@@ -58,7 +58,7 @@ defmodule RivaAshWeb.Components.Navigation.QuickActions do
   @spec build_container_class(String.t(), String.t()) :: String.t()
   defp build_container_class(class, layout) do
     ["quick-actions", "layout-#{layout}", class]
-    |> Enum.filter(& &1 != "")
+    |> Enum.filter(&(&1 != ""))
     |> Enum.join(" ")
   end
 

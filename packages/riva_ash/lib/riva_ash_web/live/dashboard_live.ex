@@ -2,7 +2,7 @@ defmodule RivaAshWeb.DashboardLive do
   @moduledoc """
   Dashboard Hub - Unified dashboard with metrics, quick actions, and overview widgets.
   Combines data from multiple resources to provide a comprehensive business overview.
-  
+
   This LiveView follows Phoenix/Ash/Elixir patterns:
   - Uses AuthHelpers for authentication and business scoping
   - Delegates business logic to Dashboard context
@@ -213,8 +213,8 @@ defmodule RivaAshWeb.DashboardLive do
                               <%= reservation.client.first_name %> <%= reservation.client.last_name %>
                             </p>
                             <p class="text-sm text-gray-500">
-                              <%= reservation.item.name %> • 
-                              <%= Calendar.strftime(reservation.reserved_from, "%I:%M %p") %> - 
+                              <%= reservation.item.name %> •
+                              <%= Calendar.strftime(reservation.reserved_from, "%I:%M %p") %> -
                               <%= Calendar.strftime(reservation.reserved_until, "%I:%M %p") %>
                             </p>
                           </div>
@@ -340,7 +340,7 @@ defmodule RivaAshWeb.DashboardLive do
   Formats currency values for display.
   """
   defp format_currency(amount) when is_number(amount) do
-    "$#{:erlang.float_to_binary(amount, [decimals: 2])}"
+    "$#{:erlang.float_to_binary(amount, decimals: 2)}"
   end
 
   defp format_currency(%Decimal{} = decimal) do

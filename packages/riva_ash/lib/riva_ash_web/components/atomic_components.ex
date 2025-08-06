@@ -61,13 +61,13 @@ defmodule RivaAshWeb.Components.AtomicComponents do
 
   @doc """
   Validates macro options with early return pattern.
-  
+
   ## Parameters
   - opts: Keyword list of options
-  
+
   ## Returns
   - :ok if valid
-  
+
   ## Raises
   - ArgumentError for invalid options
   """

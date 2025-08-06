@@ -222,7 +222,7 @@ defmodule RivaAsh.Resources.ItemSchedule do
 
     calculate :day_type,
               :string,
-              expr(if(day_of_week >= 1 and day_of_week <= 5, "weekday", "weekend")) do
+              expr(if day_of_week >= 1 and day_of_week <= 5, do: "weekday", else: "weekend") do
       public?(true)
       description("Day type as string: 'weekday' or 'weekend'")
     end
@@ -263,11 +263,10 @@ defmodule RivaAsh.Resources.ItemSchedule do
     ## Returns
     - `true` if the schedule is active, `false` otherwise
     """
-    @spec is_active?(t()) :: boolean()
-    def is_active?(item_schedule) do
-      with %{archived_at: nil} <- item_schedule do
-        true
-      else
+    @spec active?(t()) :: boolean()
+    def active?(item_schedule) do
+      case item_schedule do
+        %{archived_at: nil} -> true
         _ -> false
       end
     end
@@ -281,8 +280,8 @@ defmodule RivaAsh.Resources.ItemSchedule do
     ## Returns
     - `true` if available, `false` if blocked
     """
-    @spec is_available?(t()) :: boolean()
-    def is_available?(item_schedule), do: item_schedule.is_available
+    @spec available?(t()) :: boolean()
+    def available?(item_schedule), do: item_schedule.is_available
 
     @doc """
     Gets the day name for the schedule.
@@ -316,8 +315,8 @@ defmodule RivaAsh.Resources.ItemSchedule do
     ## Returns
     - `true` if weekday, `false` if weekend
     """
-    @spec is_weekday?(t()) :: boolean()
-    def is_weekday?(item_schedule) do
+    @spec weekday?(t()) :: boolean()
+    def weekday?(item_schedule) do
       item_schedule.day_of_week >= 1 and item_schedule.day_of_week <= 5
     end
 
@@ -330,8 +329,8 @@ defmodule RivaAsh.Resources.ItemSchedule do
     ## Returns
     - `true` if weekend, `false` if weekday
     """
-    @spec is_weekend?(t()) :: boolean()
-    def is_weekend?(item_schedule) do
+    @spec weekend?(t()) :: boolean()
+    def weekend?(item_schedule) do
       item_schedule.day_of_week == 0 or item_schedule.day_of_week == 6
     end
 
@@ -482,7 +481,7 @@ defmodule RivaAsh.Resources.ItemSchedule do
     """
     @spec formatted_info(t()) :: String.t()
     def formatted_info(item_schedule) do
-      with true <- is_active?(item_schedule),
+      with true <- active?(item_schedule),
            item_name <- item_name(item_schedule),
            day_name <- day_name(item_schedule),
            time_range <- formatted_time_range(item_schedule),
@@ -504,8 +503,8 @@ defmodule RivaAsh.Resources.ItemSchedule do
     ## Returns
     - `true` if valid, `false` otherwise
     """
-    @spec is_valid?(t()) :: boolean()
-    def is_valid?(item_schedule) do
+    @spec valid?(t()) :: boolean()
+    def valid?(item_schedule) do
       start_seconds = Time.to_second_after_midnight(item_schedule.start_time)
       end_seconds = Time.to_second_after_midnight(item_schedule.end_time)
 
@@ -524,24 +523,27 @@ defmodule RivaAsh.Resources.ItemSchedule do
     """
     @spec next_occurrence(t()) :: {:ok, DateTime.t()} | {:error, String.t()}
     def next_occurrence(item_schedule) do
-      with true <- is_valid?(item_schedule),
-           true <- is_active?(item_schedule) do
+      with true <- valid?(item_schedule),
+           true <- active?(item_schedule) do
         # Get the current date and time
         now = DateTime.utc_now()
 
         # Calculate the next occurrence
-        days_until_next = case item_schedule.day_of_week do
-          0 -> # Sunday
-            case now.weekday do
-              7 -> 0
-              _ -> 7 - now.weekday
-            end
-          _ ->
-            case now.weekday do
-              day when day < item_schedule.day_of_week -> item_schedule.day_of_week - day
-              _ -> 7 - (now.weekday - item_schedule.day_of_week)
-            end
-        end
+        days_until_next =
+          case item_schedule.day_of_week do
+            # Sunday
+            0 ->
+              case now.weekday do
+                7 -> 0
+                _ -> 7 - now.weekday
+              end
+
+            _ ->
+              case now.weekday do
+                day when day < item_schedule.day_of_week -> item_schedule.day_of_week - day
+                _ -> 7 - (now.weekday - item_schedule.day_of_week)
+              end
+          end
 
         # Create the next occurrence datetime
         next_date = Date.add(now, days_until_next)

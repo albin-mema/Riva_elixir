@@ -102,7 +102,7 @@ defmodule RivaAsh.PropertyTesting.RouteEnumerator do
     |> Map.take([:public, :authenticated, :admin])
     |> Map.values()
     |> List.flatten()
-    |> Enum.filter(&is_navigable_route?/1)
+    |> Enum.filter(&navigable_route?/1)
   end
 
   @doc """
@@ -110,7 +110,7 @@ defmodule RivaAsh.PropertyTesting.RouteEnumerator do
   """
   def crud_routes do
     authenticated_routes()
-    |> Enum.filter(&is_crud_route?/1)
+    |> Enum.filter(&crud_route?/1)
     |> Enum.group_by(&extract_resource_name/1)
   end
 
@@ -128,31 +128,31 @@ defmodule RivaAsh.PropertyTesting.RouteEnumerator do
 
   defp categorize_route(route) do
     cond do
-      is_api_route?(route) -> :api
-      is_admin_route?(route) -> :admin
-      is_error_route?(route) -> :error
-      is_authenticated_route?(route) -> :authenticated
+      api_route?(route) -> :api
+      admin_route?(route) -> :admin
+      error_route?(route) -> :error
+      authenticated_route?(route) -> :authenticated
       true -> :public
     end
   end
 
-  defp is_api_route?(route) do
+  defp api_route?(route) do
     String.starts_with?(route.path, "/api") or
       String.starts_with?(route.path, "/graphql")
   end
 
-  defp is_admin_route?(route) do
+  defp admin_route?(route) do
     String.starts_with?(route.path, "/admin") or
       has_auth_pipeline?(route, :require_authenticated_user)
   end
 
-  defp is_error_route?(route) do
+  defp error_route?(route) do
     route.path in ["/404", "/access-denied", "/*path"]
   end
 
-  defp is_authenticated_route?(route) do
+  defp authenticated_route?(route) do
     has_auth_pipeline?(route, :require_authenticated_user) and
-      not is_admin_route?(route)
+      not admin_route?(route)
   end
 
   defp has_auth_pipeline?(route, pipeline) do
@@ -181,7 +181,7 @@ defmodule RivaAsh.PropertyTesting.RouteEnumerator do
     end
   end
 
-  defp is_navigable_route?(route) do
+  defp navigable_route?(route) do
     # Exclude routes that are not suitable for navigation testing
     excluded_patterns = [
       ~r/\/sign-out$/,
@@ -195,7 +195,7 @@ defmodule RivaAsh.PropertyTesting.RouteEnumerator do
     end) and route.verb == :get
   end
 
-  defp is_crud_route?(route) do
+  defp crud_route?(route) do
     crud_actions = [:index, :show, :new, :create, :edit, :update, :delete]
     route.action in crud_actions
   end
@@ -207,7 +207,7 @@ defmodule RivaAsh.PropertyTesting.RouteEnumerator do
         resource
         # Remove plural 's'
         |> String.trim_trailing("s")
-        |> String.to_atom()
+        |> String.to_existing_atom()
 
       _ ->
         :unknown

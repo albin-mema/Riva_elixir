@@ -1,7 +1,7 @@
 defmodule RivaAshWeb.Schema do
   @moduledoc """
   GraphQL schema definition for the Riva Ash application.
-  
+
   This module defines the GraphQL API interface using Absinthe and
   integrates with Ash for data access and business logic. It provides
   query and mutation operations for application resources.
@@ -15,7 +15,7 @@ defmodule RivaAshWeb.Schema do
 
   @doc """
   Root query type definition.
-  
+
   Defines all available GraphQL query operations for retrieving
   data from the application. Queries are automatically generated
   from Ash resources through the AshGraphql integration.
@@ -27,7 +27,7 @@ defmodule RivaAshWeb.Schema do
 
   @doc """
   Root mutation type definition.
-  
+
   Defines all available GraphQL mutation operations for creating,
   updating, and deleting data in the application. Mutations are
   automatically generated from Ash resources through the AshGraphql
@@ -40,7 +40,7 @@ defmodule RivaAshWeb.Schema do
 
   @doc """
   Error handling for GraphQL execution.
-  
+
   Provides custom error formatting for GraphQL responses to ensure
   consistent error reporting across the API.
   """
@@ -63,7 +63,7 @@ defmodule RivaAshWeb.Schema do
 
   @doc """
   Plugin configuration for Absinthe schema.
-  
+
   Configures additional plugins and middleware for enhanced
   GraphQL functionality, including introspection and validation.
   """
@@ -77,7 +77,7 @@ defmodule RivaAshWeb.Schema do
 
   @doc """
   Middleware pipeline for GraphQL execution.
-  
+
   Defines middleware that runs around each GraphQL execution
   to provide common functionality like authentication,
   authorization, and logging.

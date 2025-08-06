@@ -1,5 +1,5 @@
 {
-  "name": "riva-monorepo",
+  "name": "reservation-system-monorepo",
   "version": "1.0.0",
   "description": "Monorepo containing Ash backend and React frontend",
   "private": true,
@@ -68,7 +68,7 @@
     "wait:db:local": "until pg_isready -h localhost -p 5432; do echo 'Waiting for PostgreSQL...'; sleep 1; done",
     "db:start": "./scripts/start-postgres.sh",
     "db:stop": "./scripts/start-postgres.sh --stop",
-    "db:status": "docker ps --filter name=riva-postgres-dev",
+    "db:status": "docker ps --filter name=reservation-postgres-dev",
     "db:docker:start": "./docker-dev.sh start",
     "db:docker:stop": "./docker-dev.sh stop",
     "db:docker:reset": "./docker-dev.sh reset",

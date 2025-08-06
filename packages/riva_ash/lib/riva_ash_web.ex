@@ -21,7 +21,7 @@ defmodule RivaAshWeb do
 
   @doc """
   Returns the list of static paths served by the application.
-  
+
   These paths are used for static asset serving and should include
   all publicly accessible files.
   """
@@ -30,7 +30,7 @@ defmodule RivaAshWeb do
 
   @doc """
   Generates router configuration with common imports and setup.
-  
+
   Returns a quoted expression that configures a Phoenix router
   with essential imports for web development.
   """
@@ -47,7 +47,7 @@ defmodule RivaAshWeb do
 
   @doc """
   Generates channel configuration for real-time features.
-  
+
   Returns a quoted expression that configures a Phoenix channel
   with essential setup for WebSocket communication.
   """
@@ -60,7 +60,7 @@ defmodule RivaAshWeb do
 
   @doc """
   Generates controller configuration with standard formats and helpers.
-  
+
   Returns a quoted expression that configures a Phoenix controller
   with HTML and JSON formats, along with essential imports.
   """
@@ -79,7 +79,7 @@ defmodule RivaAshWeb do
 
   @doc """
   Generates LiveView configuration with layout hooks and helpers.
-  
+
   Returns a quoted expression that configures a Phoenix LiveView
   with layout compilation and essential imports.
   """
@@ -98,7 +98,7 @@ defmodule RivaAshWeb do
 
   @doc """
   Generates LiveComponent configuration with HTML helpers.
-  
+
   Returns a quoted expression that configures a Phoenix LiveComponent
   with essential HTML rendering helpers.
   """
@@ -113,7 +113,7 @@ defmodule RivaAshWeb do
 
   @doc """
   Generates HTML component configuration with form and controller helpers.
-  
+
   Returns a quoted expression that configures Phoenix HTML components
   with form handling and controller convenience functions.
   """
@@ -133,7 +133,7 @@ defmodule RivaAshWeb do
 
   @doc """
   Generates HTML helper functions for common web operations.
-  
+
   Returns a quoted expression with imports for HTML escaping,
   form handling, internationalization, and route generation.
   """
@@ -157,7 +157,7 @@ defmodule RivaAshWeb do
 
   @doc """
   Generates verified route configuration for type-safe routing.
-  
+
   Returns a quoted expression that configures Phoenix VerifiedRoutes
   with endpoint, router, and static path information.
   """
@@ -173,14 +173,14 @@ defmodule RivaAshWeb do
 
   @doc """
   Dispatches to the appropriate web component configuration.
-  
+
   When used, this macro dispatches to the appropriate controller/view/etc.
   configuration based on the atom provided.
-  
+
   ## Parameters
     - `which`: An atom indicating which web component to configure
       (e.g., `:controller`, `:live_view`, `:html`)
-  
+
   ## Returns
     A quoted expression for the requested web component configuration
   """

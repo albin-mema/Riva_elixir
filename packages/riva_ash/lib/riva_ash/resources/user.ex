@@ -1,4 +1,11 @@
 defmodule RivaAsh.Accounts.User do
+  @moduledoc """
+  User account resource for authentication and authorization.
+
+  This module defines the User resource with authentication capabilities using AshAuthentication.
+  Users can have roles of "admin", "user", or "superadmin" with different permission levels.
+  """
+
   use Ash.Resource,
     domain: RivaAsh.Accounts,
     data_layer: AshPostgres.DataLayer,
@@ -9,10 +16,6 @@ defmodule RivaAsh.Accounts.User do
     table("users")
     repo(RivaAsh.Repo)
   end
-
-
-
-
 
   attributes do
     uuid_primary_key(:id)
@@ -94,41 +97,41 @@ defmodule RivaAsh.Accounts.User do
 
   # Define the validations
   validations do
-    validate present([:email])
-    validate one_of(:role, ["admin", "user", "superadmin"])
+    validate(present([:email]))
+    validate(one_of(:role, ["admin", "user", "superadmin"]))
   end
 
   # Define authorization policies
   policies do
     # Superadmins can do everything (bypass all other policies)
     bypass actor_attribute_equals(:role, "superadmin") do
-      authorize_if always()
+      authorize_if(always())
     end
 
     # Allow seeding read action without authentication (bypass all other policies)
     bypass action(:seed_read) do
-      authorize_if always()
+      authorize_if(always())
     end
 
     # Allow public registration without authentication
     policy action(:register_with_password) do
-      authorize_if always()
+      authorize_if(always())
     end
 
     # Users can read their own profile
     policy action_type(:read) do
-      authorize_if expr(id == ^actor(:id))
+      authorize_if(expr(id == ^actor(:id)))
     end
 
     # Users can update their own profile (except role)
     policy action_type(:update) do
-      authorize_if expr(id == ^actor(:id))
-      forbid_if changing_attributes([:role])
+      authorize_if(expr(id == ^actor(:id)))
+      forbid_if(changing_attributes([:role]))
     end
 
     # Block destroy actions (only superadmins can destroy users)
     policy action_type(:destroy) do
-      forbid_if always()
+      forbid_if(always())
     end
   end
 

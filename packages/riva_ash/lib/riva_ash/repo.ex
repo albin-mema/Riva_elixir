@@ -1,7 +1,7 @@
 defmodule RivaAsh.Repo do
   @moduledoc """
   PostgreSQL repository configuration for the Riva Ash application.
-  
+
   This module extends AshPostgres.Repo to provide database-specific
   functionality including connection management, migrations, and
   database operations.
@@ -13,15 +13,15 @@ defmodule RivaAsh.Repo do
 
   @doc """
   Returns the default dynamic repository for database operations.
-  
+
   This function checks for a dynamically configured repository and falls
   back to the default repository if none is configured.
-  
+
   ## Returns
   - `module()` - The repository module to use for database operations
-  
+
   ## Examples
-  
+
       iex> RivaAsh.Repo.default_dynamic_repo()
       RivaAsh.Repo
   """
@@ -32,15 +32,15 @@ defmodule RivaAsh.Repo do
 
   @doc """
   Returns the list of required PostgreSQL extensions.
-  
+
   These extensions are automatically installed during database setup
   and are required for proper application functionality.
-  
+
   ## Returns
   - `[String.t()]` - List of PostgreSQL extension names
-  
+
   ## Examples
-  
+
       iex> RivaAsh.Repo.installed_extensions()
       ["uuid-ossp", "citext", "ash-functions"]
   """
@@ -57,15 +57,15 @@ defmodule RivaAsh.Repo do
 
   @doc """
   Returns the minimum required PostgreSQL version.
-  
+
   This version is checked during application startup to ensure
   compatibility with all required features.
-  
+
   ## Returns
   - `Version.t()` - Minimum required PostgreSQL version
-  
+
   ## Examples
-  
+
       iex> RivaAsh.Repo.min_pg_version()
       %Version{major: 13, minor: 0, patch: 0}
   """
@@ -74,16 +74,16 @@ defmodule RivaAsh.Repo do
 
   @doc """
   Validates the current PostgreSQL version compatibility.
-  
+
   Checks if the connected PostgreSQL version meets the minimum
   requirements for the application.
-  
+
   ## Returns
   - `:ok` - Version is compatible
   - `{:error, String.t()}` - Version is not compatible
-  
+
   ## Examples
-  
+
       iex> RivaAsh.Repo.validate_version()
       :ok
   """
@@ -99,15 +99,15 @@ defmodule RivaAsh.Repo do
 
   @doc """
   Returns the database connection configuration.
-  
+
   This function provides access to the current database configuration
   for monitoring and debugging purposes.
-  
+
   ## Returns
   - `map()` - Database configuration settings
-  
+
   ## Examples
-  
+
       iex> RivaAsh.Repo.config()
       %{hostname: "localhost", database: "riva_ash", ...}
   """
@@ -118,16 +118,16 @@ defmodule RivaAsh.Repo do
 
   @doc """
   Checks if the database connection is healthy.
-  
+
   Performs a simple query to verify that the database connection
   is active and responding.
-  
+
   ## Returns
   - `:ok` - Connection is healthy
   - `{:error, term()}` - Connection is not healthy
-  
+
   ## Examples
-  
+
       iex> RivaAsh.Repo.health_check()
       :ok
   """
@@ -145,15 +145,15 @@ defmodule RivaAsh.Repo do
 
   @doc """
   Returns the database statistics for monitoring.
-  
+
   Collects various statistics about the database connection
   and performance metrics.
-  
+
   ## Returns
   - `map()` - Database statistics
-  
+
   ## Examples
-  
+
       iex> RivaAsh.Repo.stats()
       %{connection_count: 5, query_count: 1234, ...}
   """
@@ -175,6 +175,7 @@ defmodule RivaAsh.Repo do
       case Ecto.Adapters.SQL.query(__MODULE__, "SELECT version()", []) do
         {:ok, %{rows: [[version_str]]}} ->
           parse_version_string(version_str)
+
         {:error, reason} ->
           {:error, reason}
       end
@@ -193,6 +194,7 @@ defmodule RivaAsh.Repo do
           {:ok, version} -> {:ok, version}
           {:error, reason} -> {:error, reason}
         end
+
       nil ->
         {:error, "Unable to parse PostgreSQL version string"}
     end
@@ -201,13 +203,16 @@ defmodule RivaAsh.Repo do
   @spec check_version_compatibility(Version.t()) :: :ok | {:error, String.t()}
   defp check_version_compatibility(current_version) do
     min_version = min_pg_version()
-    
+
     case Version.compare(current_version, min_version) do
       :lt ->
-        {:error,
-         "PostgreSQL version #{current_version} is below minimum required version #{min_version}"}
-      :eq -> :ok
-      :gt -> :ok
+        {:error, "PostgreSQL version #{current_version} is below minimum required version #{min_version}"}
+
+      :eq ->
+        :ok
+
+      :gt ->
+        :ok
     end
   end
 

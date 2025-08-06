@@ -106,9 +106,10 @@ defmodule RivaAsh.Test.TimeHelpers do
         # assertions with frozen time
       end)
   """
-  @spec with_frozen_time(NaiveDateTime.t() | DateTime.t(), (() -> any())) :: any()
+  @spec with_frozen_time(NaiveDateTime.t() | DateTime.t(), (-> any())) :: any()
   def with_frozen_time(datetime, fun) when is_function(fun, 0) do
     prev = Application.get_env(:riva_ash, :test_clock)
+
     try do
       clock_freeze(datetime)
       fun.()

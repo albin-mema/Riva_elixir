@@ -86,5 +86,5 @@ defmodule RivaAshWeb.Error.NotFoundLive do
   end
 
   # Private helper functions
-  defp get_page_title, do: Application.get_env(:riva_ash, __MODULE__, [])[:page_title] || "Page Not Found"
+  defp get_page_title, do: Application.get_env(:riva_ash, __MODULE__, []) |> get_in([:page_title]) || "Page Not Found"
 end

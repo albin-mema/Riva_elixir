@@ -1,7 +1,7 @@
 defmodule RivaAshWeb.Components.Atoms.Spinner do
   @moduledoc """
   Loading spinner component with various styles.
-  
+
   Follows functional core, imperative shell pattern with comprehensive type safety.
   """
   use Phoenix.Component
@@ -12,9 +12,9 @@ defmodule RivaAshWeb.Components.Atoms.Spinner do
 
   @doc """
   Renders a loading spinner.
-  
+
   ## Examples
-    
+
       <.spinner />
       <.spinner size="lg" variant="primary" />
       <.spinner label="Loading..." show_label={true} />
@@ -31,9 +31,11 @@ defmodule RivaAshWeb.Components.Atoms.Spinner do
     with {:ok, validated_assigns} <- validate_assigns(assigns),
          spinner_class <- build_spinner_class(validated_assigns),
          container_class <- build_container_class(validated_assigns) do
-      assigns = validated_assigns
+      assigns =
+        validated_assigns
         |> assign(:spinner_class, spinner_class)
         |> assign(:container_class, container_class)
+
       render_spinner(assigns)
     else
       {:error, reason} -> render_error(reason)
@@ -162,6 +164,7 @@ defmodule RivaAshWeb.Components.Atoms.Spinner do
     # In a real implementation, you might want to log this error
     # and render a fallback spinner or error state
     IO.puts("Spinner error: #{reason}")
+
     ~H"""
     <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative">
       <span class="block sm:inline">Error: <%= reason %></span>

@@ -2,7 +2,7 @@ defmodule RivaAshWeb.FinancialOperationsLive do
   @moduledoc """
   Financial Operations - Unified financial interface.
   Combines Payments, Pricing, and financial reporting into a single interface.
-  
+
   This LiveView follows Phoenix/Ash/Elixir patterns:
   - Uses AuthHelpers for authentication and business scoping
   - Delegates business logic to Financial context
@@ -328,7 +328,7 @@ defmodule RivaAshWeb.FinancialOperationsLive do
             + Record Payment
           </.button>
         </div>
-        
+
         <div class="overflow-x-auto">
           <table class="min-w-full divide-y divide-gray-200">
             <thead class="bg-gray-50">
@@ -398,7 +398,7 @@ defmodule RivaAshWeb.FinancialOperationsLive do
             + Create Pricing Rule
           </.button>
         </div>
-        
+
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           <%= if length(@pricings) == 0 do %>
             <div class="col-span-full text-center text-gray-500 py-8">
@@ -437,7 +437,7 @@ defmodule RivaAshWeb.FinancialOperationsLive do
       <:body>
       <div class="p-6">
         <h3 class="text-lg font-medium text-gray-900 mb-4">Financial Reports</h3>
-        
+
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
           <!-- Revenue Report -->
           <div class="bg-gray-50 p-6 rounded-lg">
@@ -536,7 +536,7 @@ defmodule RivaAshWeb.FinancialOperationsLive do
   Formats currency values for display.
   """
   defp format_currency(amount) when is_number(amount) do
-    "$#{:erlang.float_to_binary(amount, [decimals: 2])}"
+    "$#{:erlang.float_to_binary(amount, decimals: 2)}"
   end
 
   defp format_currency(%Decimal{} = decimal) do

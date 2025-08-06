@@ -21,8 +21,8 @@ defmodule RivaAsh.GDPR.ConsentRecord do
 
   import RivaAsh.ResourceHelpers
 
-  @config Application.get_env(:riva_ash, :gdpr, %{})
-  @default_consent_method Application.get_env(:riva_ash, :gdpr_default_consent_method, :web_form)
+  @config Application.compile_env(:riva_ash, :gdpr, %{})
+  @default_consent_method Application.compile_env(:riva_ash, :gdpr_default_consent_method, :web_form)
 
   standard_postgres("consent_records")
   standard_paper_trail()
@@ -317,7 +317,7 @@ defmodule RivaAsh.GDPR.ConsentRecord do
   # Private helper functions for data transformation
   defp validate_consent_params(params) when is_map(params) do
     required_fields = [:user_id, :purpose, :consent_version]
-    
+
     if Enum.all?(required_fields, &Map.has_key?(params, &1)) do
       :ok
     else

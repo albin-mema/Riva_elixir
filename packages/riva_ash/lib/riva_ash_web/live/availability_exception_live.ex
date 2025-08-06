@@ -1,7 +1,7 @@
 defmodule RivaAshWeb.AvailabilityExceptionLive do
   @moduledoc """
   LiveView for managing Availability Exceptions.
-  
+
   This LiveView follows Phoenix/Ash/Elixir patterns:
   - Uses AuthHelpers for authentication and business scoping
   - Delegates business logic to AvailabilityException context
@@ -32,6 +32,7 @@ defmodule RivaAshWeb.AvailabilityExceptionLive do
          ) do
       {:ok, socket} ->
         {:ok, assign(socket, loading: false)}
+
       {:error, _} = error ->
         {:ok, error}
     end
@@ -43,8 +44,9 @@ defmodule RivaAshWeb.AvailabilityExceptionLive do
     case AvailabilityExceptions.list_exceptions(socket.assigns.current_user, params) do
       {exceptions, meta} ->
         {:noreply, assign(socket, exceptions: exceptions, meta: meta)}
+
       {:error, reason} ->
-        {:noreply, 
+        {:noreply,
          socket
          |> put_flash(:error, "Failed to load availability exceptions: #{reason}")
          |> assign(loading: false)}

@@ -95,10 +95,13 @@ defmodule RivaAshWeb.Components.Atoms.ColorPicker do
     cond do
       String.starts_with?(color, "#") and String.length(color) in [4, 7] ->
         validate_hex_color(color)
+
       String.starts_with?(color, "rgb") ->
         validate_rgb_color(color)
+
       String.starts_with?(color, "hsl") ->
         validate_hsl_color(color)
+
       true ->
         {:error, "Unsupported color format"}
     end
@@ -111,6 +114,7 @@ defmodule RivaAshWeb.Components.Atoms.ColorPicker do
       _ -> {:error, "Invalid hex color"}
     end
   end
+
   defp validate_hex_color(_), do: {:error, "Invalid hex color format"}
 
   @spec validate_rgb_color(String.t()) :: {:ok, map()} | {:error, String.t()}
@@ -118,13 +122,17 @@ defmodule RivaAshWeb.Components.Atoms.ColorPicker do
     case String.split(rest, ")") do
       [values, ""] ->
         parts = String.split(values, ",")
+
         case parse_rgb_parts(parts) do
           {:ok, rgb} -> {:ok, %{format: "rgb", value: rgb}}
           {:error, _} -> {:error, "Invalid RGB values"}
         end
-      _ -> {:error, "Invalid RGB format"}
+
+      _ ->
+        {:error, "Invalid RGB format"}
     end
   end
+
   defp validate_rgb_color(_), do: {:error, "Invalid RGB format"}
 
   @spec parse_rgb_parts(list(String.t())) :: {:ok, String.t()} | {:error, String.t()}
@@ -140,6 +148,7 @@ defmodule RivaAshWeb.Components.Atoms.ColorPicker do
       _ -> {:error, "Invalid RGB values"}
     end
   end
+
   defp parse_rgb_parts(_), do: {:error, "Invalid RGB parts"}
 
   @spec validate_hsl_color(String.t()) :: {:ok, map()} | {:error, String.t()}
@@ -147,13 +156,17 @@ defmodule RivaAshWeb.Components.Atoms.ColorPicker do
     case String.split(rest, ")") do
       [values, ""] ->
         parts = String.split(values, ",")
+
         case parse_hsl_parts(parts) do
           {:ok, hsl} -> {:ok, %{format: "hsl", value: hsl}}
           {:error, _} -> {:error, "Invalid HSL values"}
         end
-      _ -> {:error, "Invalid HSL format"}
+
+      _ ->
+        {:error, "Invalid HSL format"}
     end
   end
+
   defp validate_hsl_color(_), do: {:error, "Invalid HSL format"}
 
   @spec parse_hsl_parts(list(String.t())) :: {:ok, String.t()} | {:error, String.t()}
@@ -169,6 +182,7 @@ defmodule RivaAshWeb.Components.Atoms.ColorPicker do
       _ -> {:error, "Invalid HSL values"}
     end
   end
+
   defp parse_hsl_parts(_), do: {:error, "Invalid HSL parts"}
 
   @spec render_color_picker(assigns :: assigns()) :: Phoenix.LiveView.Rendered.t()
@@ -210,20 +224,22 @@ defmodule RivaAshWeb.Components.Atoms.ColorPicker do
   @spec build_input_class(String.t(), String.t(), Phoenix.HTML.FormField.t()) :: String.t()
   defp build_input_class(size, variant, field) do
     base_classes = "w-12 h-12 rounded-md border cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-500"
-    
-    size_classes = case size do
-      "sm" -> "w-10 h-10"
-      "lg" -> "w-14 h-14"
-      _ -> "w-12 h-12"
-    end
 
-    variant_classes = case variant do
-      "error" -> "border-red-300 focus:border-red-500 focus:ring-red-500"
-      "success" -> "border-green-300 focus:border-green-500 focus:ring-green-500"
-      _ -> "border-gray-300 focus:border-blue-500 focus:ring-blue-500"
-    end
+    size_classes =
+      case size do
+        "sm" -> "w-10 h-10"
+        "lg" -> "w-14 h-14"
+        _ -> "w-12 h-12"
+      end
 
-    error_classes = if field && field.errors != [], do: "border-red-500", else: ""
+    variant_classes =
+      case variant do
+        "error" -> "border-red-300 focus:border-red-500 focus:ring-red-500"
+        "success" -> "border-green-300 focus:border-green-500 focus:ring-green-500"
+        _ -> "border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+      end
+
+    error_classes = if field && field.errors != [], "border-red-500", ""
 
     "#{base_classes} #{size_classes} #{variant_classes} #{error_classes}"
   end
@@ -231,20 +247,22 @@ defmodule RivaAshWeb.Components.Atoms.ColorPicker do
   @spec build_text_input_class(String.t(), String.t(), Phoenix.HTML.FormField.t()) :: String.t()
   defp build_text_input_class(size, variant, field) do
     base_classes = "flex-1 rounded-md border px-3 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-    
-    size_classes = case size do
-      "sm" -> "text-sm"
-      "lg" -> "text-lg"
-      _ -> "text-base"
-    end
 
-    variant_classes = case variant do
-      "error" -> "border-red-300 focus:border-red-500 focus:ring-red-500"
-      "success" -> "border-green-300 focus:border-green-500 focus:ring-green-500"
-      _ -> "border-gray-300 focus:border-blue-500 focus:ring-blue-500"
-    end
+    size_classes =
+      case size do
+        "sm" -> "text-sm"
+        "lg" -> "text-lg"
+        _ -> "text-base"
+      end
 
-    error_classes = if field && field.errors != [], do: "border-red-500", else: ""
+    variant_classes =
+      case variant do
+        "error" -> "border-red-300 focus:border-red-500 focus:ring-red-500"
+        "success" -> "border-green-300 focus:border-green-500 focus:ring-green-500"
+        _ -> "border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+      end
+
+    error_classes = if field && field.errors != [], "border-red-500", ""
 
     "#{base_classes} #{size_classes} #{variant_classes} #{error_classes}"
   end

@@ -10,6 +10,7 @@ defmodule RivaAshWeb.Components.UI.ButtonComponentTest do
   @spec test_renders_default_button_with_inner_content :: :ok
   test "renders default button with inner content" do
     assigns = %{}
+
     html =
       rendered_to_string(~H"""
       <Button.button>Click</Button.button>
@@ -23,6 +24,7 @@ defmodule RivaAshWeb.Components.UI.ButtonComponentTest do
   @spec test_renders_destructive_variant_and_loading_spinner :: :ok
   test "renders destructive variant and loading spinner" do
     assigns = %{}
+
     html =
       rendered_to_string(~H"""
       <Button.button variant="destructive" loading={true}>Delete</Button.button>
@@ -36,6 +38,7 @@ defmodule RivaAshWeb.Components.UI.ButtonComponentTest do
   @spec test_respects_size_mappings :: :ok
   test "respects size mappings" do
     assigns = %{}
+
     html_sm =
       rendered_to_string(~H"""
       <Button.button size="sm">Small</Button.button>

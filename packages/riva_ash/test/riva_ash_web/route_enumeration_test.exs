@@ -96,30 +96,30 @@ defmodule RivaAshWeb.RouteEnumerationTest do
   end
 
   defp categorize_routes(routes) do
-    public_routes = Enum.filter(routes, &is_public_route?/1)
-    auth_routes = Enum.filter(routes, &is_authenticated_route?/1)
-    api_routes = Enum.filter(routes, &is_api_route?/1)
-    admin_routes = Enum.filter(routes, &is_admin_route?/1)
+    public_routes = Enum.filter(routes, &public_route?/1)
+    auth_routes = Enum.filter(routes, &authenticated_route?/1)
+    api_routes = Enum.filter(routes, &api_route?/1)
+    admin_routes = Enum.filter(routes, &admin_route?/1)
 
     {public_routes, auth_routes, api_routes, admin_routes}
   end
 
-  defp is_public_route?(%{path: path, pipe_through: pipes}) do
+  defp public_route?(%{path: path, pipe_through: pipes}) do
     String.starts_with?(path, "/") and
       not String.starts_with?(path, "/api") and
       not String.starts_with?(path, "/admin") and
       not Enum.member?(pipes, :require_authenticated_user)
   end
 
-  defp is_authenticated_route?(%{pipe_through: pipes}) do
+  defp authenticated_route?(%{pipe_through: pipes}) do
     Enum.member?(pipes, :require_authenticated_user)
   end
 
-  defp is_api_route?(%{path: path}) do
+  defp api_route?(%{path: path}) do
     String.starts_with?(path, "/api") or String.starts_with?(path, "/graphql")
   end
 
-  defp is_admin_route?(%{path: path}) do
+  defp admin_route?(%{path: path}) do
     String.starts_with?(path, "/admin")
   end
 
@@ -216,7 +216,6 @@ defmodule RivaAshWeb.RouteEnumerationTest do
 
         500 ->
           IO.puts("  ❌ #{verb} #{path} -> #{status} (SERVER ERROR)")
-          IO.inspect(response.resp_body, label: "Error body")
 
         _ ->
           IO.puts("  ? #{verb} #{path} -> #{status}")
@@ -275,7 +274,6 @@ defmodule RivaAshWeb.RouteEnumerationTest do
 
           500 ->
             IO.puts("  ❌ GET #{actual_path} -> #{status} (SERVER ERROR)")
-            IO.inspect(response.resp_body, label: "Error body")
 
           _ ->
             IO.puts("  ? GET #{actual_path} -> #{status}")
@@ -312,7 +310,6 @@ defmodule RivaAshWeb.RouteEnumerationTest do
 
           500 ->
             IO.puts("  ❌ GET #{path} -> #{status} (SERVER ERROR)")
-            IO.inspect(response.resp_body, label: "Error body")
 
           _ ->
             IO.puts("  ? GET #{path} -> #{status}")

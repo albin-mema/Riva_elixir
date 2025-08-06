@@ -1,7 +1,7 @@
 defmodule RivaAshWeb.Components.Atoms.Progress do
   @moduledoc """
   Progress component for displaying loading states and completion percentages.
-  
+
   Follows functional core, imperative shell pattern with comprehensive type safety.
   """
   use Phoenix.Component
@@ -15,13 +15,13 @@ defmodule RivaAshWeb.Components.Atoms.Progress do
 
   @doc """
   Renders a progress component with different variants and types.
-  
+
   ## Examples
-    
+
       <.progress value={75} />
-      
+
       <.progress value={100} variant="success" size="lg" />
-      
+
       <.progress variant="warning" type="circular" size="md">
         <.progress_label>Loading...</.progress_label>
       </.progress>
@@ -147,7 +147,7 @@ defmodule RivaAshWeb.Components.Atoms.Progress do
     ~H"""
     <div class={@progress_class} {@rest}>
       <div class="w-full bg-gray-200 rounded-full">
-        <div 
+        <div
           class="h-full rounded-full transition-all duration-300 ease-in-out"
           style={"width: #{@value}%"}
           role="progressbar"
@@ -226,6 +226,7 @@ defmodule RivaAshWeb.Components.Atoms.Progress do
     # In a real implementation, you might want to log this error
     # and render a fallback progress or error state
     IO.puts("Progress error: #{reason}")
+
     ~H"""
     <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative">
       <span class="block sm:inline">Error: <%= reason %></span>

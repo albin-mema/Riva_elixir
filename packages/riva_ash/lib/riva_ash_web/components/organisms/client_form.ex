@@ -41,12 +41,12 @@ defmodule RivaAshWeb.Components.Organisms.ClientForm do
       <.form_field field={@form[:last_name]} label="Last Name" required />
       <.form_field field={@form[:email]} label="Email" type="email" />
       <.form_field field={@form[:phone]} label="Phone" type="tel" />
-      
+
       <div class={@registration_class}>
         <.toggle field={@form[:is_registered]} label="Register as permanent client" />
         <.form_field :if={@form[:is_registered].value} field={@form[:password]} label="Password" type="password" />
       </div>
-      
+
       <div class={@actions_class}>
         <.button type="submit" loading={@loading}>
           <%= if @editing, do: "Update Client", else: "Create Client" %>
@@ -65,9 +65,7 @@ defmodule RivaAshWeb.Components.Organisms.ClientForm do
 
   # Helper function to build form classes
   @spec build_form_class() :: String.t()
-  defp build_form_class() do
-    ""
-  end
+  defp build_form_class, do: ""
 
   # Helper function to build registration classes
   @spec build_registration_class(boolean()) :: String.t()
@@ -77,7 +75,5 @@ defmodule RivaAshWeb.Components.Organisms.ClientForm do
 
   # Helper function to build actions classes
   @spec build_actions_class() :: String.t()
-  defp build_actions_class() do
-    ""
-  end
+  defp build_actions_class, do: ""
 end

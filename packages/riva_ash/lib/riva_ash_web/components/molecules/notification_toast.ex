@@ -1,40 +1,40 @@
 defmodule RivaAshWeb.Components.Molecules.NotificationToast do
   @moduledoc """
   Toast notification component for temporary messages.
-  
+
   Provides a configurable toast notification system with different types,
   positions, durations, and dismiss functionality.
-  
+
   ## Styleguide Compliance
-  
+
   This component follows the Riva Ash styleguide principles:
-  
+
   ### Functional Programming Patterns
   - Uses pipeline operator (`|>`) for data transformation
   - Implements pure functions with no side effects
   - Uses pattern matching for data validation and processing
   - Follows single level of abstraction principle
-  
+
   ### Type Safety
   - Comprehensive type specifications using `@type` and `@spec`
   - Strong typing for all function parameters and return values
   - Type validation through pattern matching
-  
+
   ### Error Handling
   - Uses result tuples (`:ok | {:error, String.t()}`) for consistent error handling
   - Early validation with guard clauses
   - Clear error messages for invalid inputs
-  
+
   ### Code Abstraction
   - Separates concerns into focused helper functions
   - Extracts validation logic into dedicated functions
   - Uses functional composition for complex operations
-  
+
   ### Phoenix/Ash Patterns
   - Follows Phoenix LiveView component conventions
   - Uses proper attribute validation and building
   - Implements functional core, imperative shell pattern
-  
+
   ### LiveView Component Patterns
   - Uses proper slot and attribute handling
   - Implements accessibility features
@@ -86,27 +86,53 @@ defmodule RivaAshWeb.Components.Molecules.NotificationToast do
       />
   """
   @spec notification_toast(assigns :: assigns()) :: Phoenix.LiveView.Rendered.t()
-  attr(:title, :string, default: nil,
-    doc: "Title of the notification")
-  attr(:message, :string, required: true,
-    doc: "Message content of the notification")
-  attr(:type, :string, default: "info",
+  attr(:title, :string,
+    default: nil,
+    doc: "Title of the notification"
+  )
+
+  attr(:message, :string,
+    required: true,
+    doc: "Message content of the notification"
+  )
+
+  attr(:type, :string,
+    default: "info",
     values: ~w(success error warning info),
-    doc: "Type of the notification")
-  attr(:duration, :integer, default: 5000,
-    doc: "Duration in milliseconds before the toast auto-dismisses")
-  attr(:dismissible, :boolean, default: true,
-    doc: "Whether the toast can be manually dismissed")
-  attr(:show, :boolean, default: false,
-    doc: "Whether to show the toast")
+    doc: "Type of the notification"
+  )
+
+  attr(:duration, :integer,
+    default: 5000,
+    doc: "Duration in milliseconds before the toast auto-dismisses"
+  )
+
+  attr(:dismissible, :boolean,
+    default: true,
+    doc: "Whether the toast can be manually dismissed"
+  )
+
+  attr(:show, :boolean,
+    default: false,
+    doc: "Whether to show the toast"
+  )
+
   attr(:position, :string,
     default: "top-right",
     values: ~w(top-left top-right bottom-left bottom-right),
-    doc: "Position of the toast on screen")
-  attr(:on_dismiss, :string, default: nil,
-    doc: "JavaScript command to execute when the toast is dismissed")
-  attr(:class, :string, default: "",
-    doc: "Additional CSS classes for the container")
+    doc: "Position of the toast on screen"
+  )
+
+  attr(:on_dismiss, :string,
+    default: nil,
+    doc: "JavaScript command to execute when the toast is dismissed"
+  )
+
+  attr(:class, :string,
+    default: "",
+    doc: "Additional CSS classes for the container"
+  )
+
   attr(:rest, :global)
 
   @impl true
@@ -223,17 +249,21 @@ defmodule RivaAshWeb.Components.Molecules.NotificationToast do
   # Helper function to build container classes
   @spec build_container_class(String.t(), position()) :: String.t()
   defp build_container_class(class, position) do
-    classes = [
-      class,
-      build_position_classes(position)
-    ]
-    |> Enum.reject(&(&1 == "")) # Remove empty strings
-    |> Enum.join(" ") # Join with spaces
+    classes =
+      [
+        class,
+        build_position_classes(position)
+      ]
+      # Remove empty strings
+      |> Enum.reject(&(&1 == ""))
+      # Join with spaces
+      |> Enum.join(" ")
 
     classes
   end
 
-  @spec render_content(String.t() | nil, String.t(), notification_type(), boolean(), String.t() | nil) :: Phoenix.LiveView.Rendered.t()
+  @spec render_content(String.t() | nil, String.t(), notification_type(), boolean(), String.t() | nil) ::
+          Phoenix.LiveView.Rendered.t()
   defp render_content(title, message, type, dismissible, on_dismiss) do
     ~H"""
     <div class="notification-toast-content flex items-start justify-between">

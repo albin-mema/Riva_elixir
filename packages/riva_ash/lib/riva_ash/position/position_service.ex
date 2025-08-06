@@ -3,16 +3,16 @@ defmodule RivaAsh.Position.PositionService do
   Service for handling item position operations.
   Separates business logic from LiveView concerns.
   """
-  
+
   alias RivaAsh.Resources.ItemPosition
   alias Ash.Query
 
   @doc """
   Gets all item positions for a specific user.
-  
+
   ## Parameters
   - user: The user to get positions for
-  
+
   ## Returns
   {:ok, {[ItemPosition.t()], meta}} | {:error, reason}
   """
@@ -26,6 +26,7 @@ defmodule RivaAsh.Position.PositionService do
             page: 1,
             page_size: length(item_positions)
           }
+
           {:ok, {item_positions, meta}}
       end
     rescue
@@ -36,11 +37,11 @@ defmodule RivaAsh.Position.PositionService do
 
   @doc """
   Gets a specific item position by ID for a user.
-  
+
   ## Parameters
   - position_id: ID of the position to retrieve
   - user: The user requesting the position
-  
+
   ## Returns
   {:ok, ItemPosition.t()} | {:error, reason}
   """
@@ -60,30 +61,29 @@ defmodule RivaAsh.Position.PositionService do
 
   @doc """
   Creates a new item position.
-  
+
   ## Parameters
   - position_params: Map of position parameters
   - user: The user creating the position
-  
+
   ## Returns
   {:ok, ItemPosition.t()} | {:error, reason}
   """
   @spec create_position(map(), User.t()) :: {:ok, ItemPosition.t()} | {:error, term()}
   def create_position(position_params, user) do
     with :ok <- validate_position_params(position_params),
-         {:ok, position} <- ItemPosition.create!(position_params, actor: user) do
-      {:ok, position}
-    end
+         {:ok, position} <- ItemPosition.create!(position_params, actor: user),
+         do: {:ok, position}
   end
 
   @doc """
   Updates an existing item position.
-  
+
   ## Parameters
   - position_id: ID of the position to update
   - update_params: Map of update parameters
   - user: The user performing the update
-  
+
   ## Returns
   {:ok, ItemPosition.t()} | {:error, reason}
   """
@@ -91,18 +91,17 @@ defmodule RivaAsh.Position.PositionService do
   def update_position(position_id, update_params, user) do
     with {:ok, position} <- get_position(position_id, user),
          :ok <- validate_update_params(position, update_params),
-         {:ok, updated_position} <- ItemPosition.update!(position, update_params, actor: user) do
-      {:ok, updated_position}
-    end
+         {:ok, updated_position} <- ItemPosition.update!(position, update_params, actor: user),
+         do: {:ok, updated_position}
   end
 
   @doc """
   Deletes an item position.
-  
+
   ## Parameters
   - position_id: ID of the position to delete
   - user: The user performing the deletion
-  
+
   ## Returns
   {:ok, ItemPosition.t()} | {:error, reason}
   """
@@ -110,18 +109,17 @@ defmodule RivaAsh.Position.PositionService do
   def delete_position(position_id, user) do
     with {:ok, position} <- get_position(position_id, user),
          :ok <- validate_deletion(position),
-         {:ok, deleted_position} <- ItemPosition.destroy!(position, actor: user) do
-      {:ok, deleted_position}
-    end
+         {:ok, deleted_position} <- ItemPosition.destroy!(position, actor: user),
+         do: {:ok, deleted_position}
   end
 
   @doc """
   Activates an item position.
-  
+
   ## Parameters
   - position_id: ID of the position to activate
   - user: The user performing the activation
-  
+
   ## Returns
   {:ok, ItemPosition.t()} | {:error, reason}
   """
@@ -129,18 +127,17 @@ defmodule RivaAsh.Position.PositionService do
   def activate_position(position_id, user) do
     with {:ok, position} <- get_position(position_id, user),
          :ok <- validate_activation(position),
-         {:ok, updated_position} <- update_position_status(position, :active, user) do
-      {:ok, updated_position}
-    end
+         {:ok, updated_position} <- update_position_status(position, :active, user),
+         do: {:ok, updated_position}
   end
 
   @doc """
   Deactivates an item position.
-  
+
   ## Parameters
   - position_id: ID of the position to deactivate
   - user: The user performing the deactivation
-  
+
   ## Returns
   {:ok, ItemPosition.t()} | {:error, reason}
   """
@@ -148,20 +145,19 @@ defmodule RivaAsh.Position.PositionService do
   def deactivate_position(position_id, user) do
     with {:ok, position} <- get_position(position_id, user),
          :ok <- validate_deactivation(position),
-         {:ok, updated_position} <- update_position_status(position, :inactive, user) do
-      {:ok, updated_position}
-    end
+         {:ok, updated_position} <- update_position_status(position, :inactive, user),
+         do: {:ok, updated_position}
   end
 
   @doc """
   Validates if coordinates are within layout bounds.
-  
+
   ## Parameters
   - x_coord: X coordinate
   - y_coord: Y coordinate
   - layout_id: Layout ID to check against
   - user: The user performing the validation
-  
+
   ## Returns
   {:ok, boolean()} | {:error, reason}
   """
@@ -177,7 +173,7 @@ defmodule RivaAsh.Position.PositionService do
 
   @doc """
   Checks for overlapping positions in a layout.
-  
+
   ## Parameters
   - position_id: ID of the position to check (can be nil for new positions)
   - layout_id: Layout ID to check within
@@ -186,24 +182,38 @@ defmodule RivaAsh.Position.PositionService do
   - width: Width of the position
   - height: Height of the position
   - user: The user performing the check
-  
+
   ## Returns
   {:ok, boolean()} | {:error, reason}
   """
-  @spec check_overlap(String.t() | nil, String.t(), integer(), integer(), integer() | nil, integer() | nil, User.t()) :: {:ok, boolean()} | {:error, term()}
+  @spec check_overlap(String.t() | nil, String.t(), integer(), integer(), integer() | nil, integer() | nil, User.t()) ::
+          {:ok, boolean()} | {:error, term()}
   def check_overlap(position_id, layout_id, x_coord, y_coord, width, height, user) do
     # This would check for overlapping positions in the same layout
     # For now, we'll implement a basic placeholder
     {:ok, false}
   end
 
+  @spec check_overlap(map()) :: {:ok, boolean()} | {:error, term()}
+  defp check_overlap(%{
+         position_id: position_id,
+         layout_id: layout_id,
+         x_coord: x_coord,
+         y_coord: y_coord,
+         width: width,
+         height: height,
+         user: user
+       }) do
+    check_overlap(position_id, layout_id, x_coord, y_coord, width, height, user)
+  end
+
   # Private helper functions
 
   defp validate_position_params(params) do
     required_fields = [:item_id, :layout_id, :x_coord, :y_coord]
-    
+
     missing_fields = required_fields |> Enum.filter(&(!Map.has_key?(params, &1)))
-    
+
     case missing_fields do
       [] -> :ok
       _ -> {:error, {:missing_fields, missing_fields}}
@@ -213,7 +223,7 @@ defmodule RivaAsh.Position.PositionService do
   defp validate_update_params(position, update_params) do
     # Don't allow changing item or layout as it would affect relationships
     restricted_fields = [:item_id, :layout_id]
-    
+
     case Enum.any?(restricted_fields, &Map.has_key?(update_params, &1)) do
       true -> {:error, :cannot_change_restricted_fields}
       false -> :ok
@@ -245,11 +255,13 @@ defmodule RivaAsh.Position.PositionService do
   end
 
   defp update_position_status(position, status, user) do
-    update_params = %{status: status, updated_at: DateTime.utc_now()}
-    ItemPosition.update!(position, update_params, actor: user)
-  rescue
-    error in [Ash.Error.Forbidden, Ash.Error.Invalid] ->
-      {:error, error}
+    try do
+      update_params = %{status: status, updated_at: DateTime.utc_now()}
+      ItemPosition.update!(position, update_params, actor: user)
+    rescue
+      error in [Ash.Error.Forbidden, Ash.Error.Invalid] ->
+        {:error, error}
+    end
   end
 
   defp has_active_associations(position) do

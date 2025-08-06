@@ -1,7 +1,7 @@
 defmodule RivaAshWeb.Components.Atoms.Container do
   @moduledoc """
   Container component for constraining content width and centering.
-  
+
   Follows functional core, imperative shell pattern with comprehensive type safety.
   """
   use Phoenix.Component
@@ -13,17 +13,17 @@ defmodule RivaAshWeb.Components.Atoms.Container do
 
   @doc """
   Renders a container component with different size options.
-  
+
   ## Examples
-    
+
       <.container size="md">
         <p>This content is constrained to medium width</p>
       </.container>
-      
+
       <.container fluid={true}>
         <p>This content spans the full width</p>
       </.container>
-      
+
       <.container size="xl" center={true}>
         <p>Large centered container</p>
       </.container>
@@ -129,6 +129,7 @@ defmodule RivaAshWeb.Components.Atoms.Container do
     # In a real implementation, you might want to log this error
     # and render a fallback container or error state
     IO.puts("Container error: #{reason}")
+
     ~H"""
     <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative">
       <span class="block sm:inline">Error: <%= reason %></span>

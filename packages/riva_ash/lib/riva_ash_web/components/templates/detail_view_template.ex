@@ -99,48 +99,48 @@ defmodule RivaAshWeb.Components.Templates.DetailViewTemplate do
   # Helper function to build header classes
   @spec build_header_class(list()) :: String.t()
   defp build_header_class(actions) do
-    if actions != [], do: "mb-6", else: "mb-4"
+    if actions != [], "mb-6", "mb-4"
   end
 
   # Helper function to build title classes
   @spec build_title_class(String.t()) :: String.t()
   defp build_title_class(title) do
-    if title, do: "text-2xl font-bold", else: "hidden"
+    if title, "text-2xl font-bold", "hidden"
   end
 
   # Helper function to build description classes
   @spec build_description_class(String.t() | nil) :: String.t()
   defp build_description_class(description) do
-    if description, do: "text-muted-foreground", else: "hidden"
+    if description, "text-muted-foreground", "hidden"
   end
 
   # Helper function to build actions classes
   @spec build_actions_class(list()) :: String.t()
   defp build_actions_class(actions) do
-    if actions != [], do: "flex gap-2", else: "hidden"
+    if actions != [], "flex gap-2", "hidden"
   end
 
   # Helper function to build header content classes
   @spec build_header_content_class(list()) :: String.t()
   defp build_header_content_class(header_content) do
-    if header_content != [], do: "detail-header mb-6", else: "hidden"
+    if header_content != [], "detail-header mb-6", "hidden"
   end
 
   # Helper function to build tabs container classes
   @spec build_tabs_class(list()) :: String.t()
   defp build_tabs_class(tabs) do
-    if tabs != [], do: "detail-tabs mb-6", else: "hidden"
+    if tabs != [], "detail-tabs mb-6", "hidden"
   end
 
   # Helper function to build tab navigation classes
   @spec build_tab_navigation_class(list()) :: String.t()
   defp build_tab_navigation_class(tabs) do
-    if tabs != [], do: "w-full", else: "hidden"
+    if tabs != [], "w-full", "hidden"
   end
 
   # Helper function to build content classes
   @spec build_content_class(list()) :: String.t()
   defp build_content_class(tab_content) do
-    if tab_content != [], do: "detail-content", else: "hidden"
+    if tab_content != [], "detail-content", "hidden"
   end
 end

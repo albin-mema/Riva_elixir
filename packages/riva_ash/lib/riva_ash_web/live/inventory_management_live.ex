@@ -35,7 +35,7 @@ defmodule RivaAshWeb.InventoryManagementLive do
               |> assign(:loading, false)
 
             {:ok, socket}
-          
+
           {:error, reason} ->
             Logger.error("Failed to load inventory data: #{inspect(reason)}")
             {:ok, redirect(socket, to: "/access-denied")}

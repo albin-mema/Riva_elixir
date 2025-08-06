@@ -1,12 +1,12 @@
 defmodule RivaAshWeb.Telemetry do
   @moduledoc """
   Telemetry supervisor and metrics collection for Riva Ash web interface.
-  
+
   Handles metrics collection, reporting, and custom telemetry events for
   Phoenix, Ash, Reactor, and business-specific operations. This module
   provides comprehensive monitoring capabilities for application performance,
   user behavior, and system health.
-  
+
   The telemetry system includes:
   - Phoenix endpoint and LiveView metrics
   - Ash resource and action tracking
@@ -31,7 +31,7 @@ defmodule RivaAshWeb.Telemetry do
 
   @doc """
   Starts the telemetry supervisor.
-  
+
   Initializes the telemetry system with periodic metrics collection
   and custom event handlers for comprehensive application monitoring.
   """
@@ -55,7 +55,7 @@ defmodule RivaAshWeb.Telemetry do
 
   @doc """
   Returns the complete metrics configuration for the application.
-  
+
   Defines all metrics collected by the telemetry system including
   Phoenix framework metrics, Ash resource metrics, Reactor metrics,
   database performance metrics, VM metrics, and custom business metrics.
@@ -162,8 +162,7 @@ defmodule RivaAshWeb.Telemetry do
       summary("riva_ash.repo.query.idle_time",
         unit: {:native, :millisecond},
         tags: [:source, :command],
-        description:
-          "The time the connection spent waiting before being checked out for the query"
+        description: "The time the connection spent waiting before being checked out for the query"
       ),
 
       # VM Metrics
@@ -188,7 +187,7 @@ defmodule RivaAshWeb.Telemetry do
 
   @doc """
   Returns periodic measurement functions for the telemetry poller.
-  
+
   Defines functions that will be executed periodically to collect
   system and application metrics that aren't event-driven.
   """
@@ -204,7 +203,7 @@ defmodule RivaAshWeb.Telemetry do
 
   @doc """
   Dispatches VM metrics for system monitoring.
-  
+
   Collects and normalizes virtual machine metrics including memory usage
   and run queue lengths. Handles different Erlang/OTP versions gracefully.
   """
@@ -219,7 +218,7 @@ defmodule RivaAshWeb.Telemetry do
 
   @doc """
   Dispatches application-specific metrics.
-  
+
   Collects custom application metrics including active connections,
   business counts, reservation counts, and cache performance.
   """
@@ -281,7 +280,7 @@ defmodule RivaAshWeb.Telemetry do
 
   @doc """
   Attaches custom telemetry handlers for development tools.
-  
+
   Sets up event handlers that enrich telemetry data with additional
   context and metadata for debugging and development purposes.
   """
@@ -314,7 +313,7 @@ defmodule RivaAshWeb.Telemetry do
 
   @doc """
   Handles telemetry events with enrichment and transformation.
-  
+
   Processes various telemetry events to enrich them with additional
   metadata and context for better observability and debugging.
   """
@@ -379,7 +378,7 @@ defmodule RivaAshWeb.Telemetry do
 
   @doc """
   Extracts actor role from actor metadata.
-  
+
   Safely extracts the role information from various actor types
   for authorization and auditing purposes.
   """
@@ -403,9 +402,12 @@ defmodule RivaAshWeb.Telemetry do
   @spec normalize_run_queue_metrics() :: map()
   defp normalize_run_queue_metrics do
     case :erlang.statistics(:total_run_queue_lengths) do
-      %{total: _t} = m -> m
+      %{total: _t} = m ->
+        m
+
       {cpu, io, total} when is_integer(cpu) and is_integer(io) and is_integer(total) ->
         %{cpu: cpu, io: io, total: total}
+
       _ ->
         %{}
     end
@@ -413,7 +415,7 @@ defmodule RivaAshWeb.Telemetry do
 
   @doc """
   Emits custom telemetry events for authorization denials.
-  
+
   Tracks authorization failures for security monitoring and
   access pattern analysis.
   """
@@ -433,7 +435,7 @@ defmodule RivaAshWeb.Telemetry do
 
   @doc """
   Emits custom telemetry events for reservation creation.
-  
+
   Tracks reservation creation for business analytics and
   performance monitoring.
   """
@@ -453,7 +455,7 @@ defmodule RivaAshWeb.Telemetry do
 
   @doc """
   Emits custom telemetry events for business setup start.
-  
+
   Tracks the beginning of business setup workflows for
   process monitoring and user experience analysis.
   """
@@ -468,7 +470,7 @@ defmodule RivaAshWeb.Telemetry do
 
   @doc """
   Emits custom telemetry events for business setup completion.
-  
+
   Tracks the completion of business setup workflows with
   performance metrics and error tracking.
   """

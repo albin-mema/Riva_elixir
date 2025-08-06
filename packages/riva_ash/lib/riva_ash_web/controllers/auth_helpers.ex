@@ -58,10 +58,11 @@ defmodule RivaAshWeb.AuthHelpers do
   """
   @spec fetch_current_user(conn(), opts()) :: conn()
   def fetch_current_user(conn, _opts) do
-    with {:ok, user} <- load_user_from_session(conn) do
-      assign(conn, :current_user, user)
-    else
-      {:error, _reason} -> clear_user_session(conn)
+    case load_user_from_session(conn) do
+      {:ok, user} ->
+        assign(conn, :current_user, user)
+      {:error, _reason} ->
+        clear_user_session(conn)
     end
   end
 
@@ -70,11 +71,11 @@ defmodule RivaAshWeb.AuthHelpers do
   """
   @spec sign_in_user(conn(), user()) :: conn()
   def sign_in_user(conn, user) do
-    with {:ok, validated_user} <- validate_user(user),
-         {:ok, token} <- generate_auth_token(validated_user.id) do
-      establish_user_session(conn, validated_user, token)
-    else
-      {:error, _reason} -> conn
+    case {validate_user(user), generate_auth_token(validated_user.id)} do
+      {{:ok, validated_user}, {:ok, token}} ->
+        establish_user_session(conn, validated_user, token)
+      {:error, _reason} ->
+        conn
     end
   end
 
@@ -107,10 +108,11 @@ defmodule RivaAshWeb.AuthHelpers do
   defp load_user_from_session(conn) do
     user_token = get_session(conn, :user_token)
 
-    with {:ok, token} <- validate_token_exists(user_token),
-         {:ok, user_id} <- verify_token(token),
-         {:ok, user} <- fetch_user_by_id(user_id) do
-      {:ok, user}
+    case {validate_token_exists(user_token), verify_token(token), fetch_user_by_id(user_id)} do
+      {{:ok, token}, {:ok, user_id}, {:ok, user}} ->
+        {:ok, user}
+      _ ->
+        {:error, :authentication_failed}
     end
   end
 

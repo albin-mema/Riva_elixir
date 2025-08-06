@@ -105,6 +105,7 @@ defmodule RivaAsh.Mermaid do
       true ->
         relationship_strings = extract_relationship_strings(relationship_results)
         {:ok, Enum.join(relationship_strings, "\n")}
+
       false ->
         {:error, errors}
     end
@@ -126,7 +127,8 @@ defmodule RivaAsh.Mermaid do
          destination: destination,
          cardinality: cardinality,
          type: type
-       }) when is_binary(source_resource) and is_binary(name) do
+       })
+       when is_binary(source_resource) and is_binary(name) do
     with {:ok, dest_resource} <- format_destination_resource(destination),
          {:ok, relationship_line} <-
            format_relationship_line(source_resource, dest_resource, name, cardinality, type) do
@@ -144,9 +146,11 @@ defmodule RivaAsh.Mermaid do
     end
   end
 
-  @spec format_relationship_line(String.t(), String.t(), String.t(), atom(), atom()) :: {:ok, String.t()} | {:error, any()}
+  @spec format_relationship_line(String.t(), String.t(), String.t(), atom(), atom()) ::
+          {:ok, String.t()} | {:error, any()}
   defp format_relationship_line(source_resource, dest_resource, name, cardinality, type)
-       when is_binary(source_resource) and is_binary(dest_resource) and is_binary(name) and is_atom(cardinality) and is_atom(type) do
+       when is_binary(source_resource) and is_binary(dest_resource) and is_binary(name) and is_atom(cardinality) and
+              is_atom(type) do
     result = build_relationship_line(source_resource, dest_resource, name, cardinality, type)
     {:ok, result}
   end

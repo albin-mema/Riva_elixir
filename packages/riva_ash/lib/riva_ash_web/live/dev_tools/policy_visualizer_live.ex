@@ -353,7 +353,8 @@ defmodule RivaAshWeb.DevTools.PolicyVisualizerLive do
     end
 
     # Helper functions
-    defp get_page_title, do: Application.get_env(:riva_ash, __MODULE__, [])[:page_title] || "Policy Decision Tree Visualizer"
+    defp get_page_title,
+      do: Application.get_env(:riva_ash, __MODULE__, []) |> get_in([:page_title]) || "Policy Decision Tree Visualizer"
 
     # Policy trace functions
     defp get_trace_result(_node_name, _trace) do

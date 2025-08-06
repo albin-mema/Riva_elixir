@@ -46,22 +46,43 @@ defmodule RivaAshWeb.Components.Molecules.StatusIndicator do
       />
   """
   @spec status_indicator(assigns :: assigns()) :: Phoenix.LiveView.Rendered.t()
-  attr(:status, :string, required: true,
-    doc: "Status to display")
-  attr(:label, :string, default: nil,
-    doc: "Optional label for the status")
-  attr(:show_icon, :boolean, default: true,
-    doc: "Whether to show an icon with the status")
-  attr(:show_pulse, :boolean, default: false,
-    doc: "Whether to show a pulse animation")
-  attr(:size, :string, default: "md",
+  attr(:status, :string,
+    required: true,
+    doc: "Status to display"
+  )
+
+  attr(:label, :string,
+    default: nil,
+    doc: "Optional label for the status"
+  )
+
+  attr(:show_icon, :boolean,
+    default: true,
+    doc: "Whether to show an icon with the status"
+  )
+
+  attr(:show_pulse, :boolean,
+    default: false,
+    doc: "Whether to show a pulse animation"
+  )
+
+  attr(:size, :string,
+    default: "md",
     values: ~w(sm md lg),
-    doc: "Size of the status indicator")
-  attr(:variant, :string, default: "auto",
+    doc: "Size of the status indicator"
+  )
+
+  attr(:variant, :string,
+    default: "auto",
     values: ~w(auto success warning error info secondary default),
-    doc: "Visual variant of the status indicator")
-  attr(:class, :string, default: "",
-    doc: "Additional CSS classes for the container")
+    doc: "Visual variant of the status indicator"
+  )
+
+  attr(:class, :string,
+    default: "",
+    doc: "Additional CSS classes for the container"
+  )
+
   attr(:rest, :global)
 
   @impl true
@@ -132,7 +153,9 @@ defmodule RivaAshWeb.Components.Molecules.StatusIndicator do
   defp validate_variant("info"), do: :ok
   defp validate_variant("secondary"), do: :ok
   defp validate_variant("default"), do: :ok
-  defp validate_variant(_), do: {:error, "variant must be one of: auto, success, warning, error, info, secondary, default"}
+
+  defp validate_variant(_),
+    do: {:error, "variant must be one of: auto, success, warning, error, info, secondary, default"}
 
   @spec validate_class(String.t()) :: :ok | {:error, String.t()}
   defp validate_class(class) when is_binary(class), do: :ok
@@ -180,6 +203,7 @@ defmodule RivaAshWeb.Components.Molecules.StatusIndicator do
   @spec render_pulse(variant()) :: Phoenix.LiveView.Rendered.t()
   defp render_pulse(variant) do
     assigns = %{variant: variant}
+
     ~H"""
     <div class={["status-indicator-pulse relative flex h-2 w-2", pulse_color(@variant)]}>
       <span class="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75"></span>

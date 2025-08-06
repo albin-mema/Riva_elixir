@@ -1,7 +1,7 @@
 defmodule RivaAshWeb.Auth.SignInLive do
   @moduledoc """
   User sign-in LiveView.
-  
+
   This LiveView follows Phoenix/Ash/Elixir patterns:
   - Keeps business logic out of the LiveView module
   - Delegates to Accounts.Authentication for business logic
@@ -16,18 +16,20 @@ defmodule RivaAshWeb.Auth.SignInLive do
   alias RivaAsh.ErrorHelpers
 
   # Use application configuration for rate limiting
-  @rate_limiter Application.get_env(:riva_ash, :rate_limiter, RivaAsh.Accounts.RateLimiter)
+  @rate_limiter Application.compile_env(:riva_ash, :rate_limiter, RivaAsh.Accounts.RateLimiter)
 
   @impl true
   def mount(_params, _session, socket) do
     client_ip = get_client_ip(socket)
     form = to_form(%{"email" => "", "password" => ""})
-    {:ok, assign(socket,
-      form: form,
-      error_message: nil,
-      loading: false,
-      client_ip: client_ip
-    )}
+
+    {:ok,
+     assign(socket,
+       form: form,
+       error_message: nil,
+       loading: false,
+       client_ip: client_ip
+     )}
   end
 
   @impl true

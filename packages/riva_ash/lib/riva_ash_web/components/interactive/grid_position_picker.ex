@@ -1,42 +1,42 @@
 defmodule RivaAshWeb.Components.Interactive.GridPositionPicker do
   @moduledoc """
   Grid position selector component for row/column positioning.
-  
+
   ## Styleguide Compliance
-  
+
   This component follows the Riva Ash styleguide principles:
-  
+
   ### Functional Programming
   - Uses pure functions with immutable data
   - Implements pattern matching for data validation
   - Follows the functional core, imperative shell pattern
   - Uses pipelines for data transformation
-  
+
   ### Type Safety
   - Comprehensive type specifications for all functions
   - Uses proper Elixir type annotations
   - Implements guard clauses for validation
-  
+
   ### Code Abstraction
   - Single level of abstraction principle
   - Extracted helper functions for business logic
   - Clear separation of concerns
   - Reusable utility functions
-  
+
   ### Phoenix/Ash Patterns
   - Follows Phoenix LiveView component patterns
   - Uses proper attribute handling
   - Implements consistent event handling
   - Ash-specific data structures and patterns
-  
+
   ### LiveView Component Best Practices
   - Proper use of assigns and HEEx templates
   - Consistent naming conventions
   - Clear documentation and examples
   - Accessible and semantic HTML structure
-  
+
   ## Examples
-  
+
   ```elixir
   # Basic usage
   <.grid_position_picker
@@ -44,7 +44,7 @@ defmodule RivaAshWeb.Components.Interactive.GridPositionPicker do
     grid_columns={5}
     on_position_select="handle_position_select"
   />
-  
+
   # With selected position and occupied positions
   <.grid_position_picker
     grid_rows={8}
@@ -60,9 +60,9 @@ defmodule RivaAshWeb.Components.Interactive.GridPositionPicker do
 
   @doc """
   Renders a grid position picker interface.
-  
+
   ## Attributes
-  
+
   - `grid_rows` (integer, required): Number of rows in the grid
   - `grid_columns` (integer, required): Number of columns in the grid
   - `selected_row` (integer, optional): Currently selected row
@@ -88,9 +88,9 @@ defmodule RivaAshWeb.Components.Interactive.GridPositionPicker do
 
   @doc """
   Renders the grid position picker component.
-  
+
   ## Examples
-  
+
       iex> grid_position_picker(%{
       ...>   grid_rows: 5,
       ...>   grid_columns: 5,
@@ -109,12 +109,12 @@ defmodule RivaAshWeb.Components.Interactive.GridPositionPicker do
 
   @doc """
   Validates component assigns.
-  
+
   ## Examples
-  
+
       iex> validate_assigns(%{grid_rows: 5, grid_columns: 5, on_position_select: "event"})
       {:ok, %{grid_rows: 5, grid_columns: 5, on_position_select: "event"}}
-      
+
       iex> validate_assigns(%{grid_rows: 5, on_position_select: "event"})
       {:error, "grid_columns is required"}
   """
@@ -132,15 +132,15 @@ defmodule RivaAshWeb.Components.Interactive.GridPositionPicker do
 
   @doc """
   Validates grid dimensions.
-  
+
   ## Examples
-  
+
       iex> validate_grid_dimensions(5, 5)
       {:ok, {5, 5}}
-      
+
       iex> validate_grid_dimensions(0, 5)
       {:error, "grid_rows must be greater than 0"}
-      
+
       iex> validate_grid_dimensions(5, 0)
       {:error, "grid_columns must be greater than 0"}
   """
@@ -159,22 +159,23 @@ defmodule RivaAshWeb.Components.Interactive.GridPositionPicker do
 
   @doc """
   Validates selected position.
-  
+
   ## Examples
-  
+
       iex> validate_selected_position(3, 4)
       {:ok, {3, 4}}
-      
+
       iex> validate_selected_position(3, nil)
       {:ok, {3, nil}}
-      
+
       iex> validate_selected_position(-1, 4)
       {:error, "selected_row must be positive"}
-      
+
       iex> validate_selected_position(3, -1)
       {:error, "selected_column must be positive"}
   """
-  @spec validate_selected_position(integer() | nil, integer() | nil) :: {:ok, {integer() | nil, integer() | nil}} | {:error, String.t()}
+  @spec validate_selected_position(integer() | nil, integer() | nil) ::
+          {:ok, {integer() | nil, integer() | nil}} | {:error, String.t()}
   defp validate_selected_position(row, column) when is_integer(row) and is_integer(column) do
     cond do
       row <= 0 -> {:error, "selected_row must be positive"}
@@ -209,21 +210,21 @@ defmodule RivaAshWeb.Components.Interactive.GridPositionPicker do
 
   @doc """
   Validates occupied positions.
-  
+
   ## Examples
-  
+
       iex> validate_occupied_positions([{1, 1}, {2, 2}])
       {:ok, [{1, 1}, {2, 2}]}
-      
+
       iex> validate_occupied_positions([{1, -1}, {2, 2}])
       {:error, "Invalid position: {1, -1}"}
-      
+
       iex> validate_occupied_positions("invalid")
       {:error, "occupied_positions must be a list"}
   """
   @spec validate_occupied_positions(list()) :: {:ok, list()} | {:error, String.t()}
   defp validate_occupied_positions(positions) when is_list(positions) do
-    case Enum.find(positions, fn pos -> not is_valid_position(pos) end) do
+    case Enum.find(positions, fn pos -> not valid_position?(pos) end) do
       nil -> {:ok, positions}
       invalid_pos -> {:error, "Invalid position: #{inspect(invalid_pos)}"}
     end
@@ -235,42 +236,42 @@ defmodule RivaAshWeb.Components.Interactive.GridPositionPicker do
 
   @doc """
   Checks if a position is valid.
-  
+
   ## Examples
-  
-      iex> is_valid_position({1, 1})
+
+      iex> valid_position?({1, 1})
       true
-      
-      iex> is_valid_position({1, -1})
+
+      iex> valid_position?({1, -1})
       false
-      
-      iex> is_valid_position("invalid")
+
+      iex> valid_position?("invalid")
       false
   """
-  @spec is_valid_position(any()) :: boolean()
-  defp is_valid_position({row, column}) when is_integer(row) and is_integer(column) do
+  @spec valid_position?(any()) :: boolean()
+  defp valid_position?({row, column}) when is_integer(row) and is_integer(column) do
     row > 0 and column > 0
   end
 
-  defp is_valid_position(_position) do
+  defp valid_position?(_position) do
     false
   end
 
   @doc """
   Validates required assigns.
-  
+
   ## Examples
-  
+
       iex> validate_required(%{key: "value"}, [:key])
       {:ok, %{key: "value"}}
-      
+
       iex> validate_required(%{}, [:key])
       {:error, "key is required"}
   """
   @spec validate_required(map(), list(atom())) :: {:ok, map()} | {:error, String.t()}
   defp validate_required(assigns, required_keys) do
     missing_keys = required_keys -- Map.keys(assigns)
-    
+
     if Enum.empty?(missing_keys) do
       {:ok, assigns}
     else
@@ -280,9 +281,9 @@ defmodule RivaAshWeb.Components.Interactive.GridPositionPicker do
 
   @doc """
   Renders the picker component.
-  
+
   ## Examples
-  
+
       iex> render_picker(%{grid_rows: 5, grid_columns: 5, on_position_select: "event"})
       %Phoenix.LiveView.Rendered{...}
   """
@@ -292,7 +293,7 @@ defmodule RivaAshWeb.Components.Interactive.GridPositionPicker do
     <div class={["grid-position-picker", @class]} {@rest}>
       <div :if={@show_coordinates} class="selected-position">
         <p>
- Selected Position:
+    Selected Position:
           <%= if @selected_row && @selected_column do %>
             Row <%= @selected_row %>, Column <%= @selected_column %>
           <% else %>
@@ -309,14 +310,14 @@ defmodule RivaAshWeb.Components.Interactive.GridPositionPicker do
           :for={{row, col} <- generate_grid_positions(@grid_rows, @grid_columns)}
           class={[
             "grid-position",
-            if(is_selected_position(row, col, @selected_row, @selected_column), do: "selected", else: ""),
-            if(is_occupied_position(row, col, @occupied_positions), do: "occupied", else: "available")
+            if(selected_position?(row, col, @selected_row, @selected_column), do: "selected", else: ""),
+            if(occupied_position?({row, col}, @occupied_positions), do: "occupied", else: "available")
           ]}
           style={"grid-row: #{row}; grid-column: #{col}; aspect-ratio: 1; min-height: 30px;"}
           phx-click={@on_position_select}
           phx-value-row={row}
           phx-value-column={col}
-          disabled={is_occupied_position(row, col, @occupied_positions)}
+          disabled={occupied_position?({row, col}, @occupied_positions)}
           title={"Row #{row}, Column #{col}"}
         >
           <%= if @show_coordinates do %>
@@ -347,17 +348,18 @@ defmodule RivaAshWeb.Components.Interactive.GridPositionPicker do
 
   @doc """
   Generates all possible grid positions.
-  
+
   ## Examples
-  
+
       iex> generate_grid_positions(2, 2)
       [{1, 1}, {1, 2}, {2, 1}, {2, 2}]
-      
+
       iex> generate_grid_positions(1, 3)
       [{1, 1}, {1, 2}, {1, 3}]
   """
   @spec generate_grid_positions(integer(), integer()) :: list({integer(), integer()})
-  defp generate_grid_positions(rows, columns) when is_integer(rows) and is_integer(columns) and rows > 0 and columns > 0 do
+  defp generate_grid_positions(rows, columns)
+       when is_integer(rows) and is_integer(columns) and rows > 0 and columns > 0 do
     for row <- 1..rows, col <- 1..columns, do: {row, col}
   end
 
@@ -367,46 +369,46 @@ defmodule RivaAshWeb.Components.Interactive.GridPositionPicker do
 
   @doc """
   Checks if a position is selected.
-  
+
   ## Examples
-      
-      iex> is_selected_position(3, 4, 3, 4)
+
+      iex> selected_position?(3, 4, 3, 4)
       true
-      
-      iex> is_selected_position(3, 4, 3, nil)
+
+      iex> selected_position?(3, 4, 3, nil)
       true
-      
-      iex> is_selected_position(3, 4, nil, 4)
+
+      iex> selected_position?(3, 4, nil, 4)
       true
-      
-      iex> is_selected_position(3, 4, 5, 4)
+
+      iex> selected_position?(3, 4, 5, 4)
       false
   """
-  @spec is_selected_position(integer(), integer(), integer() | nil, integer() | nil) :: boolean()
-  defp is_selected_position(row, column, selected_row, selected_column) do
+  @spec selected_position?(integer(), integer(), integer() | nil, integer() | nil) :: boolean()
+  defp selected_position?(row, column, selected_row, selected_column) do
     (selected_row == row or selected_row == nil) and (selected_column == column or selected_column == nil)
   end
 
   @doc """
   Checks if a position is occupied.
-  
+
   ## Examples
-      
-      iex> is_occupied_position(1, 1, [{1, 1}, {2, 2}])
+
+      iex> occupied_position?({1, 1}, [{1, 1}, {2, 2}])
       true
-      
-      iex> is_occupied_position(1, 2, [{1, 1}, {2, 2}])
+
+      iex> occupied_position?({1, 2}, [{1, 1}, {2, 2}])
       false
-      
-      iex> is_occupied_position(1, 1, [])
+
+      iex> occupied_position?({1, 1}, [])
       false
   """
-  @spec is_occupied_position(integer(), integer(), list({integer(), integer()})) :: boolean()
-  defp is_occupied_position(row, column, occupied_positions) when is_list(occupied_positions) do
+  @spec occupied_position?({integer(), integer()}, list({integer(), integer()})) :: boolean()
+  defp occupied_position?({row, column}, occupied_positions) when is_list(occupied_positions) do
     {row, column} in occupied_positions
   end
 
-  defp is_occupied_position(_row, _column, _occupied_positions) do
+  defp occupied_position?(_position, _occupied_positions) do
     false
   end
 end

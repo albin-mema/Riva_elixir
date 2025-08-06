@@ -346,274 +346,290 @@ defmodule RivaAsh.Resources.ItemHold do
   ## Returns
   - `true` if the hold is active, `false` otherwise
   """
-  @spec is_active?(t()) :: boolean()
-  def is_active?(item_hold) do
-    with %{is_active: true, archived_at: nil} <- item_hold do
+  @spec active?(t()) :: boolean()
+  def active?(item_hold) do
+    case item_hold do
+      %{is_active: true, archived_at: nil} ->
         # Check if the hold has expired
         case DateTime.compare(item_hold.expires_at, DateTime.utc_now()) do
           :gt -> true
           _ -> false
         end
-      else
-        _ -> false
-      end
+      _ -> false
     end
+  end
 
-    @doc """
-    Checks if the item hold has expired.
+  @doc """
+  Checks if the item hold has expired.
 
-    ## Parameters
-    - item_hold: The item hold record to check
+  ## Parameters
+  - item_hold: The item hold record to check
 
-    ## Returns
-    - `true` if the hold has expired, `false` otherwise
-    """
-    @spec is_expired?(t()) :: boolean()
-    def is_expired?(item_hold) do
-      with %{is_active: true} <- item_hold do
+  ## Returns
+  - `true` if the hold has expired, `false` otherwise
+  """
+  @spec expired?(t()) :: boolean()
+  def expired?(item_hold) do
+    case item_hold do
+      %{is_active: true} ->
         case DateTime.compare(item_hold.expires_at, DateTime.utc_now()) do
           :lt -> true
           _ -> false
         end
-      else
-        _ -> false
-      end
+      _ -> false
     end
+  end
 
-    @doc """
-    Gets the remaining time until the hold expires.
+  @doc """
+  Gets the remaining time until the hold expires.
 
-    ## Parameters
-    - item_hold: The item hold record
+  ## Parameters
+  - item_hold: The item hold record
 
-    ## Returns
-    - `{:ok, seconds}` with remaining seconds, or `{:error, reason}` if invalid
-    """
-    @spec remaining_time(t()) :: {:ok, integer()} | {:error, String.t()}
-    def remaining_time(item_hold) do
-      with true <- is_active?(item_hold),
-           {:ok, remaining} <- DateTime.diff(item_hold.expires_at, DateTime.utc_now()) do
-        {:ok, remaining}
-      else
-        false -> {:error, "Hold is not active"}
-        {:error, reason} -> {:error, reason}
-      end
+  ## Returns
+  - `{:ok, seconds}` with remaining seconds, or `{:error, reason}` if invalid
+  """
+  @spec remaining_time(t()) :: {:ok, integer()} | {:error, String.t()}
+  def remaining_time(item_hold) do
+    case active?(item_hold) do
+      true ->
+        case DateTime.diff(item_hold.expires_at, DateTime.utc_now()) do
+          {:ok, remaining} -> {:ok, remaining}
+          {:error, reason} -> {:error, reason}
+        end
+      false -> {:error, "Hold is not active"}
     end
+  end
 
-    @doc """
-    Formats the remaining time in a human-readable format.
+  @doc """
+  Formats the remaining time in a human-readable format.
 
-    ## Parameters
-    - item_hold: The item hold record
+  ## Parameters
+  - item_hold: The item hold record
 
-    ## Returns
-    - String with formatted remaining time or "Expired"
-    """
-    @spec formatted_remaining_time(t()) :: String.t()
-    def formatted_remaining_time(item_hold) do
-      case remaining_time(item_hold) do
-        {:ok, seconds} when seconds > 0 ->
-          format_duration(seconds)
+  ## Returns
+  - String with formatted remaining time or "Expired"
+  """
+  @spec formatted_remaining_time(t()) :: String.t()
+  def formatted_remaining_time(item_hold) do
+    case remaining_time(item_hold) do
+      {:ok, seconds} when seconds > 0 ->
+        format_duration(seconds)
 
-        {:ok, _} ->
-          "Expired"
+      {:ok, _} ->
+        "Expired"
 
-        {:error, _} ->
-          "Invalid hold"
-      end
+      {:error, _} ->
+        "Invalid hold"
     end
+  end
 
-    @doc """
-    Gets the duration of the hold in minutes.
+  @doc """
+  Gets the duration of the hold in minutes.
 
-    ## Parameters
-    - item_hold: The item hold record
+  ## Parameters
+  - item_hold: The item hold record
 
-    ## Returns
-    - Integer with duration in minutes
-    """
-    @spec duration_minutes(t()) :: integer()
-    def duration_minutes(item_hold) do
-      DateTime.diff(item_hold.reserved_until, item_hold.reserved_from, :second) |> div(60)
+  ## Returns
+  - Integer with duration in minutes
+  """
+  @spec duration_minutes(t()) :: integer()
+  def duration_minutes(item_hold) do
+    DateTime.diff(item_hold.reserved_until, item_hold.reserved_from, :second) |> div(60)
+  end
+
+  @doc """
+  Gets the hold duration in a human-readable format.
+
+  ## Parameters
+  - item_hold: The item hold record
+
+  ## Returns
+  - String with formatted duration
+  """
+  @spec formatted_duration(t()) :: String.t()
+  def formatted_duration(item_hold) do
+    duration_minutes(item_hold) |> format_duration_minutes()
+  end
+
+  @doc """
+  Checks if the hold is for the specified time range.
+
+  ## Parameters
+  - item_hold: The item hold record
+  - start_time: Start time to check against
+  - end_time: End time to check against
+
+  ## Returns
+  - `true` if the hold overlaps with the specified time range, `false` otherwise
+  """
+  @spec overlaps_with?(t(), DateTime.t(), DateTime.t()) :: boolean()
+  def overlaps_with?(item_hold, start_time, end_time) do
+    DateTime.compare(item_hold.reserved_until, start_time) == :gt and
+      DateTime.compare(item_hold.reserved_from, end_time) == :lt
+  end
+
+  @doc """
+  Releases the hold by marking it as inactive.
+
+  ## Parameters
+  - item_hold: The item hold record to release
+
+  ## Returns
+  - `{:ok, updated_hold}` if successful
+  - `{:error, reason}` if failed
+  """
+  @spec release(t()) :: {:ok, t()} | {:error, String.t()}
+  def release(item_hold) do
+    case Ash.update(item_hold, action: :release, domain: RivaAsh.Domain) do
+      {:ok, updated_hold} -> {:ok, updated_hold}
+      {:error, reason} -> {:error, "Failed to release hold: #{inspect(reason)}"}
     end
+  end
 
-    @doc """
-    Gets the hold duration in a human-readable format.
+  @doc """
+  Extends the hold duration by the specified number of minutes.
 
-    ## Parameters
-    - item_hold: The item hold record
+  ## Parameters
+  - item_hold: The item hold record to extend
+  - additional_minutes: Number of minutes to add
 
-    ## Returns
-    - String with formatted duration
-    """
-    @spec formatted_duration(t()) :: String.t()
-    def formatted_duration(item_hold) do
-      duration_minutes(item_hold) |> format_duration_minutes()
+  ## Returns
+  - `{:ok, updated_hold}` if successful
+  - `{:error, reason}` if failed
+  """
+  @spec extend(t(), integer()) :: {:ok, t()} | {:error, String.t()}
+  def extend(item_hold, additional_minutes) when additional_minutes > 0 do
+    case Ash.update(item_hold,
+           action: :extend,
+           arguments: [additional_minutes: additional_minutes],
+           domain: RivaAsh.Domain
+         ) do
+      {:ok, updated_hold} -> {:ok, updated_hold}
+      {:error, reason} -> {:error, "Failed to extend hold: #{inspect(reason)}"}
     end
+  end
 
-    @doc """
-    Checks if the hold is for the specified time range.
+  def extend(_item_hold, additional_minutes) do
+    {:error, "Additional minutes must be positive"}
+  end
 
-    ## Parameters
-    - item_hold: The item hold record
-    - start_time: Start time to check against
-    - end_time: End time to check against
+  @doc """
+  Validates that the hold has all required relationships.
 
-    ## Returns
-    - `true` if the hold overlaps with the specified time range, `false` otherwise
-    """
-    @spec overlaps_with?(t(), DateTime.t(), DateTime.t()) :: boolean()
-    def overlaps_with?(item_hold, start_time, end_time) do
-      DateTime.compare(item_hold.reserved_until, start_time) == :gt and
-        DateTime.compare(item_hold.reserved_from, end_time) == :lt
+  ## Parameters
+  - item_hold: The item hold record to validate
+
+  ## Returns
+  - `{:ok, item_hold}` if valid
+  - `{:error, reason}` if invalid
+  """
+  @spec validate_relationships(t()) :: {:ok, t()} | {:error, String.t()}
+  def validate_relationships(item_hold) do
+    cond do
+      is_nil(item_hold.item) ->
+        {:error, "Item relationship is missing"}
+
+      is_nil(item_hold.client) ->
+        {:error, "Client relationship is missing"}
+
+      true ->
+        {:ok, item_hold}
     end
+  end
 
-    @doc """
-    Releases the hold by marking it as inactive.
+  @doc """
+  Checks if the hold can be extended.
 
-    ## Parameters
-    - item_hold: The item hold record to release
+  ## Parameters
+  - item_hold: The item hold record to check
 
-    ## Returns
-    - `{:ok, updated_hold}` if successful
-    - `{:error, reason}` if failed
-    """
-    @spec release(t()) :: {:ok, t()} | {:error, String.t()}
-    def release(item_hold) do
-      case Ash.update(item_hold, action: :release, domain: RivaAsh.Domain) do
-        {:ok, updated_hold} -> {:ok, updated_hold}
-        {:error, reason} -> {:error, "Failed to release hold: #{inspect(reason)}"}
-      end
+  ## Returns
+  - `true` if the hold can be extended, `false` otherwise
+  """
+  @spec can_extend?(t()) :: boolean()
+  def can_extend?(item_hold) do
+    case active?(item_hold) do
+      true ->
+        case remaining_time(item_hold) do
+          {:ok, remaining} -> remaining > 300
+          _ -> false
+        end
+      _ -> false
     end
+  end
 
-    @doc """
-    Extends the hold duration by the specified number of minutes.
+  @doc """
+  Gets the maximum extension time for the hold.
 
-    ## Parameters
-    - item_hold: The item hold record to extend
-    - additional_minutes: Number of minutes to add
+  ## Parameters
+  - item_hold: The item hold record
 
-    ## Returns
-    - `{:ok, updated_hold}` if successful
-    - `{:error, reason}` if failed
-    """
-    @spec extend(t(), integer()) :: {:ok, t()} | {:error, String.t()}
-    def extend(item_hold, additional_minutes) when additional_minutes > 0 do
-      case Ash.update(item_hold, action: :extend, arguments: [additional_minutes: additional_minutes], domain: RivaAsh.Domain) do
-        {:ok, updated_hold} -> {:ok, updated_hold}
-        {:error, reason} -> {:error, "Failed to extend hold: #{inspect(reason)}"}
-      end
+  ## Returns
+  - Integer with maximum additional minutes allowed
+  """
+  @spec max_extension_minutes(t()) :: integer()
+  def max_extension_minutes(item_hold) do
+    case active?(item_hold) do
+      true ->
+        case remaining_time(item_hold) do
+          {:ok, remaining} -> min(div(remaining, 60), 10)
+          _ -> 0
+        end
+      _ -> 0
     end
+  end
 
-    def extend(_item_hold, additional_minutes) do
-      {:error, "Additional minutes must be positive"}
+  @doc """
+  Formats the hold information for display.
+
+  ## Parameters
+  - item_hold: The item hold record
+
+  ## Returns
+  - String with formatted hold information
+  """
+  @spec formatted_info(t()) :: String.t()
+  def formatted_info(item_hold) do
+    case active?(item_hold) do
+      true ->
+        case item_hold.item.name do
+          item_name ->
+            case display_name(item_hold.client) do
+              client_name ->
+                case formatted_remaining_time(item_hold) do
+                  remaining_time -> "#{client_name} has hold on '#{item_name}' until #{remaining_time}"
+                end
+            end
+        end
+      false ->
+        "Hold on '#{item_hold.item.name}' has expired"
     end
+  end
 
-    @doc """
-    Validates that the hold has all required relationships.
+  # Private helper functions
 
-    ## Parameters
-    - item_hold: The item hold record to validate
+  defp format_duration(seconds) when seconds < 60, do: "#{seconds} seconds"
+  defp format_duration(seconds) when seconds < 3600, do: "#{div(seconds, 60)} minutes"
+  defp format_duration(seconds), do: "#{div(seconds, 3600)} hours"
 
-    ## Returns
-    - `{:ok, item_hold}` if valid
-    - `{:error, reason}` if invalid
-    """
-    @spec validate_relationships(t()) :: {:ok, t()} | {:error, String.t()}
-    def validate_relationships(item_hold) do
-      cond do
-        is_nil(item_hold.item) ->
-          {:error, "Item relationship is missing"}
+  defp format_duration_minutes(minutes) when minutes < 60, do: "#{minutes} minutes"
+  defp format_duration_minutes(minutes) when minutes == 60, do: "1 hour"
+  defp format_duration_minutes(minutes), do: "#{div(minutes, 60)} hours"
 
-        is_nil(item_hold.client) ->
-          {:error, "Client relationship is missing"}
+  defp display_name(client) do
+    case client do
+      %{first_name: first, last_name: last} when is_binary(first) and is_binary(last) ->
+        "#{first} #{last}"
 
-        true ->
-          {:ok, item_hold}
-      end
+      %{first_name: first} when is_binary(first) ->
+        first
+
+      %{last_name: last} when is_binary(last) ->
+        last
+
+      _ ->
+        "Unknown client"
     end
-
-    @doc """
-    Checks if the hold can be extended.
-
-    ## Parameters
-    - item_hold: The item hold record to check
-
-    ## Returns
-    - `true` if the hold can be extended, `false` otherwise
-    """
-    @spec can_extend?(t()) :: boolean()
-    def can_extend?(item_hold) do
-      with true <- is_active?(item_hold),
-           {:ok, remaining} <- remaining_time(item_hold) do
-        # Allow extension if there's more than 5 minutes remaining
-        remaining > 300
-      else
-        _ -> false
-      end
-    end
-
-    @doc """
-    Gets the maximum extension time for the hold.
-
-    ## Parameters
-    - item_hold: The item hold record
-
-    ## Returns
-    - Integer with maximum additional minutes allowed
-    """
-    @spec max_extension_minutes(t()) :: integer()
-    def max_extension_minutes(item_hold) do
-      with true <- is_active?(item_hold),
-           {:ok, remaining} <- remaining_time(item_hold) do
-        # Allow up to 50% of remaining time or 10 minutes, whichever is less
-        min(div(remaining, 60), 10)
-      else
-        _ -> 0
-      end
-    end
-
-    @doc """
-    Formats the hold information for display.
-
-    ## Parameters
-    - item_hold: The item hold record
-
-    ## Returns
-    - String with formatted hold information
-    """
-    @spec formatted_info(t()) :: String.t()
-    def formatted_info(item_hold) do
-      with true <- is_active?(item_hold),
-           item_name <- item_hold.item.name,
-           client_name <- display_name(item_hold.client),
-           remaining_time <- formatted_remaining_time(item_hold) do
-        "#{client_name} has hold on '#{item_name}' until #{remaining_time}"
-      else
-        false ->
-          "Hold on '#{item_hold.item.name}' has expired"
-      end
-    end
-
-    # Private helper functions
-
-    defp format_duration(seconds) when seconds < 60, do: "#{seconds} seconds"
-    defp format_duration(seconds) when seconds < 3600, do: "#{div(seconds, 60)} minutes"
-    defp format_duration(seconds), do: "#{div(seconds, 3600)} hours"
-
-    defp format_duration_minutes(minutes) when minutes < 60, do: "#{minutes} minutes"
-    defp format_duration_minutes(minutes) when minutes == 60, do: "1 hour"
-    defp format_duration_minutes(minutes), do: "#{div(minutes, 60)} hours"
-
-    defp display_name(client) do
-      case client do
-        %{first_name: first, last_name: last} when is_binary(first) and is_binary(last) ->
-          "#{first} #{last}"
-        %{first_name: first} when is_binary(first) ->
-          first
-        %{last_name: last} when is_binary(last) ->
-          last
-        _ -> "Unknown client"
-      end
-    end
+  end
 end

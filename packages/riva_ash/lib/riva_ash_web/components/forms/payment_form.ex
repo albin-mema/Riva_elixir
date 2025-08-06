@@ -1,15 +1,15 @@
 defmodule RivaAshWeb.Components.Forms.PaymentForm do
   @moduledoc """
   Payment processing form component.
-  
+
   This component follows the functional core, imperative shell pattern,
   with pure functions for data transformation and validation, and
   the LiveView component handling UI state and side effects.
-  
+
   ## Styleguide Compliance
-  
+
   This module follows the Riva Ash styleguide principles:
-  
+
   - **Functional Programming**: Uses pure functions, pattern matching, and pipelines
   - **Type Safety**: Comprehensive type specifications with @spec annotations
   - **Single Level of Abstraction**: Each function has a clear, focused responsibility
@@ -23,41 +23,41 @@ defmodule RivaAshWeb.Components.Forms.PaymentForm do
   import RivaAshWeb.Components.Atoms.Button
 
   @type assigns :: %{
-    optional(:form) => map(),
-    optional(:reservation) => map(),
-    optional(:payment_methods) => list(),
-    optional(:on_submit) => String.t(),
-    optional(:on_change) => String.t(),
-    optional(:on_cancel) => String.t(),
-    optional(:loading) => boolean(),
-    optional(:class) => String.t(),
-    optional(:rest) => any()
-  }
+          optional(:form) => map(),
+          optional(:reservation) => map(),
+          optional(:payment_methods) => list(),
+          optional(:on_submit) => String.t(),
+          optional(:on_change) => String.t(),
+          optional(:on_cancel) => String.t(),
+          optional(:loading) => boolean(),
+          optional(:class) => String.t(),
+          optional(:rest) => any()
+        }
 
   @type payment_form_data :: %{
-    payment_method: String.t(),
-    card_number: String.t(),
-    card_holder_name: String.t(),
-    expiry_month: String.t(),
-    expiry_year: String.t(),
-    cvv: String.t(),
-    bank_account: String.t(),
-    routing_number: String.t(),
-    amount_received: float(),
-    change_given: float(),
-    notes: String.t()
-  }
+          payment_method: String.t(),
+          card_number: String.t(),
+          card_holder_name: String.t(),
+          expiry_month: String.t(),
+          expiry_year: String.t(),
+          cvv: String.t(),
+          bank_account: String.t(),
+          routing_number: String.t(),
+          amount_received: float(),
+          change_given: float(),
+          notes: String.t()
+        }
 
   @type reservation_summary :: %{
-    client_name: String.t(),
-    item_name: String.t(),
-    date: String.t(),
-    total_amount: float()
-  }
+          client_name: String.t(),
+          item_name: String.t(),
+          date: String.t(),
+          total_amount: float()
+        }
 
   @doc """
   Renders a payment form.
-  
+
   ## Examples
       <.payment_form
         form={@form}
@@ -206,7 +206,7 @@ defmodule RivaAshWeb.Components.Forms.PaymentForm do
 
   @doc """
   Validates payment form data.
-  
+
   ## Returns
     {:ok, validated_data} | {:error, changeset}
   """
@@ -224,7 +224,7 @@ defmodule RivaAshWeb.Components.Forms.PaymentForm do
   defp validate_required_fields(params) when is_map(params) do
     required_fields = [:payment_method]
     missing_fields = required_fields |> Enum.filter(&is_nil(Map.get(params, &1)))
-    
+
     case missing_fields do
       [] -> :ok
       _ -> {:error, %{missing_fields: missing_fields}}
@@ -233,7 +233,7 @@ defmodule RivaAshWeb.Components.Forms.PaymentForm do
 
   defp validate_payment_method_fields(params) when is_map(params) do
     payment_method = Map.get(params, :payment_method)
-    
+
     case payment_method do
       "credit_card" -> validate_credit_card_fields(params)
       "bank_transfer" -> validate_bank_transfer_fields(params)
@@ -245,7 +245,7 @@ defmodule RivaAshWeb.Components.Forms.PaymentForm do
   defp validate_credit_card_fields(params) when is_map(params) do
     required_fields = [:card_number, :card_holder_name, :expiry_month, :expiry_year, :cvv]
     missing_fields = required_fields |> Enum.filter(&is_nil(Map.get(params, &1)))
-    
+
     case missing_fields do
       [] -> :ok
       _ -> {:error, %{missing_fields: missing_fields}}
@@ -255,7 +255,7 @@ defmodule RivaAshWeb.Components.Forms.PaymentForm do
   defp validate_bank_transfer_fields(params) when is_map(params) do
     required_fields = [:bank_account, :routing_number]
     missing_fields = required_fields |> Enum.filter(&is_nil(Map.get(params, &1)))
-    
+
     case missing_fields do
       [] -> :ok
       _ -> {:error, %{missing_fields: missing_fields}}
@@ -315,17 +315,26 @@ defmodule RivaAshWeb.Components.Forms.PaymentForm do
   @spec expiry_month_options() :: list({String.t(), String.t()})
   defp expiry_month_options do
     Application.compile_env(:riva_ash, :expiry_month_options, [
-      {"01", "01"}, {"02", "02"}, {"03", "03"}, {"04", "04"},
-      {"05", "05"}, {"06", "06"}, {"07", "07"}, {"08", "08"},
-      {"09", "09"}, {"10", "10"}, {"11", "11"}, {"12", "12"}
+      {"01", "01"},
+      {"02", "02"},
+      {"03", "03"},
+      {"04", "04"},
+      {"05", "05"},
+      {"06", "06"},
+      {"07", "07"},
+      {"08", "08"},
+      {"09", "09"},
+      {"10", "10"},
+      {"11", "11"},
+      {"12", "12"}
     ])
   end
 
   @spec expiry_year_options() :: list({String.t(), String.t()})
   defp expiry_year_options do
     current_year = DateTime.utc_now().year
-    years = current_year..current_year + 10
-    
+    years = current_year..(current_year + 10)
+
     Enum.map(years, fn year ->
       {to_string(year), to_string(year)}
     end)

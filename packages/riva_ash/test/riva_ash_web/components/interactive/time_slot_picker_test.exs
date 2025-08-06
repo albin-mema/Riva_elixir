@@ -30,8 +30,7 @@ defmodule RivaAshWeb.Components.Interactive.TimeSlotPickerTest do
             on_slot_deselect: "deselect_slot"
           }
 
-          {:ok,
-           Phoenix.LiveView.Utils.assign(socket, assigns),
+          {:ok, Phoenix.LiveView.Utils.assign(socket, assigns),
            fn assigns ->
              ~H"""
              <div id="host">

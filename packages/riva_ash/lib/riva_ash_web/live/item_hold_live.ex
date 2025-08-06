@@ -19,6 +19,7 @@ defmodule RivaAshWeb.ItemHoldLive do
         case load_item_holds_data(socket, user) do
           {:ok, socket} ->
             {:ok, socket}
+
           {:error, reason} ->
             Logger.error("Failed to load item holds: #{inspect(reason)}")
             {:ok, redirect(socket, to: "/access-denied")}
@@ -96,13 +97,13 @@ defmodule RivaAshWeb.ItemHoldLive do
   def handle_event("cancel_item_hold", %{"id" => id}, socket) do
     case HoldService.cancel_hold(id, socket.assigns.current_user) do
       {:ok, _item_hold} ->
-        {:noreply, 
+        {:noreply,
          socket
          |> put_flash(:info, "Item hold cancelled successfully")
          |> reload_item_holds()}
-      
+
       {:error, reason} ->
-        {:noreply, 
+        {:noreply,
          socket
          |> put_flash(:error, "Failed to cancel item hold: #{format_error(reason)}")}
     end
@@ -111,13 +112,13 @@ defmodule RivaAshWeb.ItemHoldLive do
   def handle_event("delete_item_hold", %{"id" => id}, socket) do
     case HoldService.delete_hold(id, socket.assigns.current_user) do
       {:ok, _item_hold} ->
-        {:noreply, 
+        {:noreply,
          socket
          |> put_flash(:info, "Item hold deleted successfully")
          |> reload_item_holds()}
-      
+
       {:error, reason} ->
-        {:noreply, 
+        {:noreply,
          socket
          |> put_flash(:error, "Failed to delete item hold: #{format_error(reason)}")}
     end
@@ -142,9 +143,9 @@ defmodule RivaAshWeb.ItemHoldLive do
           |> assign(:item_holds, item_holds)
           |> assign(:meta, meta)
           |> assign(:loading, false)
-        
+
         {:ok, socket}
-      
+
       {:error, reason} ->
         {:error, reason}
     end
@@ -155,7 +156,7 @@ defmodule RivaAshWeb.ItemHoldLive do
       {:ok, {item_holds, meta}} ->
         assign(socket, :item_holds, item_holds)
         |> assign(:meta, meta)
-      
+
       {:error, _reason} ->
         socket
     end
@@ -166,22 +167,30 @@ defmodule RivaAshWeb.ItemHoldLive do
   end
 
   defp format_datetime(nil), do: "N/A"
+
   defp format_datetime(datetime) do
     case DateTime.from_naive(datetime, "Etc/UTC") do
-      {:ok, datetime} -> 
+      {:ok, datetime} ->
         Calendar.strftime(datetime, "%Y-%m-%d %H:%M:%S")
-      {:error, _} -> 
+
+      {:error, _} ->
         "Invalid date"
     end
   end
 
   defp format_error(reason) do
     case reason do
-      %Ash.Error.Invalid{errors: errors} -> 
-        errors |> Enum.map(&format_validation_error/1) |> Enum.join(", ")
-      %Ash.Error.Forbidden{} -> "You don't have permission to perform this action"
-      %Ash.Error.NotFound{} -> "Item hold not found"
-      _ -> "An unexpected error occurred"
+      %Ash.Error.Invalid{errors: errors} ->
+        Enum.map_join(errors, ", ", &format_validation_error/1)
+
+      %Ash.Error.Forbidden{} ->
+        "You don't have permission to perform this action"
+
+      %Ash.Error.NotFound{} ->
+        "Item hold not found"
+
+      _ ->
+        "An unexpected error occurred"
     end
   end
 

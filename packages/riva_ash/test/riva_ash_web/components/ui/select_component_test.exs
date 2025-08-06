@@ -12,6 +12,7 @@ defmodule RivaAshWeb.Components.UI.SelectComponentTest do
     @spec test_renders_with_prompt_and_options :: :ok
     test "renders with prompt and options" do
       assigns = %{}
+
       html =
         rendered_to_string(~H"""
         <Select.select
@@ -33,6 +34,7 @@ defmodule RivaAshWeb.Components.UI.SelectComponentTest do
     @spec test_applies_size_and_variant_classes :: :ok
     test "applies size and variant classes" do
       assigns = %{}
+
       html =
         rendered_to_string(~H"""
         <Select.select options={[]} size="lg" variant="error" />
@@ -46,6 +48,7 @@ defmodule RivaAshWeb.Components.UI.SelectComponentTest do
     @spec test_multiple_disabled_required_attributes_propagate :: :ok
     test "multiple, disabled, required attributes propagate" do
       assigns = %{}
+
       html =
         rendered_to_string(~H"""
         <Select.select options={[]} multiple disabled required />

@@ -109,15 +109,11 @@ defmodule RivaAshWeb.Components.Organisms.ItemForm do
 
   # Helper function to build form classes
   @spec build_form_class() :: String.t()
-  defp build_form_class() do
-    ""
-  end
+  defp build_form_class, do: ""
 
   # Helper function to build basic info classes
   @spec build_basic_info_class() :: String.t()
-  defp build_basic_info_class() do
-    "space-y-4"
-  end
+  defp build_basic_info_class, do: "space-y-4"
 
   # Helper function to build section type classes
   @spec build_section_type_class(list(), list()) :: String.t()
@@ -127,31 +123,21 @@ defmodule RivaAshWeb.Components.Organisms.ItemForm do
 
   # Helper function to build availability classes
   @spec build_availability_class() :: String.t()
-  defp build_availability_class() do
-    "grid grid-cols-1 md:grid-cols-2 gap-4"
-  end
+  defp build_availability_class, do: "grid grid-cols-1 md:grid-cols-2 gap-4"
 
   # Helper function to build capacity classes
   @spec build_capacity_class() :: String.t()
-  defp build_capacity_class() do
-    ""
-  end
+  defp build_capacity_class, do: ""
 
   # Helper function to build public settings classes
   @spec build_public_settings_class() :: String.t()
-  defp build_public_settings_class() do
-    "space-y-4 p-4 bg-green-50 rounded-lg border border-green-200"
-  end
+  defp build_public_settings_class, do: "space-y-4 p-4 bg-green-50 rounded-lg border border-green-200"
 
   # Helper function to build position classes
   @spec build_position_class() :: String.t()
-  defp build_position_class() do
-    "space-y-4"
-  end
+  defp build_position_class, do: "space-y-4"
 
   # Helper function to build actions classes
   @spec build_actions_class() :: String.t()
-  defp build_actions_class() do
-    "flex gap-3"
-  end
+  defp build_actions_class, do: "flex gap-3"
 end

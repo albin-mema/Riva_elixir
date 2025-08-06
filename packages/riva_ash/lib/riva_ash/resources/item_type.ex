@@ -254,12 +254,12 @@ defmodule RivaAsh.Resources.ItemType do
   defp apply_business_filter(query, nil), do: query
 
   defp apply_business_filter(query, business_id) do
-    Ash.Query.filter(query, expr(business_id == ^business_id))
+    Ash.Query.filter(query, [item_type], item_type.business_id == ^business_id)
   end
 
   @spec apply_active_filter(Ash.Query.t()) :: Ash.Query.t()
   defp apply_active_filter(query) do
-    Ash.Query.filter(query, expr(is_active == true and is_nil(archived_at)))
+    Ash.Query.filter(query, [item_type], item_type.is_active == true and is_nil(item_type.archived_at))
   end
 
   @spec apply_search_filter(Ash.Query.t(), String.t() | nil) :: Ash.Query.t()
@@ -267,53 +267,39 @@ defmodule RivaAsh.Resources.ItemType do
 
   defp apply_search_filter(query, search_term) do
     search_term = "%#{search_term}%"
-    Ash.Query.filter(query,
-      or: [
-        expr(name like ^search_term),
-        expr(description like ^search_term)
-      ]
+
+    Ash.Query.filter(
+      query,
+      [item_type],
+      ilike(item_type.name, ^search_term) or ilike(item_type.description, ^search_term)
     )
-  end
-
-  # Private helper functions
-  @spec display_name(__MODULE__.t()) :: String.t()
-  defp display_name(item_type) do
-    business_name =
-      if item_type.business do
-        item_type.business.name
-      else
-        "Unknown Business"
-      end
-
-    "#{item_type.name} (#{business_name})"
   end
 
   # Helper functions for business logic and data validation
 
   @doc """
   Checks if the item type is currently active (not archived).
-  
+
   ## Parameters
   - item_type: The item type record to check
-  
+
   ## Returns
   - `true` if the item type is active, `false` otherwise
   """
-  @spec is_active?(t()) :: boolean()
-  def is_active?(item_type) do
-    with %{archived_at: nil} <- item_type do
-      true
-    else
+  @spec active?(t()) :: boolean()
+  def active?(item_type) do
+    case item_type do
+      %{archived_at: nil} -> true
       _ -> false
     end
   end
 
   @doc """
   Checks if the item type has a valid color specified.
-  
+
   ## Parameters
   - item_type: The item type record to check
-  
+
   ## Returns
   - `true` if color is valid, `false` otherwise
   """
@@ -328,10 +314,10 @@ defmodule RivaAsh.Resources.ItemType do
 
   @doc """
   Gets the display name of the item type with business information.
-  
+
   ## Parameters
   - item_type: The item type record
-  
+
   ## Returns
   - String with the formatted display name
   """
@@ -349,19 +335,22 @@ defmodule RivaAsh.Resources.ItemType do
 
   @doc """
   Gets the formatted color information for display.
-  
+
   ## Parameters
   - item_type: The item type record
-  
+
   ## Returns
   - String with formatted color information
   """
   @spec color_info(t()) :: String.t()
   def color_info(item_type) do
     case item_type.color do
-      nil -> "No color specified"
+      nil ->
+        "No color specified"
+
       color when is_binary(color) and String.match?(color, ~r/^#[0-9A-Fa-f]{6}$/) ->
         "Color: #{color}"
+
       _ ->
         "Invalid color format"
     end
@@ -369,10 +358,10 @@ defmodule RivaAsh.Resources.ItemType do
 
   @doc """
   Gets the icon information for display.
-  
+
   ## Parameters
   - item_type: The item type record
-  
+
   ## Returns
   - String with icon information or "No icon specified"
   """
@@ -387,10 +376,10 @@ defmodule RivaAsh.Resources.ItemType do
 
   @doc """
   Gets the item count for this item type.
-  
+
   ## Parameters
   - item_type: The item type record
-  
+
   ## Returns
   - Integer with the number of items of this type
   """
@@ -401,10 +390,10 @@ defmodule RivaAsh.Resources.ItemType do
 
   @doc """
   Checks if the item type has any associated items.
-  
+
   ## Parameters
   - item_type: The item type record to check
-  
+
   ## Returns
   - `true` if items exist, `false` otherwise
   """
@@ -413,10 +402,10 @@ defmodule RivaAsh.Resources.ItemType do
 
   @doc """
   Gets the pricing rule count for this item type.
-  
+
   ## Parameters
   - item_type: The item type record
-  
+
   ## Returns
   - Integer with the number of pricing rules
   """
@@ -427,10 +416,10 @@ defmodule RivaAsh.Resources.ItemType do
 
   @doc """
   Checks if the item type has any pricing rules.
-  
+
   ## Parameters
   - item_type: The item type record to check
-  
+
   ## Returns
   - `true` if pricing rules exist, `false` otherwise
   """
@@ -439,10 +428,10 @@ defmodule RivaAsh.Resources.ItemType do
 
   @doc """
   Validates that the item type has all required relationships.
-  
+
   ## Parameters
   - item_type: The item type record to validate
-  
+
   ## Returns
   - `{:ok, item_type}` if valid
   - `{:error, reason}` if invalid
@@ -452,7 +441,7 @@ defmodule RivaAsh.Resources.ItemType do
     cond do
       is_nil(item_type.business) ->
         {:error, "Business relationship is missing"}
-      
+
       true ->
         {:ok, item_type}
     end
@@ -460,23 +449,23 @@ defmodule RivaAsh.Resources.ItemType do
 
   @doc """
   Formats the complete item type information for display.
-  
+
   ## Parameters
   - item_type: The item type record
-  
+
   ## Returns
   - String with complete item type information
   """
   @spec formatted_info(t()) :: String.t()
   def formatted_info(item_type) do
-    with true <- is_active?(item_type),
-         display_name <- display_name(item_type),
-         description <- item_type.description || "No description",
-         item_count <- item_count(item_type),
-         color_info <- color_info(item_type),
-         icon_info <- icon_info(item_type) do
-      "#{display_name}: #{description} | Items: #{item_count} | #{color_info} | #{icon_info}"
-    else
+    case is_active?(item_type) do
+      true ->
+        display_name = display_name(item_type)
+        description = item_type.description || "No description"
+        item_count = item_count(item_type)
+        color_info = color_info(item_type)
+        icon_info = icon_info(item_type)
+        "#{display_name}: #{description} | Items: #{item_count} | #{color_info} | #{icon_info}"
       false ->
         "Archived item type: #{display_name(item_type)}"
     end
@@ -484,10 +473,10 @@ defmodule RivaAsh.Resources.ItemType do
 
   @doc """
   Gets the business name associated with this item type.
-  
+
   ## Parameters
   - item_type: The item type record
-  
+
   ## Returns
   - String with the business name
   """
@@ -501,10 +490,10 @@ defmodule RivaAsh.Resources.ItemType do
 
   @doc """
   Checks if the item type can be safely deleted.
-  
+
   ## Parameters
   - item_type: The item type record to check
-  
+
   ## Returns
   - `true` if can be deleted, `false` otherwise
   """
@@ -515,10 +504,10 @@ defmodule RivaAsh.Resources.ItemType do
 
   @doc """
   Gets the reason why the item type cannot be deleted.
-  
+
   ## Parameters
   - item_type: The item type record to check
-  
+
   ## Returns
   - String with deletion reason or empty string if can be deleted
   """
@@ -533,10 +522,10 @@ defmodule RivaAsh.Resources.ItemType do
 
   @doc """
   Validates the item type data.
-  
+
   ## Parameters
   - item_type: The item type record to validate
-  
+
   ## Returns
   - `{:ok, item_type}` if valid
   - `{:error, reason}` if invalid
@@ -546,10 +535,10 @@ defmodule RivaAsh.Resources.ItemType do
     cond do
       is_nil(item_type.name) or item_type.name == "" ->
         {:error, "Item type name is required"}
-      
+
       not has_valid_color?(item_type) ->
         {:error, "Invalid color format"}
-      
+
       true ->
         {:ok, item_type}
     end
@@ -580,44 +569,5 @@ defmodule RivaAsh.Resources.ItemType do
       {:ok, item_type} -> get_business(item_type_id)
       {:error, reason} -> {:error, reason}
     end
-  end
-
-  # Private helper functions for filtering
-  @spec apply_business_filter(Ash.Query.t(), String.t() | nil) :: Ash.Query.t()
-  defp apply_business_filter(query, nil), do: query
-
-  defp apply_business_filter(query, business_id) do
-    Ash.Query.filter(query, expr(business_id == ^business_id))
-  end
-
-  @spec apply_active_filter(Ash.Query.t()) :: Ash.Query.t()
-  defp apply_active_filter(query) do
-    Ash.Query.filter(query, expr(is_active == true and is_nil(archived_at)))
-  end
-
-  @spec apply_search_filter(Ash.Query.t(), String.t() | nil) :: Ash.Query.t()
-  defp apply_search_filter(query, nil), do: query
-
-  defp apply_search_filter(query, search_term) do
-    search_term = "%#{search_term}%"
-    Ash.Query.filter(query,
-      or: [
-        expr(name like ^search_term),
-        expr(description like ^search_term)
-      ]
-    )
-  end
-
-  # Private helper functions
-  @spec display_name(__MODULE__.t()) :: String.t()
-  defp display_name(item_type) do
-    business_name =
-      if item_type.business do
-        item_type.business.name
-      else
-        "Unknown Business"
-      end
-
-    "#{item_type.name} (#{business_name})"
   end
 end

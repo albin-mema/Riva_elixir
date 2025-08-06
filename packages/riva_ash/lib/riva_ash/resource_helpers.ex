@@ -168,8 +168,10 @@ defmodule RivaAsh.ResourceHelpers do
   """
   @spec standard_paper_trail(Keyword.t()) :: Macro.t()
   defmacro standard_paper_trail(opts \\ []) do
-    with {:ok, ignore_attributes} <- validate_ignore_attributes(Keyword.get(opts, :ignore_attributes, [:inserted_at, :updated_at])),
-         {:ok, create_version_on_destroy} <- validate_create_version_on_destroy(Keyword.get(opts, :create_version_on_destroy?, true)) do
+    with {:ok, ignore_attributes} <-
+           validate_ignore_attributes(Keyword.get(opts, :ignore_attributes, [:inserted_at, :updated_at])),
+         {:ok, create_version_on_destroy} <-
+           validate_create_version_on_destroy(Keyword.get(opts, :create_version_on_destroy?, true)) do
       build_paper_trail_config(ignore_attributes, create_version_on_destroy)
     else
       {:error, reason} -> raise ArgumentError, "Invalid standard_paper_trail options: #{reason}"
@@ -244,7 +246,7 @@ defmodule RivaAsh.ResourceHelpers do
   """
   @spec standard_business_resource(String.t(), list()) :: Macro.t()
   defmacro standard_business_resource(table_name, admin_columns \\ [])
-      when is_binary(table_name) and is_list(admin_columns) do
+           when is_binary(table_name) and is_list(admin_columns) do
     quote do
       standard_postgres(unquote(table_name))
       standard_archive()
@@ -275,7 +277,7 @@ defmodule RivaAsh.ResourceHelpers do
   """
   @spec standard_lookup_resource(String.t(), list()) :: Macro.t()
   defmacro standard_lookup_resource(table_name, admin_columns)
-      when is_binary(table_name) and is_list(admin_columns) do
+           when is_binary(table_name) and is_list(admin_columns) do
     quote do
       standard_postgres(unquote(table_name))
       standard_archive()
@@ -289,7 +291,7 @@ defmodule RivaAsh.ResourceHelpers do
   """
   @spec standard_json_api(String.t(), String.t() | nil) :: Macro.t()
   defmacro standard_json_api(type_name, base_route \\ nil)
-      when is_binary(type_name) do
+           when is_binary(type_name) do
     base_route = base_route || "/#{String.replace(type_name, "_", "-")}s"
 
     quote do
@@ -383,9 +385,7 @@ defmodule RivaAsh.ResourceHelpers do
 
       read :by_business_active do
         argument(:business_id, :uuid, allow_nil?: false)
-        filter(
-          expr(business_id == ^arg(:business_id) and is_active == true and is_nil(archived_at))
-        )
+        filter(expr(business_id == ^arg(:business_id) and is_active == true and is_nil(archived_at)))
       end
     end
   end
@@ -428,21 +428,29 @@ defmodule RivaAsh.ResourceHelpers do
 
   @spec build_graphql_config(String.t(), String.t()) :: Macro.t()
   defp build_graphql_config(type_name, type_name_str) do
+    get_atom = String.to_existing_atom("get_#{type_name}")
+    list_atom = String.to_existing_atom("list_#{type_name_str}s")
+    active_atom = String.to_existing_atom("active_#{type_name_str}s")
+    inactive_atom = String.to_existing_atom("inactive_#{type_name_str}s")
+    create_atom = String.to_existing_atom("create_#{type_name}")
+    update_atom = String.to_existing_atom("update_#{type_name}")
+    delete_atom = String.to_existing_atom("delete_#{type_name}")
+
     quote do
       graphql do
         type(unquote(type_name))
 
         queries do
-          get(:"get_#{unquote(type_name)}", :read)
-          list(:"list_#{unquote(type_name_str)}s", :read)
-          list(:"active_#{unquote(type_name_str)}s", :active)
-          list(:"inactive_#{unquote(type_name_str)}s", :inactive)
+          get(unquote(get_atom), :read)
+          list(unquote(list_atom), :read)
+          list(unquote(active_atom), :active)
+          list(unquote(inactive_atom), :inactive)
         end
 
         mutations do
-          create(:"create_#{unquote(type_name)}", :create)
-          update(:"update_#{unquote(type_name)}", :update)
-          destroy(:"delete_#{unquote(type_name)}", :destroy)
+          create(unquote(create_atom), :create)
+          update(unquote(update_atom), :update)
+          destroy(unquote(delete_atom), :destroy)
         end
       end
     end

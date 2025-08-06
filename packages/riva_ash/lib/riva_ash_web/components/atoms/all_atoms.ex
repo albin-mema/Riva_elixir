@@ -1,7 +1,7 @@
 defmodule RivaAshWeb.Components.Atoms.AllAtoms do
   @moduledoc """
   This module serves as a central point for importing all atomic components.
-  
+
   Follows functional core, imperative shell pattern with comprehensive type safety.
   """
   use Phoenix.Component
@@ -11,9 +11,9 @@ defmodule RivaAshWeb.Components.Atoms.AllAtoms do
 
   @doc """
   Imports all atomic components with validation.
-  
+
   ## Examples
-  
+
       use RivaAshWeb.Components.Atoms.AllAtoms
   """
   @spec __using__(opts :: keyword()) :: Macro.t()
@@ -23,7 +23,7 @@ defmodule RivaAshWeb.Components.Atoms.AllAtoms do
 
     quote do
       import RivaAshWeb.Components.Atoms.AllAtoms
-      
+
       # Import individual atom components with proper organization
       import RivaAshWeb.Components.Atoms.Avatar
       import RivaAshWeb.Components.Atoms.Badge
@@ -40,7 +40,7 @@ defmodule RivaAshWeb.Components.Atoms.AllAtoms do
       import RivaAshWeb.Components.Atoms.TimePicker
       import RivaAshWeb.Components.Atoms.Toggle
       import RivaAshWeb.Components.Atoms.Tooltip
-      
+
       # Import UI components for canonical usage
       alias RivaAshWeb.Components.UI.Button, as: UIButton
       alias RivaAshWeb.Components.UI.Input, as: UIInput
@@ -57,13 +57,13 @@ defmodule RivaAshWeb.Components.Atoms.AllAtoms do
 
   @doc """
   Validates macro options with early return pattern.
-  
+
   ## Parameters
   - opts: Keyword list of options
-  
+
   ## Returns
   - :ok if valid
-  
+
   ## Raises
   - ArgumentError for invalid options
   """

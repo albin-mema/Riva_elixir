@@ -20,6 +20,7 @@ defmodule RivaAshWeb.AuthFlowTest do
 
       # Test user sign in
       {:ok, _lv, _html} = live(build_conn(), ~p"/sign-in")
+
       conn =
         post(build_conn(), ~p"/sign-in", %{
           "email" => "test@example.com",
@@ -66,8 +67,10 @@ defmodule RivaAshWeb.AuthFlowTest do
       case result do
         {:error, {:redirect, %{to: path}}} ->
           assert path == ~p"/sign-in"
+
         {:error, {:live_redirect, %{to: path}}} ->
           assert path == ~p"/sign-in"
+
         {:ok, _lv, _html} ->
           flunk("Expected redirect to sign-in")
       end

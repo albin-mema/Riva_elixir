@@ -20,7 +20,7 @@ defmodule RivaAsh.Authorization do
   """
   @spec has_permission(map(), atom() | String.t()) :: boolean()
   def has_permission(actor, permission_name) do
-    with {:ok, normalized_permission} <- normalize_permission_name(permission_name),
+    with {:ok, _normalized_permission} <- normalize_permission_name(permission_name),
          true <- admin_user?(actor) do
       true
     else
@@ -46,7 +46,7 @@ defmodule RivaAsh.Authorization do
   """
   @spec can_access_business?(map(), String.t()) :: boolean()
   def can_access_business?(actor, business_id) when is_binary(business_id) do
-    with {:ok, validated_business_id} <- validate_business_id(business_id),
+    with {:ok, _validated_business_id} <- validate_business_id(business_id),
          true <- admin_user?(actor) do
       true
     else
@@ -84,9 +84,8 @@ defmodule RivaAsh.Authorization do
 
   @spec check_business_ownership(String.t(), String.t()) :: boolean()
   defp check_business_ownership(user_id, business_id) when is_binary(user_id) and is_binary(business_id) do
-    with {:ok, business} <- Ash.get(RivaAsh.Resources.Business, business_id, domain: RivaAsh.Domain) do
-      business.owner_id == user_id
-    else
+    case Ash.get(RivaAsh.Resources.Business, business_id, domain: RivaAsh.Domain) do
+      {:ok, business} -> business.owner_id == user_id
       {:error, _} -> false
     end
   end
@@ -167,10 +166,6 @@ defmodule RivaAsh.Authorization do
   defp regular_user?(%{role: "user"}), do: true
   defp regular_user?(_), do: false
 
-  @spec employee?(map()) :: boolean()
-  defp employee?(%{id: employee_id}) when is_binary(employee_id), do: true
-  defp employee?(_), do: false
-
   @spec current_business_matches?(map(), String.t()) :: boolean()
   defp current_business_matches?(%{current_business_id: business_id}, business_id), do: true
   defp current_business_matches?(_, _), do: false
@@ -179,6 +174,7 @@ defmodule RivaAsh.Authorization do
   defp has_business_in_list?(%{businesses: businesses}, business_id) when is_list(businesses) do
     Enum.any?(businesses, &(&1.id == business_id))
   end
+
   defp has_business_in_list?(_, _), do: false
 
   @spec check_user_permission(map(), atom()) :: boolean()
@@ -226,11 +222,13 @@ defmodule RivaAsh.Authorization do
 
   @spec normalize_permission_name(atom() | String.t()) :: {:ok, atom()} | {:error, String.t()}
   defp normalize_permission_name(permission) when is_atom(permission), do: {:ok, permission}
+
   defp normalize_permission_name(permission) when is_binary(permission) do
     try do
-      {:ok, String.to_atom(permission)}
+      {:ok, String.to_existing_atom(permission)}
     rescue
       ArgumentError -> {:error, "Invalid permission name: #{permission}"}
+      error -> {:error, "Unexpected error converting permission: #{inspect(error)}"}
     end
   end
 
@@ -271,5 +269,12 @@ defmodule RivaAsh.Authorization do
     else
       {:error, "Invalid business ID"}
     end
+  end
+
+  @spec check_employee_permission(String.t(), atom()) :: boolean()
+  defp check_employee_permission(employee_id, _permission_name) when is_binary(employee_id) do
+    # For now, assume employees have all permissions
+    # This could be extended to check an employee_permissions table
+    true
   end
 end

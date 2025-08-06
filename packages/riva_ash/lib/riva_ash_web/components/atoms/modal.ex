@@ -152,20 +152,22 @@ defmodule RivaAshWeb.Components.Atoms.Modal do
   defp build_modal_class(size, variant) do
     base_classes = "relative bg-white rounded-lg shadow-xl transform transition-all duration-300"
 
-    size_classes = case size do
-      "sm" -> "w-96"
-      "md" -> "w-[500px]"
-      "lg" -> "w-[600px]"
-      "xl" -> "w-[800px]"
-      "full" -> "w-full max-w-4xl mx-4"
-    end
+    size_classes =
+      case size do
+        "sm" -> "w-96"
+        "md" -> "w-[500px]"
+        "lg" -> "w-[600px]"
+        "xl" -> "w-[800px]"
+        "full" -> "w-full max-w-4xl mx-4"
+      end
 
-    variant_classes = case variant do
-      "danger" -> "border-t-4 border-red-500"
-      "success" -> "border-t-4 border-green-500"
-      "warning" -> "border-t-4 border-yellow-500"
-      _ -> "border-t-4 border-blue-500"
-    end
+    variant_classes =
+      case variant do
+        "danger" -> "border-t-4 border-red-500"
+        "success" -> "border-t-4 border-green-500"
+        "warning" -> "border-t-4 border-yellow-500"
+        _ -> "border-t-4 border-blue-500"
+      end
 
     "#{base_classes} #{size_classes} #{variant_classes}"
   end

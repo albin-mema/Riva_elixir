@@ -115,9 +115,7 @@ defmodule RivaAsh.DatabaseHealth do
 
   @spec log_extension_success([String.t()]) :: :ok
   defp log_extension_success(required_extensions) do
-    Logger.info(
-      "All required database extensions are installed: #{inspect(required_extensions)}"
-    )
+    Logger.info("All required database extensions are installed: #{inspect(required_extensions)}")
 
     {:ok, :ok}
   end
@@ -193,7 +191,7 @@ defmodule RivaAsh.DatabaseHealth do
 
   @spec run_health_checks([{String.t(), (-> :ok | {:error, any()})}]) :: :ok | {:error, [String.t()]}
   defp run_health_checks(checks) do
-    Enum.reduce_while(checks, [], fn {check_name, check_fn}, errors ->
+    Enum.reduce_while(checks, [], fn {_check_name, check_fn }, errors ->
       case check_fn.() do
         :ok ->
           {:cont, errors}
@@ -208,24 +206,6 @@ defmodule RivaAsh.DatabaseHealth do
     end
   end
 
-  @spec log_check_result(:ok | {:ok, any()} | {:error, any()}, String.t()) ::
-        {:ok, :ok} | {:error, String.t()}
-  defp log_check_result(result, check_name) do
-    result
-    |> case do
-      :ok ->
-        Logger.info("✓ #{check_name} check passed")
-        {:ok, :ok}
-
-      {:ok, _} ->
-        Logger.info("✓ #{check_name} check passed")
-        {:ok, :ok}
-
-      {:error, reason} ->
-        Logger.error("✗ #{check_name} check failed: #{inspect(reason)}")
-        {:error, "#{check_name}: #{inspect(reason)}"}
-    end
-  end
 
   @spec check_postgres_version() :: :ok | {:error, String.t()}
   defp check_postgres_version do
@@ -242,9 +222,7 @@ defmodule RivaAsh.DatabaseHealth do
 
   @spec log_version_success(Version.t(), Version.t()) :: :ok
   defp log_version_success(current_version, min_version) do
-    Logger.info(
-      "PostgreSQL version #{current_version} meets minimum requirement #{min_version}"
-    )
+    Logger.info("PostgreSQL version #{current_version} meets minimum requirement #{min_version}")
 
     {:ok, :ok}
   end
@@ -254,8 +232,7 @@ defmodule RivaAsh.DatabaseHealth do
     if Version.compare(current_version, min_version) in [:gt, :eq] do
       {:ok, :ok}
     else
-      {:error,
-       "PostgreSQL version #{current_version} is below minimum requirement #{min_version}"}
+      {:error, "PostgreSQL version #{current_version} is below minimum requirement #{min_version}"}
     end
   end
 
@@ -279,7 +256,7 @@ defmodule RivaAsh.DatabaseHealth do
   @spec parse_postgres_version(String.t()) :: {:ok, Version.t()} | {:error, String.t()}
   defp parse_postgres_version(version_string) do
     # Extract version number from string like "PostgreSQL 15.4 on x86_64-pc-linux-gnu..."
-    case Regex.run(~r/PostgreSQL (\d+)\.(\d+)(?:\.(\d+))?/, version_string) do
+    case Regex.run(~r/PostgreSQL(\d+)\.(\d+)(?:\.(\d+))?/, version_string) do
       [_, major, minor] ->
         Version.parse("#{major}.#{minor}.0")
 

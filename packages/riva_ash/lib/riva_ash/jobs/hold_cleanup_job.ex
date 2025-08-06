@@ -191,34 +191,20 @@ defmodule RivaAsh.Jobs.HoldCleanupJob do
   end
 
   @spec handle_cleanup_result({non_neg_integer(), state()}) :: {:noreply, state()}
-  defp handle_cleanup_result({count, new_state}) do
+  defp handle_cleanup_result({_count, new_state}) do
     new_state
     |> schedule_cleanup()
     |> respond_with_no_reply()
   end
 
-  defp handle_cleanup_result({_count, state}) do
-    state
-    |> schedule_cleanup()
-    |> respond_with_no_reply()
-  end
-
   @spec handle_retry_result({non_neg_integer(), state()}) :: {:noreply, state()}
-  defp handle_retry_result({count, new_state}) do
+  defp handle_retry_result({_count, new_state}) do
     {:noreply, new_state}
-  end
-
-  defp handle_retry_result({_count, state}) do
-    {:noreply, state}
   end
 
   @spec handle_immediate_cleanup_result({non_neg_integer(), state()}) :: {:reply, non_neg_integer(), state()}
   defp handle_immediate_cleanup_result({count, new_state}) do
     {:reply, count, new_state}
-  end
-
-  defp handle_immediate_cleanup_result({_count, state}) do
-    {:reply, 0, state}
   end
 
   # Helper functions for consistent response handling
@@ -312,6 +298,7 @@ defmodule RivaAsh.Jobs.HoldCleanupJob do
   @spec process_expired_holds([map()], non_neg_integer()) :: :ok | {:error, term()}
   defp process_expired_holds(expired_holds, count) when count > 0 do
     Logger.info("Found #{count} expired holds to clean up")
+
     expired_holds
     |> process_holds_in_batches()
   end

@@ -118,10 +118,12 @@ defmodule RivaAshWeb.GlobalSearchLive do
 
   defp perform_search(search_term, city_filter, country_filter) do
     search_params = build_search_params(search_term, city_filter, country_filter)
-    
+
     case SearchService.global_search(search_params) do
-      {:ok, results} -> results
-      {:error, reason} -> 
+      {:ok, results} ->
+        results
+
+      {:error, reason} ->
         Logger.error("Global search failed: #{inspect(reason)}")
         {[], []}
     end
@@ -143,21 +145,21 @@ defmodule RivaAshWeb.GlobalSearchLive do
 
   defp build_search_params(search_term, city_filter, country_filter) do
     params = %{}
-    
+
     params = if search_term != "", do: Map.put(params, :search_term, search_term), else: params
     params = if city_filter != "", do: Map.put(params, :city, city_filter), else: params
     params = if country_filter != "", do: Map.put(params, :country, country_filter), else: params
-    
+
     params
   end
 
   defp build_query_params(search_term, city_filter, country_filter) do
     query_params = []
-    
+
     query_params = if search_term != "", do: [{"q", search_term} | query_params], else: query_params
     query_params = if city_filter != "", do: [{"city", city_filter} | query_params], else: query_params
     query_params = if country_filter != "", do: [{"country", country_filter} | query_params], else: query_params
-    
+
     query_params
   end
 
@@ -173,17 +175,26 @@ defmodule RivaAshWeb.GlobalSearchLive do
   end
 
   defp get_meta_description do
-    Application.get_env(:riva_ash, :meta_description, 
-      "Discover and book reservations at thousands of businesses. Find restaurants, services, and activities near you. No registration required to search.")
+    Application.get_env(
+      :riva_ash,
+      :meta_description,
+      "Discover and book reservations at thousands of businesses. Find restaurants, services, and activities near you. No registration required to search."
+    )
   end
 
   defp format_error(reason) do
     case reason do
       %Ash.Error.Invalid{errors: errors} ->
-        errors |> Enum.map(&format_validation_error/1) |> Enum.join(", ")
-      %Ash.Error.Forbidden{} -> "You don't have permission to perform this search"
-      %Ash.Error.NotFound{} -> "Search resources not found"
-      _ -> "An unexpected error occurred"
+        Enum.map_join(errors, ", ", &format_validation_error/1)
+
+      %Ash.Error.Forbidden{} ->
+        "You don't have permission to perform this search"
+
+      %Ash.Error.NotFound{} ->
+        "Search resources not found"
+
+      _ ->
+        "An unexpected error occurred"
     end
   end
 
@@ -200,8 +211,11 @@ defmodule RivaAshWeb.GlobalSearchLive do
   end
 
   defp get_meta_description do
-    Application.get_env(:riva_ash, :global_search_meta_description,
-      "Discover and book reservations at thousands of businesses. Find restaurants, services, and activities near you. No registration required to search.")
+    Application.get_env(
+      :riva_ash,
+      :global_search_meta_description,
+      "Discover and book reservations at thousands of businesses. Find restaurants, services, and activities near you. No registration required to search."
+    )
   end
 
   def render(assigns) do

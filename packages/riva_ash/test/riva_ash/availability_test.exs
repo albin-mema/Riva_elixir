@@ -288,10 +288,7 @@ defmodule RivaAsh.AvailabilityTest do
             end_time: ~T[09:00:00]
           }
 
-          {:ok,
-           item: item,
-           business_schedule: business_schedule,
-           non_business_schedule: non_business_schedule}
+          {:ok, item: item, business_schedule: business_schedule, non_business_schedule: non_business_schedule}
         end
 
         @spec test_item_is_available_during_business_hours :: :ok

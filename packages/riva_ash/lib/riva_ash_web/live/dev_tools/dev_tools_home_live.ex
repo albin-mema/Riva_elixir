@@ -289,6 +289,6 @@ defmodule RivaAshWeb.DevTools.DevToolsHomeLive do
     end
 
     # Helper functions
-    defp get_page_title, do: Application.get_env(:riva_ash, __MODULE__, [])[:page_title] || "Development Tools"
+    defp get_page_title, do: Application.get_env(:riva_ash, __MODULE__, []) |> get_in([:page_title]) || "Development Tools"
   end
 end

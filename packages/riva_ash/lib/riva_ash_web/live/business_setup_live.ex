@@ -2,7 +2,7 @@ defmodule RivaAshWeb.BusinessSetupLive do
   @moduledoc """
   Business Setup Wizard - Guided multi-step setup flow.
   Combines Business, Plot, Section, Layout, and Item configuration into a unified workflow.
-  
+
   This LiveView follows Phoenix/Ash/Elixir patterns:
   - Uses AuthHelpers for authentication and business scoping
   - Delegates business logic to BusinessSetup context
@@ -619,7 +619,7 @@ defmodule RivaAshWeb.BusinessSetupLive do
   end
 
   def handle_event("update_field", %{"field" => field, "value" => value}, socket) do
-    setup_data = Map.put(socket.assigns.setup_data, String.to_atom(field), value)
+    setup_data = Map.put(socket.assigns.setup_data, String.to_existing_atom(field), value)
     {:noreply, assign(socket, :setup_data, setup_data)}
   end
 
@@ -633,6 +633,7 @@ defmodule RivaAshWeb.BusinessSetupLive do
 
       {:error, %Ash.InvalidChangeset{errors: errors}} ->
         error_message = ErrorHelpers.format_errors(errors)
+
         {:noreply,
          socket
          |> put_flash(:error, "Failed to save business information: #{error_message}")
@@ -747,6 +748,7 @@ defmodule RivaAshWeb.BusinessSetupLive do
 
       {:error, %Ash.InvalidChangeset{errors: errors}} ->
         error_message = ErrorHelpers.format_errors(errors)
+
         {:noreply,
          socket
          |> assign(:loading, false)

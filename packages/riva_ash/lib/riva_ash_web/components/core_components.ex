@@ -86,11 +86,14 @@ defmodule RivaAshWeb.CoreComponents do
     assigns
     |> Map.get(:kind, :info)
     |> case do
-      :info -> [
+      :info ->
+        [
           "fixed top-2 right-2 mr-2 w-80 sm:w-96 z-50 rounded-lg p-3 ring-1",
           "bg-emerald-50 text-emerald-800 ring-emerald-500 fill-cyan-900"
         ]
-      :error -> [
+
+      :error ->
+        [
           "fixed top-2 right-2 mr-2 w-80 sm:w-96 z-50 rounded-lg p-3 ring-1",
           "bg-rose-50 text-rose-900 shadow-md ring-rose-500 fill-rose-900"
         ]
@@ -151,20 +154,15 @@ defmodule RivaAshWeb.CoreComponents do
     end
   end
 
-
-
-
   defp hide(js, selector) do
     JS.hide(js,
       to: selector,
       time: 200,
       transition:
-        {"transition-all transform ease-out duration-200",
-         "opacity-100 translate-y-0 sm:translate-x-0", "opacity-0 translate-y-2 sm:translate-x-2"}
+        {"transition-all transform ease-out duration-200", "opacity-100 translate-y-0 sm:translate-x-0",
+         "opacity-0 translate-y-2 sm:translate-x-2"}
     )
   end
-
-
 
   @doc """
   Renders a React component using live_react.

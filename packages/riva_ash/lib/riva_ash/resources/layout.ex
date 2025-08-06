@@ -249,27 +249,32 @@ defmodule RivaAsh.Resources.Layout do
   @spec apply_plot_filter(Ash.Query.t(), String.t() | nil) :: Ash.Query.t()
   defp apply_plot_filter(query, nil), do: query
 
-  defp apply_plot_filter(query, plot_id) do
-    Ash.Query.filter(query, expr(plot_id == ^plot_id))
+  defp apply_plot_filter(query, plot_id) when is_binary(plot_id) do
+    query
+    |> Ash.Query.filter(plot_id: ^plot_id)
   end
 
   @spec apply_business_filter(Ash.Query.t(), String.t() | nil) :: Ash.Query.t()
   defp apply_business_filter(query, nil), do: query
 
-  defp apply_business_filter(query, business_id) do
-    Ash.Query.filter(query, expr(plot.business_id == ^business_id))
+  defp apply_business_filter(query, business_id) when is_binary(business_id) do
+    query
+    |> Ash.Query.join(:left, [layout: l], p in assoc(l, :plot), as: :plot)
+    |> Ash.Query.filter(plot: [business_id: ^business_id])
   end
 
   @spec apply_active_filter(Ash.Query.t()) :: Ash.Query.t()
   defp apply_active_filter(query) do
-    Ash.Query.filter(query, expr(is_active == true and is_nil(archived_at)))
+    query
+    |> Ash.Query.filter(is_active: true, is_nil: :archived_at)
   end
 
   @spec apply_layout_type_filter(Ash.Query.t(), atom() | nil) :: Ash.Query.t()
   defp apply_layout_type_filter(query, nil), do: query
 
-  defp apply_layout_type_filter(query, layout_type) do
-    Ash.Query.filter(query, expr(layout_type == ^layout_type))
+  defp apply_layout_type_filter(query, layout_type) when is_atom(layout_type) do
+    query
+    |> Ash.Query.filter(layout_type: ^layout_type)
   end
 
   identities do
@@ -302,28 +307,27 @@ defmodule RivaAsh.Resources.Layout do
 
   @doc """
   Checks if the layout is currently active (not archived).
-  
+
   ## Parameters
   - layout: The layout record to check
-  
+
   ## Returns
   - `true` if the layout is active, `false` otherwise
   """
-  @spec is_active?(t()) :: boolean()
-  def is_active?(layout) do
-    with %{archived_at: nil} <- layout do
-      true
-    else
+  @spec active?(t()) :: boolean()
+  def active?(layout) do
+    case layout do
+      %{archived_at: nil} -> true
       _ -> false
     end
   end
 
   @doc """
   Gets the layout type as a human-readable string.
-  
+
   ## Parameters
   - layout: The layout record
-  
+
   ## Returns
   - String with layout type description
   """
@@ -339,46 +343,46 @@ defmodule RivaAsh.Resources.Layout do
 
   @doc """
   Checks if the layout uses grid positioning.
-  
+
   ## Parameters
   - layout: The layout record to check
-  
+
   ## Returns
   - `true` if grid layout, `false` otherwise
   """
-  @spec is_grid_layout?(t()) :: boolean()
-  def is_grid_layout?(layout), do: layout.layout_type == :grid
+  @spec grid_layout?(t()) :: boolean()
+  def grid_layout?(layout), do: layout.layout_type == :grid
 
   @doc """
   Checks if the layout uses free-form positioning.
-  
+
   ## Parameters
   - layout: The layout record to check
-  
+
   ## Returns
   - `true` if free-form layout, `false` otherwise
   """
-  @spec is_free_form_layout?(t()) :: boolean()
-  def is_free_form_layout?(layout), do: layout.layout_type == :free
+  @spec free_form_layout?(t()) :: boolean()
+  def free_form_layout?(layout), do: layout.layout_type == :free
 
   @doc """
   Checks if the layout uses linear positioning.
-  
+
   ## Parameters
   - layout: The layout record to check
-  
+
   ## Returns
   - `true` if linear layout, `false` otherwise
   """
-  @spec is_linear_layout?(t()) :: boolean()
-  def is_linear_layout?(layout), do: layout.layout_type == :linear
+  @spec linear_layout?(t()) :: boolean()
+  def linear_layout?(layout), do: layout.layout_type == :linear
 
   @doc """
   Gets the formatted dimensions of the layout.
-  
+
   ## Parameters
   - layout: The layout record
-  
+
   ## Returns
   - String with formatted dimensions
   """
@@ -387,13 +391,13 @@ defmodule RivaAsh.Resources.Layout do
     cond do
       not is_nil(layout.width) and not is_nil(layout.height) ->
         "#{Decimal.to_string(layout.width)} x #{Decimal.to_string(layout.height)}"
-      
+
       not is_nil(layout.width) ->
         "Width: #{Decimal.to_string(layout.width)}"
-      
+
       not is_nil(layout.height) ->
         "Height: #{Decimal.to_string(layout.height)}"
-      
+
       true ->
         "No dimensions specified"
     end
@@ -401,26 +405,26 @@ defmodule RivaAsh.Resources.Layout do
 
   @doc """
   Gets the formatted grid information for grid layouts.
-  
+
   ## Parameters
   - layout: The layout record
-  
+
   ## Returns
   - String with grid information or "Not a grid layout"
   """
   @spec grid_info(t()) :: String.t()
   def grid_info(layout) do
-    if is_grid_layout?(layout) do
+    if grid_layout?(layout) do
       case {layout.grid_rows, layout.grid_columns} do
         {rows, cols} when is_integer(rows) and is_integer(cols) and rows > 0 and cols > 0 ->
           "#{rows} x #{cols} grid"
-        
+
         {rows, _} when is_integer(rows) and rows > 0 ->
           "#{rows} rows"
-        
+
         {_, cols} when is_integer(cols) and cols > 0 ->
           "#{cols} columns"
-        
+
         _ ->
           "Invalid grid configuration"
       end
@@ -431,10 +435,10 @@ defmodule RivaAsh.Resources.Layout do
 
   @doc """
   Gets the background information for the layout.
-  
+
   ## Parameters
   - layout: The layout record
-  
+
   ## Returns
   - String with background information
   """
@@ -443,13 +447,13 @@ defmodule RivaAsh.Resources.Layout do
     cond do
       not is_nil(layout.background_color) and not is_nil(layout.background_image_url) ->
         "Color: #{layout.background_color}, Image: #{layout.background_image_url}"
-      
+
       not is_nil(layout.background_color) ->
         "Background color: #{layout.background_color}"
-      
+
       not is_nil(layout.background_image_url) ->
         "Background image: #{layout.background_image_url}"
-      
+
       true ->
         "No background specified"
     end
@@ -457,10 +461,10 @@ defmodule RivaAsh.Resources.Layout do
 
   @doc """
   Checks if the layout has a valid background color.
-  
+
   ## Parameters
   - layout: The layout record to check
-  
+
   ## Returns
   - `true` if color is valid, `false` otherwise
   """
@@ -475,10 +479,10 @@ defmodule RivaAsh.Resources.Layout do
 
   @doc """
   Gets the item position count for this layout.
-  
+
   ## Parameters
   - layout: The layout record
-  
+
   ## Returns
   - Integer with the number of item positions
   """
@@ -489,10 +493,10 @@ defmodule RivaAsh.Resources.Layout do
 
   @doc """
   Checks if the layout has any item positions.
-  
+
   ## Parameters
   - layout: The layout record to check
-  
+
   ## Returns
   - `true` if positions exist, `false` otherwise
   """
@@ -501,10 +505,10 @@ defmodule RivaAsh.Resources.Layout do
 
   @doc """
   Validates that the layout has all required relationships.
-  
+
   ## Parameters
   - layout: The layout record to validate
-  
+
   ## Returns
   - `{:ok, layout}` if valid
   - `{:error, reason}` if invalid
@@ -514,7 +518,7 @@ defmodule RivaAsh.Resources.Layout do
     cond do
       is_nil(layout.plot) ->
         {:error, "Plot relationship is missing"}
-      
+
       true ->
         {:ok, layout}
     end
@@ -522,10 +526,10 @@ defmodule RivaAsh.Resources.Layout do
 
   @doc """
   Gets the plot name associated with this layout.
-  
+
   ## Parameters
   - layout: The layout record
-  
+
   ## Returns
   - String with the plot name
   """
@@ -539,24 +543,24 @@ defmodule RivaAsh.Resources.Layout do
 
   @doc """
   Formats the complete layout information for display.
-  
+
   ## Parameters
   - layout: The layout record
-  
+
   ## Returns
   - String with complete layout information
   """
   @spec formatted_info(t()) :: String.t()
   def formatted_info(layout) do
-    with true <- is_active?(layout),
-         name <- layout.name,
-         plot_name <- plot_name(layout),
-         layout_type <- layout_type_description(layout),
-         dimensions <- formatted_dimensions(layout),
-         grid_info <- grid_info(layout),
-         background <- background_info(layout) do
-      "#{name} in #{plot_name}: #{layout_type}, #{dimensions}, #{grid_info}, #{background}"
-    else
+    case is_active?(layout) do
+      true ->
+        name = layout.name
+        plot_name = plot_name(layout)
+        layout_type = layout_type_description(layout)
+        dimensions = formatted_dimensions(layout)
+        grid_info = grid_info(layout)
+        background = background_info(layout)
+        "#{name} in #{plot_name}: #{layout_type}, #{dimensions}, #{grid_info}, #{background}"
       false ->
         "Archived layout: #{layout.name}"
     end
@@ -564,21 +568,21 @@ defmodule RivaAsh.Resources.Layout do
 
   @doc """
   Checks if the layout configuration is valid.
-  
+
   ## Parameters
   - layout: The layout record to check
-  
+
   ## Returns
   - `true` if configuration is valid, `false` otherwise
   """
-  @spec is_valid_configuration?(t()) :: boolean()
-  def is_valid_configuration?(layout) do
+  @spec valid_configuration?(t()) :: boolean()
+  def valid_configuration?(layout) do
     cond do
       # Grid layouts must have rows and columns
-      is_grid_layout?(layout) ->
+      grid_layout?(layout) ->
         is_integer(layout.grid_rows) and layout.grid_rows > 0 and
           is_integer(layout.grid_columns) and layout.grid_columns > 0
-      
+
       # Free-form and linear layouts can have optional dimensions
       true ->
         true
@@ -587,10 +591,10 @@ defmodule RivaAsh.Resources.Layout do
 
   @doc """
   Gets the business name associated with this layout.
-  
+
   ## Parameters
   - layout: The layout record
-  
+
   ## Returns
   - String with the business name
   """
@@ -604,10 +608,10 @@ defmodule RivaAsh.Resources.Layout do
 
   @doc """
   Checks if the layout can be safely deleted.
-  
+
   ## Parameters
   - layout: The layout record to check
-  
+
   ## Returns
   - `true` if can be deleted, `false` otherwise
   """
@@ -618,10 +622,10 @@ defmodule RivaAsh.Resources.Layout do
 
   @doc """
   Gets the reason why the layout cannot be deleted.
-  
+
   ## Parameters
   - layout: The layout record to check
-  
+
   ## Returns
   - String with deletion reason or empty string if can be deleted
   """
@@ -644,28 +648,4 @@ defmodule RivaAsh.Resources.Layout do
 
   # Private helper functions for filtering
   @spec apply_plot_filter(Ash.Query.t(), String.t() | nil) :: Ash.Query.t()
-  defp apply_plot_filter(query, nil), do: query
-
-  defp apply_plot_filter(query, plot_id) do
-    Ash.Query.filter(query, expr(plot_id == ^plot_id))
-  end
-
-  @spec apply_business_filter(Ash.Query.t(), String.t() | nil) :: Ash.Query.t()
-  defp apply_business_filter(query, nil), do: query
-
-  defp apply_business_filter(query, business_id) do
-    Ash.Query.filter(query, expr(plot.business_id == ^business_id))
-  end
-
-  @spec apply_active_filter(Ash.Query.t()) :: Ash.Query.t()
-  defp apply_active_filter(query) do
-    Ash.Query.filter(query, expr(is_active == true and is_nil(archived_at)))
-  end
-
-  @spec apply_layout_type_filter(Ash.Query.t(), atom() | nil) :: Ash.Query.t()
-  defp apply_layout_type_filter(query, nil), do: query
-
-  defp apply_layout_type_filter(query, layout_type) do
-    Ash.Query.filter(query, expr(layout_type == ^layout_type))
-  end
 end

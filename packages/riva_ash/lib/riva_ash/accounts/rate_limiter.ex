@@ -1,7 +1,7 @@
 defmodule RivaAsh.Accounts.RateLimiter do
   @moduledoc """
   Provides rate limiting functionality for authentication attempts.
-  
+
   This module implements a sliding window rate limiting algorithm to prevent
   brute force attacks on authentication endpoints.
   """
@@ -22,10 +22,10 @@ defmodule RivaAsh.Accounts.RateLimiter do
 
   @doc """
   Starts the rate limiter GenServer.
-  
+
   ## Parameters
     - opts: Options for starting the server
-  
+
   ## Returns
     - {:ok, pid}: Server started successfully
     - {:error, reason}: Failed to start server
@@ -37,10 +37,10 @@ defmodule RivaAsh.Accounts.RateLimiter do
 
   @doc """
   Checks if an IP address is allowed to make a sign-in attempt.
-  
+
   ## Parameters
     - ip_address: The IP address to check
-  
+
   ## Returns
     - {:ok, :allowed}: Attempt is allowed
     - {:error, :rate_limited}: Attempt is rate limited
@@ -56,7 +56,7 @@ defmodule RivaAsh.Accounts.RateLimiter do
 
   @doc """
   Records a sign-in attempt for an IP address.
-  
+
   ## Parameters
     - ip_address: The IP address to record
   """
@@ -71,7 +71,7 @@ defmodule RivaAsh.Accounts.RateLimiter do
 
   @doc """
   Resets the rate limit counter for an IP address.
-  
+
   ## Parameters
     - ip_address: The IP address to reset
   """
@@ -145,7 +145,7 @@ defmodule RivaAsh.Accounts.RateLimiter do
     end
   end
 
-  defp should_cleanup?(current_time) do
+  defp should_cleanup?(_current_time) do
     rem(System.unique_integer(), @cleanup_interval) == 0
   end
 

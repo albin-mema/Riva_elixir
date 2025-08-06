@@ -1,7 +1,7 @@
 defmodule RivaAshWeb.Components.Atoms.Link do
   @moduledoc """
   Link component for navigation and interactive elements.
-  
+
   Follows functional core, imperative shell pattern with comprehensive type safety.
   """
   use Phoenix.Component
@@ -14,15 +14,15 @@ defmodule RivaAshWeb.Components.Atoms.Link do
 
   @doc """
   Renders a link component with different variants and styles.
-  
+
   ## Examples
-    
+
       <.link href="/about">About Us</.link>
-      
+
       <.link variant="primary" size="lg" weight="bold" underline="hover">
         Get Started
       </.link>
-      
+
       <.link variant="success" to={~p"/dashboard"}>
         Dashboard
       </.link>
@@ -190,6 +190,7 @@ defmodule RivaAshWeb.Components.Atoms.Link do
     # In a real implementation, you might want to log this error
     # and render a fallback link or error state
     IO.puts("Link error: #{reason}")
+
     ~H"""
     <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative">
       <span class="block sm:inline">Error: <%= reason %></span>

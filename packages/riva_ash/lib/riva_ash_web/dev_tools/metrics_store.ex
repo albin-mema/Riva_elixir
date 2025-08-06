@@ -21,7 +21,7 @@ defmodule RivaAshWeb.DevTools.MetricsStore do
   """
 
   use GenServer
-  
+
   alias Phoenix.PubSub
 
   @table_name :devtools_metrics
@@ -32,18 +32,26 @@ defmodule RivaAshWeb.DevTools.MetricsStore do
   @default_slow_query_threshold 100
   @default_result_limit 50
 
-  @type metric_type :: :query | :policy_evaluation | :http_request |
-                      :authorization_failure | :reactor_step | :action |
-                      :ash | :reactor | :phoenix | :riva_ash
+  @type metric_type ::
+          :query
+          | :policy_evaluation
+          | :http_request
+          | :authorization_failure
+          | :reactor_step
+          | :action
+          | :ash
+          | :reactor
+          | :phoenix
+          | :riva_ash
   @type metric_data :: map()
   @type metric_metadata :: map()
   @type metric :: %{
-    id: String.t(),
-    type: metric_type(),
-    data: metric_data(),
-    metadata: metric_metadata(),
-    timestamp: DateTime.t()
-  }
+          id: String.t(),
+          type: metric_type(),
+          data: metric_data(),
+          metadata: metric_metadata(),
+          timestamp: DateTime.t()
+        }
   @type timeframe :: :minute | :hour | :day | :week
   @type query_opts :: [since: DateTime.t(), limit: pos_integer()]
   @type subscriber_ref :: reference()
@@ -179,108 +187,105 @@ defmodule RivaAshWeb.DevTools.MetricsStore do
   @impl true
   def init(opts) do
     table = :ets.new(@table_name, [:ordered_set, :public, :named_table])
-    
+
     # Set up telemetry handlers
     attach_telemetry_handlers()
-    
+
     # Schedule cleanup
     schedule_cleanup()
-    
+
     state = %__MODULE__{
       table: table,
       retention_policy: Keyword.get(opts, :retention_hours, @default_retention_hours),
       subscribers: %{},
       cleanup_interval: Keyword.get(opts, :cleanup_interval, @default_cleanup_interval)
     }
-    
+
     {:ok, state}
   end
 
   @impl true
   def handle_cast({:store_metric, metric}, state) do
     :ets.insert(state.table, {metric.timestamp, metric})
-    
+
     # Notify subscribers
     broadcast_metric(metric, state)
-    
+
     {:noreply, state}
   end
 
   def handle_cast({:subscribe, pid, types}, state) do
     ref = Process.monitor(pid)
     subscribers = Map.put(state.subscribers, ref, {pid, types})
-    
+
     {:noreply, %{state | subscribers: subscribers}}
   end
 
   @impl true
   def handle_call({:query_metrics, type, opts}, _from, state) do
     since = Keyword.get(opts, :since, DateTime.add(DateTime.utc_now(), -3600))
-    limit = min(Keyword.get(opts, :limit, @default_query_limit), 10000) # Cap at reasonable limit
-    
+    # Cap at reasonable limit
+    limit = min(Keyword.get(opts, :limit, @default_query_limit), 10_000)
+
     metrics =
       state.table
       |> :ets.select([
-        {{:"$1", :"$2"},
-         [{:andalso, {:>=, :"$1", since}, {:==, {:map_get, :type, :"$2"}, type}}],
-         [:"$2"]}
+        {{:"$1", :"$2"}, [{:andalso, {:>=, :"$1", since}, {:==, {:map_get, :type, :"$2"}, type}}], [:"$2"]}
       ])
       |> Enum.take(limit)
       |> Enum.reverse()
-    
+
     {:reply, metrics, state}
   end
 
   def handle_call({:get_summary, timeframe}, _from, state) do
     since = get_timeframe_start(timeframe)
-    
+
     summary = calculate_summary(state.table, since)
-    
+
     {:reply, summary, state}
   end
 
   def handle_call({:get_slow_queries, threshold_ms, limit}, _from, state) do
-    since = DateTime.add(DateTime.utc_now(), -3600) # Last hour
-    
+    # Last hour
+    since = DateTime.add(DateTime.utc_now(), -3600)
+
     slow_queries =
       state.table
       |> :ets.select([
         {{:"$1", :"$2"},
-         [{:andalso,
-           {:>=, :"$1", since},
-           {:==, {:map_get, :type, :"$2"}, :query},
-           {:>=, {:map_get, :duration, {:map_get, :data, :"$2"}}, threshold_ms}}],
-         [:"$2"]}
+         [
+           {:andalso, {:>=, :"$1", since}, {:==, {:map_get, :type, :"$2"}, :query},
+            {:>=, {:map_get, :duration, {:map_get, :data, :"$2"}}, threshold_ms}}
+         ], [:"$2"]}
       ])
       |> Enum.take(limit)
       |> Enum.sort_by(fn metric -> metric.data.duration end, :desc)
-    
+
     {:reply, slow_queries, state}
   end
 
   def handle_call({:get_authorization_failures, limit}, _from, state) do
-    since = DateTime.add(DateTime.utc_now(), -3600) # Last hour
-    
+    # Last hour
+    since = DateTime.add(DateTime.utc_now(), -3600)
+
     failures =
       state.table
       |> :ets.select([
-        {{:"$1", :"$2"},
-         [{:andalso,
-           {:>=, :"$1", since},
-           {:==, {:map_get, :type, :"$2"}, :authorization_failure}}],
+        {{:"$1", :"$2"}, [{:andalso, {:>=, :"$1", since}, {:==, {:map_get, :type, :"$2"}, :authorization_failure}}],
          [:"$2"]}
       ])
       |> Enum.take(limit)
       |> Enum.reverse()
-    
+
     {:reply, failures, state}
   end
 
   def handle_call({:get_performance_trends, timeframe}, _from, state) do
     since = get_timeframe_start(timeframe)
-    
+
     trends = calculate_performance_trends(state.table, since)
-    
+
     {:reply, trends, state}
   end
 
@@ -334,49 +339,69 @@ defmodule RivaAshWeb.DevTools.MetricsStore do
   end
 
   defp handle_telemetry_event([:devtools, :ash, :query], measurements, metadata, _config) do
-    store_metric(:query, %{
-      resource: metadata.resource,
-      action: metadata.action,
-      duration: measurements.duration && System.convert_time_unit(measurements.duration, :native, :millisecond),
-      actor_role: metadata.actor_role
-    }, metadata)
+    store_metric(
+      :query,
+      %{
+        resource: metadata.resource,
+        action: metadata.action,
+        duration: measurements.duration && System.convert_time_unit(measurements.duration, :native, :millisecond),
+        actor_role: metadata.actor_role
+      },
+      metadata
+    )
   end
 
   defp handle_telemetry_event([:devtools, :ash, :policy, :evaluation], measurements, metadata, _config) do
-    store_metric(:policy_evaluation, %{
-      resource: metadata.resource,
-      action: metadata.action,
-      result: metadata.result,
-      duration: measurements.duration && System.convert_time_unit(measurements.duration, :native, :millisecond),
-      actor_role: metadata.actor_role
-    }, metadata)
+    store_metric(
+      :policy_evaluation,
+      %{
+        resource: metadata.resource,
+        action: metadata.action,
+        result: metadata.result,
+        duration: measurements.duration && System.convert_time_unit(measurements.duration, :native, :millisecond),
+        actor_role: metadata.actor_role
+      },
+      metadata
+    )
   end
 
   defp handle_telemetry_event([:phoenix, :endpoint, :stop], measurements, metadata, _config) do
-    store_metric(:http_request, %{
-      method: metadata.conn.method,
-      path: metadata.conn.request_path,
-      status: metadata.conn.status,
-      duration: measurements.duration && System.convert_time_unit(measurements.duration, :native, :millisecond)
-    }, metadata)
+    store_metric(
+      :http_request,
+      %{
+        method: metadata.conn.method,
+        path: metadata.conn.request_path,
+        status: metadata.conn.status,
+        duration: measurements.duration && System.convert_time_unit(measurements.duration, :native, :millisecond)
+      },
+      metadata
+    )
   end
 
   defp handle_telemetry_event([:riva_ash, :authorization, :denied], measurements, metadata, _config) do
-    store_metric(:authorization_failure, %{
-      resource: metadata.resource,
-      action: metadata.action,
-      reason: metadata.reason,
-      actor_role: metadata.actor_role
-    }, metadata)
+    store_metric(
+      :authorization_failure,
+      %{
+        resource: metadata.resource,
+        action: metadata.action,
+        reason: metadata.reason,
+        actor_role: metadata.actor_role
+      },
+      metadata
+    )
   end
 
   defp handle_telemetry_event([:devtools, :reactor, :step], measurements, metadata, _config) do
-    store_metric(:reactor_step, %{
-      reactor: metadata.reactor,
-      step: metadata.step,
-      status: metadata.status,
-      duration: measurements.duration && System.convert_time_unit(measurements.duration, :native, :millisecond)
-    }, metadata)
+    store_metric(
+      :reactor_step,
+      %{
+        reactor: metadata.reactor,
+        step: metadata.step,
+        status: metadata.status,
+        duration: measurements.duration && System.convert_time_unit(measurements.duration, :native, :millisecond)
+      },
+      metadata
+    )
   end
 
   defp handle_telemetry_event(_event, _measurements, _metadata, _config) do
@@ -385,7 +410,7 @@ defmodule RivaAshWeb.DevTools.MetricsStore do
 
   defp broadcast_metric(metric, state) do
     PubSub.broadcast(RivaAsh.PubSub, @pubsub_topic, {:new_metric, metric})
-    
+
     # Notify specific subscribers
     for {ref, {pid, types}} <- state.subscribers do
       if should_notify_metric(metric, types) do
@@ -406,19 +431,20 @@ defmodule RivaAshWeb.DevTools.MetricsStore do
   end
 
   defp schedule_cleanup, do: schedule_cleanup(%__MODULE__{cleanup_interval: @default_cleanup_interval})
-  
+
   defp schedule_cleanup(state) do
     Process.send_after(self(), :cleanup, state.cleanup_interval)
   end
 
   defp cleanup_old_metrics(state) do
     cutoff = DateTime.add(DateTime.utc_now(), -state.retention_policy * 3600)
-    
+
     # Delete old metrics
-    deleted_count = :ets.select_delete(state.table, [
-      {{:"$1", :"$2"}, [{:<, :"$1", cutoff}], [true]}
-    ])
-    
+    deleted_count =
+      :ets.select_delete(state.table, [
+        {{:"$1", :"$2"}, [{:<, :"$1", cutoff}], [true]}
+      ])
+
     if deleted_count > 0 do
       IO.puts("MetricsStore: Cleaned up #{deleted_count} old metrics")
     end
@@ -426,13 +452,14 @@ defmodule RivaAshWeb.DevTools.MetricsStore do
 
   defp get_timeframe_start(:minute), do: DateTime.add(DateTime.utc_now(), -60)
   defp get_timeframe_start(:hour), do: DateTime.add(DateTime.utc_now(), -3600)
-  defp get_timeframe_start(:day), do: DateTime.add(DateTime.utc_now(), -86400)
-  defp get_timeframe_start(:week), do: DateTime.add(DateTime.utc_now(), -604800)
+  defp get_timeframe_start(:day), do: DateTime.add(DateTime.utc_now(), -86_400)
+  defp get_timeframe_start(:week), do: DateTime.add(DateTime.utc_now(), -604_800)
 
   defp calculate_summary(table, since) do
-    metrics = :ets.select(table, [
-      {{:"$1", :"$2"}, [{:>=, :"$1", since}], [:"$2"]}
-    ])
+    metrics =
+      :ets.select(table, [
+        {{:"$1", :"$2"}, [{:>=, :"$1", since}], [:"$2"]}
+      ])
 
     %{
       total_requests: count_by_type(metrics, :http_request),
@@ -451,13 +478,14 @@ defmodule RivaAshWeb.DevTools.MetricsStore do
   end
 
   defp calculate_performance_trends(table, since) do
-    metrics = :ets.select(table, [
-      {{:"$1", :"$2"}, [{:>=, :"$1", since}], [:"$2"]}
-    ])
+    metrics =
+      :ets.select(table, [
+        {{:"$1", :"$2"}, [{:>=, :"$1", since}], [:"$2"]}
+      ])
 
     # Group by 5-minute intervals
     interval_ms = 5 * 60 * 1000
-    
+
     metrics
     |> Enum.group_by(fn metric ->
       timestamp_ms = DateTime.to_unix(metric.timestamp, :millisecond)
@@ -485,7 +513,7 @@ defmodule RivaAshWeb.DevTools.MetricsStore do
     durations =
       metrics
       |> Enum.filter(&(&1.type == type))
-      |> Enum.map(&(&1.data.duration))
+      |> Enum.map(& &1.data.duration)
       |> Enum.filter(&is_number/1)
 
     case durations do
@@ -498,8 +526,8 @@ defmodule RivaAshWeb.DevTools.MetricsStore do
     metrics
     |> Enum.filter(fn metric ->
       metric.type == :query &&
-      is_number(metric.data.duration) &&
-      metric.data.duration > threshold_ms
+        is_number(metric.data.duration) &&
+        metric.data.duration > threshold_ms
     end)
     |> length()
   end

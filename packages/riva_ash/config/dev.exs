@@ -12,7 +12,7 @@ config :riva_ash, RivaAsh.Repo,
   password: System.get_env("DB_PASSWORD") || Application.compile_env(:riva_ash, :db_password, "postgres"),
   hostname: System.get_env("DB_HOSTNAME") || Application.compile_env(:riva_ash, :db_hostname, "localhost"),
   database: System.get_env("DB_NAME") || Application.compile_env(:riva_ash, :db_database, "riva_ash_dev"),
-  port: System.get_env("DB_PORT", "5432") |> String.to_integer(),
+  port: String.to_integer(System.get_env("DB_PORT", "5432")),
   stacktrace: true,
   show_sensitive_data_on_connection_error: true,
   pool_size: Application.compile_env(:riva_ash, :db_pool_size, 10)
@@ -36,7 +36,13 @@ config :riva_ash, RivaAshWeb.Endpoint,
   code_reloader: true,
   debug_errors: true,
   # Development secret - safe to commit, not used in production
-  secret_key_base: System.get_env("SECRET_KEY_BASE") || Application.compile_env(:riva_ash, :secret_key_base, "EuaQggrb3gfhrDAQUZqTsTMUt7zf9voCI2frB3kuyBabOCHiEue48mXJiMtL7QLj"),
+  secret_key_base:
+    System.get_env("SECRET_KEY_BASE") ||
+      Application.compile_env(
+        :riva_ash,
+        :secret_key_base,
+        "EuaQggrb3gfhrDAQUZqTsTMUt7zf9voCI2frB3kuyBabOCHiEue48mXJiMtL7QLj"
+      ),
   watchers: [
     tailwind: {Tailwind, :install_and_run, [:default, ~w(--watch)]},
     storybook_tailwind: {Tailwind, :install_and_run, [:storybook, ~w(--watch)]},
@@ -54,10 +60,10 @@ config :riva_ash, RivaAshWeb.Endpoint,
 # Enable dev routes for dashboard
 # Configuration patterns: Use application config rather than hardcoding to allow overrides
 # Functional programming patterns: Use consistent boolean evaluation
-config :riva_ash, dev_routes:
-  System.get_env("DEV_ROUTES", "false")
-  |> String.downcase()
-  |> (&(&1 in ["1", "true", "yes", "on"])).()
+config :riva_ash,
+  dev_routes:
+    String.downcase(System.get_env("DEV_ROUTES", "false"))
+    |> (&(&1 in ["1", "true", "yes", "on"])).()
 
 # Enable detailed logging for authentication
 # Code readability: Use consistent logging format across environments
@@ -87,7 +93,12 @@ config :phoenix, :plug_init_mode, :runtime
 config :live_debugger,
   ip: {127, 0, 0, 1},
   port: Application.compile_env(:riva_ash, :live_debugger_port, 4007),
-  secret_key_base: Application.compile_env(:riva_ash, :live_debugger_secret_key_base, "EuaQggrb3gfhrDAQUZqTsTMUt7zf9voCI2frB3kuyBabOCHiEue48mXJiMtL7QLj"),
+  secret_key_base:
+    Application.compile_env(
+      :riva_ash,
+      :live_debugger_secret_key_base,
+      "EuaQggrb3gfhrDAQUZqTsTMUt7zf9voCI2frB3kuyBabOCHiEue48mXJiMtL7QLj"
+    ),
   signing_salt: Application.compile_env(:riva_ash, :live_debugger_signing_salt, "live_debugger_salt"),
   adapter: Bandit.PhoenixAdapter,
   server: true

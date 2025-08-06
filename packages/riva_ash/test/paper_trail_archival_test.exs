@@ -310,17 +310,17 @@ defmodule RivaAsh.PaperTrailArchivalTest do
 
   @doc """
   Helper function to get versions for a resource.
-  
+
   ## Parameters
   - resource: The Ash resource module to get versions for
   - source_id: The ID of the source resource
-  
+
   ## Returns
   - List of version records
   """
   @spec get_versions_for_resource(module(), any()) :: list()
   defp get_versions_for_resource(resource, source_id) do
-    version_resource = Module.concat(resource, Version)
+    version_resource = Module.safe_concat(resource, Version)
 
     version_resource
     |> Ash.Query.filter(version_source_id == ^source_id)
@@ -330,10 +330,10 @@ defmodule RivaAsh.PaperTrailArchivalTest do
 
   @doc """
   Creates a test business for paper trail testing.
-  
+
   ## Parameters
   - user: The user actor creating the business
-  
+
   ## Returns
   - The created business struct
   """
@@ -349,10 +349,10 @@ defmodule RivaAsh.PaperTrailArchivalTest do
 
   @doc """
   Creates a test client for paper trail testing.
-  
+
   ## Parameters
   - business: The business to associate the client with
-  
+
   ## Returns
   - The created client struct
   """
@@ -370,7 +370,7 @@ defmodule RivaAsh.PaperTrailArchivalTest do
 
   @doc """
   Creates a test permission for paper trail testing.
-  
+
   ## Returns
   - The created permission struct
   """

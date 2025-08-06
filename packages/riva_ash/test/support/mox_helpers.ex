@@ -94,6 +94,7 @@ defmodule RivaAsh.Test.MoxHelpers do
   defp default_stubs({_other_behaviour, _mock}), do: :ok
 
   defp behaviour_to_mock(RivaAsh.Clock), do: RivaAsh.ClockMock
+
   defp behaviour_to_mock(other),
     do: raise(ArgumentError, "Unknown behaviour mapping for #{inspect(other)}")
 

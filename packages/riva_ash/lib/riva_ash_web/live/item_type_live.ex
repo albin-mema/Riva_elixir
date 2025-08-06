@@ -19,6 +19,7 @@ defmodule RivaAshWeb.ItemTypeLive do
         case load_item_types_data(socket, user) do
           {:ok, socket} ->
             {:ok, socket}
+
           {:error, reason} ->
             Logger.error("Failed to load item types: #{inspect(reason)}")
             {:ok, redirect(socket, to: "/access-denied")}
@@ -104,13 +105,13 @@ defmodule RivaAshWeb.ItemTypeLive do
   def handle_event("activate_item_type", %{"id" => id}, socket) do
     case TypeService.activate_type(id, socket.assigns.current_user) do
       {:ok, _item_type} ->
-        {:noreply, 
+        {:noreply,
          socket
          |> put_flash(:info, "Item type activated successfully")
          |> reload_item_types()}
-      
+
       {:error, reason} ->
-        {:noreply, 
+        {:noreply,
          socket
          |> put_flash(:error, "Failed to activate item type: #{format_error(reason)}")}
     end
@@ -119,13 +120,13 @@ defmodule RivaAshWeb.ItemTypeLive do
   def handle_event("deactivate_item_type", %{"id" => id}, socket) do
     case TypeService.deactivate_type(id, socket.assigns.current_user) do
       {:ok, _item_type} ->
-        {:noreply, 
+        {:noreply,
          socket
          |> put_flash(:info, "Item type deactivated successfully")
          |> reload_item_types()}
-      
+
       {:error, reason} ->
-        {:noreply, 
+        {:noreply,
          socket
          |> put_flash(:error, "Failed to deactivate item type: #{format_error(reason)}")}
     end
@@ -134,13 +135,13 @@ defmodule RivaAshWeb.ItemTypeLive do
   def handle_event("delete_item_type", %{"id" => id}, socket) do
     case TypeService.delete_type(id, socket.assigns.current_user) do
       {:ok, _item_type} ->
-        {:noreply, 
+        {:noreply,
          socket
          |> put_flash(:info, "Item type deleted successfully")
          |> reload_item_types()}
-      
+
       {:error, reason} ->
-        {:noreply, 
+        {:noreply,
          socket
          |> put_flash(:error, "Failed to delete item type: #{format_error(reason)}")}
     end
@@ -161,9 +162,9 @@ defmodule RivaAshWeb.ItemTypeLive do
           |> assign(:item_types, item_types)
           |> assign(:meta, meta)
           |> assign(:loading, false)
-        
+
         {:ok, socket}
-      
+
       {:error, reason} ->
         {:error, reason}
     end
@@ -174,7 +175,7 @@ defmodule RivaAshWeb.ItemTypeLive do
       {:ok, {item_types, meta}} ->
         assign(socket, :item_types, item_types)
         |> assign(:meta, meta)
-      
+
       {:error, _reason} ->
         socket
     end
@@ -186,17 +187,24 @@ defmodule RivaAshWeb.ItemTypeLive do
 
   defp truncate_text(nil, _length), do: "N/A"
   defp truncate_text(text, length) when byte_size(text) <= length, do: text
+
   defp truncate_text(text, length) do
     String.slice(text, 0, length) <> "..."
   end
 
   defp format_error(reason) do
     case reason do
-      %Ash.Error.Invalid{errors: errors} -> 
-        errors |> Enum.map(&format_validation_error/1) |> Enum.join(", ")
-      %Ash.Error.Forbidden{} -> "You don't have permission to perform this action"
-      %Ash.Error.NotFound{} -> "Item type not found"
-      _ -> "An unexpected error occurred"
+      %Ash.Error.Invalid{errors: errors} ->
+        Enum.map_join(errors, ", ", &format_validation_error/1)
+
+      %Ash.Error.Forbidden{} ->
+        "You don't have permission to perform this action"
+
+      %Ash.Error.NotFound{} ->
+        "Item type not found"
+
+      _ ->
+        "An unexpected error occurred"
     end
   end
 

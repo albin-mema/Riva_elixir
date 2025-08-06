@@ -4,7 +4,7 @@ defmodule RivaAshWeb.Components.Atoms.Button do
 
   Use RivaAshWeb.Components.UI.Button.button/1 directly in new code.
   This module delegates to the canonical component to maintain backward compatibility.
-  
+
   Follows functional core, imperative shell pattern with comprehensive type safety.
   """
   use Phoenix.Component
@@ -22,9 +22,9 @@ defmodule RivaAshWeb.Components.Atoms.Button do
   Renders a button component.
 
   Backwards-compatible API: maps legacy variant/size to UI.Button API.
-  
+
   ## Examples
-    
+
       <.button variant="primary">Click me</.button>
       <.button size="lg" loading={true}>Loading...</.button>
       <.button variant="outline" disabled={true}>Disabled</.button>
@@ -43,9 +43,11 @@ defmodule RivaAshWeb.Components.Atoms.Button do
     with {:ok, validated_assigns} <- validate_assigns(assigns),
          ui_variant <- map_variant(validated_assigns.variant),
          ui_size <- legacy_size(validated_assigns.size) do
-      assigns = validated_assigns
+      assigns =
+        validated_assigns
         |> assign(:ui_variant, ui_variant)
         |> assign(:ui_size, ui_size)
+
       render_button(assigns)
     else
       {:error, reason} -> render_error(reason)
@@ -153,6 +155,7 @@ defmodule RivaAshWeb.Components.Atoms.Button do
     # In a real implementation, you might want to log this error
     # and render a fallback button or error state
     IO.puts("Button error: #{reason}")
+
     ~H"""
     <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative">
       <span class="block sm:inline">Error: <%= reason %></span>

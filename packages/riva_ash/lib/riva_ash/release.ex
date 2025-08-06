@@ -1,11 +1,11 @@
 defmodule RivaAsh.Release do
   @moduledoc """
   Database release management for the Riva Ash application.
-  
+
   This module provides functionality for running database migrations,
   rollbacks, and other release-related tasks in production environments
   where Mix may not be available as a dependency.
-  
+
   It follows the functional core, imperative shell pattern with
   comprehensive error handling and logging.
   """
@@ -15,17 +15,17 @@ defmodule RivaAsh.Release do
 
   @doc """
   Runs all pending database migrations.
-  
+
   This function loads the application, gets all configured repositories,
   and runs migrations for each one. It provides detailed logging and
   error handling for production environments.
-  
+
   ## Returns
   - `{:ok, [{:ok | :error, module()}]}` - Migration results for each repository
   - `{:error, term()}` - Application loading or configuration error
-  
+
   ## Examples
-  
+
       iex> RivaAsh.Release.migrate()
       {:ok, [{:ok, RivaAsh.Repo}]}
   """
@@ -46,20 +46,20 @@ defmodule RivaAsh.Release do
 
   @doc """
   Rolls back migrations to a specific version.
-  
+
   This function rolls back migrations for a specific repository
   to the given version number.
-  
+
   ## Arguments
   - `repo` - The repository module to rollback
   - `version` - The target version to rollback to
-  
+
   ## Returns
   - `{:ok, term()}` - Rollback completed successfully
   - `{:error, term()}` - Rollback failed
-  
+
   ## Examples
-  
+
       iex> RivaAsh.Release.rollback(RivaAsh.Repo, 20230101120000)
       {:ok, %Ecto.Migrator.Migrations{...}}
   """
@@ -79,16 +79,16 @@ defmodule RivaAsh.Release do
 
   @doc """
   Rolls back the most recent migration.
-  
+
   This is a convenience function that rolls back the most recent
   migration for all repositories.
-  
+
   ## Returns
   - `{:ok, [{:ok | :error, module()}]}` - Rollback results for each repository
   - `{:error, term()}` - Rollback failed
-  
+
   ## Examples
-  
+
       iex> RivaAsh.Release.rollback_last()
       {:ok, [{:ok, RivaAsh.Repo}]}
   """
@@ -109,16 +109,16 @@ defmodule RivaAsh.Release do
 
   @doc """
   Checks the migration status of all repositories.
-  
+
   This function provides information about the current migration
   status including applied and pending migrations.
-  
+
   ## Returns
   - `{:ok, [map()]}` - Status information for each repository
   - `{:error, term()}` - Status check failed
-  
+
   ## Examples
-  
+
       iex> RivaAsh.Release.status()
       {:ok, [%{repo: RivaAsh.Repo, applied: 10, pending: 2}]}
   """
@@ -136,20 +136,20 @@ defmodule RivaAsh.Release do
 
   @doc """
   Creates a new migration file.
-  
+
   This function generates a new migration file with the given name
   and inserts it into the migrations directory.
-  
+
   ## Arguments
   - `name` - The name of the migration
   - `opts` - Optional parameters (repo, change, etc.)
-  
+
   ## Returns
   - `{:ok, String.t()}` - Path to the created migration file
   - `{:error, term()}` - File creation failed
-  
+
   ## Examples
-  
+
       iex> RivaAsh.Release.create_migration("add_users_table")
       {:ok, "priv/repo/migrations/20230101120000_add_users_table.exs"}
   """
@@ -157,10 +157,10 @@ defmodule RivaAsh.Release do
   def create_migration(name, opts \\ []) do
     timestamp = generate_timestamp()
     repo = Keyword.get(opts, :repo, RivaAsh.Repo)
-    
+
     migration_name = "#{timestamp}_#{name}.exs"
     migration_path = Path.join(@migrations_dir, migration_name)
-    
+
     with :ok <- validate_migration_name(name),
          :ok <- ensure_migrations_dir(),
          content <- generate_migration_content(name, repo, opts),
@@ -209,9 +209,10 @@ defmodule RivaAsh.Release do
     Enum.map(repos, fn repo ->
       case Ecto.Migrator.with_repo(repo, &Ecto.Migrator.migrations(&1)) do
         {:ok, migrations} ->
-          applied = Enum.filter(migrations, & &1.version <= get_last_version(repo))
-          pending = Enum.filter(migrations, & &1.version > get_last_version(repo))
+          applied = Enum.filter(migrations, &(&1.version <= get_last_version(repo)))
+          pending = Enum.filter(migrations, &(&1.version > get_last_version(repo)))
           %{repo: repo, applied: length(applied), pending: length(pending)}
+
         {:error, reason} ->
           %{repo: repo, error: reason}
       end
@@ -226,7 +227,9 @@ defmodule RivaAsh.Release do
           nil -> 0
           version -> version
         end
-      {:error, _} -> 0
+
+      {:error, _} ->
+        0
     end
   end
 
@@ -257,7 +260,7 @@ defmodule RivaAsh.Release do
     """
     defmodule #{String.capitalize(name)} do
       use Ecto.Migration
-      
+
       def change do
         # Add your migration changes here
       end
@@ -267,13 +270,13 @@ defmodule RivaAsh.Release do
 
   # Logging functions
 
-  @spec log_migration_results([{(:ok | :error), module()}]) :: :ok
+  @spec log_migration_results([{:ok | :error, module()}]) :: :ok
   defp log_migration_results(results) do
     successful = Enum.count(results, &match?({:ok, _}, &1))
     failed = Enum.count(results, &match?({:error, _}, &1))
-    
+
     Logger.info("Migration completed: #{successful} successful, #{failed} failed")
-    
+
     Enum.each(results, fn
       {:ok, repo} -> Logger.info("✓ #{repo} migrated successfully")
       {:error, {repo, reason}} -> Logger.error("✗ #{repo} migration failed: #{inspect(reason)}")
@@ -295,11 +298,11 @@ defmodule RivaAsh.Release do
     Logger.error("Rollback failed for #{repo} to version #{version}: #{inspect(reason)}")
   end
 
-  @spec log_rollback_results([{(:ok | :error), module()}]) :: :ok
+  @spec log_rollback_results([{:ok | :error, module()}]) :: :ok
   defp log_rollback_results(results) do
     successful = Enum.count(results, &match?({:ok, _}, &1))
     failed = Enum.count(results, &match?({:error, _}, &1))
-    
+
     Logger.info("Rollback completed: #{successful} successful, #{failed} failed")
   end
 

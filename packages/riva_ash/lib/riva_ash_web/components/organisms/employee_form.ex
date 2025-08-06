@@ -148,7 +148,7 @@ defmodule RivaAshWeb.Components.Organisms.EmployeeForm do
                 </select>
                 <%= if @form[:role].errors != [] do %>
                   <p class="mt-1 text-red-600 text-sm">
-                    <%= Enum.map(@form[:role].errors, &elem(&1, 0)) |> Enum.join(", ") %>
+                    <%= Enum.map_join(@form[:role].errors, ", ", &elem(&1, 0)) %>
                   </p>
                 <% end %>
               </div>
@@ -180,7 +180,7 @@ defmodule RivaAshWeb.Components.Organisms.EmployeeForm do
                 </select>
                 <%= if @form[:business_id].errors != [] do %>
                   <p class="mt-1 text-red-600 text-sm">
-                    <%= Enum.map(@form[:business_id].errors, &elem(&1, 0)) |> Enum.join(", ") %>
+                    <%= Enum.map_join(@form[:business_id].errors, ", ", &elem(&1, 0)) %>
                   </p>
                 <% end %>
               </div>
@@ -249,27 +249,19 @@ defmodule RivaAshWeb.Components.Organisms.EmployeeForm do
 
   # Helper function to build body classes
   @spec build_body_class() :: String.t()
-  defp build_body_class() do
-    ""
-  end
+  defp build_body_class, do: ""
 
   # Helper function to build form classes
   @spec build_form_class() :: String.t()
-  defp build_form_class() do
-    "space-y-6"
-  end
+  defp build_form_class, do: "space-y-6"
 
   # Helper function to build personal info classes
   @spec build_personal_info_class() :: String.t()
-  defp build_personal_info_class() do
-    "gap-4 grid grid-cols-1 md:grid-cols-2"
-  end
+  defp build_personal_info_class, do: "gap-4 grid grid-cols-1 md:grid-cols-2"
 
   # Helper function to build contact info classes
   @spec build_contact_info_class() :: String.t()
-  defp build_contact_info_class() do
-    "gap-4 grid grid-cols-1 md:grid-cols-2"
-  end
+  defp build_contact_info_class, do: "gap-4 grid grid-cols-1 md:grid-cols-2"
 
   # Helper function to build permissions classes
   @spec build_permissions_class(list()) :: String.t()
@@ -285,19 +277,13 @@ defmodule RivaAshWeb.Components.Organisms.EmployeeForm do
 
   # Helper function to build status classes
   @spec build_status_class() :: String.t()
-  defp build_status_class() do
-    "flex items-center"
-  end
+  defp build_status_class, do: "flex items-center"
 
   # Helper function to build notes classes
   @spec build_notes_class() :: String.t()
-  defp build_notes_class() do
-    ""
-  end
+  defp build_notes_class, do: ""
 
   # Helper function to build actions classes
   @spec build_actions_class() :: String.t()
-  defp build_actions_class() do
-    "flex justify-end space-x-3 pt-4 border-t"
-  end
+  defp build_actions_class, do: "flex justify-end space-x-3 pt-4 border-t"
 end

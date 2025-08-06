@@ -19,18 +19,34 @@ defmodule RivaAshWeb.Components.Molecules.TabNavigation do
   Renders tab navigation with accessibility features and keyboard navigation.
   """
   @spec tab_navigation(assigns :: assigns()) :: Phoenix.LiveView.Rendered.t()
-  attr(:tabs, :list, required: true,
-    doc: "List of tabs with required :id and :label keys")
-  attr(:active_tab, :string, required: true,
-    doc: "ID of the currently active tab")
-  attr(:on_tab_change, :string, required: true,
-    doc: "Event handler for tab changes")
-  attr(:variant, :string, default: "default", values: ~w(default pills underline),
-    doc: "Visual variant of the tab navigation")
-  attr(:size, :string, default: "md", values: ~w(sm md lg),
-    doc: "Size variant of the tab navigation")
-  attr(:class, :string, default: "",
-    doc: "Additional CSS classes for the container")
+  attr(:tabs, :list,
+    required: true,
+    doc: "List of tabs with required :id and :label keys"
+  )
+
+  attr(:active_tab, :string,
+    required: true,
+    doc: "ID of the currently active tab"
+  )
+
+  attr(:on_tab_change, :string,
+    required: true,
+    doc: "Event handler for tab changes"
+  )
+
+  attr(:variant, :string,
+    default: "default",
+    values: ~w(default pills underline),
+    doc: "Visual variant of the tab navigation"
+  )
+
+  attr(:size, :string, default: "md", values: ~w(sm md lg), doc: "Size variant of the tab navigation")
+
+  attr(:class, :string,
+    default: "",
+    doc: "Additional CSS classes for the container"
+  )
+
   attr(:rest, :global)
 
   @impl true
@@ -70,6 +86,7 @@ defmodule RivaAshWeb.Components.Molecules.TabNavigation do
       false -> {:error, "All tabs must have :id and :label keys"}
     end
   end
+
   defp validate_tabs(_), do: {:error, "Tabs must be a non-empty list"}
 
   @spec valid_tab?(map()) :: boolean()
@@ -79,7 +96,7 @@ defmodule RivaAshWeb.Components.Molecules.TabNavigation do
 
   @spec validate_active_tab(String.t(), list(map())) :: :ok | {:error, String.t()}
   defp validate_active_tab(active_tab, tabs) do
-    if Enum.any?(tabs, & &1[:id] == active_tab) do
+    if Enum.any?(tabs, &(&1[:id] == active_tab)) do
       :ok
     else
       {:error, "active_tab must match one of the tab IDs"}
@@ -140,7 +157,7 @@ defmodule RivaAshWeb.Components.Molecules.TabNavigation do
       aria-controls={panel_id}
       aria-disabled={tab[:disabled]}
       class={build_tab_class(is_active, variant, size, tab[:disabled])}
-      phx-click={if not tab[:disabled], do: on_tab_change}
+      phx-click={if tab[:disabled] == false, do: on_tab_change}
       phx-value-tab={tab[:id]}
       disabled={tab[:disabled]}
       data-tab-id={tab[:id]}

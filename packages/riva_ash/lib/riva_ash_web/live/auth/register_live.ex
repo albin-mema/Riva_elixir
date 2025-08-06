@@ -1,7 +1,7 @@
 defmodule RivaAshWeb.Auth.RegisterLive do
   @moduledoc """
   User registration LiveView.
-  
+
   This LiveView follows Phoenix/Ash/Elixir patterns:
   - Keeps business logic out of the LiveView module
   - Delegates to Accounts.UserRegistration for business logic
@@ -16,16 +16,19 @@ defmodule RivaAshWeb.Auth.RegisterLive do
 
   @impl true
   def mount(_params, _session, socket) do
-    form = AshPhoenix.Form.for_create(UserRegistration, :register,
-      as: "user",
-      actor: nil
-    ) |> to_form()
-    
-    {:ok, assign(socket,
-      form: form,
-      error_message: nil,
-      loading: false
-    )}
+    form =
+      AshPhoenix.Form.for_create(UserRegistration, :register,
+        as: "user",
+        actor: nil
+      )
+      |> to_form()
+
+    {:ok,
+     assign(socket,
+       form: form,
+       error_message: nil,
+       loading: false
+     )}
   end
 
   @impl true
@@ -159,7 +162,7 @@ defmodule RivaAshWeb.Auth.RegisterLive do
   @impl true
   def handle_event("register", %{"user" => user_params}, socket) do
     socket = assign(socket, loading: true, error_message: nil)
-    
+
     case UserRegistration.register(user_params) do
       {:ok, _user} ->
         {:noreply,
@@ -170,23 +173,27 @@ defmodule RivaAshWeb.Auth.RegisterLive do
       {:error, %Ash.Changeset{errors: errors}} ->
         form = AshPhoenix.Form.validate(socket.assigns.form, user_params) |> to_form()
         error_message = format_registration_errors(errors)
-        {:noreply, assign(socket,
-          form: form,
-          error_message: error_message,
-          loading: false
-        )}
+
+        {:noreply,
+         assign(socket,
+           form: form,
+           error_message: error_message,
+           loading: false
+         )}
 
       {:error, reason} when is_binary(reason) ->
-        {:noreply, assign(socket,
-          error_message: reason,
-          loading: false
-        )}
+        {:noreply,
+         assign(socket,
+           error_message: reason,
+           loading: false
+         )}
 
       {:error, reason} ->
-        {:noreply, assign(socket,
-          error_message: "Registration failed: #{inspect(reason)}",
-          loading: false
-        )}
+        {:noreply,
+         assign(socket,
+           error_message: "Registration failed: #{inspect(reason)}",
+           loading: false
+         )}
     end
   end
 

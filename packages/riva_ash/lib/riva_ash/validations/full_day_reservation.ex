@@ -44,12 +44,12 @@ defmodule RivaAsh.Validations.FullDayReservation do
   @spec full_day_reservation?(DateTime.t(), DateTime.t()) :: boolean()
   defp full_day_reservation?(reserved_from, reserved_until) do
     {from_date, from_time, until_date, until_time} =
-      {DateTime.to_date(reserved_from), DateTime.to_time(reserved_from),
-       DateTime.to_date(reserved_until), DateTime.to_time(reserved_until)}
-    
+      {DateTime.to_date(reserved_from), DateTime.to_time(reserved_from), DateTime.to_date(reserved_until),
+       DateTime.to_time(reserved_until)}
+
     start_is_beginning_of_day = Timex.compare(from_time, ~T[00:00:00]) == 0
     end_is_end_of_day = validate_end_time(until_time, until_date, from_date)
-    
+
     start_is_beginning_of_day and end_is_end_of_day
   end
 

@@ -1,42 +1,42 @@
 defmodule RivaAshWeb.Components.Interactive.DailySchedule do
   @moduledoc """
   Daily schedule component with hourly time slots.
-  
+
   ## Styleguide Compliance
-  
+
   This component follows the Riva Ash styleguide principles:
-  
+
   ### Functional Programming
   - Uses pure functions with immutable data
   - Implements pattern matching for data validation
   - Follows the functional core, imperative shell pattern
   - Uses pipelines for data transformation
-  
+
   ### Type Safety
   - Comprehensive type specifications for all functions
   - Uses proper Elixir type annotations
   - Implements guard clauses for validation
-  
+
   ### Code Abstraction
   - Single level of abstraction principle
   - Extracted helper functions for business logic
   - Clear separation of concerns
   - Reusable utility functions
-  
+
   ### Phoenix/Ash Patterns
   - Follows Phoenix LiveView component patterns
   - Uses proper attribute handling
   - Implements consistent event handling
   - Ash-specific data structures and patterns
-  
+
   ### LiveView Component Best Practices
   - Proper use of assigns and HEEx templates
   - Consistent naming conventions
   - Clear documentation and examples
   - Accessible and semantic HTML structure
-  
+
   ## Examples
-  
+
   ```elixir
   # Basic usage
   <.daily_schedule
@@ -45,7 +45,7 @@ defmodule RivaAshWeb.Components.Interactive.DailySchedule do
     on_slot_click="handle_slot_click"
     on_navigate="navigate_day"
   />
-  
+
   # With all day events
   <.daily_schedule
     current_date="2024-01-15"
@@ -62,9 +62,9 @@ defmodule RivaAshWeb.Components.Interactive.DailySchedule do
 
   @doc """
   Renders a daily schedule view.
-  
+
   ## Attributes
-  
+
   - `current_date` (string, required): Current date being displayed
   - `events` (list, optional): List of events to display
   - `on_slot_click` (string, required): Event handler for slot clicks
@@ -92,9 +92,9 @@ defmodule RivaAshWeb.Components.Interactive.DailySchedule do
 
   @doc """
   Renders the daily schedule component.
-  
+
   ## Examples
-  
+
       iex> daily_schedule(%{
       ...>   current_date: "2024-01-15",
       ...>   events: [],
@@ -114,12 +114,12 @@ defmodule RivaAshWeb.Components.Interactive.DailySchedule do
 
   @doc """
   Validates component assigns.
-  
+
   ## Examples
-  
+
       iex> validate_assigns(%{current_date: "2024-01-15", on_slot_click: "event", on_navigate: "navigate"})
       {:ok, %{current_date: "2024-01-15", on_slot_click: "event", on_navigate: "navigate"}}
-      
+
       iex> validate_assigns(%{on_slot_click: "event", on_navigate: "navigate"})
       {:error, "current_date is required"}
   """
@@ -136,12 +136,12 @@ defmodule RivaAshWeb.Components.Interactive.DailySchedule do
 
   @doc """
   Validates date format.
-  
+
   ## Examples
-  
+
       iex> validate_date("2024-01-15")
       {:ok, "2024-01-15"}
-      
+
       iex> validate_date("invalid-date")
       {:error, "current_date must be a valid date string"}
   """
@@ -161,12 +161,12 @@ defmodule RivaAshWeb.Components.Interactive.DailySchedule do
 
   @doc """
   Validates time range parameters.
-  
+
   ## Examples
-  
+
       iex> validate_time_range(8, 18)
       {:ok, {8, 18}}
-      
+
       iex> validate_time_range(18, 8)
       {:error, "start_hour must be less than end_hour"}
   """
@@ -185,19 +185,19 @@ defmodule RivaAshWeb.Components.Interactive.DailySchedule do
 
   @doc """
   Validates required assigns.
-  
+
   ## Examples
-  
+
       iex> validate_required(%{key: "value"}, [:key])
       {:ok, %{key: "value"}}
-      
+
       iex> validate_required(%{}, [:key])
       {:error, "key is required"}
   """
   @spec validate_required(map(), list(atom())) :: {:ok, map()} | {:error, String.t()}
   defp validate_required(assigns, required_keys) do
     missing_keys = required_keys -- Map.keys(assigns)
-    
+
     if Enum.empty?(missing_keys) do
       {:ok, assigns}
     else
@@ -207,9 +207,9 @@ defmodule RivaAshWeb.Components.Interactive.DailySchedule do
 
   @doc """
   Renders the schedule component.
-  
+
   ## Examples
-  
+
       iex> render_schedule(%{current_date: "2024-01-15", events: [], on_slot_click: "event", on_navigate: "navigate"})
       %Phoenix.LiveView.Rendered{...}
   """
@@ -226,7 +226,7 @@ defmodule RivaAshWeb.Components.Interactive.DailySchedule do
           Next Day ›
         </.button>
       </div>
-      
+
       <div :if={@show_all_day && has_all_day_events(@events)} class="all-day-events">
         <!-- All day events section -->
         <div class="all-day-header">
@@ -243,7 +243,7 @@ defmodule RivaAshWeb.Components.Interactive.DailySchedule do
           </button>
         </div>
       </div>
-      
+
       <div class="time-slots">
         <!-- Hourly time slots -->
         <div :for={hour <- @start_hour..@end_hour} class="time-slot-row">
@@ -276,12 +276,12 @@ defmodule RivaAshWeb.Components.Interactive.DailySchedule do
 
   @doc """
   Formats date for display.
-  
+
   ## Examples
-  
+
       iex> format_date("2024-01-15")
       "January 15, 2024"
-      
+
       iex> format_date("2024-12-25")
       "December 25, 2024"
   """
@@ -292,6 +292,7 @@ defmodule RivaAshWeb.Components.Interactive.DailySchedule do
       [year, month, day] ->
         month_name = get_month_name(String.to_integer(month))
         "#{month_name} #{String.to_integer(day)}, #{year}"
+
       _ ->
         date
     end
@@ -303,21 +304,32 @@ defmodule RivaAshWeb.Components.Interactive.DailySchedule do
 
   @doc """
   Gets month name from month number.
-  
+
   ## Examples
-  
+
       iex> get_month_name(1)
       "January"
-      
+
       iex> get_month_name(12)
       "December"
   """
   @spec get_month_name(integer()) :: String.t()
   defp get_month_name(month) when month >= 1 and month <= 12 do
     months = [
-      "January", "February", "March", "April", "May", "June",
-      "July", "August", "September", "October", "November", "December"
+      "January",
+      "February",
+      "March",
+      "April",
+      "May",
+      "June",
+      "July",
+      "August",
+      "September",
+      "October",
+      "November",
+      "December"
     ]
+
     Enum.at(months, month - 1)
   end
 
@@ -327,12 +339,12 @@ defmodule RivaAshWeb.Components.Interactive.DailySchedule do
 
   @doc """
   Formats hour for display.
-  
+
   ## Examples
-  
+
       iex> format_hour(9)
       "9:00"
-      
+
       iex> format_hour(15)
       "15:00"
   """
@@ -347,15 +359,15 @@ defmodule RivaAshWeb.Components.Interactive.DailySchedule do
 
   @doc """
   Checks if there are any all day events.
-  
+
   ## Examples
-  
+
       iex> has_all_day_events([%{all_day: true}, %{all_day: false}])
       true
-      
+
       iex> has_all_day_events([%{all_day: false}, %{all_day: false}])
       false
-      
+
       iex> has_all_day_events([])
       false
   """
@@ -370,12 +382,12 @@ defmodule RivaAshWeb.Components.Interactive.DailySchedule do
 
   @doc """
   Filters all day events from the events list.
-  
+
   ## Examples
-  
+
       iex> filter_all_day_events([%{all_day: true, title: "Event 1"}, %{all_day: false, title: "Event 2"}])
       [%{all_day: true, title: "Event 1"}]
-      
+
       iex> filter_all_day_events([])
       []
   """

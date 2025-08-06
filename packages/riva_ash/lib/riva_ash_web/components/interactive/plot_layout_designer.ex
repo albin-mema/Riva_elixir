@@ -1,42 +1,42 @@
 defmodule RivaAshWeb.Components.Interactive.PlotLayoutDesigner do
   @moduledoc """
   Visual plot layout editor component with drag and drop.
-  
+
   ## Styleguide Compliance
-  
+
   This component follows the Riva Ash styleguide principles:
-  
+
   ### Functional Programming
   - Uses pure functions with immutable data
   - Implements pattern matching for data validation
   - Follows the functional core, imperative shell pattern
   - Uses pipelines for data transformation
-  
+
   ### Type Safety
   - Comprehensive type specifications for all functions
   - Uses proper Elixir type annotations
   - Implements guard clauses for validation
-  
+
   ### Code Abstraction
   - Single level of abstraction principle
   - Extracted helper functions for business logic
   - Clear separation of concerns
   - Reusable utility functions
-  
+
   ### Phoenix/Ash Patterns
   - Follows Phoenix LiveView component patterns
   - Uses proper attribute handling
   - Implements consistent event handling
   - Ash-specific data structures and patterns
-  
+
   ### LiveView Component Best Practices
   - Proper use of assigns and HEEx templates
   - Consistent naming conventions
   - Clear documentation and examples
   - Accessible and semantic HTML structure
-  
+
   ## Examples
-  
+
   ```elixir
   # Basic usage
   <.plot_layout_designer
@@ -49,7 +49,7 @@ defmodule RivaAshWeb.Components.Interactive.PlotLayoutDesigner do
     on_item_move="move_item"
     mode="edit"
   />
-  
+
   # View mode
   <.plot_layout_designer
     layout={@layout}
@@ -66,9 +66,9 @@ defmodule RivaAshWeb.Components.Interactive.PlotLayoutDesigner do
 
   @doc """
   Renders a visual plot layout designer.
-  
+
   ## Attributes
-  
+
   - `layout` (map, required): Layout configuration
   - `sections` (list, optional): List of sections in the layout
   - `items` (list, optional): List of items in the layout
@@ -104,9 +104,9 @@ defmodule RivaAshWeb.Components.Interactive.PlotLayoutDesigner do
 
   @doc """
   Renders the plot layout designer component.
-  
+
   ## Examples
-  
+
       iex> plot_layout_designer(%{
       ...>   layout: %{},
       ...>   sections: [],
@@ -134,18 +134,29 @@ defmodule RivaAshWeb.Components.Interactive.PlotLayoutDesigner do
 
   @doc """
   Validates component assigns.
-  
+
   ## Examples
-  
+
       iex> validate_assigns(%{layout: %{}, sections: [], items: [], grid_rows: 5, grid_columns: 5, on_section_move: "move", on_item_move: "move", on_add_section: "add", on_add_item: "add", on_remove_element: "remove", on_grid_resize: "resize", mode: "edit"})
       {:ok, %{layout: %{}, sections: [], items: [], grid_rows: 5, grid_columns: 5, on_section_move: "move", on_item_move: "move", on_add_section: "add", on_add_item: "add", on_remove_element: "remove", on_grid_resize: "resize", mode: "edit"}}
-      
+
       iex> validate_assigns(%{grid_rows: 5, grid_columns: 5})
       {:error, "layout is required"}
   """
   @spec validate_assigns(map()) :: {:ok, map()} | {:error, String.t()}
   defp validate_assigns(assigns) do
-    with {:ok, _} <- validate_required(assigns, [:layout, :grid_rows, :grid_columns, :on_section_move, :on_item_move, :on_add_section, :on_add_item, :on_remove_element, :on_grid_resize]),
+    with {:ok, _} <-
+           validate_required(assigns, [
+             :layout,
+             :grid_rows,
+             :grid_columns,
+             :on_section_move,
+             :on_item_move,
+             :on_add_section,
+             :on_add_item,
+             :on_remove_element,
+             :on_grid_resize
+           ]),
          {:ok, _} <- validate_grid_dimensions(assigns.grid_rows, assigns.grid_columns),
          {:ok, _} <- validate_mode(assigns.mode),
          {:ok, _} <- validate_element_data(assigns.sections, assigns.items) do
@@ -157,15 +168,15 @@ defmodule RivaAshWeb.Components.Interactive.PlotLayoutDesigner do
 
   @doc """
   Validates grid dimensions.
-  
+
   ## Examples
-  
+
       iex> validate_grid_dimensions(5, 5)
       {:ok, {5, 5}}
-      
+
       iex> validate_grid_dimensions(0, 5)
       {:error, "grid_rows must be greater than 0"}
-      
+
       iex> validate_grid_dimensions(5, 0)
       {:error, "grid_columns must be greater than 0"}
   """
@@ -184,15 +195,15 @@ defmodule RivaAshWeb.Components.Interactive.PlotLayoutDesigner do
 
   @doc """
   Validates mode value.
-  
+
   ## Examples
-  
+
       iex> validate_mode("edit")
       {:ok, "edit"}
-      
+
       iex> validate_mode("view")
       {:ok, "view"}
-      
+
       iex> validate_mode("invalid")
       {:error, "mode must be either \"view\" or \"edit\""}
   """
@@ -211,15 +222,15 @@ defmodule RivaAshWeb.Components.Interactive.PlotLayoutDesigner do
 
   @doc """
   Validates element data.
-  
+
   ## Examples
-  
+
       iex> validate_element_data([], [])
       {:ok, {[], []}}
-      
+
       iex> validate_element_data([%{id: 1, name: "Section"}], [%{id: 1, name: "Item", section_id: 1}])
       {:ok, {[%{id: 1, name: "Section"}], [%{id: 1, name: "Item", section_id: 1}]}}
-      
+
       iex> validate_element_data([%{invalid: "data"}], [])
       {:error, "Invalid section data"}
   """
@@ -237,21 +248,21 @@ defmodule RivaAshWeb.Components.Interactive.PlotLayoutDesigner do
 
   @doc """
   Validates section data.
-  
+
   ## Examples
-  
+
       iex> validate_section_data([])
       {:ok, []}
-      
+
       iex> validate_section_data([%{id: 1, name: "Section", grid_row: 1, grid_column: 1}])
       {:ok, [%{id: 1, name: "Section", grid_row: 1, grid_column: 1}]}
-      
+
       iex> validate_section_data([%{invalid: "data"}])
       {:error, "Invalid section data"}
   """
   @spec validate_section_data(list(map())) :: {:ok, list(map())} | {:error, String.t()}
   defp validate_section_data(sections) when is_list(sections) do
-    case Enum.find(sections, fn section -> not is_valid_section(section) end) do
+    case Enum.find(sections, fn section -> not valid_section?(section) end) do
       nil -> {:ok, sections}
       _ -> {:error, "Invalid section data"}
     end
@@ -263,21 +274,21 @@ defmodule RivaAshWeb.Components.Interactive.PlotLayoutDesigner do
 
   @doc """
   Validates item data.
-  
+
   ## Examples
-  
+
       iex> validate_item_data([])
       {:ok, []}
-      
+
       iex> validate_item_data([%{id: 1, name: "Item", section_id: 1}])
       {:ok, [%{id: 1, name: "Item", section_id: 1}]}
-      
+
       iex> validate_item_data([%{invalid: "data"}])
       {:error, "Invalid item data"}
   """
   @spec validate_item_data(list(map())) :: {:ok, list(map())} | {:error, String.t()}
   defp validate_item_data(items) when is_list(items) do
-    case Enum.find(items, fn item -> not is_valid_item(item) end) do
+    case Enum.find(items, fn item -> not valid_item?(item) end) do
       nil -> {:ok, items}
       _ -> {:error, "Invalid item data"}
     end
@@ -289,76 +300,76 @@ defmodule RivaAshWeb.Components.Interactive.PlotLayoutDesigner do
 
   @doc """
   Checks if section data is valid.
-  
+
   ## Examples
-  
-      iex> is_valid_section(%{id: 1, name: "Section", grid_row: 1, grid_column: 1})
+
+      iex> valid_section?(%{id: 1, name: "Section", grid_row: 1, grid_column: 1})
       true
-      
-      iex> is_valid_section(%{id: 1, name: "Section"})
+
+      iex> valid_section?(%{id: 1, name: "Section"})
       false
-      
-      iex> is_valid_section("invalid")
+
+      iex> valid_section?("invalid")
       false
   """
-  @spec is_valid_section(map()) :: boolean()
-  defp is_valid_section(section) when is_map(section) do
+  @spec valid_section?(map()) :: boolean()
+  defp valid_section?(section) when is_map(section) do
     Map.has_key?(section, :id) and
-    Map.has_key?(section, :name) and
-    Map.has_key?(section, :grid_row) and
-    Map.has_key?(section, :grid_column) and
-    is_integer(section.grid_row) and
-    is_integer(section.grid_column) and
-    section.grid_row > 0 and
-    section.grid_column > 0
+      Map.has_key?(section, :name) and
+      Map.has_key?(section, :grid_row) and
+      Map.has_key?(section, :grid_column) and
+      is_integer(section.grid_row) and
+      is_integer(section.grid_column) and
+      section.grid_row > 0 and
+      section.grid_column > 0
   end
 
-  defp is_valid_section(_section) do
+  defp valid_section?(_section) do
     false
   end
 
   @doc """
   Checks if item data is valid.
-  
+
   ## Examples
-  
-      iex> is_valid_item(%{id: 1, name: "Item", section_id: 1})
+
+      iex> valid_item?(%{id: 1, name: "Item", section_id: 1})
       true
-      
-      iex> is_valid_item(%{id: 1, name: "Item"})
+
+      iex> valid_item?(%{id: 1, name: "Item"})
       false
-      
-      iex> is_valid_item("invalid")
+
+      iex> valid_item?("invalid")
       false
   """
-  @spec is_valid_item(map()) :: boolean()
-  defp is_valid_item(item) when is_map(item) do
+  @spec valid_item?(map()) :: boolean()
+  defp valid_item?(item) when is_map(item) do
     Map.has_key?(item, :id) and
-    Map.has_key?(item, :name) and
-    Map.has_key?(item, :section_id) and
-    is_integer(item.section_id) and
-    item.section_id > 0
+      Map.has_key?(item, :name) and
+      Map.has_key?(item, :section_id) and
+      is_integer(item.section_id) and
+      item.section_id > 0
   end
 
-  defp is_valid_item(_item) do
+  defp valid_item?(_item) do
     false
   end
 
   @doc """
   Validates required assigns.
-  
+
   ## Examples
-  
+
       iex> validate_required(%{key: "value"}, [:key])
       {:ok, %{key: "value"}}
-      
+
       iex> validate_required(%{}, [:key])
       {:error, "key is required"}
   """
   @spec validate_required(map(), list(atom())) :: {:ok, map()} | {:error, String.t()}
   defp validate_required(assigns, required_keys) do
     missing_keys = required_keys -- Map.keys(assigns)
-    
+
     if Enum.empty?(missing_keys) do
       {:ok, assigns}
     else
@@ -368,9 +379,9 @@ defmodule RivaAshWeb.Components.Interactive.PlotLayoutDesigner do
 
   @doc """
   Renders the designer component.
-  
+
   ## Examples
-  
+
       iex> render_designer(%{layout: %{}, sections: [], items: [], grid_rows: 5, grid_columns: 5, on_section_move: "move", on_item_move: "move", on_add_section: "add", on_add_item: "add", on_remove_element: "remove", on_grid_resize: "resize", mode: "edit"})
       %Phoenix.LiveView.Rendered{...}
   """
@@ -424,7 +435,7 @@ defmodule RivaAshWeb.Components.Interactive.PlotLayoutDesigner do
             :for={section <- get_elements_at_position(@sections, row, col)}
             class={[
               "section-element",
-              if(is_selected_element(@selected_element, section.id, "section"), do: "selected", else: "")
+              if(selected_element?(@selected_element, section.id, "section"), do: "selected", else: "")
             ]}
             phx-click={if @mode == "edit", do: "element_selected", else: nil}
             phx-value-type="section"
@@ -448,7 +459,7 @@ defmodule RivaAshWeb.Components.Interactive.PlotLayoutDesigner do
               :for={item <- get_section_items(@items, section.id)}
               class={[
                 "item-element",
-                if(is_selected_element(@selected_element, item.id, "item"), do: "selected", else: "")
+                if(selected_element?(@selected_element, item.id, "item"), do: "selected", else: "")
               ]}
               phx-click={if @mode == "edit", do: "element_selected", else: nil}
               phx-value-type="item"
@@ -504,17 +515,18 @@ defmodule RivaAshWeb.Components.Interactive.PlotLayoutDesigner do
 
   @doc """
   Generates all possible grid positions.
-  
+
   ## Examples
-  
+
       iex> generate_grid_positions(2, 2)
       [{1, 1}, {1, 2}, {2, 1}, {2, 2}]
-      
+
       iex> generate_grid_positions(1, 3)
       [{1, 1}, {1, 2}, {1, 3}]
   """
   @spec generate_grid_positions(integer(), integer()) :: list({integer(), integer()})
-  defp generate_grid_positions(rows, columns) when is_integer(rows) and is_integer(columns) and rows > 0 and columns > 0 do
+  defp generate_grid_positions(rows, columns)
+       when is_integer(rows) and is_integer(columns) and rows > 0 and columns > 0 do
     for row <- 1..rows, col <- 1..columns, do: {row, col}
   end
 
@@ -524,12 +536,12 @@ defmodule RivaAshWeb.Components.Interactive.PlotLayoutDesigner do
 
   @doc """
   Gets elements at a specific position.
-  
+
   ## Examples
-  
+
       iex> get_elements_at_position([%{id: 1, name: "Section", grid_row: 1, grid_column: 1}], 1, 1)
       [%{id: 1, name: "Section", grid_row: 1, grid_column: 1}]
-      
+
       iex> get_elements_at_position([%{id: 1, name: "Section", grid_row: 1, grid_column: 1}], 2, 2)
       []
   """
@@ -546,12 +558,12 @@ defmodule RivaAshWeb.Components.Interactive.PlotLayoutDesigner do
 
   @doc """
   Gets items for a specific section.
-  
+
   ## Examples
-  
+
       iex> get_section_items([%{id: 1, name: "Item", section_id: 1}], 1)
       [%{id: 1, name: "Item", section_id: 1}]
-      
+
       iex> get_section_items([%{id: 1, name: "Item", section_id: 1}], 2)
       []
   """
@@ -568,24 +580,24 @@ defmodule RivaAshWeb.Components.Interactive.PlotLayoutDesigner do
 
   @doc """
   Checks if an element is selected.
-  
+
   ## Examples
-  
-      iex> is_selected_element(%{id: 1, type: "section"}, 1, "section")
+
+      iex> selected_element?(%{id: 1, type: "section"}, 1, "section")
       true
-      
-      iex> is_selected_element(%{id: 1, type: "section"}, 2, "section")
+
+      iex> selected_element?(%{id: 1, type: "section"}, 2, "section")
       false
-      
-      iex> is_selected_element(nil, 1, "section")
+
+      iex> selected_element?(nil, 1, "section")
       false
   """
-  @spec is_selected_element(map() | nil, integer(), String.t()) :: boolean()
-  defp is_selected_element(selected_element, id, type) when is_map(selected_element) do
+  @spec selected_element?(map() | nil, integer(), String.t()) :: boolean()
+  defp selected_element?(selected_element, id, type) when is_map(selected_element) do
     selected_element.id == id and selected_element.type == type
   end
 
-  defp is_selected_element(_selected_element, _id, _type) do
+  defp selected_element?(_selected_element, _id, _type) do
     false
   end
 end

@@ -1,42 +1,42 @@
 defmodule RivaAshWeb.Components.Interactive.WeeklyCalendar do
   @moduledoc """
   Weekly calendar component with time slots.
-  
+
   ## Styleguide Compliance
-  
+
   This component follows the Riva Ash styleguide principles:
-  
+
   ### Functional Programming
   - Uses pure functions with immutable data
   - Implements pattern matching for data validation
   - Follows the functional core, imperative shell pattern
   - Uses pipelines for data transformation
-  
+
   ### Type Safety
   - Comprehensive type specifications for all functions
   - Uses proper Elixir type annotations
   - Implements guard clauses for validation
-  
+
   ### Code Abstraction
   - Single level of abstraction principle
   - Extracted helper functions for business logic
   - Clear separation of concerns
   - Reusable utility functions
-  
+
   ### Phoenix/Ash Patterns
   - Follows Phoenix LiveView component patterns
   - Uses proper attribute handling
   - Implements consistent event handling
   - Ash-specific data structures and patterns
-  
+
   ### LiveView Component Best Practices
   - Proper use of assigns and HEEx templates
   - Consistent naming conventions
   - Clear documentation and examples
   - Accessible and semantic HTML structure
-  
+
   ## Examples
-  
+
   ```elixir
   # Basic usage
   <.weekly_calendar
@@ -44,7 +44,7 @@ defmodule RivaAshWeb.Components.Interactive.WeeklyCalendar do
     on_slot_click="handle_slot_click"
     on_navigate="navigate_week"
   />
-  
+
   # With events and time slots
   <.weekly_calendar
     current_week="2024-W01"
@@ -63,9 +63,9 @@ defmodule RivaAshWeb.Components.Interactive.WeeklyCalendar do
 
   @doc """
   Renders a weekly calendar view with time slots.
-  
+
   ## Attributes
-  
+
   - `current_week` (string, required): Current week being displayed (YYYY-Www format)
   - `events` (list, optional): List of events to display
   - `time_slots` (list, optional): List of time slots
@@ -93,9 +93,9 @@ defmodule RivaAshWeb.Components.Interactive.WeeklyCalendar do
 
   @doc """
   Renders the weekly calendar component.
-  
+
   ## Examples
-  
+
       iex> weekly_calendar(%{
       ...>   current_week: "2024-W01",
       ...>   events: [],
@@ -116,12 +116,12 @@ defmodule RivaAshWeb.Components.Interactive.WeeklyCalendar do
 
   @doc """
   Validates component assigns.
-  
+
   ## Examples
-  
+
       iex> validate_assigns(%{current_week: "2024-W01", on_slot_click: "event", on_navigate: "navigate"})
       {:ok, %{current_week: "2024-W01", on_slot_click: "event", on_navigate: "navigate"}}
-      
+
       iex> validate_assigns(%{on_slot_click: "event", on_navigate: "navigate"})
       {:error, "current_week is required"}
   """
@@ -141,12 +141,12 @@ defmodule RivaAshWeb.Components.Interactive.WeeklyCalendar do
 
   @doc """
   Validates week format.
-  
+
   ## Examples
-  
+
       iex> validate_week("2024-W01")
       {:ok, "2024-W01"}
-      
+
       iex> validate_week("invalid-week")
       {:error, "current_week must be a valid week string (YYYY-Www)"}
   """
@@ -166,12 +166,12 @@ defmodule RivaAshWeb.Components.Interactive.WeeklyCalendar do
 
   @doc """
   Validates time range parameters.
-  
+
   ## Examples
-  
+
       iex> validate_time_range(8, 18)
       {:ok, {8, 18}}
-      
+
       iex> validate_time_range(18, 8)
       {:error, "start_hour must be less than end_hour"}
   """
@@ -190,15 +190,15 @@ defmodule RivaAshWeb.Components.Interactive.WeeklyCalendar do
 
   @doc """
   Validates slot duration.
-  
+
   ## Examples
-  
+
       iex> validate_slot_duration(60)
       {:ok, 60}
-      
+
       iex> validate_slot_duration(0)
       {:error, "slot_duration must be greater than 0"}
-      
+
       iex> validate_slot_duration(-1)
       {:error, "slot_duration must be greater than 0"}
   """
@@ -217,24 +217,24 @@ defmodule RivaAshWeb.Components.Interactive.WeeklyCalendar do
 
   @doc """
   Validates event data.
-  
+
   ## Examples
-  
+
       iex> validate_event_data([])
       {:ok, []}
-      
+
       iex> validate_event_data([%{id: 1, title: "Event"}])
       {:ok, [%{id: 1, title: "Event"}]}
-      
+
       iex> validate_event_data([%{invalid: "data"}])
       {:error, "Invalid event data"}
-      
+
       iex> validate_event_data("invalid")
       {:error, "events must be a list"}
   """
   @spec validate_event_data(list(map())) :: {:ok, list(map())} | {:error, String.t()}
   defp validate_event_data(events) when is_list(events) do
-    case Enum.find(events, fn event -> not is_valid_event(event) end) do
+    case Enum.find(events, fn event -> not valid_event?(event) end) do
       nil -> {:ok, events}
       _ -> {:error, "Invalid event data"}
     end
@@ -246,24 +246,24 @@ defmodule RivaAshWeb.Components.Interactive.WeeklyCalendar do
 
   @doc """
   Validates time slot data.
-  
+
   ## Examples
-  
+
       iex> validate_time_slot_data([])
       {:ok, []}
-      
+
       iex> validate_time_slot_data([%{id: 1, start_time: "09:00", end_time: "10:00"}])
       {:ok, [%{id: 1, start_time: "09:00", end_time: "10:00"}]}
-      
+
       iex> validate_time_slot_data([%{invalid: "data"}])
       {:error, "Invalid time slot data"}
-      
+
       iex> validate_time_slot_data("invalid")
       {:error, "time_slots must be a list"}
   """
   @spec validate_time_slot_data(list(map())) :: {:ok, list(map())} | {:error, String.t()}
   defp validate_time_slot_data(time_slots) when is_list(time_slots) do
-    case Enum.find(time_slots, fn slot -> not is_valid_time_slot(slot) end) do
+    case Enum.find(time_slots, fn slot -> not valid_time_slot?(slot) end) do
       nil -> {:ok, time_slots}
       _ -> {:error, "Invalid time slot data"}
     end
@@ -275,72 +275,72 @@ defmodule RivaAshWeb.Components.Interactive.WeeklyCalendar do
 
   @doc """
   Checks if event data is valid.
-  
+
   ## Examples
-  
+
       iex> is_valid_event(%{id: 1, title: "Event"})
       true
-      
+
       iex> is_valid_event(%{id: 1})
       false
-      
+
       iex> is_valid_event("invalid")
       false
   """
-  @spec is_valid_event(map()) :: boolean()
-  defp is_valid_event(event) when is_map(event) do
+  @spec valid_event?(map()) :: boolean()
+  defp valid_event?(event) when is_map(event) do
     Map.has_key?(event, :id) and
-    Map.has_key?(event, :title) and
-    is_integer(event.id) and
-    event.id > 0
+      Map.has_key?(event, :title) and
+      is_integer(event.id) and
+      event.id > 0
   end
 
-  defp is_valid_event(_event) do
+  defp valid_event?(_event) do
     false
   end
 
   @doc """
   Checks if time slot data is valid.
-  
+
   ## Examples
-  
+
       iex> is_valid_time_slot(%{id: 1, start_time: "09:00", end_time: "10:00"})
       true
-      
+
       iex> is_valid_time_slot(%{id: 1, start_time: "09:00"})
       false
-      
+
       iex> is_valid_time_slot("invalid")
       false
   """
-  @spec is_valid_time_slot(map()) :: boolean()
-  defp is_valid_time_slot(slot) when is_map(slot) do
+  @spec valid_time_slot?(map()) :: boolean()
+  defp valid_time_slot?(slot) when is_map(slot) do
     Map.has_key?(slot, :id) and
-    Map.has_key?(slot, :start_time) and
-    Map.has_key?(slot, :end_time) and
-    is_integer(slot.id) and
-    slot.id > 0
+      Map.has_key?(slot, :start_time) and
+      Map.has_key?(slot, :end_time) and
+      is_integer(slot.id) and
+      slot.id > 0
   end
 
-  defp is_valid_time_slot(_slot) do
+  defp valid_time_slot?(_slot) do
     false
   end
 
   @doc """
   Validates required assigns.
-  
+
   ## Examples
-  
+
       iex> validate_required(%{key: "value"}, [:key])
       {:ok, %{key: "value"}}
-      
+
       iex> validate_required(%{}, [:key])
       {:error, "key is required"}
   """
   @spec validate_required(map(), list(atom())) :: {:ok, map()} | {:error, String.t()}
   defp validate_required(assigns, required_keys) do
     missing_keys = required_keys -- Map.keys(assigns)
-    
+
     if Enum.empty?(missing_keys) do
       {:ok, assigns}
     else
@@ -350,9 +350,9 @@ defmodule RivaAshWeb.Components.Interactive.WeeklyCalendar do
 
   @doc """
   Renders the calendar component.
-  
+
   ## Examples
-  
+
       iex> render_calendar(%{current_week: "2024-W01", events: [], time_slots: [], on_slot_click: "event", on_navigate: "navigate"})
       %Phoenix.LiveView.Rendered{...}
   """
@@ -369,7 +369,7 @@ defmodule RivaAshWeb.Components.Interactive.WeeklyCalendar do
           Next Week ›
         </.button>
       </div>
-      
+
       <div class="calendar-grid">
         <!-- Time column -->
         <div class="time-column">
@@ -378,7 +378,7 @@ defmodule RivaAshWeb.Components.Interactive.WeeklyCalendar do
             <%= format_hour(hour) %>
           </div>
         </div>
-        
+
         <!-- Day columns -->
         <div :for={day <- get_days_of_week()} class="day-column">
           <div class="day-header"><%= day %></div>
@@ -400,9 +400,9 @@ defmodule RivaAshWeb.Components.Interactive.WeeklyCalendar do
 
   @doc """
   Gets days of the week.
-  
+
   ## Examples
-  
+
       iex> get_days_of_week()
       ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
   """
@@ -413,12 +413,12 @@ defmodule RivaAshWeb.Components.Interactive.WeeklyCalendar do
 
   @doc """
   Formats week for display.
-  
+
   ## Examples
-  
+
       iex> format_week("2024-W01")
       "Week 1, 2024"
-      
+
       iex> format_week("2024-W52")
       "Week 52, 2024"
   """
@@ -429,6 +429,7 @@ defmodule RivaAshWeb.Components.Interactive.WeeklyCalendar do
         year = String.to_integer(year)
         week_num = String.to_integer(week_num)
         "Week #{week_num}, #{year}"
+
       _ ->
         week
     end
@@ -440,12 +441,12 @@ defmodule RivaAshWeb.Components.Interactive.WeeklyCalendar do
 
   @doc """
   Formats hour for display.
-  
+
   ## Examples
-  
+
       iex> format_hour(9)
       "9:00"
-      
+
       iex> format_hour(15)
       "15:00"
   """

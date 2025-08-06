@@ -1,40 +1,40 @@
 defmodule RivaAshWeb.Components.Molecules.ActionMenu do
   @moduledoc """
   Dropdown action menu component.
-  
+
   Provides a dropdown menu with configurable positioning, sizing, and actions.
   Supports keyboard navigation and accessibility features.
-  
+
   ## Styleguide Compliance
-  
+
   This component follows the Riva Ash styleguide principles:
-  
+
   ### Functional Programming Patterns
   - Uses pipeline operator (`|>`) for data transformation
   - Implements pure functions with no side effects
   - Uses pattern matching for data validation and processing
   - Follows single level of abstraction principle
-  
+
   ### Type Safety
   - Comprehensive type specifications using `@type` and `@spec`
   - Strong typing for all function parameters and return values
   - Type validation through pattern matching
-  
+
   ### Error Handling
   - Uses result tuples (`:ok | {:error, String.t()}`) for consistent error handling
   - Early validation with guard clauses
   - Clear error messages for invalid inputs
-  
+
   ### Code Abstraction
   - Separates concerns into focused helper functions
   - Extracts validation logic into dedicated functions
   - Uses functional composition for complex operations
-  
+
   ### Phoenix/Ash Patterns
   - Follows Phoenix LiveView component conventions
   - Uses proper attribute validation and building
   - Implements functional core, imperative shell pattern
-  
+
   ### LiveView Component Patterns
   - Uses proper slot and attribute handling
   - Implements accessibility features
@@ -78,21 +78,38 @@ defmodule RivaAshWeb.Components.Molecules.ActionMenu do
       />
   """
   @spec action_menu(assigns :: assigns()) :: Phoenix.LiveView.Rendered.t()
-  attr(:trigger_label, :string, default: "Actions",
-    doc: "Label for the trigger button")
-  attr(:trigger_icon, :atom, default: :ellipsis_vertical,
-    doc: "Icon for the trigger button")
-  attr(:actions, :list, required: true,
-    doc: "List of actions with :label, :icon, :phx_click, and :disabled keys")
+  attr(:trigger_label, :string,
+    default: "Actions",
+    doc: "Label for the trigger button"
+  )
+
+  attr(:trigger_icon, :atom,
+    default: :ellipsis_vertical,
+    doc: "Icon for the trigger button"
+  )
+
+  attr(:actions, :list,
+    required: true,
+    doc: "List of actions with :label, :icon, :phx_click, and :disabled keys"
+  )
+
   attr(:position, :atom,
     default: :bottom_right,
     values: ~w(bottom_left bottom_right top_left top_right)a,
-    doc: "Position of the dropdown menu relative to the trigger")
-  attr(:size, :atom, default: :md,
+    doc: "Position of the dropdown menu relative to the trigger"
+  )
+
+  attr(:size, :atom,
+    default: :md,
     values: ~w(sm md lg)a,
-    doc: "Size variant of the trigger button")
-  attr(:class, :string, default: "",
-    doc: "Additional CSS classes for the container")
+    doc: "Size variant of the trigger button"
+  )
+
+  attr(:class, :string,
+    default: "",
+    doc: "Additional CSS classes for the container"
+  )
+
   attr(:rest, :global)
 
   @impl true
@@ -147,15 +164,16 @@ defmodule RivaAshWeb.Components.Molecules.ActionMenu do
       false -> {:error, "All actions must have :label, :icon, :phx_click, and :disabled keys"}
     end
   end
+
   defp validate_actions(_), do: {:error, "actions must be a list"}
 
   @spec valid_action?(map()) :: boolean()
   defp valid_action?(action) do
     is_map(action) and
-    is_binary(action[:label]) and
-    is_atom(action[:icon]) and
-    is_binary(action[:phx_click]) and
-    is_boolean(action[:disabled])
+      is_binary(action[:label]) and
+      is_atom(action[:icon]) and
+      is_binary(action[:phx_click]) and
+      is_boolean(action[:disabled])
   end
 
   @spec validate_position(menu_position() | String.t()) :: :ok | {:error, String.t()}
@@ -225,6 +243,7 @@ defmodule RivaAshWeb.Components.Molecules.ActionMenu do
   attr(:icon, :atom, default: nil)
   attr(:size, :string, default: "md", values: ~w(sm md lg))
   attr(:menu_id, :string, required: true)
+
   defp render_trigger_button(assigns) do
     ~H"""
     <UIButton.button

@@ -1,40 +1,40 @@
 defmodule RivaAshWeb.Components.Molecules.ConfirmDialog do
   @moduledoc """
   Confirmation dialog component for destructive actions.
-  
+
   Provides a modal dialog for confirming user actions with customizable
   labels, variants, and event handlers.
-  
+
   ## Styleguide Compliance
-  
+
   This component follows the Riva Ash styleguide principles:
-  
+
   ### Functional Programming Patterns
   - Uses pipeline operator (`|>`) for data transformation
   - Implements pure functions with no side effects
   - Uses pattern matching for data validation and processing
   - Follows single level of abstraction principle
-  
+
   ### Type Safety
   - Comprehensive type specifications using `@type` and `@spec`
   - Strong typing for all function parameters and return values
   - Type validation through pattern matching
-  
+
   ### Error Handling
   - Uses result tuples (`:ok | {:error, String.t()}`) for consistent error handling
   - Early validation with guard clauses
   - Clear error messages for invalid inputs
-  
+
   ### Code Abstraction
   - Separates concerns into focused helper functions
   - Extracts validation logic into dedicated functions
   - Uses functional composition for complex operations
-  
+
   ### Phoenix/Ash Patterns
   - Follows Phoenix LiveView component conventions
   - Uses proper attribute validation and building
   - Implements functional core, imperative shell pattern
-  
+
   ### LiveView Component Patterns
   - Uses proper slot and attribute handling
   - Implements accessibility features
@@ -85,25 +85,52 @@ defmodule RivaAshWeb.Components.Molecules.ConfirmDialog do
       />
   """
   @spec confirm_dialog(assigns :: assigns()) :: Phoenix.LiveView.Rendered.t()
-  attr(:title, :string, required: true,
-    doc: "Title of the confirmation dialog")
-  attr(:message, :string, required: true,
-    doc: "Message content of the dialog")
-  attr(:confirm_label, :string, default: "Confirm",
-    doc: "Label for the confirm button")
-  attr(:cancel_label, :string, default: "Cancel",
-    doc: "Label for the cancel button")
-  attr(:variant, :string, default: "destructive",
+  attr(:title, :string,
+    required: true,
+    doc: "Title of the confirmation dialog"
+  )
+
+  attr(:message, :string,
+    required: true,
+    doc: "Message content of the dialog"
+  )
+
+  attr(:confirm_label, :string,
+    default: "Confirm",
+    doc: "Label for the confirm button"
+  )
+
+  attr(:cancel_label, :string,
+    default: "Cancel",
+    doc: "Label for the cancel button"
+  )
+
+  attr(:variant, :string,
+    default: "destructive",
     values: ~w(destructive warning info),
-    doc: "Variant of the confirm button")
-  attr(:on_confirm, :string, required: true,
-    doc: "JavaScript command to execute on confirmation")
-  attr(:on_cancel, :string, required: true,
-    doc: "JavaScript command to execute on cancellation")
-  attr(:show, :boolean, default: false,
-    doc: "Whether to show the dialog")
-  attr(:class, :string, default: "",
-    doc: "Additional CSS classes for the dialog container")
+    doc: "Variant of the confirm button"
+  )
+
+  attr(:on_confirm, :string,
+    required: true,
+    doc: "JavaScript command to execute on confirmation"
+  )
+
+  attr(:on_cancel, :string,
+    required: true,
+    doc: "JavaScript command to execute on cancellation"
+  )
+
+  attr(:show, :boolean,
+    default: false,
+    doc: "Whether to show the dialog"
+  )
+
+  attr(:class, :string,
+    default: "",
+    doc: "Additional CSS classes for the dialog container"
+  )
+
   attr(:rest, :global)
 
   @impl true
@@ -197,7 +224,15 @@ defmodule RivaAshWeb.Components.Molecules.ConfirmDialog do
     """
   end
 
-  @spec render_dialog_content(String.t(), String.t(), String.t(), String.t(), dialog_variant(), String.t(), String.t()) :: Phoenix.LiveView.Rendered.t()
+  @spec render_dialog_content(
+          String.t(),
+          String.t(),
+          String.t(),
+          String.t(),
+          dialog_variant(),
+          String.t(),
+          String.t()
+        ) :: Phoenix.LiveView.Rendered.t()
   defp render_dialog_content(title, message, confirm_label, cancel_label, variant, on_confirm, on_cancel) do
     # Render dialog content using functional composition
     assigns = %{

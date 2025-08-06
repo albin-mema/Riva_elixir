@@ -18,11 +18,7 @@ config :riva_ash, RivaAsh.Repo,
   database: System.get_env("DB_NAME") || "riva_ash_test#{System.get_env("MIX_TEST_PARTITION")}",
   port: System.get_env("DB_PORT", "5432") |> String.to_integer(),
   pool: Ecto.Adapters.SQL.Sandbox,
-  pool_size:
-    case System.get_env("DB_POOL_SIZE") do
-      nil -> Application.compile_env(:riva_ash, :db_pool_size, 10)
-      v -> String.to_integer(v)
-    end,
+  pool_size: if(System.get_env("DB_POOL_SIZE"), do: String.to_integer(System.get_env("DB_POOL_SIZE")), else: Application.compile_env(:riva_ash, :db_pool_size, 10)),
   ownership_timeout: Application.compile_env(:riva_ash, :db_ownership_timeout, 15_000),
   timeout: Application.compile_env(:riva_ash, :db_timeout, 15_000),
   ssl: false,

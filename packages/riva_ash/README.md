@@ -1,6 +1,6 @@
-# Riva Ash API
+# Reservation System API
 
-A RESTful API built with Elixir, Phoenix, and Ash Framework for managing businesses, sections, and items. This API provides full CRUD operations with OpenAPI/Swagger documentation and an admin interface.
+A RESTful API built with Elixir, Phoenix, and Ash Framework for managing organizations, sections, and items. This API provides full CRUD operations with OpenAPI/Swagger documentation and an admin interface.
 
 ## Features
 
@@ -56,7 +56,7 @@ A RESTful API built with Elixir, Phoenix, and Ash Framework for managing busines
 
 1. Clone and navigate to the project:
 ```bash
-cd riva_ash
+cd reservation_system
 ```
 
 2. Install dependencies:
@@ -70,7 +70,7 @@ config :riva_ash, RivaAsh.Repo,
   username: "postgres",
   password: "postgres",
   hostname: "localhost",
-  database: "riva_ash_dev"
+  database: "reservation_system_dev"
 ```
 
 4. Setup database:

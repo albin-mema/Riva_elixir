@@ -19,6 +19,7 @@ defmodule RivaAshWeb.PaymentLive do
         case load_payments_data(socket, user) do
           {:ok, socket} ->
             {:ok, socket}
+
           {:error, reason} ->
             Logger.error("Failed to load payments: #{inspect(reason)}")
             {:ok, redirect(socket, to: "/access-denied")}
@@ -93,13 +94,13 @@ defmodule RivaAshWeb.PaymentLive do
   def handle_event("process_payment", %{"id" => id}, socket) do
     case PaymentService.process_payment(id, socket.assigns.current_user) do
       {:ok, _payment} ->
-        {:noreply, 
+        {:noreply,
          socket
          |> put_flash(:info, "Payment processed successfully")
          |> reload_payments()}
-      
+
       {:error, reason} ->
-        {:noreply, 
+        {:noreply,
          socket
          |> put_flash(:error, "Failed to process payment: #{format_error(reason)}")}
     end
@@ -108,13 +109,13 @@ defmodule RivaAshWeb.PaymentLive do
   def handle_event("cancel_payment", %{"id" => id}, socket) do
     case PaymentService.cancel_payment(id, socket.assigns.current_user) do
       {:ok, _payment} ->
-        {:noreply, 
+        {:noreply,
          socket
          |> put_flash(:info, "Payment cancelled successfully")
          |> reload_payments()}
-      
+
       {:error, reason} ->
-        {:noreply, 
+        {:noreply,
          socket
          |> put_flash(:error, "Failed to cancel payment: #{format_error(reason)}")}
     end
@@ -123,13 +124,13 @@ defmodule RivaAshWeb.PaymentLive do
   def handle_event("delete_payment", %{"id" => id}, socket) do
     case PaymentService.delete_payment(id, socket.assigns.current_user) do
       {:ok, _payment} ->
-        {:noreply, 
+        {:noreply,
          socket
          |> put_flash(:info, "Payment deleted successfully")
          |> reload_payments()}
-      
+
       {:error, reason} ->
-        {:noreply, 
+        {:noreply,
          socket
          |> put_flash(:error, "Failed to delete payment: #{format_error(reason)}")}
     end
@@ -150,9 +151,9 @@ defmodule RivaAshWeb.PaymentLive do
           |> assign(:payments, payments)
           |> assign(:meta, meta)
           |> assign(:loading, false)
-        
+
         {:ok, socket}
-      
+
       {:error, reason} ->
         {:error, reason}
     end
@@ -163,7 +164,7 @@ defmodule RivaAshWeb.PaymentLive do
       {:ok, {payments, meta}} ->
         assign(socket, :payments, payments)
         |> assign(:meta, meta)
-      
+
       {:error, _reason} ->
         socket
     end
@@ -185,6 +186,7 @@ defmodule RivaAshWeb.PaymentLive do
   defp format_currency(amount), do: amount
 
   defp format_date(nil), do: "N/A"
+
   defp format_date(date) do
     case Calendar.strftime(date, "%Y-%m-%d %H:%M") do
       {:ok, formatted} -> formatted
@@ -194,11 +196,17 @@ defmodule RivaAshWeb.PaymentLive do
 
   defp format_error(reason) do
     case reason do
-      %Ash.Error.Invalid{errors: errors} -> 
-        errors |> Enum.map(&format_validation_error/1) |> Enum.join(", ")
-      %Ash.Error.Forbidden{} -> "You don't have permission to perform this action"
-      %Ash.Error.NotFound{} -> "Payment not found"
-      _ -> "An unexpected error occurred"
+      %Ash.Error.Invalid{errors: errors} ->
+        Enum.map_join(errors, ", ", &format_validation_error/1)
+
+      %Ash.Error.Forbidden{} ->
+        "You don't have permission to perform this action"
+
+      %Ash.Error.NotFound{} ->
+        "Payment not found"
+
+      _ ->
+        "An unexpected error occurred"
     end
   end
 

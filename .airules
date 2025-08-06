@@ -1,20 +1,23 @@
-#  Riva Ash - AI Agent Guidelines
+# Reservation System - AI Agent Guidelines
 
-**Version**: 1.0
-**Last Updated**: 2024-08-01
+**Version**: 1.0 **Last Updated**: 2024-08-01
 
 ## Project Overview
 
-**Riva** is a comprehensive business management system built with Elixir/Phoenix and Ash Framework, featuring reservation management, employee permissions, and real-time capabilities. The project follows a packages-based architecture with all code organized under the `packages/` directory.
+This is a comprehensive reservation management system built with Elixir/Phoenix
+and Ash Framework, featuring resource booking, user permissions, and real-time
+capabilities. The project follows a packages-based architecture with all code
+organized under the `packages/` directory.
 
 ### Key Technologies
-- **Backend**: Elixir 1.19+, Phoenix 1.7+, Ash Framework 3.5+
-- **Database**: PostgreSQL with UUID primary keys
-- **Frontend**: LiveView with React integration (live_react)
-- **Testing**: ExUnit with property-based testing (StreamData)
-- **Authentication**: AshAuthentication with role-based access
-- **Authorization**: Ash Policies with SimpleSat SAT solver
-- **UI**: Tailwind CSS with Atomic Design patterns
+
+-   **Backend**: Elixir 1.19+, Phoenix 1.7+, Ash Framework 3.5+
+-   **Database**: PostgreSQL with UUID primary keys
+-   **Frontend**: LiveView with React integration (live_react)
+-   **Testing**: ExUnit with property-based testing (StreamData)
+-   **Authentication**: AshAuthentication with role-based access
+-   **Authorization**: Ash Policies with SimpleSat SAT solver
+-   **UI**: Tailwind CSS with Atomic Design patterns
 
 ## Project Structure
 
@@ -23,8 +26,8 @@ packages/
 ├── riva_ash/                 # Main Ash application
 │   ├── lib/
 │   │   ├── riva_ash/
-│   │   │   ├── resources/    # Ash resources (Business, Item, etc.)
-│   │   │   ├── reactors/     # Complex business logic workflows
+│   │   │   ├── resources/    # Ash resources (Organization, Item, etc.)
+│   │   │   ├── reactors/     # Complex application logic workflows
 │   │   │   ├── policies/     # Authorization policies
 │   │   │   ├── permissions/  # Permission system
 │   │   │   └── validations/  # Custom validations
@@ -42,11 +45,12 @@ packages/
 ### 1. Resource Development
 
 **Standard Extensions**: Every resource must include:
-- AshPaperTrail (audit trails)
-- AshArchival (soft delete)
-- Proper policies with admin bypass
-- UUID primary keys
-- Timestamps (inserted_at, updated_at)
+
+-   AshPaperTrail (audit trails)
+-   AshArchival (soft delete)
+-   Proper policies with admin bypass
+-   UUID primary keys
+-   Timestamps (inserted_at, updated_at)
 
 **Relationships**: Use proper Ash relationships with foreign key constraints.
 
@@ -56,21 +60,24 @@ packages/
 
 **Audit Trails**: AshPaperTrail tracks all changes.
 
-**Grid Positioning**: Use row/column grid system instead of x,y coordinates for layouts.
+**Grid Positioning**: Use row/column grid system instead of x,y coordinates for
+layouts.
 
-### 3. Business Logic Patterns
+### 3. Application Logic Patterns
 
 **Reservation System**:
-- Full-day billing only
-- No weekend/weekday differentiation
-- Constant pricing with business exceptions
-- Row/column positioning for items
+
+-   Full-day billing only
+-   No weekend/weekday differentiation
+-   Constant pricing with organization exceptions
+-   Row/column positioning for items
 
 **Permission Hierarchy**:
-- Admin: Full system access
-- Business Owner: Full business access
-- Employee: Permission-based access
-- Client: Limited self-service access
+
+-   Admin: Full system access
+-   Organization Owner: Full organization access
+-   User: Permission-based access
+-   Client: Limited self-service access
 
 ## Common Patterns
 
@@ -82,11 +89,11 @@ packages/
 4. Create migration
 5. Add policies with admin bypass
 6. **MANDATORY**: Write comprehensive test suite:
-   - Property-based tests for all actions (create, read, update, destroy)
-   - Policy tests with various user roles and permissions
-   - Validation tests with random invalid data
-   - Relationship tests with associated resources
-   - Archive/soft delete functionality tests
+    - Property-based tests for all actions (create, read, update, destroy)
+    - Policy tests with various user roles and permissions
+    - Validation tests with random invalid data
+    - Relationship tests with associated resources
+    - Archive/soft delete functionality tests
 
 ### 2. Adding Complex Workflows
 
@@ -95,12 +102,12 @@ packages/
 3. Include compensation logic
 4. Add to resource as custom action if needed
 5. **MANDATORY**: Comprehensive test suite:
-   - Property-based tests with random valid input combinations
-   - Error scenario tests with invalid inputs
-   - Compensation logic tests (rollback scenarios)
-   - Integration tests with all affected resources
-   - Performance tests for complex workflows
-   - Edge case tests with boundary conditions
+    - Property-based tests with random valid input combinations
+    - Error scenario tests with invalid inputs
+    - Compensation logic tests (rollback scenarios)
+    - Integration tests with all affected resources
+    - Performance tests for complex workflows
+    - Edge case tests with boundary conditions
 
 ### 3. UI Component Creation
 
@@ -108,21 +115,18 @@ packages/
 2. Create in appropriate component directory
 3. Add to Storybook
 4. **MANDATORY**: Comprehensive test suite:
-   - Property-based tests for component props with random valid values
-   - Interaction tests using `phoenix_test`
-   - Accessibility tests for proper ARIA attributes
-   - Responsive design tests across different screen sizes
-   - Form validation tests with random invalid inputs
-   - LiveView event handling tests
+    - Property-based tests for component props with random valid values
+    - Interaction tests using `phoenix_test`
+    - Accessibility tests for proper ARIA attributes
+    - Responsive design tests across different screen sizes
+    - Form validation tests with random invalid inputs
+    - LiveView event handling tests
 5. Document props and usage in Storybook
 
 ## Git Workflow
 
-**Commit Author**: All commits should use `albinmema25@gmail.com`
-
-**App Name**: Use "Riva" in all user-facing text and documentation.
-
-**Repository**: Private GitHub at `https://github.com/albin-mema/Riva_elixir.git`
+**App Name**: Use "Reservation System" in all user-facing text and
+documentation.
 
 ## Development Environment
 
@@ -130,14 +134,15 @@ packages/
 
 **Docker**: Docker Desktop available for database connections
 
-**Package Manager**: Use appropriate package managers (mix, npm/pnpm) - never edit package files directly
+**Package Manager**: Use appropriate package managers (mix, npm/pnpm) - never
+edit package files directly
 
 ## Key Resources
 
-- Business, Employee, Client, Item, Section, Plot, Layout
-- Reservation, Payment, Pricing, Permission
-- ItemPosition, ItemHold, ItemSchedule, AvailabilityException
-- RecurringReservation, RecurringReservationInstance
+-   Organization, User, Client, Item, Section, Plot, Layout
+-   Reservation, Payment, Pricing, Permission
+-   ItemPosition, ItemHold, ItemSchedule, AvailabilityException
+-   RecurringReservation, RecurringReservationInstance
 
 ## Testing Commands
 
@@ -163,49 +168,59 @@ mix test.watch
 
 ## Important Notes
 
-- **MANDATORY TESTING**: Every piece of generated code MUST include comprehensive tests
-- **Property-based testing REQUIRED**: Use StreamData for all tests where applicable
-- **Test before considering code complete**: Code without tests is incomplete
-- **Never bypass authentication** in production code
-- **Always use Reactor** for complex multi-step business logic
-- **Centralize permissions** in Constants module
-- **Follow atomic design** for all UI components
-- **Prefer LiveView** over React unless specific needs require it
+-   **MANDATORY TESTING**: Every piece of generated code MUST include
+    comprehensive tests
+-   **Property-based testing REQUIRED**: Use StreamData for all tests where
+    applicable
+-   **Test before considering code complete**: Code without tests is incomplete
+-   **Never bypass authentication** in production code
+-   **Always use Reactor** for complex multi-step business logic
+-   **Centralize permissions** in Constants module
+-   **Follow atomic design** for all UI components
+-   **Prefer LiveView** over React unless specific needs require it
 
 ## Code Quality Standards
 
 ### 1. Code Style and Structure
-- **Single Level of Abstraction**: Functions should operate at one level of abstraction, reading like prose
-- **Testable Functions**: When splitting long functions, ensure each part can be tested in isolation
-- **See**: [Style Guide](./docs/styleguide.md) for detailed coding standards
+
+-   **Single Level of Abstraction**: Functions should operate at one level of
+    abstraction, reading like prose
+-   **Testable Functions**: When splitting long functions, ensure each part can
+    be tested in isolation
+-   **See**: [Style Guide](./styleguide.md) for detailed coding standards
 
 ### 2. Error Handling
-- Use Ash's built-in error handling patterns
-- Implement proper error boundaries in LiveView
-- Return meaningful error messages to users
-- Log errors appropriately for debugging
+
+-   Use Ash's built-in error handling patterns
+-   Implement proper error boundaries in LiveView
+-   Return meaningful error messages to users
+-   Log errors appropriately for debugging
 
 ### 3. Performance Considerations
-- Use Ash's built-in query optimization
-- Implement proper pagination with Flop
-- Avoid N+1 queries through proper loading
-- Use database indexes for frequently queried fields
+
+-   Use Ash's built-in query optimization
+-   Implement proper pagination with Flop
+-   Avoid N+1 queries through proper loading
+-   Use database indexes for frequently queried fields
 
 ### 4. Security Best Practices
-- Always validate user input
-- Use Ash policies for authorization
-- Sanitize data before display
-- Follow OWASP guidelines for web security
+
+-   Always validate user input
+-   Use Ash policies for authorization
+-   Sanitize data before display
+-   Follow OWASP guidelines for web security
 
 ## Debugging and Development Tools
 
 ### 1. Available Tools
-- **AshAdmin**: Web-based admin interface at `/admin`
-- **GraphQL Playground**: Available for API exploration
-- **LiveView Debugger**: Use for LiveView debugging
-- **Ash Console**: `iex -S mix` for interactive development
+
+-   **AshAdmin**: Web-based admin interface at `/admin`
+-   **GraphQL Playground**: Available for API exploration
+-   **LiveView Debugger**: Use for LiveView debugging
+-   **Ash Console**: `iex -S mix` for interactive development
 
 ### 2. Common Debugging Commands
+
 ```elixir
 # Inspect Ash queries
 Ash.Query.to_sql(query, RivaAsh.Repo)
@@ -220,145 +235,189 @@ Ash.Resource.Info.actions(Resource)
 ## API Design Patterns
 
 ### 1. JSON API
-- All resources exposed via AshJsonApi
-- Follow JSON:API specification
-- Use proper HTTP status codes
-- Include relationship links
+
+-   All resources exposed via AshJsonApi
+-   Follow JSON:API specification
+-   Use proper HTTP status codes
+-   Include relationship links
 
 ### 2. GraphQL
-- Available for complex queries
-- Use for frontend data fetching
-- Implement proper field selection
-- Handle errors gracefully
+
+-   Available for complex queries
+-   Use for frontend data fetching
+-   Implement proper field selection
+-   Handle errors gracefully
 
 ## Deployment Considerations
 
 ### 1. Environment Configuration
-- Use environment variables for secrets
-- Configure different environments properly
-- Set up proper logging levels
-- Configure database connections
+
+-   Use environment variables for secrets
+-   Configure different environments properly
+-   Set up proper logging levels
+-   Configure database connections
 
 ### 2. Database Management
-- Run migrations in order
-- Use seeds for initial data
-- Backup strategies for production
-- Monitor database performance
+
+-   Run migrations in order
+-   Use seeds for initial data
+-   Backup strategies for production
+-   Monitor database performance
 
 ## Troubleshooting Common Issues
 
 ### 1. Ash Policy Errors
-- Check policy definitions in resources
-- Verify actor is properly set
-- Use policy breakdowns for debugging
-- Ensure permissions exist in Constants
+
+-   Check policy definitions in resources
+-   Verify actor is properly set
+-   Use policy breakdowns for debugging
+-   Ensure permissions exist in Constants
 
 ### 2. LiveView Issues
-- Check socket connections
-- Verify proper assigns usage
-- Debug with LiveView debugger
-- Test with different browsers
+
+-   Check socket connections
+-   Verify proper assigns usage
+-   Debug with LiveView debugger
+-   Test with different browsers
 
 ### 3. Database Issues
-- Check migration status
-- Verify foreign key constraints
-- Monitor query performance
-- Check connection pool settings
+
+-   Check migration status
+-   Verify foreign key constraints
+-   Monitor query performance
+-   Check connection pool settings
 
 ## Contributing Guidelines
 
 ### 1. Code Review Checklist
-- [ ] Tests pass and cover new functionality
-- [ ] Documentation updated
-- [ ] Follows established patterns
-- [ ] Security considerations addressed
-- [ ] Performance impact assessed
+
+-   [ ] Tests pass and cover new functionality
+-   [ ] Documentation updated
+-   [ ] Follows established patterns
+-   [ ] Security considerations addressed
+-   [ ] Performance impact assessed
 
 ### 2. Pull Request Guidelines
-- Clear description of changes
-- Reference related issues
-- Include test coverage
-- Update documentation as needed
-- Follow commit message conventions
+
+-   Clear description of changes
+-   Reference related issues
+-   Include test coverage
+-   Update documentation as needed
+-   Follow commit message conventions
 
 ## Resources and Documentation
 
 ### 1. Key Documentation
-- Ash Framework: https://ash-hq.org/
-- Phoenix LiveView: https://hexdocs.pm/phoenix_live_view/
-- Elixir: https://elixir-lang.org/docs.html
-- PostgreSQL: https://www.postgresql.org/docs/
+
+-   Ash Framework: https://ash-hq.org/
+-   Phoenix LiveView: https://hexdocs.pm/phoenix_live_view/
+-   Elixir: https://elixir-lang.org/docs.html
+-   PostgreSQL: https://www.postgresql.org/docs/
 
 ### 2. Context-Specific Documentation
 
 **For New Contributors:**
-- Start with [Contributing Guide](./docs/CONTRIBUTING.md)
-- Follow [Setup Guide](./docs/SETUP_GUIDE.md) for environment setup
-- Review [Development Workflow](./docs/DEVELOPMENT_WORKFLOW.md)
-- Check [Development Setup](./docs/DEVELOPMENT_SETUP.md) for detailed setup instructions
+
+-   Start with [Contributing Guide](./docs/CONTRIBUTING.md)
+-   Follow [Setup Guide](./docs/SETUP_GUIDE.md) for environment setup
+-   Review [Development Workflow](./docs/DEVELOPMENT_WORKFLOW.md)
+-   Check [Development Setup](./docs/DEVELOPMENT_SETUP.md) for detailed setup
+    instructions
 
 **For Feature Development:**
-- Reference [Architectural Patterns](./packages/riva_ash/patterns.md) for implementation guidance
-- Use [Testing Guidelines](./docs/testing-guidelines.md) for comprehensive testing strategies
-- Follow [UI Guidelines](./docs/ui-guidelines.md) for component development
-- Review [Style Guide](./docs/styleguide.md) for code quality standards
+
+-   Reference [Architectural Patterns](./packages/riva_ash/patterns.md) for
+    implementation guidance
+-   Use [Testing Guidelines](./docs/testing-guidelines.md) for comprehensive
+    testing strategies
+-   Follow [UI Guidelines](./docs/ui-guidelines.md) for component development
+-   Review [Style Guide](./styleguide.md) for code quality standards
 
 **For System Understanding:**
-- Review [Architecture Guidelines](./docs/architecture-guidelines.md)
-- Check [Reservation System Assessment](./docs/RESERVATION_SYSTEM_ASSESSMENT.md)
-- Examine [User Actions](./docs/USER_ACTIONS.md) specifications
-- See [Component Migration Guide](./docs/component-migration-guide.md) for migration patterns
+
+-   Review [Architecture Guidelines](./docs/architecture-guidelines.md)
+-   Check
+    [Reservation System Assessment](./docs/RESERVATION_SYSTEM_ASSESSMENT.md)
+-   Examine [User Actions](./docs/USER_ACTIONS.md) specifications
+-   See [Component Migration Guide](./docs/component-migration-guide.md) for
+    migration patterns
 
 **For Integration Work:**
-- See [Timex Integration](./docs/TIMEX_INTEGRATION.md) for time handling
-- Check [Development Tools](./docs/devtools.md) for available tooling
-- Review [Storybook Structure](./docs/storybook-structure.md) for UI documentation
-- Consult [Production Deployment](./docs/production-deployment.md) for deployment guidelines
+
+-   See [Timex Integration](./docs/TIMEX_INTEGRATION.md) for time handling
+-   Check [Development Tools](./docs/devtools.md) for available tooling
+-   Review [Storybook Structure](./docs/storybook-structure.md) for UI
+    documentation
+-   Consult [Production Deployment](./docs/production-deployment.md) for
+    deployment guidelines
 
 ## Detailed Guidelines
 
-For more detailed guidelines, please refer to the following documents based on your needs:
+For more detailed guidelines, please refer to the following documents based on
+your needs:
 
 ### Core Development
-- [Architecture Guidelines](./docs/architecture-guidelines.md) - Architectural patterns and design principles
-- [Testing Guidelines](./docs/testing-guidelines.md) - Comprehensive testing strategies and requirements
-- [UI Guidelines](./docs/ui-guidelines.md) - UI component development and atomic design patterns
-- [Style Guide](./docs/styleguide.md) - Code quality standards and abstraction principles
+
+-   [Architecture Guidelines](./docs/architecture-guidelines.md) - Architectural
+    patterns and design principles
+-   [Testing Guidelines](./docs/testing-guidelines.md) - Comprehensive testing
+    strategies and requirements
+-   [UI Guidelines](./docs/ui-guidelines.md) - UI component development and
+    atomic design patterns
+-   [Style Guide](./styleguide.md) - Code quality standards and abstraction
+    principles
 
 ### Getting Started
-- [Setup Guide](./docs/SETUP_GUIDE.md) - Complete environment setup with troubleshooting
-- [Development Setup](./docs/DEVELOPMENT_SETUP.md) - Detailed setup instructions
-- [Development Workflow](./docs/DEVELOPMENT_WORKFLOW.md) - Development process and best practices
-- [Contributing Guide](./docs/CONTRIBUTING.md) - Comprehensive contribution guidelines
+
+-   [Setup Guide](./docs/SETUP_GUIDE.md) - Complete environment setup with
+    troubleshooting
+-   [Development Setup](./docs/DEVELOPMENT_SETUP.md) - Detailed setup
+    instructions
+-   [Development Workflow](./docs/DEVELOPMENT_WORKFLOW.md) - Development process
+    and best practices
+-   [Contributing Guide](./docs/CONTRIBUTING.md) - Comprehensive contribution
+    guidelines
 
 ### Technical Deep Dive
-- [Architectural Patterns](./packages/riva_ash/patterns.md) - Detailed implementation patterns with examples
-- [Testing Guide](./packages/riva_ash/docs/testing_guide.md) - In-depth testing strategies and tools
-- [Component Migration Guide](./docs/component-migration-guide.md) - Migration patterns and strategies
+
+-   [Architectural Patterns](./packages/riva_ash/patterns.md) - Detailed
+    implementation patterns with examples
+-   [Testing Guide](./packages/riva_ash/docs/testing_guide.md) - In-depth
+    testing strategies and tools
+-   [Component Migration Guide](./docs/component-migration-guide.md) - Migration
+    patterns and strategies
 
 ### Tools and Deployment
-- [Development Tools](./docs/devtools.md) - Available development and debugging tools
-- [Storybook Structure](./docs/storybook-structure.md) - UI component documentation structure
-- [Production Deployment](./docs/production-deployment.md) - Deployment guidelines and best practices
+
+-   [Development Tools](./docs/devtools.md) - Available development and
+    debugging tools
+-   [Storybook Structure](./docs/storybook-structure.md) - UI component
+    documentation structure
+-   [Production Deployment](./docs/production-deployment.md) - Deployment
+    guidelines and best practices
 
 ### System Documentation
-- [Reservation System Assessment](./docs/RESERVATION_SYSTEM_ASSESSMENT.md) - System analysis and requirements
-- [User Actions](./docs/USER_ACTIONS.md) - User interaction specifications
-- [Timex Integration](./docs/TIMEX_INTEGRATION.md) - Time handling and integration patterns
-- [TODO UI](./docs/todo-ui.md) - UI development tasks and priorities
+
+-   [Reservation System Assessment](./docs/RESERVATION_SYSTEM_ASSESSMENT.md) -
+    System analysis and requirements
+-   [User Actions](./docs/USER_ACTIONS.md) - User interaction specifications
+-   [Timex Integration](./docs/TIMEX_INTEGRATION.md) - Time handling and
+    integration patterns
+-   [TODO UI](./docs/todo-ui.md) - UI development tasks and priorities
 
 ## Example Implementations
 
 For example implementations, please refer to the following files:
 
-- **Resources**: `packages/riva_ash/lib/riva_ash/resources/`
-- **Reactors**: `packages/riva_ash/lib/riva_ash/reactors/`
-- **UI Components**: `packages/riva_ash/lib/riva_ash_web/components/`
-- **Tests**: `packages/riva_ash/test/`
+-   **Resources**: `packages/riva_ash/lib/riva_ash/resources/`
+-   **Reactors**: `packages/riva_ash/lib/riva_ash/reactors/`
+-   **UI Components**: `packages/riva_ash/lib/riva_ash_web/components/`
+-   **Tests**: `packages/riva_ash/test/`
 
 ## AI Instructions
 
-When generating code for this project, please follow these specific instructions:
+When generating code for this project, please follow these specific
+instructions:
 
 1. **Always use Reactor** for complex multi-step business logic
 2. **Centralize permissions** in the Constants module
@@ -384,7 +443,8 @@ To verify that generated code follows the project's patterns:
 The project uses the following error handling patterns:
 
 1. **Ash's built-in error handling**: Use Ash's error types and patterns
-2. **LiveView error boundaries**: Implement proper error boundaries in LiveView components
+2. **LiveView error boundaries**: Implement proper error boundaries in LiveView
+   components
 3. **Meaningful error messages**: Return clear, user-friendly error messages
 4. **Appropriate logging**: Log errors with sufficient context for debugging
 

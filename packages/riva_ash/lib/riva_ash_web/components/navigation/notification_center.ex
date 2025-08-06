@@ -50,7 +50,7 @@ defmodule RivaAshWeb.Components.Navigation.NotificationCenter do
           <%= @unread_count %>
         </.badge>
       </.button>
-      
+
       <div :if={@show_panel} class={@panel_class}>
         <div class={@header_class}>
           <h3>Notifications</h3>
@@ -63,12 +63,12 @@ defmodule RivaAshWeb.Components.Navigation.NotificationCenter do
             Mark all read
           </.button>
         </div>
-        
+
         <div :if={@notifications == []} class="empty-notifications">
           <.icon name={:bell_slash} />
           <p>No notifications</p>
         </div>
-        
+
         <div :if={@notifications != []} class={@list_class}>
           <div
             :for={notification <- Enum.take(@notifications, @max_display)}
@@ -80,7 +80,7 @@ defmodule RivaAshWeb.Components.Navigation.NotificationCenter do
             <div class="notification-icon">
               <.icon name={get_notification_icon(notification.type)} />
             </div>
-            
+
             <div
               class="notification-content"
               phx-click={@on_notification_click}
@@ -96,7 +96,7 @@ defmodule RivaAshWeb.Components.Navigation.NotificationCenter do
                 <%= format_time_ago(notification.inserted_at) %>
               </div>
             </div>
-            
+
             <div class="notification-actions">
               <.button
                 :if={!notification.read}
@@ -110,7 +110,7 @@ defmodule RivaAshWeb.Components.Navigation.NotificationCenter do
             </div>
           </div>
         </div>
-        
+
         <div :if={length(@notifications) > @max_display} class="panel-footer">
           <a href="/notifications" class="view-all-link">
             View all notifications
@@ -125,7 +125,7 @@ defmodule RivaAshWeb.Components.Navigation.NotificationCenter do
   @spec build_container_class(String.t()) :: String.t()
   defp build_container_class(class) do
     ["notification-center", class]
-    |> Enum.filter(& &1 != "")
+    |> Enum.filter(&(&1 != ""))
     |> Enum.join(" ")
   end
 
@@ -137,9 +137,7 @@ defmodule RivaAshWeb.Components.Navigation.NotificationCenter do
 
   # Helper function to build panel classes
   @spec build_panel_class(boolean()) :: String.t()
-  defp build_panel_class(show_panel) do
-    if show_panel, do: "notification-panel", else: "hidden"
-  end
+  defp build_panel_class(show_panel), do: if show_panel, do: "notification-panel", else: "hidden"
 
   # Helper function to build header classes
   @spec build_header_class(integer()) :: String.t()

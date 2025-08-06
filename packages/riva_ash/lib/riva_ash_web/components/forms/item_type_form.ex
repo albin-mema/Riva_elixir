@@ -1,15 +1,15 @@
 defmodule RivaAshWeb.Components.Forms.ItemTypeForm do
   @moduledoc """
   Item type configuration form component.
-  
+
   This component follows the functional core, imperative shell pattern,
   with pure functions for data transformation and validation, and
   the LiveView component handling UI state and side effects.
-  
+
   ## Styleguide Compliance
-  
+
   This module follows the Riva Ash styleguide principles:
-  
+
   - **Functional Programming**: Uses pure functions, pattern matching, and pipelines
   - **Type Safety**: Comprehensive type specifications with @spec annotations
   - **Single Level of Abstraction**: Each function has a clear, focused responsibility
@@ -24,30 +24,30 @@ defmodule RivaAshWeb.Components.Forms.ItemTypeForm do
   import RivaAshWeb.Components.Atoms.Toggle
 
   @type assigns :: %{
-    optional(:form) => map(),
-    optional(:editing) => boolean(),
-    optional(:on_submit) => String.t(),
-    optional(:on_change) => String.t(),
-    optional(:on_cancel) => String.t(),
-    optional(:loading) => boolean(),
-    optional(:class) => String.t(),
-    optional(:rest) => any()
-  }
+          optional(:form) => map(),
+          optional(:editing) => boolean(),
+          optional(:on_submit) => String.t(),
+          optional(:on_change) => String.t(),
+          optional(:on_cancel) => String.t(),
+          optional(:loading) => boolean(),
+          optional(:class) => String.t(),
+          optional(:rest) => any()
+        }
 
   @type item_type_form_data :: %{
-    name: String.t(),
-    description: String.t(),
-    default_capacity: integer(),
-    default_duration: integer(),
-    requires_approval: boolean(),
-    allows_recurring: boolean(),
-    base_price: float(),
-    price_unit: String.t()
-  }
+          name: String.t(),
+          description: String.t(),
+          default_capacity: integer(),
+          default_duration: integer(),
+          requires_approval: boolean(),
+          allows_recurring: boolean(),
+          base_price: float(),
+          price_unit: String.t()
+        }
 
   @doc """
   Renders an item type form.
-  
+
   ## Examples
       <.item_type_form
         form={@form}
@@ -132,7 +132,8 @@ defmodule RivaAshWeb.Components.Forms.ItemTypeForm do
     """
   end
 
-  @spec render_form_actions(editing :: boolean(), loading :: boolean(), on_cancel :: String.t()) :: Phoenix.LiveView.Rendered.t()
+  @spec render_form_actions(editing :: boolean(), loading :: boolean(), on_cancel :: String.t()) ::
+          Phoenix.LiveView.Rendered.t()
   defp render_form_actions(assigns) do
     ~H"""
     <div>
@@ -148,7 +149,7 @@ defmodule RivaAshWeb.Components.Forms.ItemTypeForm do
 
   @doc """
   Validates item type form data.
-  
+
   ## Returns
     {:ok, validated_data} | {:error, changeset}
   """
@@ -166,7 +167,7 @@ defmodule RivaAshWeb.Components.Forms.ItemTypeForm do
   defp validate_required_fields(params) when is_map(params) do
     required_fields = [:name, :price_unit]
     missing_fields = required_fields |> Enum.filter(&is_nil(Map.get(params, &1)))
-    
+
     case missing_fields do
       [] -> :ok
       _ -> {:error, %{missing_fields: missing_fields}}
@@ -174,7 +175,7 @@ defmodule RivaAshWeb.Components.Forms.ItemTypeForm do
   end
 
   defp validate_pricing_fields(params) when is_map(params) do
-    with {:ok, base_price} <- validate_price(params[:base_price]),
+    with {:ok, _base_price} <- validate_price(params[:base_price]),
          :ok <- validate_price_unit(params[:price_unit]) do
       :ok
     else
@@ -187,14 +188,17 @@ defmodule RivaAshWeb.Components.Forms.ItemTypeForm do
   defp validate_price(_), do: {:error, %{base_price: "must be a positive number"}}
 
   defp validate_price_unit(nil), do: {:error, %{price_unit: "price unit is required"}}
+
   defp validate_price_unit(unit) when is_binary(unit) do
     valid_units = ["hour", "day", "week", "fixed"]
+
     if unit in valid_units do
       :ok
     else
       {:error, %{price_unit: "must be one of: #{Enum.join(valid_units, ", ")}"}}
     end
   end
+
   defp validate_price_unit(_), do: {:error, %{price_unit: "must be a string"}}
 
   @doc """

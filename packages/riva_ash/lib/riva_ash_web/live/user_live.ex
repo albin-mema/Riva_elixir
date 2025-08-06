@@ -105,6 +105,7 @@ defmodule RivaAshWeb.UserLive do
 
           {:error, error} ->
             error_message = ErrorHelpers.format_error(error)
+
             socket =
               socket
               |> assign(:error_message, "Failed to reload users: #{error_message}")
@@ -114,6 +115,7 @@ defmodule RivaAshWeb.UserLive do
 
       {:error, error} ->
         error_message = ErrorHelpers.format_error(error)
+
         socket =
           socket
           |> assign(:error_message, "Failed to delete user: #{error_message}")
@@ -128,5 +130,5 @@ defmodule RivaAshWeb.UserLive do
 
   # Private helper functions
 
-  defp get_page_title, do: Application.get_env(:riva_ash, __MODULE__, [])[:page_title] || "Users"
+  defp get_page_title, do: Application.get_env(:riva_ash, __MODULE__, []) |> get_in([:page_title]) || "Users"
 end

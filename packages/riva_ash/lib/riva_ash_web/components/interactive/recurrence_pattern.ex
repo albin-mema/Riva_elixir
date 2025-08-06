@@ -1,49 +1,49 @@
 defmodule RivaAshWeb.Components.Interactive.RecurrencePattern do
   @moduledoc """
   Recurring reservation pattern setup component.
-  
+
   ## Styleguide Compliance
-  
+
   This component follows the Riva Ash styleguide principles:
-  
+
   ### Functional Programming
   - Uses pure functions with immutable data
   - Implements pattern matching for data validation
   - Follows the functional core, imperative shell pattern
   - Uses pipelines for data transformation
-  
+
   ### Type Safety
   - Comprehensive type specifications for all functions
   - Uses proper Elixir type annotations
   - Implements guard clauses for validation
-  
+
   ### Code Abstraction
   - Single level of abstraction principle
   - Extracted helper functions for business logic
   - Clear separation of concerns
   - Reusable utility functions
-  
+
   ### Phoenix/Ash Patterns
   - Follows Phoenix LiveView component patterns
   - Uses proper attribute handling
   - Implements consistent event handling
   - Ash-specific data structures and patterns
-  
+
   ### LiveView Component Best Practices
   - Proper use of assigns and HEEx templates
   - Consistent naming conventions
   - Clear documentation and examples
   - Accessible and semantic HTML structure
-  
+
   ## Examples
-  
+
   ```elixir
   # Basic usage
   <.recurrence_pattern
     pattern={@pattern}
     on_pattern_change="handle_pattern_change"
   />
-  
+
   # With preview functionality
   <.recurrence_pattern
     pattern={@pattern}
@@ -58,9 +58,9 @@ defmodule RivaAshWeb.Components.Interactive.RecurrencePattern do
 
   @doc """
   Renders a recurrence pattern configuration interface.
-  
+
   ## Attributes
-  
+
   - `pattern` (map, default: %{}): Pattern configuration data
   - `on_pattern_change` (string, required): Event handler for pattern changes
   - `on_preview` (string, optional): Event handler for preview generation
@@ -80,9 +80,9 @@ defmodule RivaAshWeb.Components.Interactive.RecurrencePattern do
 
   @doc """
   Renders the recurrence pattern component.
-  
+
   ## Examples
-  
+
       iex> recurrence_pattern(%{
       ...>   pattern: %{},
       ...>   on_pattern_change: "handle_pattern_change"
@@ -100,12 +100,12 @@ defmodule RivaAshWeb.Components.Interactive.RecurrencePattern do
 
   @doc """
   Validates component assigns.
-  
+
   ## Examples
-  
+
       iex> validate_assigns(%{pattern: %{}, on_pattern_change: "handle_change"})
       {:ok, %{pattern: %{}, on_pattern_change: "handle_change"}}
-      
+
       iex> validate_assigns(%{pattern: %{}})
       {:error, "on_pattern_change is required"}
   """
@@ -122,15 +122,15 @@ defmodule RivaAshWeb.Components.Interactive.RecurrencePattern do
 
   @doc """
   Validates pattern data.
-  
+
   ## Examples
-  
+
       iex> validate_pattern(%{})
       {:ok, %{}}
-      
+
       iex> validate_pattern(%{form: %{pattern_type: "daily"}})
       {:ok, %{form: %{pattern_type: "daily"}}}
-      
+
       iex> validate_pattern("invalid")
       {:error, "pattern must be a map"}
   """
@@ -145,15 +145,15 @@ defmodule RivaAshWeb.Components.Interactive.RecurrencePattern do
 
   @doc """
   Validates max occurrences.
-  
+
   ## Examples
-  
+
       iex> validate_max_occurrences(365)
       {:ok, 365}
-      
+
       iex> validate_max_occurrences(0)
       {:error, "max_occurrences must be greater than 0"}
-      
+
       iex> validate_max_occurrences(-1)
       {:error, "max_occurrences must be greater than 0"}
   """
@@ -172,19 +172,19 @@ defmodule RivaAshWeb.Components.Interactive.RecurrencePattern do
 
   @doc """
   Validates required assigns.
-  
+
   ## Examples
-  
+
       iex> validate_required(%{key: "value"}, [:key])
       {:ok, %{key: "value"}}
-      
+
       iex> validate_required(%{}, [:key])
       {:error, "key is required"}
   """
   @spec validate_required(map(), list(atom())) :: {:ok, map()} | {:error, String.t()}
   defp validate_required(assigns, required_keys) do
     missing_keys = required_keys -- Map.keys(assigns)
-    
+
     if Enum.empty?(missing_keys) do
       {:ok, assigns}
     else
@@ -194,9 +194,9 @@ defmodule RivaAshWeb.Components.Interactive.RecurrencePattern do
 
   @doc """
   Renders the pattern component.
-  
+
   ## Examples
-  
+
       iex> render_pattern(%{pattern: %{}, on_pattern_change: "handle_change"})
       %Phoenix.LiveView.Rendered{...}
   """
@@ -321,15 +321,15 @@ defmodule RivaAshWeb.Components.Interactive.RecurrencePattern do
 
   @doc """
   Gets pattern field value.
-  
+
   ## Examples
-  
+
       iex> get_pattern_field(%{form: %{pattern_type: "daily"}}, :pattern_type)
       "daily"
-      
+
       iex> get_pattern_field(%{}, :pattern_type)
       nil
-      
+
       iex> get_pattern_field(%{form: %{invalid: "data"}}, :pattern_type)
       nil
   """
@@ -349,15 +349,15 @@ defmodule RivaAshWeb.Components.Interactive.RecurrencePattern do
 
   @doc """
   Gets pattern type.
-  
+
   ## Examples
-  
+
       iex> get_pattern_type(%{form: %{pattern_type: "daily"}})
       "daily"
-      
+
       iex> get_pattern_type(%{})
       nil
-      
+
       iex> get_pattern_type(%{form: %{}})
       nil
   """
@@ -372,15 +372,15 @@ defmodule RivaAshWeb.Components.Interactive.RecurrencePattern do
 
   @doc """
   Gets end type.
-  
+
   ## Examples
-  
+
       iex> get_end_type(%{form: %{end_type: "count"}})
       "count"
-      
+
       iex> get_end_type(%{})
       nil
-      
+
       iex> get_end_type(%{form: %{}})
       nil
   """
@@ -395,15 +395,15 @@ defmodule RivaAshWeb.Components.Interactive.RecurrencePattern do
 
   @doc """
   Formats date for display.
-  
+
   ## Examples
-  
+
       iex> format_date_for_display("2024-01-15")
       "January 15, 2024"
-      
+
       iex> format_date_for_display("2024-12-25")
       "December 25, 2024"
-      
+
       iex> format_date_for_display("invalid-date")
       "invalid-date"
   """
@@ -414,9 +414,10 @@ defmodule RivaAshWeb.Components.Interactive.RecurrencePattern do
         year = String.to_integer(year)
         month = String.to_integer(month)
         day = String.to_integer(day)
-        
+
         month_name = get_month_name(month)
         "#{month_name} #{day}, #{year}"
+
       _ ->
         date
     end
@@ -428,24 +429,35 @@ defmodule RivaAshWeb.Components.Interactive.RecurrencePattern do
 
   @doc """
   Gets month name from month number.
-  
+
   ## Examples
-  
+
       iex> get_month_name(1)
       "January"
-      
+
       iex> get_month_name(12)
       "December"
-      
+
       iex> get_month_name(13)
       "Unknown"
   """
   @spec get_month_name(integer()) :: String.t()
   defp get_month_name(month) when month >= 1 and month <= 12 do
     months = [
-      "January", "February", "March", "April", "May", "June",
-      "July", "August", "September", "October", "November", "December"
+      "January",
+      "February",
+      "March",
+      "April",
+      "May",
+      "June",
+      "July",
+      "August",
+      "September",
+      "October",
+      "November",
+      "December"
     ]
+
     Enum.at(months, month - 1)
   end
 

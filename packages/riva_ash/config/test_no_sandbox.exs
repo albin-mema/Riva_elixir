@@ -7,7 +7,9 @@ config :riva_ash, RivaAsh.Repo,
   username: System.get_env("DB_USERNAME") || Application.compile_env(:riva_ash, :db_username, "postgres"),
   password: System.get_env("DB_PASSWORD") || Application.compile_env(:riva_ash, :db_password, "postgres"),
   hostname: System.get_env("DB_HOSTNAME") || Application.compile_env(:riva_ash, :db_hostname, "localhost"),
-  database: System.get_env("DB_NAME") || Application.compile_env(:riva_ash, :test_no_sandbox_database, "riva_ash_test_no_sandbox"),
+  database:
+    System.get_env("DB_NAME") ||
+      Application.compile_env(:riva_ash, :test_no_sandbox_database, "riva_ash_test_no_sandbox"),
   pool: DBConnection.ConnectionPool,
   pool_size: System.get_env("DB_POOL_SIZE", "10") |> String.to_integer(),
   timeout: System.get_env("DB_TIMEOUT_MS", "5000") |> String.to_integer(),
@@ -18,7 +20,11 @@ config :riva_ash, RivaAsh.Repo,
 config :riva_ash, RivaAshWeb.Endpoint,
   http: [ip: {127, 0, 0, 1}, port: Application.compile_env(:riva_ash, :test_no_sandbox_port, 4002)],
   secret_key_base:
-    Application.compile_env(:riva_ash, :test_secret_key_base, "test_secret_key_base_change_me_in_production_this_needs_to_be_at_least_64_bytes_long_for_security"),
+    Application.compile_env(
+      :riva_ash,
+      :test_secret_key_base,
+      "test_secret_key_base_change_me_in_production_this_needs_to_be_at_least_64_bytes_long_for_security"
+    ),
   server: true
 
 # Configure Ecto repos

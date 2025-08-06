@@ -20,7 +20,7 @@ defmodule RivaAshWeb.FallbackController do
   @doc """
   Handles Ash query not found errors.
   """
-  @spec call(conn(), {:error, %Ash.Error.Query.NotFound{}}) :: conn()
+  @spec call(conn(), {:error, struct()}) :: conn()
   def call(conn, {:error, %Ash.Error.Query.NotFound{}}) do
     conn
     |> put_status(:not_found)
@@ -30,7 +30,7 @@ defmodule RivaAshWeb.FallbackController do
   @doc """
   Handles Ash validation errors.
   """
-  @spec call(conn(), {:error, %Ash.Error.Invalid{}}) :: conn()
+  @spec call(conn(), {:error, struct()}) :: conn()
   def call(conn, {:error, %Ash.Error.Invalid{} = error}) do
     conn
     |> put_status(:unprocessable_entity)
@@ -43,7 +43,7 @@ defmodule RivaAshWeb.FallbackController do
   @doc """
   Handles Ash authorization errors.
   """
-  @spec call(conn(), {:error, %Ash.Error.Forbidden{}}) :: conn()
+  @spec call(conn(), {:error, struct()}) :: conn()
   def call(conn, {:error, %Ash.Error.Forbidden{}}) do
     conn
     |> put_status(:forbidden)
@@ -73,9 +73,7 @@ defmodule RivaAshWeb.FallbackController do
   # Private helper functions
 
   defp format_ash_validation_errors(%Ash.Error.Invalid{errors: errors}) do
-    errors
-    |> Enum.map(&format_ash_error/1)
-    |> Enum.reject(&is_nil/1)
+    Enum.reject(Enum.map(errors, &format_ash_error/1), &is_nil/1)
   end
 
   defp format_ash_error(%{field: field, message: message}) when is_atom(field) do

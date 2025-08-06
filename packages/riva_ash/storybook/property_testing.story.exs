@@ -1,25 +1,25 @@
 defmodule Storybook.PropertyTesting do
   @moduledoc """
   Property-based testing showcase for Storybook components.
-  
+
   This story demonstrates how property-based testing can generate
   hundreds of component variations automatically, helping discover
   edge cases and ensuring robust component behavior.
   """
-  
+
   use PhoenixStorybook.Story, :page
-  
+
   import RivaAsh.StorybookTesting.PropertyGenerators
-  
+
   def doc do
     """
     Property-based testing for UI components using StreamData.
-    
+
     This page showcases automatically generated component variations
     that help discover edge cases and ensure component robustness.
     """
   end
-  
+
   def navigation do
     [
       {:overview, "Overview", {:fa, "flask", :thin}},
@@ -29,7 +29,7 @@ defmodule Storybook.PropertyTesting do
       {:performance, "Performance", {:fa, "gauge-high", :thin}}
     ]
   end
-  
+
   def render(assigns = %{tab: :overview}) do
     ~H"""
     <div class="psb-welcome-page">
@@ -76,27 +76,27 @@ defmodule Storybook.PropertyTesting do
       <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-6">
         <h3 class="text-lg font-semibold mb-3 text-yellow-800">⚡ Quick Start</h3>
         <pre class="bg-gray-800 text-green-400 p-4 rounded text-sm overflow-x-auto"><code># Run property-based tests
-mix test test/riva_ash_web/storybook_property_test.exs
+    mix test test/riva_ash_web/storybook_property_test.exs
 
-# Run with more iterations
-PROPERTY_MAX_RUNS=1000 mix test test/riva_ash_web/storybook_property_test.exs
+    # Run with more iterations
+    PROPERTY_MAX_RUNS=1000 mix test test/riva_ash_web/storybook_property_test.exs
 
-# Run visual regression tests
-PROPERTY_VISUAL=true mix test test/riva_ash_web/storybook_property_test.exs --include visual</code></pre>
+    # Run visual regression tests
+    PROPERTY_VISUAL=true mix test test/riva_ash_web/storybook_property_test.exs --include visual</code></pre>
       </div>
     </div>
     """
   end
-  
+
   def render(assigns = %{tab: :button_variations}) do
     # Generate 20 random button variations
-    button_variations = 
+    button_variations =
       button_props()
       |> Enum.take(20)
       |> Enum.with_index()
-    
+
     assigns = assign(assigns, :button_variations, button_variations)
-    
+
     ~H"""
     <div class="psb-welcome-page">
       <h1 class="text-3xl font-bold mb-6">🔘 Button Property Variations</h1>
@@ -148,16 +148,16 @@ PROPERTY_VISUAL=true mix test test/riva_ash_web/storybook_property_test.exs --in
     </div>
     """
   end
-  
+
   def render(assigns = %{tab: :input_variations}) do
     # Generate 15 random input variations
-    input_variations = 
+    input_variations =
       input_props()
       |> Enum.take(15)
       |> Enum.with_index()
-    
+
     assigns = assign(assigns, :input_variations, input_variations)
-    
+
     ~H"""
     <div class="psb-welcome-page">
       <h1 class="text-3xl font-bold mb-6">📝 Input Property Variations</h1>
@@ -198,15 +198,15 @@ PROPERTY_VISUAL=true mix test test/riva_ash_web/storybook_property_test.exs --in
     </div>
     """
   end
-  
+
   def render(assigns = %{tab: :edge_cases}) do
     # Generate edge case examples
     button_edge_cases = edge_case_props(:button) |> Enum.take(5)
     input_edge_cases = edge_case_props(:input) |> Enum.take(5)
-    
+
     assigns = assign(assigns, :button_edge_cases, button_edge_cases)
     assigns = assign(assigns, :input_edge_cases, input_edge_cases)
-    
+
     ~H"""
     <div class="psb-welcome-page">
       <h1 class="text-3xl font-bold mb-6">⚠️ Edge Case Testing</h1>
@@ -278,7 +278,7 @@ PROPERTY_VISUAL=true mix test test/riva_ash_web/storybook_property_test.exs --in
     </div>
     """
   end
-  
+
   def render(assigns = %{tab: :performance}) do
     ~H"""
     <div class="psb-welcome-page">
@@ -314,13 +314,13 @@ PROPERTY_VISUAL=true mix test test/riva_ash_web/storybook_property_test.exs --in
       <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-6">
         <h3 class="text-lg font-semibold mb-3 text-yellow-800">🚀 Run Performance Tests</h3>
         <pre class="bg-gray-800 text-green-400 p-4 rounded text-sm overflow-x-auto"><code># Run performance property tests
-mix test test/riva_ash_web/storybook_property_test.exs -t performance
+    mix test test/riva_ash_web/storybook_property_test.exs -t performance
 
-# Run with more iterations for better statistics
-PROPERTY_MAX_RUNS=500 mix test test/riva_ash_web/storybook_property_test.exs -t performance
+    # Run with more iterations for better statistics
+    PROPERTY_MAX_RUNS=500 mix test test/riva_ash_web/storybook_property_test.exs -t performance
 
-# Profile memory usage
-mix test test/riva_ash_web/storybook_property_test.exs -t memory_profile</code></pre>
+    # Profile memory usage
+    mix test test/riva_ash_web/storybook_property_test.exs -t memory_profile</code></pre>
       </div>
     </div>
     """

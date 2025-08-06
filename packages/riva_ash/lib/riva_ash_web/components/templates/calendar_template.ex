@@ -57,7 +57,7 @@ defmodule RivaAshWeb.Components.Templates.CalendarTemplate do
           <%= render_slot(action) %>
         </:action>
       </.page_header>
-      
+
       <div class={@controls_class}>
         <.tab_navigation
           tabs={[
@@ -69,7 +69,7 @@ defmodule RivaAshWeb.Components.Templates.CalendarTemplate do
           on_tab_change={@on_view_change}
           class={@tab_navigation_class}
         />
-        
+
         <div :if={@show_filters && @filters != []} class={@filters_class}>
           <.filter_panel
             filters={@filters}
@@ -80,7 +80,7 @@ defmodule RivaAshWeb.Components.Templates.CalendarTemplate do
           />
         </div>
       </div>
-      
+
       <div class={@layout_class}>
         <main class={@main_class}>
           <.calendar_view
@@ -94,7 +94,7 @@ defmodule RivaAshWeb.Components.Templates.CalendarTemplate do
             editable={true}
           />
         </main>
-        
+
         <aside :if={@sidebar_content != []} class={@sidebar_class}>
           <%= render_slot(@sidebar_content) %>
         </aside>
@@ -143,7 +143,7 @@ defmodule RivaAshWeb.Components.Templates.CalendarTemplate do
   # Helper function to build controls classes
   @spec build_controls_class(list()) :: String.t()
   defp build_controls_class(filters) do
-    if filters != [], do: "calendar-controls space-y-4", else: "calendar-controls"
+    if filters != [], "calendar-controls space-y-4", "calendar-controls"
   end
 
   # Helper function to build tab navigation classes
@@ -167,7 +167,7 @@ defmodule RivaAshWeb.Components.Templates.CalendarTemplate do
   # Helper function to build main classes
   @spec build_main_class(list()) :: String.t()
   defp build_main_class(events) do
-    if events != [], do: "calendar-main lg:col-span-3", else: "calendar-main lg:col-span-4"
+    if events != [], "calendar-main lg:col-span-3", "calendar-main lg:col-span-4"
   end
 
   # Helper function to build sidebar classes

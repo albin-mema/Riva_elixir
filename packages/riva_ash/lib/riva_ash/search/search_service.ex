@@ -3,16 +3,16 @@ defmodule RivaAsh.Search.SearchService do
   Service for handling global search operations.
   Separates business logic from LiveView concerns.
   """
-  
+
   alias RivaAsh.Resources.{Business, Item}
   alias Ash.Query
 
   @doc """
   Performs global search for businesses and items based on search parameters.
-  
+
   ## Parameters
   - search_params: Map containing search criteria (search_term, city, country)
-  
+
   ## Returns
   {:ok, {businesses, items}} | {:error, reason}
   """
@@ -26,7 +26,7 @@ defmodule RivaAsh.Search.SearchService do
 
   @doc """
   Gets available cities for search filters.
-  
+
   ## Returns
   {:ok, [String.t()]} | {:error, reason}
   """
@@ -37,24 +37,24 @@ defmodule RivaAsh.Search.SearchService do
          |> Query.select([:city])
          |> Ash.read(domain: RivaAsh.Domain) do
       {:ok, businesses} ->
-        cities = 
+        cities =
           businesses
           |> Enum.map(& &1.city)
           |> Enum.reject(&is_nil/1)
           |> Enum.reject(&(&1 == ""))
           |> Enum.uniq()
           |> Enum.sort()
-        
+
         {:ok, cities}
-      
-      {:error, reason} -> 
+
+      {:error, reason} ->
         {:error, reason}
     end
   end
 
   @doc """
   Gets available countries for search filters.
-  
+
   ## Returns
   {:ok, [String.t()]} | {:error, reason}
   """
@@ -65,17 +65,17 @@ defmodule RivaAsh.Search.SearchService do
          |> Query.select([:country])
          |> Ash.read(domain: RivaAsh.Domain) do
       {:ok, businesses} ->
-        countries = 
+        countries =
           businesses
           |> Enum.map(& &1.country)
           |> Enum.reject(&is_nil/1)
           |> Enum.reject(&(&1 == ""))
           |> Enum.uniq()
           |> Enum.sort()
-        
+
         {:ok, countries}
-      
-      {:error, reason} -> 
+
+      {:error, reason} ->
         {:error, reason}
     end
   end

@@ -82,14 +82,23 @@ defmodule RivaAshWeb.Components.Molecules.Card do
       </.card>
   """
   @spec card(assigns :: assigns()) :: Phoenix.LiveView.Rendered.t()
-  attr(:variant, :atom, default: :elevated,
+  attr(:variant, :atom,
+    default: :elevated,
     values: ~w(elevated bordered ghost)a,
-    doc: "Visual variant of the card")
-  attr(:padding, :atom, default: :normal,
+    doc: "Visual variant of the card"
+  )
+
+  attr(:padding, :atom,
+    default: :normal,
     values: ~w(none compact normal spacious)a,
-    doc: "Internal spacing of the card")
-  attr(:class, :string, default: "",
-    doc: "Additional CSS classes for the card container")
+    doc: "Internal spacing of the card"
+  )
+
+  attr(:class, :string,
+    default: "",
+    doc: "Additional CSS classes for the card container"
+  )
+
   attr(:rest, :global)
 
   slot(:header, doc: "Optional header content")
@@ -165,6 +174,7 @@ defmodule RivaAshWeb.Components.Molecules.Card do
 
   @spec render_card_header(list(), padding_variant()) :: Phoenix.LiveView.Rendered.t()
   defp render_card_header([], _padding), do: ""
+
   defp render_card_header(header, padding) do
     assigns = %{header: header, padding: padding}
 
@@ -188,6 +198,7 @@ defmodule RivaAshWeb.Components.Molecules.Card do
 
   @spec render_card_footer(list(), padding_variant()) :: Phoenix.LiveView.Rendered.t()
   defp render_card_footer([], _padding), do: ""
+
   defp render_card_footer(footer, padding) do
     assigns = %{footer: footer, padding: padding}
 
@@ -201,14 +212,18 @@ defmodule RivaAshWeb.Components.Molecules.Card do
   @spec build_card_class(assigns :: assigns()) :: String.t()
   defp build_card_class(assigns) do
     # Build CSS classes using functional pipeline
-    classes = [
-      "rounded-lg overflow-hidden", # Base classes
-      build_variant_classes(assigns.variant),
-      build_padding_classes(assigns.padding),
-      assigns.class
-    ]
-    |> Enum.reject(&(&1 == "")) # Remove empty strings
-    |> Enum.join(" ") # Join with spaces
+    classes =
+      [
+        # Base classes
+        "rounded-lg overflow-hidden",
+        build_variant_classes(assigns.variant),
+        build_padding_classes(assigns.padding),
+        assigns.class
+      ]
+      # Remove empty strings
+      |> Enum.reject(&(&1 == ""))
+      # Join with spaces
+      |> Enum.join(" ")
 
     classes
   end
@@ -221,11 +236,15 @@ defmodule RivaAshWeb.Components.Molecules.Card do
   @spec build_header_class(padding_variant()) :: String.t()
   defp build_header_class(padding) do
     # Build header classes using functional composition
-    classes = [
-      "border-b border-border", # Base header styles
-      build_padding_classes(padding) # Padding classes
-    ]
-    |> Enum.join(" ") # Join with spaces
+    classes =
+      [
+        # Base header styles
+        "border-b border-border",
+        # Padding classes
+        build_padding_classes(padding)
+      ]
+      # Join with spaces
+      |> Enum.join(" ")
 
     classes
   end
@@ -239,11 +258,15 @@ defmodule RivaAshWeb.Components.Molecules.Card do
   @spec build_footer_class(padding_variant()) :: String.t()
   defp build_footer_class(padding) do
     # Build footer classes using functional composition
-    classes = [
-      "border-t border-border bg-muted/50", # Base footer styles
-      build_padding_classes(padding) # Padding classes
-    ]
-    |> Enum.join(" ") # Join with spaces
+    classes =
+      [
+        # Base footer styles
+        "border-t border-border bg-muted/50",
+        # Padding classes
+        build_padding_classes(padding)
+      ]
+      # Join with spaces
+      |> Enum.join(" ")
 
     classes
   end
@@ -258,10 +281,15 @@ defmodule RivaAshWeb.Components.Molecules.Card do
   Card title component for use in card headers.
   """
   @spec card_title(assigns :: map()) :: Phoenix.LiveView.Rendered.t()
-  attr(:class, :string, default: "",
-    doc: "Additional CSS classes for the title")
-  slot(:inner_block, required: true,
-    doc: "Title content")
+  attr(:class, :string,
+    default: "",
+    doc: "Additional CSS classes for the title"
+  )
+
+  slot(:inner_block,
+    required: true,
+    doc: "Title content"
+  )
 
   def card_title(assigns) do
     # Render title using functional composition
@@ -285,10 +313,15 @@ defmodule RivaAshWeb.Components.Molecules.Card do
   Card description component for use in card headers.
   """
   @spec card_description(assigns :: map()) :: Phoenix.LiveView.Rendered.t()
-  attr(:class, :string, default: "",
-    doc: "Additional CSS classes for the description")
-  slot(:inner_block, required: true,
-    doc: "Description content")
+  attr(:class, :string,
+    default: "",
+    doc: "Additional CSS classes for the description"
+  )
+
+  slot(:inner_block,
+    required: true,
+    doc: "Description content"
+  )
 
   def card_description(assigns) do
     # Render description using functional composition

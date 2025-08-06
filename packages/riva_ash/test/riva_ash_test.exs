@@ -22,7 +22,7 @@ defmodule RivaAshTest do
   test "has version information" do
     # Test that the application has version information
     assert Application.get_env(:riva_ash, :vsn) ||
-           Application.spec(:riva_ash, :vsn) ||
-           "0.0.0" != ""
+             Application.spec(:riva_ash, :vsn) ||
+             "0.0.0" != ""
   end
 end

@@ -1,5 +1,5 @@
 # GDPR Compliance Documentation
-## Riva Ash Reservation System
+## Reservation System
 
 **Document Version**: 1.0  
 **Last Updated**: 2025-07-24  
@@ -23,7 +23,7 @@
 
 ## Executive Summary
 
-The Riva Ash reservation system employs a dual-actor architecture that naturally aligns with GDPR data controller/processor relationships. This document outlines our current compliance status, identifies gaps, and provides a roadmap for full GDPR compliance.
+The reservation system employs a dual-actor architecture that naturally aligns with GDPR data controller/processor relationships. This document outlines our current compliance status, identifies gaps, and provides a roadmap for full GDPR compliance.
 
 ### Key Findings:
 - ✅ **Strong Foundation**: Audit trails, soft deletes, and data minimization already implemented
@@ -53,9 +53,9 @@ Our system distinguishes between two types of actors, which maps directly to GDP
 ### Data Controller Relationships
 
 ```
-Platform (Riva Ash) → Data Processor for Business Owners
-Business Owner (User) → Data Controller for their business
-Employee → Data Processor for Business Owner + Data Subject for own data
+Platform (Reservation System) → Data Processor for Organization Owners
+Organization Owner (User) → Data Controller for their organization
+User → Data Processor for Organization Owner + Data Subject for own data
 Client → Data Subject
 ```
 
@@ -102,7 +102,7 @@ end
 - Password hashing with bcrypt
 - Session-based authentication
 - Role-based access controls
-- Business-level data isolation
+- Organization-level data isolation
 
 ### ⚠️ Partially Compliant Areas
 
@@ -120,14 +120,14 @@ end
 
 ### Personal Data Categories Processed
 
-#### User Data (Business Owners)
-- **Data**: Name, email, password hash, business information
-- **Purpose**: Account management, business operations
+#### User Data (Organization Owners)
+- **Data**: Name, email, password hash, organization information
+- **Purpose**: Account management, organization operations
 - **Legal Basis**: Contract performance (Article 6(1)(b))
 - **Retention**: Account lifetime + 7 years (legal requirements)
 
-#### Employee Data
-- **Data**: Name, email, phone, role, business association
+#### User Data (Staff)
+- **Data**: Name, email, phone, role, organization association
 - **Purpose**: Employment management, reservation processing
 - **Legal Basis**: Legitimate interest (Article 6(1)(f))
 - **Retention**: Employment period + 3 years
@@ -150,12 +150,12 @@ end
 
 ### Access Controls
 ```elixir
-# Business-level data isolation
+# Organization-level data isolation
 policy action_type([:read, :create, :update, :destroy]) do
-  authorize_if(expr(business.owner_id == ^actor(:id)))
+  authorize_if(expr(organization.owner_id == ^actor(:id)))
 end
 
-# Employee access restrictions
+# User access restrictions
 policy action_type(:read) do
   authorize_if(actor_attribute_equals(:role, :employee))
 end

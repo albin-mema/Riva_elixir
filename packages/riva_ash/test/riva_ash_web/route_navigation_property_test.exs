@@ -65,7 +65,8 @@ defmodule RivaAshWeb.RouteNavigationPropertyTest do
 
   # Test configuration
   @max_response_time_ms 5000
-  @max_memory_increase_bytes 50_000_000  # 50MB
+  # 50MB
+  @max_memory_increase_bytes 50_000_000
   @concurrent_users 3
   @malicious_params [
     "../../../etc/passwd",
@@ -93,9 +94,12 @@ defmodule RivaAshWeb.RouteNavigationPropertyTest do
       business = create_business!(%{}, user)
 
       # Create simple test data without complex resources to avoid setup issues
-      section = %{id: business.id} # Simple fallback
-      item = %{id: business.id} # Simple fallback
-      client = %{id: business.id} # Simple fallback for client
+      # Simple fallback
+      section = %{id: business.id}
+      # Simple fallback
+      item = %{id: business.id}
+      # Simple fallback for client
+      client = %{id: business.id}
 
       # Skip DB state validation entirely to avoid Sandbox owner teardown races in property/concurrency runs
       on_exit(fn -> :ok end)
@@ -115,13 +119,15 @@ defmodule RivaAshWeb.RouteNavigationPropertyTest do
     property "LiveView routes render properly", %{user: user} do
       # Get LiveView routes for integration testing
       all_routes = get_all_routes()
+
       liveview_routes =
         all_routes
-        |> Enum.filter(&is_liveview_route?/1)
+        |> Enum.filter(&liveview_route?/1)
         |> Enum.filter(fn route -> not has_parameters?(route.path) end)
         |> Enum.map(& &1.path)
-        |> Enum.filter(&is_navigable_path?/1)
-        |> Enum.take(6) # Limit for performance
+        |> Enum.filter(&navigable_path?/1)
+        # Limit for performance
+        |> Enum.take(6)
         |> ensure_nonempty_with_placeholder()
 
       IO.puts("🔴 LiveView testing #{length(liveview_routes)} routes")
@@ -138,8 +144,10 @@ defmodule RivaAshWeb.RouteNavigationPropertyTest do
             {:ok, _view, html} ->
               validate_liveview_content(html, route)
               IO.puts("✅ LiveView route #{route} -> OK")
+
             {:error, {:redirect, %{to: redirect_path}}} ->
               IO.puts("✅ LiveView route #{route} -> redirect to #{redirect_path}")
+
             {:error, reason} ->
               IO.puts("❌ LiveView route #{route} failed: #{inspect(reason)}")
           end
@@ -156,12 +164,14 @@ defmodule RivaAshWeb.RouteNavigationPropertyTest do
     property "all public routes are navigable without crashing" do
       # Get all public routes from the Phoenix router
       all_routes = get_all_routes()
-      public_routes = all_routes
-      |> Enum.filter(&is_public_route?/1)
-      |> Enum.filter(fn route -> not has_parameters?(route.path) end)
-      |> Enum.map(& &1.path)
-      |> Enum.filter(&is_navigable_path?/1)
-      |> Enum.reject(&erd_route?/1)
+
+      public_routes =
+        all_routes
+        |> Enum.filter(&public_route?/1)
+        |> Enum.filter(fn route -> not has_parameters?(route.path) end)
+        |> Enum.map(& &1.path)
+        |> Enum.filter(&navigable_path?/1)
+        |> Enum.reject(&erd_route?/1)
 
       IO.puts("🌐 Testing #{length(public_routes)} public routes from Phoenix router")
 
@@ -199,14 +209,16 @@ defmodule RivaAshWeb.RouteNavigationPropertyTest do
     property "authenticated routes are navigable after login", %{user: user} do
       # Get all authenticated routes from the Phoenix router
       all_routes = get_all_routes()
-      auth_routes = all_routes
-      |> Enum.filter(&is_authenticated_route?/1)
-      |> Enum.filter(fn route -> not has_parameters?(route.path) end)
-      |> Enum.map(& &1.path)
-      |> Enum.filter(&is_navigable_path?/1)
-      # Some environments (like CI or trimmed router config) may yield no authenticated routes.
-      # Avoid failing property generation on empty list by providing a harmless placeholder.
-      |> ensure_nonempty_with_placeholder()
+
+      auth_routes =
+        all_routes
+        |> Enum.filter(&is_authenticated_route?/1)
+        |> Enum.filter(fn route -> not has_parameters?(route.path) end)
+        |> Enum.map(& &1.path)
+        |> Enum.filter(&is_navigable_path?/1)
+        # Some environments (like CI or trimmed router config) may yield no authenticated routes.
+        # Avoid failing property generation on empty list by providing a harmless placeholder.
+        |> ensure_nonempty_with_placeholder()
 
       IO.puts("🔐 Testing #{length(auth_routes)} authenticated routes from Phoenix router")
 
@@ -273,24 +285,27 @@ defmodule RivaAshWeb.RouteNavigationPropertyTest do
     } do
       # Get parameterized routes from the Phoenix router
       all_routes = get_all_routes()
-      param_routes = all_routes
-      |> Enum.filter(fn route -> has_parameters?(route.path) and is_navigable_phoenix_route?(route) end)
-      |> Enum.map(fn route ->
-        params = generate_route_params_from_path(route.path, %{business: business})
-        if params, do: {route.path, params}, else: nil
-      end)
-      |> Enum.filter(& &1 != nil)
-      # Exclude routes known to trigger unsupported option errors during test navigation
-      |> Enum.reject(fn {path, _} -> erd_route?(path) or problematic_param_route?(path) end)
-      |> Enum.reject(fn {path, _} ->
-        String.starts_with?(path, "/item-types/") or
-        String.starts_with?(path, "/payments/") or
-        String.starts_with?(path, "/pricings/") or
-        String.starts_with?(path, "/recurring-reservations/") or
-        String.starts_with?(path, "/recurring-reservation-instances/") or
-        String.starts_with?(path, "/availability-exceptions/")
-      end)
-      |> Enum.take(10) # Limit to avoid too many tests
+
+      param_routes =
+        all_routes
+        |> Enum.filter(fn route -> has_parameters?(route.path) and is_navigable_phoenix_route?(route) end)
+        |> Enum.map(fn route ->
+          params = generate_route_params_from_path(route.path, %{business: business})
+          if params, do: {route.path, params}, else: nil
+        end)
+        |> Enum.filter(&(&1 != nil))
+        # Exclude routes known to trigger unsupported option errors during test navigation
+        |> Enum.reject(fn {path, _} -> erd_route?(path) or problematic_param_route?(path) end)
+        |> Enum.reject(fn {path, _} ->
+          String.starts_with?(path, "/item-types/") or
+            String.starts_with?(path, "/payments/") or
+            String.starts_with?(path, "/pricings/") or
+            String.starts_with?(path, "/recurring-reservations/") or
+            String.starts_with?(path, "/recurring-reservation-instances/") or
+            String.starts_with?(path, "/availability-exceptions/")
+        end)
+        # Limit to avoid too many tests
+        |> Enum.take(10)
 
       IO.puts("🔗 Testing #{length(param_routes)} parameterized routes from Phoenix router")
 
@@ -328,115 +343,123 @@ defmodule RivaAshWeb.RouteNavigationPropertyTest do
       all_routes = get_all_routes()
 
       # Extract public routes
-      public_routes = all_routes
-      |> Enum.filter(&is_public_route?/1)
-      |> Enum.filter(fn route -> not has_parameters?(route.path) end)
-      |> Enum.map(& &1.path)
-      |> Enum.filter(&is_navigable_path?/1)
-      |> Enum.reject(&erd_route?/1)
+      public_routes =
+        all_routes
+        |> Enum.filter(&public_route?/1)
+        |> Enum.filter(fn route -> not has_parameters?(route.path) end)
+        |> Enum.map(& &1.path)
+        |> Enum.filter(&navigable_path?/1)
+        |> Enum.reject(&erd_route?/1)
 
       # Extract authenticated routes
-      auth_routes = all_routes
-      |> Enum.filter(&is_authenticated_route?/1)
-      |> Enum.filter(fn route -> not has_parameters?(route.path) end)
-      |> Enum.map(& &1.path)
-      |> Enum.filter(&is_navigable_path?/1)
-      |> ensure_nonempty_with_placeholder()
+      auth_routes =
+        all_routes
+        |> Enum.filter(&authenticated_route?/1)
+        |> Enum.filter(fn route -> not has_parameters?(route.path) end)
+        |> Enum.map(& &1.path)
+        |> Enum.filter(&navigable_path?/1)
+        |> ensure_nonempty_with_placeholder()
 
       # Extract parameterized routes
-      param_routes = all_routes
-      |> Enum.filter(fn route -> has_parameters?(route.path) and is_navigable_phoenix_route?(route) end)
-      |> Enum.map(fn route ->
-        params = generate_route_params_from_path(route.path, %{business: business})
-        if params, do: {route.path, params}, else: nil
-      end)
-      |> Enum.filter(& &1 != nil)
-      |> Enum.reject(fn {path, _} -> erd_route?(path) or problematic_param_route?(path) end)
-      |> Enum.reject(fn {path, _} ->
-        String.starts_with?(path, "/item-types/") or
-        String.starts_with?(path, "/payments/") or
-        String.starts_with?(path, "/pricings/") or
-        String.starts_with?(path, "/recurring-reservations/") or
-        String.starts_with?(path, "/recurring-reservation-instances/") or
-        String.starts_with?(path, "/availability-exceptions/")
-      end)
-      |> Enum.take(5) # Limit parameterized routes
+      param_routes =
+        all_routes
+        |> Enum.filter(fn route -> has_parameters?(route.path) and navigable_phoenix_route?(route) end)
+        |> Enum.map(fn route ->
+          params = generate_route_params_from_path(route.path, %{business: business})
+          if params, do: {route.path, params}, else: nil
+        end)
+        |> Enum.filter(&(&1 != nil))
+        |> Enum.reject(fn {path, _} -> erd_route?(path) or problematic_param_route?(path) end)
+        |> Enum.reject(fn {path, _} ->
+          String.starts_with?(path, "/item-types/") or
+            String.starts_with?(path, "/payments/") or
+            String.starts_with?(path, "/pricings/") or
+            String.starts_with?(path, "/recurring-reservations/") or
+            String.starts_with?(path, "/recurring-reservation-instances/") or
+            String.starts_with?(path, "/availability-exceptions/")
+        end)
+        # Limit parameterized routes
+        |> Enum.take(5)
 
       IO.puts("🌐 Testing #{length(public_routes)} public routes")
 
-      public_failures = Enum.reduce(public_routes, [], fn route, failures ->
-        conn = build_conn()
+      public_failures =
+        Enum.reduce(public_routes, [], fn route, failures ->
+          conn = build_conn()
 
-        try do
-          response = get(conn, route)
-          status = response.status
+          try do
+            response = get(conn, route)
+            status = response.status
 
-          if status == 500 do
-            IO.puts("  ❌ Public route #{route} -> #{status} (SERVER ERROR)")
-            [{:public, route, status, response.resp_body} | failures]
-          else
-            IO.puts("  ✅ Public route #{route} -> #{status}")
-            failures
+            if status == 500 do
+              IO.puts("  ❌ Public route #{route} -> #{status} (SERVER ERROR)")
+              [{:public, route, status, response.resp_body} | failures]
+            else
+              IO.puts("  ✅ Public route #{route} -> #{status}")
+              failures
+            end
+          rescue
+            error ->
+              IO.puts("  💥 Public route #{route} -> EXCEPTION: #{inspect(error)}")
+              [{:public, route, :exception, error} | failures]
           end
-        rescue
-          error ->
-            IO.puts("  💥 Public route #{route} -> EXCEPTION: #{inspect(error)}")
-            [{:public, route, :exception, error} | failures]
-        end
-      end)
+        end)
 
       IO.puts("🔐 Testing #{length(auth_routes)} authenticated routes")
 
-      auth_failures = Enum.reduce(auth_routes, [], fn route, failures ->
-        conn = build_conn() |> sign_in_user(user)
+      auth_failures =
+        Enum.reduce(auth_routes, [], fn route, failures ->
+          conn = build_conn() |> sign_in_user(user)
 
-        try do
-          response = get(conn, route)
-          status = response.status
+          try do
+            response = get(conn, route)
+            status = response.status
 
-          if status == 500 do
-            IO.puts("  ❌ Authenticated route #{route} -> #{status} (SERVER ERROR)")
-            [{:authenticated, route, status, response.resp_body} | failures]
-          else
-            IO.puts("  ✅ Authenticated route #{route} -> #{status}")
-            failures
+            if status == 500 do
+              IO.puts("  ❌ Authenticated route #{route} -> #{status} (SERVER ERROR)")
+              [{:authenticated, route, status, response.resp_body} | failures]
+            else
+              IO.puts("  ✅ Authenticated route #{route} -> #{status}")
+              failures
+            end
+          rescue
+            error ->
+              IO.puts("  💥 Authenticated route #{route} -> EXCEPTION: #{inspect(error)}")
+              [{:authenticated, route, :exception, error} | failures]
           end
-        rescue
-          error ->
-            IO.puts("  💥 Authenticated route #{route} -> EXCEPTION: #{inspect(error)}")
-            [{:authenticated, route, :exception, error} | failures]
-        end
-      end)
+        end)
 
       IO.puts("🔗 Testing #{length(param_routes)} parameterized routes")
 
-      param_failures = Enum.reduce(param_routes, [], fn {route_template, params}, failures ->
-        path = substitute_route_params(route_template, params)
-        conn = build_conn() |> sign_in_user(user)
+      param_failures =
+        Enum.reduce(param_routes, [], fn {route_template, params}, failures ->
+          path = substitute_route_params(route_template, params)
+          conn = build_conn() |> sign_in_user(user)
 
-        try do
-          response = get(conn, path)
-          status = response.status
+          try do
+            response = get(conn, path)
+            status = response.status
 
-          if status == 500 do
-            IO.puts("  ❌ Parameterized route #{path} -> #{status} (SERVER ERROR)")
-            [{:parameterized, path, status, response.resp_body} | failures]
-          else
-            IO.puts("  ✅ Parameterized route #{path} -> #{status}")
-            failures
+            if status == 500 do
+              IO.puts("  ❌ Parameterized route #{path} -> #{status} (SERVER ERROR)")
+              [{:parameterized, path, status, response.resp_body} | failures]
+            else
+              IO.puts("  ✅ Parameterized route #{path} -> #{status}")
+              failures
+            end
+          rescue
+            error ->
+              IO.puts("  💥 Parameterized route #{path} -> EXCEPTION: #{inspect(error)}")
+              [{:parameterized, path, :exception, error} | failures]
           end
-        rescue
-          error ->
-            IO.puts("  💥 Parameterized route #{path} -> EXCEPTION: #{inspect(error)}")
-            [{:parameterized, path, :exception, error} | failures]
-        end
-      end)
+        end)
 
       # Report failures
       all_failures = public_failures ++ auth_failures ++ param_failures
 
       if length(all_failures) > 0 do
         IO.puts("\n❌ Found #{length(all_failures)} route failures:")
+
         Enum.each(all_failures, fn {category, route, status, _body} ->
           IO.puts("  - #{category}: #{route} -> #{status}")
         end)
@@ -452,10 +475,13 @@ defmodule RivaAshWeb.RouteNavigationPropertyTest do
     property "routes handle malicious parameters safely", %{user: user, business: business} do
       # Get parameterized routes for security testing
       all_routes = get_all_routes()
-      param_routes = all_routes
-      |> Enum.filter(fn route -> has_parameters?(route.path) and is_navigable_phoenix_route?(route) end)
-      |> Enum.map(& &1.path)
-      |> Enum.take(8) # Limit for security testing
+
+      param_routes =
+        all_routes
+        |> Enum.filter(fn route -> has_parameters?(route.path) and navigable_phoenix_route?(route) end)
+        |> Enum.map(& &1.path)
+        # Limit for security testing
+        |> Enum.take(8)
 
       IO.puts("🔒 Security testing #{length(param_routes)} routes with malicious parameters")
 
@@ -477,7 +503,9 @@ defmodule RivaAshWeb.RouteNavigationPropertyTest do
           # Ensure no sensitive data leaked
           validate_security_response(response, malicious_value)
 
-          IO.puts("✅ Security route #{route_template} with '#{String.slice(malicious_value, 0, 10)}...' -> #{response.status}")
+          IO.puts(
+            "✅ Security route #{route_template} with '#{String.slice(malicious_value, 0, 10)}...' -> #{response.status}"
+          )
         rescue
           error ->
             IO.puts("❌ Security test #{route_template} failed: #{inspect(error)}")
@@ -494,28 +522,29 @@ defmodule RivaAshWeb.RouteNavigationPropertyTest do
 
       IO.puts("⚡ Testing #{length(sample_routes)} routes with #{@concurrent_users} concurrent users")
 
-      tasks = Enum.map(1..@concurrent_users, fn user_num ->
-        Task.async(fn ->
-          test_user = if user_num == 1, do: user, else: create_user!()
+      tasks =
+        Enum.map(1..@concurrent_users, fn user_num ->
+          Task.async(fn ->
+            test_user = if user_num == 1, do: user, else: create_user!()
 
-          Enum.each(sample_routes, fn route ->
-            try do
-              conn = build_conn() |> sign_in_test_user(test_user)
-              {response, duration} = time_request(conn, route)
+            Enum.each(sample_routes, fn route ->
+              try do
+                conn = build_conn() |> sign_in_test_user(test_user)
+                {response, duration} = time_request(conn, route)
 
-              assert response.status in [200, 302, 404],
-                     "Concurrent user #{user_num} got #{response.status} for #{route}"
+                assert response.status in [200, 302, 404],
+                       "Concurrent user #{user_num} got #{response.status} for #{route}"
 
-              IO.puts("✅ Concurrent user #{user_num} route #{route} -> #{response.status} (#{duration}ms)")
-            rescue
-              error ->
-                IO.puts("❌ Concurrent user #{user_num} route #{route} failed: #{inspect(error)}")
-                # Don't fail concurrent tests, just log
-                :ok
-            end
+                IO.puts("✅ Concurrent user #{user_num} route #{route} -> #{response.status} (#{duration}ms)")
+              rescue
+                error ->
+                  IO.puts("❌ Concurrent user #{user_num} route #{route} failed: #{inspect(error)}")
+                  # Don't fail concurrent tests, just log
+                  :ok
+              end
+            end)
           end)
         end)
-      end)
 
       Task.await_many(tasks, 60_000)
       IO.puts("✅ Concurrent access test completed")
@@ -528,22 +557,24 @@ defmodule RivaAshWeb.RouteNavigationPropertyTest do
     RivaAshWeb.Router.__routes__()
   end
 
-  defp is_public_route?(route) do
+  defp public_route?(route) do
     # A route is public if it doesn't require authentication
-    not is_authenticated_route?(route) and
-    not String.starts_with?(route.path, "/api") and
-    not String.starts_with?(route.path, "/admin")
+    not authenticated_route?(route) and
+      not String.starts_with?(route.path, "/api") and
+      not String.starts_with?(route.path, "/admin")
   end
 
-  defp is_authenticated_route?(route) do
+  defp authenticated_route?(route) do
     # Check if route requires authentication by looking at pipe_through
     case Map.get(route, :pipe_through, []) do
       pipes when is_list(pipes) ->
         Enum.any?(pipes, fn pipe ->
           pipe == :require_authenticated_user or
-          pipe == :authenticated_layout
+            pipe == :authenticated_layout
         end)
-      _ -> false
+
+      _ ->
+        false
     end
   end
 
@@ -551,23 +582,23 @@ defmodule RivaAshWeb.RouteNavigationPropertyTest do
     String.contains?(path, ":")
   end
 
-  defp is_navigable_path?(path) do
+  defp navigable_path?(path) do
     # Filter out routes that are not suitable for navigation testing
     not String.contains?(path, "*") and
-    not String.ends_with?(path, ".json") and
-    not String.ends_with?(path, ".xml") and
-    not String.ends_with?(path, ".csv") and
-    not String.starts_with?(path, "/api") and
-    not String.contains?(path, "sign-out") and
-    not String.contains?(path, "/auth/") and
-    not String.contains?(path, "/oauth") and
-    not String.contains?(path, "/graphql") and
-    not String.contains?(path, "/dev") and
-    path != "/*path"
+      not String.ends_with?(path, ".json") and
+      not String.ends_with?(path, ".xml") and
+      not String.ends_with?(path, ".csv") and
+      not String.starts_with?(path, "/api") and
+      not String.contains?(path, "sign-out") and
+      not String.contains?(path, "/auth/") and
+      not String.contains?(path, "/oauth") and
+      not String.contains?(path, "/graphql") and
+      not String.contains?(path, "/dev") and
+      path != "/*path"
   end
 
-  defp is_navigable_phoenix_route?(route) do
-    is_navigable_path?(route.path) and route.verb == :get
+  defp navigable_phoenix_route?(route) do
+    navigable_path?(route.path) and route.verb == :get
   end
 
   # Skip ERD in tests due to dependency on external diagram generation
@@ -591,7 +622,8 @@ defmodule RivaAshWeb.RouteNavigationPropertyTest do
       String.contains?(path, ":id") ->
         cond do
           String.contains?(path, "business") -> %{"id" => test_data.business.id}
-          true -> %{"id" => test_data.business.id} # Default to business ID
+          # Default to business ID
+          true -> %{"id" => test_data.business.id}
         end
 
       String.contains?(path, ":business_id") ->
@@ -615,13 +647,12 @@ defmodule RivaAshWeb.RouteNavigationPropertyTest do
     create_user!(%{role: :admin})
   end
 
-
-
   defp create_item_safe(section) do
     try do
       create_item!(section)
     rescue
-      _ -> %{id: section.id} # Fallback
+      # Fallback
+      _ -> %{id: section.id}
     end
   end
 
@@ -646,12 +677,14 @@ defmodule RivaAshWeb.RouteNavigationPropertyTest do
     :ok
   end
 
-  defp is_liveview_route?(route) do
+  defp liveview_route?(route) do
     # Check if route uses LiveView
     case Map.get(route, :plug, nil) do
       plug when is_atom(plug) ->
         String.ends_with?(to_string(plug), "Live")
-      _ -> false
+
+      _ ->
+        false
     end
   end
 
@@ -659,10 +692,13 @@ defmodule RivaAshWeb.RouteNavigationPropertyTest do
     # Check that LiveView actually rendered content
     refute String.contains?(html, "Something went wrong"),
            "LiveView #{route} shows error message"
+
     refute String.contains?(html, "500 Internal Server Error"),
            "LiveView #{route} shows 500 error"
+
     refute String.contains?(html, "Exception"),
            "LiveView #{route} shows exception"
+
     assert String.length(html) > 100,
            "LiveView #{route} has minimal content (#{String.length(html)} chars)"
   end
@@ -680,47 +716,74 @@ defmodule RivaAshWeb.RouteNavigationPropertyTest do
       200 ->
         # Check for actual content, not error pages
         body = response.resp_body
+
         refute String.contains?(body, "Something went wrong"),
                "Route #{route} shows error message"
+
         refute String.contains?(body, "500 Internal Server Error"),
                "Route #{route} shows 500 error"
+
         refute String.contains?(body, "Exception"),
                "Route #{route} shows exception"
+
         assert String.length(body) > 50,
                "Route #{route} has minimal content (#{String.length(body)} chars)"
-      302 -> :ok # Redirects are fine
-      404 -> :ok # Not found is acceptable
-      _ -> :ok
+
+      # Redirects are fine
+      302 ->
+        :ok
+
+      # Not found is acceptable
+      404 ->
+        :ok
+
+      _ ->
+        :ok
     end
   end
 
   defp get_sample_routes_for_auth_testing do
     all_routes = get_all_routes()
 
-    public_sample = all_routes
-    |> Enum.filter(&is_public_route?/1)
-    |> Enum.filter(fn route -> not has_parameters?(route.path) end)
-    |> Enum.map(& &1.path)
-    |> Enum.filter(&is_navigable_path?/1)
-    |> Enum.take(5)
+    public_sample =
+      all_routes
+      |> Enum.filter(&public_route?/1)
+      |> Enum.filter(fn route -> not has_parameters?(route.path) end)
+      |> Enum.map(& &1.path)
+      |> Enum.filter(&navigable_path?/1)
+      |> Enum.take(5)
 
-    auth_sample = all_routes
-    |> Enum.filter(&is_authenticated_route?/1)
-    |> Enum.filter(fn route -> not has_parameters?(route.path) end)
-    |> Enum.map(& &1.path)
-    |> Enum.filter(&is_navigable_path?/1)
-    |> Enum.take(3)
+    auth_sample =
+      all_routes
+      |> Enum.filter(&authenticated_route?/1)
+      |> Enum.filter(fn route -> not has_parameters?(route.path) end)
+      |> Enum.map(& &1.path)
+      |> Enum.filter(&navigable_path?/1)
+      |> Enum.take(3)
 
     public_sample ++ auth_sample
   end
 
   defp validate_auth_response(response, route, state_name) do
     case {state_name, response.status} do
-      {:anonymous, 302} -> :ok # Redirect to login is expected
-      {:anonymous, 200} -> :ok # Public route accessible
-      {:anonymous, 404} -> :ok # Not found is acceptable
-      {:authenticated, status} when status in [200, 302, 404] -> :ok
-      {:admin, status} when status in [200, 302, 404] -> :ok
+      # Redirect to login is expected
+      {:anonymous, 302} ->
+        :ok
+
+      # Public route accessible
+      {:anonymous, 200} ->
+        :ok
+
+      # Not found is acceptable
+      {:anonymous, 404} ->
+        :ok
+
+      {:authenticated, status} when status in [200, 302, 404] ->
+        :ok
+
+      {:admin, status} when status in [200, 302, 404] ->
+        :ok
+
       {state, status} ->
         IO.puts("⚠️  Unexpected auth response: #{state} user got #{status} for #{route}")
     end
@@ -733,7 +796,8 @@ defmodule RivaAshWeb.RouteNavigationPropertyTest do
       String.contains?(path, "/sections/") -> %{"id" => test_data.section.id}
       String.contains?(path, "/items/") -> %{"id" => test_data.item.id}
       String.contains?(path, "/users/") -> %{"id" => test_data.user.id}
-      String.contains?(path, ":id") -> %{"id" => test_data.business.id} # Default fallback
+      # Default fallback
+      String.contains?(path, ":id") -> %{"id" => test_data.business.id}
       String.contains?(path, ":business_id") -> %{"business_id" => test_data.business.id}
       true -> nil
     end
@@ -756,6 +820,7 @@ defmodule RivaAshWeb.RouteNavigationPropertyTest do
     # Ensure no sensitive error information leaked
     refute String.contains?(body, "password"),
            "Password information leaked in error response"
+
     refute String.contains?(body, "secret"),
            "Secret information leaked in error response"
   end
@@ -764,12 +829,13 @@ defmodule RivaAshWeb.RouteNavigationPropertyTest do
     all_routes = get_all_routes()
 
     all_routes
-    |> Enum.filter(&is_public_route?/1)
+    |> Enum.filter(&public_route?/1)
     |> Enum.filter(fn route -> not has_parameters?(route.path) end)
     |> Enum.map(& &1.path)
-    |> Enum.filter(&is_navigable_path?/1)
+    |> Enum.filter(&navigable_path?/1)
     |> Enum.reject(&erd_route?/1)
-    |> Enum.take(8) # Limit for concurrent testing
+    # Limit for concurrent testing
+    |> Enum.take(8)
   end
 
   defp sign_in_test_user(conn, user) do

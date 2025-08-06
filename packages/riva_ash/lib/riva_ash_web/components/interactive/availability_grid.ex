@@ -1,42 +1,42 @@
 defmodule RivaAshWeb.Components.Interactive.AvailabilityGrid do
   @moduledoc """
   Weekly availability grid editor component.
-  
+
   ## Styleguide Compliance
-  
+
   This component follows the Riva Ash styleguide principles:
-  
+
   ### Functional Programming
   - Uses pure functions with immutable data
   - Implements pattern matching for data validation
   - Follows the functional core, imperative shell pattern
   - Uses pipelines for data transformation
-  
+
   ### Type Safety
   - Comprehensive type specifications for all functions
   - Uses proper Elixir type annotations
   - Implements guard clauses for validation
-  
+
   ### Code Abstraction
   - Single level of abstraction principle
   - Extracted helper functions for business logic
   - Clear separation of concerns
   - Reusable utility functions
-  
+
   ### Phoenix/Ash Patterns
   - Follows Phoenix LiveView component patterns
   - Uses proper attribute handling
   - Implements consistent event handling
   - Ash-specific data structures and patterns
-  
+
   ### LiveView Component Best Practices
   - Proper use of assigns and HEEx templates
   - Consistent naming conventions
   - Clear documentation and examples
   - Accessible and semantic HTML structure
-  
+
   ## Examples
-  
+
   ```elixir
   # Basic usage
   <.availability_grid
@@ -44,7 +44,7 @@ defmodule RivaAshWeb.Components.Interactive.AvailabilityGrid do
     on_slot_toggle="toggle_availability"
     editable={true}
   />
-  
+
   # With bulk actions
   <.availability_grid
     availability={@availability}
@@ -60,9 +60,9 @@ defmodule RivaAshWeb.Components.Interactive.AvailabilityGrid do
 
   @doc """
   Renders a weekly availability grid editor.
-  
+
   ## Attributes
-  
+
   - `availability` (map, required): Map containing availability data
   - `on_slot_toggle` (string, required): Event handler for slot toggle
   - `on_bulk_action` (string, optional): Event handler for bulk actions
@@ -88,9 +88,9 @@ defmodule RivaAshWeb.Components.Interactive.AvailabilityGrid do
 
   @doc """
   Renders the availability grid component.
-  
+
   ## Examples
-  
+
       iex> availability_grid(%{
       ...>   availability: %{"monday" => %{8 => true, 9 => false}},
       ...>   on_slot_toggle: "toggle_availability",
@@ -109,12 +109,12 @@ defmodule RivaAshWeb.Components.Interactive.AvailabilityGrid do
 
   @doc """
   Validates component assigns.
-  
+
   ## Examples
-  
+
       iex> validate_assigns(%{availability: %{}, on_slot_toggle: "event"})
       {:ok, %{availability: %{}, on_slot_toggle: "event"}}
-      
+
       iex> validate_assigns(%{on_slot_toggle: "event"})
       {:error, "availability is required"}
   """
@@ -131,12 +131,12 @@ defmodule RivaAshWeb.Components.Interactive.AvailabilityGrid do
 
   @doc """
   Validates availability data structure.
-  
+
   ## Examples
-  
+
       iex> validate_availability_structure(%{"monday" => %{8 => true}})
       {:ok, %{"monday" => %{8 => true}}}
-      
+
       iex> validate_availability_structure("invalid")
       {:error, "availability must be a map"}
   """
@@ -151,12 +151,12 @@ defmodule RivaAshWeb.Components.Interactive.AvailabilityGrid do
 
   @doc """
   Validates time range parameters.
-  
+
   ## Examples
-  
+
       iex> validate_time_range(8, 18)
       {:ok, {8, 18}}
-      
+
       iex> validate_time_range(18, 8)
       {:error, "start_hour must be less than end_hour"}
   """
@@ -175,19 +175,19 @@ defmodule RivaAshWeb.Components.Interactive.AvailabilityGrid do
 
   @doc """
   Validates required assigns.
-  
+
   ## Examples
-  
+
       iex> validate_required(%{key: "value"}, [:key])
       {:ok, %{key: "value"}}
-      
+
       iex> validate_required(%{}, [:key])
       {:error, "key is required"}
   """
   @spec validate_required(map(), list(atom())) :: {:ok, map()} | {:error, String.t()}
   defp validate_required(assigns, required_keys) do
     missing_keys = required_keys -- Map.keys(assigns)
-    
+
     if Enum.empty?(missing_keys) do
       {:ok, assigns}
     else
@@ -197,9 +197,9 @@ defmodule RivaAshWeb.Components.Interactive.AvailabilityGrid do
 
   @doc """
   Renders the grid component.
-  
+
   ## Examples
-  
+
       iex> render_grid(%{availability: %{}, on_slot_toggle: "event"})
       %Phoenix.LiveView.Rendered{...}
   """
@@ -213,7 +213,7 @@ defmodule RivaAshWeb.Components.Interactive.AvailabilityGrid do
         <.button phx-click={@on_bulk_action} phx-value-action="clear_all">Clear All</.button>
         <.button phx-click={@on_bulk_action} phx-value-action="copy_day">Copy Day</.button>
       </div>
-      
+
       <div class="grid-container">
         <!-- Header row with days -->
         <div class="grid-header">
@@ -222,13 +222,13 @@ defmodule RivaAshWeb.Components.Interactive.AvailabilityGrid do
             <%= String.capitalize(day) %>
           </div>
         </div>
-        
+
         <!-- Time slot rows -->
         <div :for={hour <- @start_hour..@end_hour} class="grid-row">
           <div class="time-cell">
             <span><%= format_hour(hour) %></span>
           </div>
-          
+
           <div :for={day <- get_days_of_week()} class="day-cell">
             <.toggle
               :if={@editable}
@@ -238,7 +238,7 @@ defmodule RivaAshWeb.Components.Interactive.AvailabilityGrid do
               phx-value-hour={hour}
               class="availability-toggle"
             />
-            
+
             <div :if={!@editable} class={[
               "availability-indicator",
               if(get_availability(@availability, day, hour), do: "available", else: "unavailable")
@@ -248,7 +248,7 @@ defmodule RivaAshWeb.Components.Interactive.AvailabilityGrid do
           </div>
         </div>
       </div>
-      
+
       <div :if={@editable} class="quick-templates">
         <h4>Quick Templates</h4>
         <.button phx-click={@on_bulk_action} phx-value-action="business_hours">Business Hours (9-5)</.button>
@@ -261,9 +261,9 @@ defmodule RivaAshWeb.Components.Interactive.AvailabilityGrid do
 
   @doc """
   Gets days of the week in order.
-  
+
   ## Examples
-  
+
       iex> get_days_of_week()
       ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"]
   """
@@ -274,12 +274,12 @@ defmodule RivaAshWeb.Components.Interactive.AvailabilityGrid do
 
   @doc """
   Formats hour for display.
-  
+
   ## Examples
-  
+
       iex> format_hour(9)
       "9:00"
-      
+
       iex> format_hour(15)
       "15:00"
   """
@@ -290,15 +290,15 @@ defmodule RivaAshWeb.Components.Interactive.AvailabilityGrid do
 
   @doc """
   Gets availability for a specific day/hour.
-  
+
   ## Examples
-  
+
       iex> get_availability(%{"monday" => %{8 => true}}, "monday", 8)
       true
-      
+
       iex> get_availability(%{"monday" => %{8 => false}}, "monday", 8)
       false
-      
+
       iex> get_availability(%{}, "monday", 8)
       false
   """

@@ -69,7 +69,7 @@ defmodule RivaAsh.Reactors.BusinessSetupFlow do
 
     run(fn %{business_info: info, owner_id: owner_id}, _context ->
       Logger.info("Starting business creation with name: #{info.name}")
-      
+
       with :ok <- validate_business_info(info),
            {:ok, business} <- do_create_business(info, owner_id) do
         Logger.info("Business created successfully: #{business.id}")
@@ -101,7 +101,7 @@ defmodule RivaAsh.Reactors.BusinessSetupFlow do
 
   defp do_create_business(%{name: name, description: description}, owner_id) do
     Logger.debug("Creating business with name: #{name}, owner_id: #{owner_id}")
-    
+
     business_attrs = %{
       name: name,
       description: description || "",
@@ -117,6 +117,7 @@ defmodule RivaAsh.Reactors.BusinessSetupFlow do
       {:ok, business} ->
         Logger.debug("Business created successfully with ID: #{business.id}")
         {:ok, business}
+
       {:error, changeset} ->
         Logger.error("Business creation failed: #{inspect(changeset)}")
         {:error, "Failed to create business: #{format_changeset_errors(changeset)}"}
@@ -147,7 +148,7 @@ defmodule RivaAsh.Reactors.BusinessSetupFlow do
 
     run(fn %{business_id: business_id, plot_details: details}, _context ->
       Logger.info("Creating plot for business: #{business_id}")
-      
+
       plot_attrs = %{
         name: details[:name] || "Main Plot",
         description: details[:description] || "Primary business plot",
@@ -165,6 +166,7 @@ defmodule RivaAsh.Reactors.BusinessSetupFlow do
         {:ok, plot} ->
           Logger.info("Plot created successfully: #{plot.id}")
           {:ok, plot}
+
         {:error, changeset} ->
           Logger.error("Plot creation failed: #{inspect(changeset)}")
           {:error, "Failed to create plot: #{format_changeset_errors(changeset)}"}
@@ -185,7 +187,7 @@ defmodule RivaAsh.Reactors.BusinessSetupFlow do
 
     run(fn %{plot_id: plot_id, plot_details: details}, _context ->
       Logger.info("Creating layout for plot: #{plot_id}")
-      
+
       layout_attrs = %{
         name: details[:layout_name] || "Main Layout",
         description: details[:layout_description] || "Primary layout for the plot",
@@ -203,6 +205,7 @@ defmodule RivaAsh.Reactors.BusinessSetupFlow do
         {:ok, layout} ->
           Logger.info("Layout created successfully: #{layout.id}")
           {:ok, layout}
+
         {:error, changeset} ->
           Logger.error("Layout creation failed: #{inspect(changeset)}")
           {:error, "Failed to create layout: #{format_changeset_errors(changeset)}"}
@@ -228,7 +231,7 @@ defmodule RivaAsh.Reactors.BusinessSetupFlow do
       created_sections =
         Enum.map(sections, fn section_info ->
           Logger.debug("Creating section: #{section_info.name}")
-          
+
           result =
             Section
             |> Ash.Changeset.for_create(:create, %{
@@ -242,6 +245,7 @@ defmodule RivaAsh.Reactors.BusinessSetupFlow do
             {:ok, section} ->
               Logger.debug("Section created successfully: #{section.id}")
               section
+
             {:error, changeset} ->
               Logger.error("Section creation failed for #{section_info.name}: #{inspect(changeset)}")
               raise "Failed to create section: #{format_changeset_errors(changeset)}"
@@ -254,6 +258,7 @@ defmodule RivaAsh.Reactors.BusinessSetupFlow do
 
     compensate(fn sections, _context ->
       Logger.warning("Compensating section creation for #{length(sections)} sections")
+
       Enum.each(sections, fn section ->
         Logger.debug("Destroying section: #{section.id}")
         Section.destroy!(section, domain: RivaAsh.Domain)
@@ -270,6 +275,7 @@ defmodule RivaAsh.Reactors.BusinessSetupFlow do
 
     run(fn %{business_id: business_id, business_info: info}, _context ->
       Logger.info("Creating item types for business: #{business_id}")
+
       item_types =
         info[:item_types] ||
           [
@@ -280,7 +286,7 @@ defmodule RivaAsh.Reactors.BusinessSetupFlow do
       created_types =
         Enum.map(item_types, fn type_info ->
           Logger.debug("Creating item type: #{type_info.name}")
-          
+
           result =
             ItemType
             |> Ash.Changeset.for_create(:create, %{
@@ -295,6 +301,7 @@ defmodule RivaAsh.Reactors.BusinessSetupFlow do
             {:ok, item_type} ->
               Logger.debug("Item type created successfully: #{item_type.id}")
               item_type
+
             {:error, changeset} ->
               Logger.error("Item type creation failed for #{type_info.name}: #{inspect(changeset)}")
               raise "Failed to create item type: #{format_changeset_errors(changeset)}"
@@ -307,6 +314,7 @@ defmodule RivaAsh.Reactors.BusinessSetupFlow do
 
     compensate(fn item_types, _context ->
       Logger.warning("Compensating item type creation for #{length(item_types)} item types")
+
       Enum.each(item_types, fn item_type ->
         Logger.debug("Destroying item type: #{item_type.id}")
         ItemType.destroy!(item_type, domain: RivaAsh.Domain)
@@ -347,6 +355,7 @@ defmodule RivaAsh.Reactors.BusinessSetupFlow do
             {:ok, pricing} ->
               Logger.debug("Pricing rule created successfully: #{pricing.id}")
               pricing
+
             {:error, changeset} ->
               Logger.error("Pricing rule creation failed for #{item_type.name}: #{inspect(changeset)}")
               raise "Failed to create pricing rule: #{format_changeset_errors(changeset)}"
@@ -359,6 +368,7 @@ defmodule RivaAsh.Reactors.BusinessSetupFlow do
 
     compensate(fn pricing_rules, _context ->
       Logger.warning("Compensating pricing rule creation for #{length(pricing_rules)} rules")
+
       Enum.each(pricing_rules, fn pricing ->
         Logger.debug("Destroying pricing rule: #{pricing.id}")
         Pricing.destroy!(pricing, domain: RivaAsh.Domain)
@@ -379,6 +389,7 @@ defmodule RivaAsh.Reactors.BusinessSetupFlow do
 
     run(fn args, _context ->
       Logger.info("Building final result for business setup flow")
+
       result = %{
         business: args.business,
         plot: args.plot,

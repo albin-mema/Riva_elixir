@@ -79,7 +79,8 @@ defmodule RivaAsh.Resources.PaymentResourceTest do
              |> Ash.Changeset.for_create(:create, %{
                reservation_id: reservation.id,
                amount_due: Decimal.new("10.00"),
-               currency: "EURO", # not a 3-letter ISO code per validations
+               # not a 3-letter ISO code per validations
+               currency: "EURO",
                payment_method: :cash
              })
              |> Ash.create()

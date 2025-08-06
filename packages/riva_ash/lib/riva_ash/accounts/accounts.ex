@@ -19,11 +19,11 @@ defmodule RivaAsh.Accounts do
 
   @doc """
   Signs in a user with email and password.
-  
+
   ## Parameters
     - email: User's email address
     - password: User's password
-  
+
   ## Returns
     - {:ok, result}: Successful authentication
     - {:error, reason}: Authentication failed
@@ -37,7 +37,7 @@ defmodule RivaAsh.Accounts do
       {:error, :strategy_not_found} ->
         handle_timing_attack()
         {:error, "Invalid email or password"}
-      
+
       {:error, reason} ->
         {:error, reason}
     end
@@ -45,10 +45,10 @@ defmodule RivaAsh.Accounts do
 
   @doc """
   Registers a new user with the provided parameters.
-  
+
   ## Parameters
     - params: User registration parameters
-  
+
   ## Returns
     - {:ok, user}: Successfully created user
     - {:error, changeset}: Registration failed
@@ -63,10 +63,10 @@ defmodule RivaAsh.Accounts do
 
   @doc """
   Gets the current authenticated user from the connection.
-  
+
   ## Parameters
     - conn: The connection containing user authentication
-  
+
   ## Returns
     - {:ok, user}: Current user
     - {:error, reason}: User not found or authentication error
@@ -105,7 +105,7 @@ defmodule RivaAsh.Accounts do
 
   defp validate_registration_params(params) when is_map(params) do
     required_fields = [:email, :name, :password]
-    
+
     if Enum.all?(required_fields, &Map.has_key?(params, &1)) do
       params
     else

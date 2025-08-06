@@ -122,6 +122,7 @@ defmodule RivaAsh.Factory do
       bind(integer(0..23), fn hours ->
         bind(integer(0..59), fn minutes ->
           base_time = Timex.now()
+
           Timex.shift(base_time, days: days, hours: hours, minutes: minutes)
           |> constant()
         end)
@@ -135,6 +136,7 @@ defmodule RivaAsh.Factory do
       bind(integer(0..23), fn hours ->
         bind(integer(0..59), fn minutes ->
           base_time = Timex.now()
+
           Timex.shift(base_time, days: -days, hours: -hours, minutes: -minutes)
           |> constant()
         end)

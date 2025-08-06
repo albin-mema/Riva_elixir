@@ -14,6 +14,7 @@ defmodule RivaAsh.Policies.OwnershipCheckTest do
 
   defp make_reservation_for_owner(owner_id) do
     attrs = Factory.reservation_attrs(%{employee_id: owner_id}) |> Enum.take(1) |> hd()
+
     Reservation
     |> Ash.Changeset.for_create(:create, attrs)
     |> Ash.create!(domain: Domain)

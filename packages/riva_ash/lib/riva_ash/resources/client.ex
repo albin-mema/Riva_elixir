@@ -4,7 +4,7 @@ defmodule RivaAsh.Resources.Client do
   Clients can be either registered or unregistered.
   """
 
-  @type t :: %__MODULE__{
+  @type t :: %RivaAsh.Resources.Client{
           id: String.t(),
           business_id: String.t(),
           name: String.t(),
@@ -475,7 +475,7 @@ defmodule RivaAsh.Resources.Client do
 
   @doc """
   Returns a list of clients formatted for dropdown selection.
-  
+
   ## Returns
   A list of tuples `{id, name}` suitable for form dropdowns.
   """
@@ -488,19 +488,21 @@ defmodule RivaAsh.Resources.Client do
 
   @doc """
   Fetches the business associated with a client.
-  
+
   ## Parameters
   - client_id - The UUID of the client
-  
+
   ## Returns
   `{:ok, business}` or `{:error, reason}`
   """
   @spec get_business(String.t()) :: {:ok, RivaAsh.Resources.Business.t()} | {:error, String.t()}
   def get_business(client_id) do
-    with {:ok, client} <- __MODULE__.by_id(client_id),
-         {:ok, business} <- Ash.load(client, :business) do
-      {:ok, business}
-    else
+    case __MODULE__.by_id(client_id) do
+      {:ok, client} ->
+        case Ash.load(client, :business) do
+          {:ok, business} -> {:ok, business}
+          {:error, reason} -> {:error, reason}
+        end
       {:error, reason} -> {:error, reason}
       error -> {:error, "Failed to load business: #{inspect(error)}"}
     end
@@ -508,10 +510,10 @@ defmodule RivaAsh.Resources.Client do
 
   @doc """
   Fetches the business associated with a client by client ID.
-  
+
   ## Parameters
   - client_id - The UUID of the client
-  
+
   ## Returns
   `{:ok, business}` or `{:error, reason}`
   """
@@ -525,28 +527,28 @@ defmodule RivaAsh.Resources.Client do
 
   @doc """
   Determines if a client is registered and verified.
-  
+
   ## Parameters
   - client - A client record
-  
+
   ## Returns
   `true` if the client is registered and verified, `false` otherwise
   """
-  @spec is_verified?(t()) :: boolean()
-  def is_verified?(%__MODULE__{is_registered: true, email_verified: true}), do: true
-  def is_verified?(%__MODULE__{}), do: false
+  @spec verified?(t()) :: boolean()
+  def verified?(%{is_registered: true, email_verified: true}), do: true
+  def verified?(%{}), do: false
 
   @doc """
   Formats the client's contact information for display.
-  
+
   ## Parameters
   - client - A client record
-  
+
   ## Returns
   A formatted contact string
   """
   @spec formatted_contact(t()) :: String.t()
-  def formatted_contact(%__MODULE__{email: email, phone: phone}) do
+  def formatted_contact(%{email: email, phone: phone}) do
     case {email, phone} do
       {nil, nil} -> "No contact information"
       {email, nil} -> email
@@ -557,17 +559,17 @@ defmodule RivaAsh.Resources.Client do
 
   @doc """
   Generates a display name for the client.
-  
+
   Uses name and email for better identification.
-  
+
   ## Parameters
   - client - A client record
-  
+
   ## Returns
   A formatted display name string
   """
   @spec display_name(t()) :: String.t()
-  def display_name(%__MODULE__{name: name, email: email}) do
+  def display_name(%{name: name, email: email}) do
     case email do
       nil -> name
       _ -> "#{name} (#{email})"
@@ -576,17 +578,17 @@ defmodule RivaAsh.Resources.Client do
 
   @doc """
   Determines if a client can make reservations.
-  
+
   ## Parameters
   - client - A client record
-  
+
   ## Returns
   `true` if the client can make reservations, `false` otherwise
   """
   @spec can_make_reservations?(t()) :: boolean()
-  def can_make_reservations?(%__MODULE__{is_registered: false}), do: true
-  def can_make_reservations?(%__MODULE__{is_registered: true, email_verified: true}), do: true
-  def can_make_reservations?(%__MODULE__{is_registered: true, email_verified: false}), do: false
+  def can_make_reservations?(%{is_registered: false}), do: true
+  def can_make_reservations?(%{is_registered: true, email_verified: true}), do: true
+  def can_make_reservations?(%{is_registered: true, email_verified: false}), do: false
 
   # Private helper functions
 

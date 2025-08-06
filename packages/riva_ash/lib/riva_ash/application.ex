@@ -23,7 +23,9 @@ defmodule RivaAsh.Application do
   @spec start_phase(atom(), Application.start_type(), term()) :: :ok | {:error, term()}
   def start_phase(phase, _start_type, _phase_args) do
     case handle_start_phase(phase) do
-      :ok -> :ok
+      :ok ->
+        :ok
+
       {:error, reason} ->
         Logger.error("Start phase #{inspect(phase)} failed: #{inspect(reason)}")
         {:error, reason}
@@ -71,7 +73,7 @@ defmodule RivaAsh.Application do
       max_restarts: 3,
       max_seconds: 10
     ]
-    
+
     Supervisor.start_link(children, opts)
   end
 
@@ -89,10 +91,12 @@ defmodule RivaAsh.Application do
   @spec handle_start_phase(atom()) :: :ok | {:error, term()}
   defp handle_start_phase(:migrate) do
     Logger.info("Running database migrations...")
+
     case safe_migrate() do
       :ok ->
         Logger.info("Database migrations completed successfully")
         :ok
+
       {:error, reason} ->
         Logger.error("Database migration failed: #{inspect(reason)}")
         {:error, reason}
@@ -120,7 +124,10 @@ defmodule RivaAsh.Application do
       Application.put_env(:ash, :sat_solver, {SimpleSat, []})
       :ok
     rescue
-      error -> {:error, "Failed to configure SAT solver: #{inspect(error)}"}
+      error in ArgumentError ->
+        {:error, "Invalid SAT solver configuration: #{inspect(error)}"}
+      error ->
+        {:error, "Failed to configure SAT solver: #{inspect(error)}"}
     end
   end
 
@@ -143,7 +150,10 @@ defmodule RivaAsh.Application do
       RivaAsh.Release.migrate()
       :ok
     rescue
-      error -> {:error, error}
+      error in RuntimeError ->
+        {:error, "Runtime error during migration: #{inspect(error)}"}
+      error ->
+        {:error, error}
     end
   end
 
@@ -180,6 +190,6 @@ defmodule RivaAsh.Application do
   @spec skip_database?() :: boolean()
   defp skip_database? do
     Application.get_env(:riva_ash, :skip_database, false) or
-    System.get_env("SKIP_DB") == "true"
+      System.get_env("SKIP_DB") == "true"
   end
 end

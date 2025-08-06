@@ -114,8 +114,8 @@ defmodule RivaAsh.Resources.Pricing do
       ])
 
       primary?(true)
-      require_atomic?(false)
 
+      require_atomic?(false)
       |> apply_pricing_validations()
     end
 
@@ -137,7 +137,6 @@ defmodule RivaAsh.Resources.Pricing do
       ])
 
       primary?(true)
-
       |> validate_cross_business_relationship()
       |> apply_pricing_validations()
     end
@@ -172,7 +171,6 @@ defmodule RivaAsh.Resources.Pricing do
 
     read :for_date do
       argument(:date, :date, allow_nil?: false)
-
       |> build_active_date_filter()
     end
 
@@ -180,8 +178,8 @@ defmodule RivaAsh.Resources.Pricing do
     read :effective_pricing do
       argument(:business_id, :uuid, allow_nil?: false)
       argument(:item_type_id, :uuid, allow_nil?: false)
-      argument(:date, :date, allow_nil?: false)
 
+      argument(:date, :date, allow_nil?: false)
       |> build_effective_pricing_filter()
     end
   end
@@ -365,7 +363,8 @@ defmodule RivaAsh.Resources.Pricing do
   end
 
   defp build_active_date_filter(changeset) do
-    filter(changeset,
+    filter(
+      changeset,
       expr(
         is_active == true and
           is_nil(archived_at) and
@@ -376,7 +375,8 @@ defmodule RivaAsh.Resources.Pricing do
   end
 
   defp build_effective_pricing_filter(changeset) do
-    filter(changeset,
+    filter(
+      changeset,
       expr(
         business_id == ^arg(:business_id) and
           item_type_id == ^arg(:item_type_id) and
@@ -388,40 +388,32 @@ defmodule RivaAsh.Resources.Pricing do
     )
   end
 
-  defp calculate_effective_weekday_price() do
-    expr(
+  defp calculate_effective_weekday_price, do: expr(
       if(
         has_day_type_pricing and not is_nil(weekday_price),
-        weekday_price,
-        price_per_day
+        do: weekday_price,
+        else: price_per_day
       )
     )
-  end
 
-  defp calculate_effective_weekend_price() do
-    expr(
+  defp calculate_effective_weekend_price, do: expr(
       if(
         has_day_type_pricing and not is_nil(weekend_price),
-        weekend_price,
-        price_per_day
+        do: weekend_price,
+        else: price_per_day
       )
     )
-  end
 
-  defp check_different_day_pricing() do
-    expr(
+  defp check_different_day_pricing, do: expr(
       has_day_type_pricing and
         not is_nil(weekday_price) and
         not is_nil(weekend_price) and
         weekday_price != weekend_price
     )
-  end
 
-  defp check_current_effectiveness() do
-    expr(
+  defp check_current_effectiveness, do: expr(
       is_active == true and
         (is_nil(effective_from) or effective_from <= fragment("NOW()::date")) and
         (is_nil(effective_until) or effective_until >= fragment("NOW()::date"))
     )
-  end
 end

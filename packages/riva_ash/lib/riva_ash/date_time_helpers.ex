@@ -32,10 +32,6 @@ defmodule RivaAsh.DateTimeHelpers do
     naive_datetime |> NaiveDateTime.to_date() |> weekend?()
   end
 
-  @spec is_weekend_day?(integer()) :: boolean()
-  defp is_weekend_day?(day_of_week) do
-    day_of_week in [6, 7]
-  end
 
   @doc """
   Determines if a given date falls on a weekday (Monday through Friday).
@@ -239,19 +235,13 @@ defmodule RivaAsh.DateTimeHelpers do
     has_weekday and has_weekend
   end
 
-  @spec has_both_weekday_and_weekend?(list(Date.t())) :: boolean()
-  defp has_both_weekday_and_weekend?(date_range) do
-    has_weekday = Enum.any?(date_range, &weekday?/1)
-    has_weekend = Enum.any?(date_range, &weekend?/1)
-    has_weekday and has_weekend
-  end
 
   @doc """
   Splits a datetime range into weekday and weekend portions.
   Returns a map with :weekday_ranges and :weekend_ranges lists.
   """
   @spec split_datetime_range_by_day_type(DateTime.t(), DateTime.t()) ::
-        %{weekday_ranges: list({DateTime.t(), DateTime.t()}), weekend_ranges: list({DateTime.t(), DateTime.t()})}
+          %{weekday_ranges: list({DateTime.t(), DateTime.t()}), weekend_ranges: list({DateTime.t(), DateTime.t()})}
   def split_datetime_range_by_day_type(start_datetime, end_datetime)
       when is_struct(start_datetime, DateTime) and is_struct(end_datetime, DateTime) do
     start_date = DateTime.to_date(start_datetime)
@@ -266,7 +256,7 @@ defmodule RivaAsh.DateTimeHelpers do
       date_range
       |> Enum.reduce({[], []}, fn date, {weekday_acc, weekend_acc} ->
         range = build_datetime_range(date, start_date, end_date, start_time, end_time)
-        
+
         if weekday?(date) do
           {[range | weekday_acc], weekend_acc}
         else
@@ -287,7 +277,7 @@ defmodule RivaAsh.DateTimeHelpers do
 
     day_start_datetime = DateTime.new!(date, day_start_time, "Etc/UTC")
     day_end_datetime = DateTime.new!(date, day_end_time, "Etc/UTC")
-    
+
     {day_start_datetime, day_end_datetime}
   end
 end

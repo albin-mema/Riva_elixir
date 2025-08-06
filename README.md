@@ -1,11 +1,14 @@
-# Riva Ash - Business Management System
+# Reservation Management System
 
-A comprehensive business management system built with Elixir/Phoenix and Ash Framework, featuring reservation management, employee permissions, and real-time capabilities.
+A comprehensive reservation management system built with Elixir/Phoenix and Ash
+Framework, featuring resource booking, user permissions, and real-time
+capabilities.
 
 ## Architecture
 
 -   **Backend**: Elixir/Phoenix with Ash Framework (`packages/riva_ash/`)
--   **Frontend**: React application with LiveView integration (`frontend/` - planned)
+-   **Frontend**: React application with LiveView integration (`frontend/` -
+    planned)
 -   **Packages**: Shared packages and utilities (`packages/`)
 
 ## Prerequisites
@@ -21,8 +24,8 @@ A comprehensive business management system built with Elixir/Phoenix and Ash Fra
 **🚀 Recommended Setup**
 
 ```bash
-git clone https://github.com/albin-mema/Riva_elixir.git
-cd Riva_elixir
+git clone <your-repository-url>
+cd reservation-system
 ./docker-dev.sh start    # Start PostgreSQL with health checks
 pnpm setup               # Install dependencies and setup database
 pnpm dev                 # Start the application
@@ -36,25 +39,34 @@ pnpm dev                 # Start the application
 
 **📖 Need Help?**
 
-- **[documentation/](documentation/)** - Complete documentation index
-- **[documentation/SETUP_GUIDE.md](documentation/SETUP_GUIDE.md)** - Complete setup guide with troubleshooting
-- **[documentation/DEVELOPMENT_WORKFLOW.md](documentation/DEVELOPMENT_WORKFLOW.md)** - Development workflow and best practices
-- **[documentation/CONTRIBUTING.md](documentation/CONTRIBUTING.md)** - Comprehensive contribution guide
+-   **[.airules](./.airules)** - Main AI agent guidelines and project overview
+-   **[docs/](docs/)** - Complete documentation index
+-   **[docs/SETUP_GUIDE.md](docs/SETUP_GUIDE.md)** - Complete setup guide with
+    troubleshooting
+-   **[docs/DEVELOPMENT_WORKFLOW.md](docs/DEVELOPMENT_WORKFLOW.md)** -
+    Development workflow and best practices
+-   **[docs/CONTRIBUTING.md](docs/CONTRIBUTING.md)** - Comprehensive
+    contribution guide
+-   **[styleguide.md](./styleguide.md)** - Code style guide for development and
+    review
 
 ### Alternative Setup Methods
 
 #### Option 1: Docker Development (Recommended)
+
 ```bash
 ./docker-dev.sh start    # PostgreSQL in Docker
 pnpm setup && pnpm dev   # App runs locally
 ```
 
 #### Option 2: Full Docker Stack
+
 ```bash
 ./docker-dev.sh full     # Everything in Docker
 ```
 
 #### Option 3: Local PostgreSQL
+
 ```bash
 # Requires local PostgreSQL installation
 pnpm setup && pnpm dev
@@ -94,8 +106,8 @@ pnpm setup && pnpm dev
 ├── packages/
 │   ├── riva_ash/           # Ash Framework backend
 │   │   ├── lib/            # Application code
-│   │   │   ├── riva_ash/   # Core business logic
-│   │   │   │   ├── resources/      # Ash resources (Business, Item, etc.)
+│   │   │   ├── riva_ash/   # Core application logic
+│   │   │   │   ├── resources/      # Ash resources (Organization, Item, etc.)
 │   │   │   │   ├── reactors/       # Reactor workflows
 │   │   │   │   ├── policies/       # Authorization policies
 │   │   │   │   └── validations/    # Custom validations
@@ -131,9 +143,10 @@ The backend is built with:
 
 ### Key Features
 
--   **Business Management**: Multi-tenant business structure
--   **Reservation System**: Full-day reservation management with recurring bookings
--   **Employee Management**: Role-based permissions and access control
+-   **Organization Management**: Multi-tenant organization structure
+-   **Reservation System**: Full-day reservation management with recurring
+    bookings
+-   **User Management**: Role-based permissions and access control
 -   **Layout Management**: Item positioning and section organization
 -   **Pricing & Payments**: Flexible pricing with payment tracking
 -   **Availability Management**: Schedules and exceptions
@@ -146,12 +159,14 @@ The backend is built with:
 -   `GET /api/docs` - Swagger UI documentation
 -   `GET /graphql` - GraphQL endpoint
 -   `GET /admin` - Ash Admin interface
--   **Resources**: businesses, sections, items, clients, employees, reservations, payments, etc.
+-   **Resources**: organizations, sections, items, clients, users, reservations,
+    payments, etc.
 -   **All CRUD operations** available for each resource via JSON API
 
 ## Frontend
 
-The frontend will integrate React with Phoenix LiveView using the `live_react` library for seamless real-time updates and component sharing.
+The frontend will integrate React with Phoenix LiveView using the `live_react`
+library for seamless real-time updates and component sharing.
 
 ## Development Workflow
 
@@ -159,10 +174,11 @@ The frontend will integrate React with Phoenix LiveView using the `live_react` l
 2. **Frontend changes**: Work in `frontend/` directory (when created)
 3. **Shared code**: Create packages in `packages/` directory
 4. **Database changes**:
-   - Modify resources in `packages/riva_ash/lib/riva_ash/resources/`
-   - Generate migrations: `mix ash_postgres.generate_migrations`
-   - Run migrations: `mix ecto.migrate`
-5. **New resources**: Add to domain in `packages/riva_ash/lib/riva_ash/domain.ex`
+    - Modify resources in `packages/riva_ash/lib/riva_ash/resources/`
+    - Generate migrations: `mix ash_postgres.generate_migrations`
+    - Run migrations: `mix ecto.migrate`
+5. **New resources**: Add to domain in
+   `packages/riva_ash/lib/riva_ash/domain.ex`
 
 See `DEVELOPMENT_WORKFLOW.md` for detailed development guidelines.
 
@@ -210,30 +226,39 @@ docker-compose down -v
 ## Development Tools
 
 ### Live Debugger
-Access the live debugger at `http://localhost:4007` when running in development mode for real-time debugging of LiveView processes.
+
+Access the live debugger at `http://localhost:4007` when running in development
+mode for real-time debugging of LiveView processes.
 
 ### Ash Admin
-Access the admin interface at `http://localhost:4000/admin` for resource management and data exploration.
+
+Access the admin interface at `http://localhost:4000/admin` for resource
+management and data exploration.
 
 ### API Documentation
-- Swagger UI: `http://localhost:4000/api/docs`
-- GraphQL Playground: `http://localhost:4000/graphql`
+
+-   Swagger UI: `http://localhost:4000/api/docs`
+-   GraphQL Playground: `http://localhost:4000/graphql`
 
 ## Environment Variables
 
 The application supports environment variables for database configuration:
 
-- `DB_USERNAME` - Database username (default: postgres)
-- `DB_PASSWORD` - Database password (default: postgres)
-- `DB_HOSTNAME` - Database hostname (default: localhost, use "postgres" for Docker)
-- `DB_NAME` - Database name (default: riva_ash_dev)
-- `DB_PORT` - Database port (default: 5432)
+-   `DB_USERNAME` - Database username (default: postgres)
+-   `DB_PASSWORD` - Database password (default: postgres)
+-   `DB_HOSTNAME` - Database hostname (default: localhost, use "postgres" for
+    Docker)
+-   `DB_NAME` - Database name (default: riva_ash_dev)
+-   `DB_PORT` - Database port (default: 5432)
 
-Environment variables can be set in your shell or added to configuration files as needed.
+Environment variables can be set in your shell or added to configuration files
+as needed.
 
 ## Property-Based Testing
 
-The project uses property-based testing to verify system behavior across a wide range of inputs. Unlike traditional unit tests that test specific examples, property-based tests generate many test cases automatically.
+The project uses property-based testing to verify system behavior across a wide
+range of inputs. Unlike traditional unit tests that test specific examples,
+property-based tests generate many test cases automatically.
 
 ### Running Property Tests
 
@@ -247,29 +272,31 @@ pnpm test:property
 
 ### Key Features
 
-- **Automatic Test Generation**: Tests a wide range of possible inputs
-- **Randomized Input**: Finds edge cases traditional tests might miss
-- **Failure Minimization**: When a test fails, automatically finds the smallest failing case
-- **Stateful Testing**: Can test complex sequences of operations
+-   **Automatic Test Generation**: Tests a wide range of possible inputs
+-   **Randomized Input**: Finds edge cases traditional tests might miss
+-   **Failure Minimization**: When a test fails, automatically finds the
+    smallest failing case
+-   **Stateful Testing**: Can test complex sequences of operations
 
-Property tests are tagged with `@tag property: true` in the test files and use StreamData generators to create test inputs.
+Property tests are tagged with `@tag property: true` in the test files and use
+StreamData generators to create test inputs.
 
 ## Resources Overview
 
 The system includes the following main resources:
 
-- **Business** - Top-level organizational units
-- **Section** - Areas within a business (e.g., dining room, patio)
-- **Item** - Reservable items (tables, rooms, equipment)
-- **Client** - Customers making reservations
-- **Employee** - Staff members with role-based permissions
-- **Reservation** - Individual bookings
-- **RecurringReservation** - Repeating reservation patterns
-- **Payment** - Payment tracking and processing
-- **Pricing** - Flexible pricing rules
-- **Layout** - Physical positioning of items
-- **ItemSchedule** - Operating hours and availability
-- **AvailabilityException** - Special availability rules
+-   **Organization** - Top-level organizational units
+-   **Section** - Areas within an organization (e.g., rooms, zones)
+-   **Item** - Reservable items (tables, rooms, equipment)
+-   **Client** - Customers making reservations
+-   **User** - Staff members with role-based permissions
+-   **Reservation** - Individual bookings
+-   **RecurringReservation** - Repeating reservation patterns
+-   **Payment** - Payment tracking and processing
+-   **Pricing** - Flexible pricing rules
+-   **Layout** - Physical positioning of items
+-   **ItemSchedule** - Operating hours and availability
+-   **AvailabilityException** - Special availability rules
 
 ## Contributing
 
@@ -283,15 +310,17 @@ The system includes the following main resources:
 
 ## Contributing
 
-We welcome contributions! Please see our [documentation/CONTRIBUTING.md](documentation/CONTRIBUTING.md) for detailed guidelines on:
+We welcome contributions! Please see our
+[docs/CONTRIBUTING.md](docs/CONTRIBUTING.md) for detailed guidelines on:
 
-- Setting up your development environment
-- Code standards and conventions
-- Testing requirements
-- Pull request process
-- Architectural patterns
+-   Setting up your development environment
+-   Code standards and conventions
+-   Testing requirements
+-   Pull request process
+-   Architectural patterns
 
 For quick contributions:
+
 1. Fork the repository
 2. Create a feature branch
 3. Make your changes following our guidelines
@@ -299,15 +328,16 @@ For quick contributions:
 
 ## Technology Stack
 
-- **Elixir 1.19** with **OTP 27**
-- **Phoenix 1.7** with LiveView
-- **Ash Framework 3.5** with extensions
-- **PostgreSQL** with UUID primary keys
-- **Docker** for development environment
-- **PNPM** for package management
-- **Tailwind CSS** for styling
-- **React** integration via live_react
+-   **Elixir 1.19** with **OTP 27**
+-   **Phoenix 1.7** with LiveView
+-   **Ash Framework 3.5** with extensions
+-   **PostgreSQL** with UUID primary keys
+-   **Docker** for development environment
+-   **PNPM** for package management
+-   **Tailwind CSS** for styling
+-   **React** integration via live_react
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
+for details.

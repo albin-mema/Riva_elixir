@@ -1,7 +1,7 @@
 defmodule RivaAshWeb.ClientLive do
   @moduledoc """
   LiveView for managing Clients.
-  
+
   This LiveView follows Phoenix/Ash/Elixir patterns:
   - Uses AuthHelpers for authentication and business scoping
   - Delegates business logic to Client context
@@ -35,6 +35,7 @@ defmodule RivaAshWeb.ClientLive do
          ) do
       {:ok, socket} ->
         {:ok, assign(socket, loading: false)}
+
       {:error, _} = error ->
         {:ok, error}
     end
@@ -46,6 +47,7 @@ defmodule RivaAshWeb.ClientLive do
     case Clients.list_clients(socket.assigns.current_user, params) do
       {clients, meta} ->
         {:noreply, assign(socket, clients: clients, meta: meta)}
+
       {:error, reason} ->
         {:noreply,
          socket

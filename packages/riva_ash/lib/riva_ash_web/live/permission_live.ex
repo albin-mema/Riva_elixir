@@ -21,6 +21,7 @@ defmodule RivaAshWeb.PermissionLive do
         case load_permissions_data(socket, user) do
           {:ok, socket} ->
             {:ok, socket}
+
           {:error, reason} ->
             Logger.error("Failed to load permissions data: #{inspect(reason)}")
             {:ok, redirect(socket, to: "/access-denied")}
@@ -147,14 +148,14 @@ defmodule RivaAshWeb.PermissionLive do
   def handle_event("manage_permissions", %{"id" => employee_id}, socket) do
     case PermissionService.get_employee_permissions(employee_id, socket.assigns.current_user) do
       {:ok, {employee, permissions, current_permissions}} ->
-        {:noreply, 
+        {:noreply,
          socket
          |> assign(:selected_employee, employee)
          |> assign(:permissions, permissions)
          |> assign(:current_permissions, current_permissions)}
-      
+
       {:error, reason} ->
-        {:noreply, 
+        {:noreply,
          socket
          |> put_flash(:error, "Failed to load employee permissions: #{format_error(reason)}")}
     end
@@ -163,7 +164,7 @@ defmodule RivaAshWeb.PermissionLive do
   def handle_event("toggle_permission", %{"permission" => permission_id}, socket) do
     # Toggle permission in current_permissions list
     current_permissions = socket.assigns.current_permissions
-    
+
     if permission_id in current_permissions do
       new_permissions = List.delete(current_permissions, permission_id)
       {:noreply, assign(socket, :current_permissions, new_permissions)}
@@ -175,19 +176,19 @@ defmodule RivaAshWeb.PermissionLive do
 
   def handle_event("save_permissions", _params, socket) do
     case PermissionService.save_employee_permissions(
-      socket.assigns.selected_employee.id,
-      socket.assigns.current_permissions,
-      socket.assigns.current_user
-    ) do
+           socket.assigns.selected_employee.id,
+           socket.assigns.current_permissions,
+           socket.assigns.current_user
+         ) do
       {:ok, _employee} ->
-        {:noreply, 
+        {:noreply,
          socket
          |> put_flash(:info, "Permissions saved successfully")
          |> assign(:selected_employee, nil)
          |> reload_permissions_data()}
-      
+
       {:error, reason} ->
-        {:noreply, 
+        {:noreply,
          socket
          |> put_flash(:error, "Failed to save permissions: #{format_error(reason)}")}
     end
@@ -208,13 +209,13 @@ defmodule RivaAshWeb.PermissionLive do
   def handle_event("delete_permission", %{"id" => id}, socket) do
     case PermissionService.delete_permission(id, socket.assigns.current_user) do
       {:ok, _permission} ->
-        {:noreply, 
+        {:noreply,
          socket
          |> put_flash(:info, "Permission deleted successfully")
          |> reload_permissions_data()}
-      
+
       {:error, reason} ->
-        {:noreply, 
+        {:noreply,
          socket
          |> put_flash(:error, "Failed to delete permission: #{format_error(reason)}")}
     end
@@ -227,13 +228,13 @@ defmodule RivaAshWeb.PermissionLive do
   def handle_event("delete_employee", %{"id" => id}, socket) do
     case PermissionService.delete_employee(id, socket.assigns.current_user) do
       {:ok, _employee} ->
-        {:noreply, 
+        {:noreply,
          socket
          |> put_flash(:info, "Employee deleted successfully")
          |> reload_permissions_data()}
-      
+
       {:error, reason} ->
-        {:noreply, 
+        {:noreply,
          socket
          |> put_flash(:error, "Failed to delete employee: #{format_error(reason)}")}
     end
@@ -258,9 +259,9 @@ defmodule RivaAshWeb.PermissionLive do
           |> assign(:current_permissions, [])
           |> assign(:meta, meta)
           |> assign(:loading, false)
-        
+
         {:ok, socket}
-      
+
       {:error, reason} ->
         {:error, reason}
     end
@@ -273,29 +274,36 @@ defmodule RivaAshWeb.PermissionLive do
         |> assign(:employees, employees)
         |> assign(:permissions, permissions)
         |> assign(:meta, meta)
-      
+
       {:error, _reason} ->
         socket
     end
   end
 
   defp get_page_title do
-    Application.get_env(:riva_ash, __MODULE__, [])[:page_title] || "Permission Management"
+    Application.get_env(:riva_ash, __MODULE__, []) |> get_in([:page_title]) || "Permission Management"
   end
 
   defp truncate_text(nil, _length), do: "N/A"
   defp truncate_text(text, length) when byte_size(text) <= length, do: text
+
   defp truncate_text(text, length) do
     String.slice(text, 0, length) <> "..."
   end
 
   defp format_error(reason) do
     case reason do
-      %Ash.Error.Invalid{errors: errors} -> 
-        errors |> Enum.map(&format_validation_error/1) |> Enum.join(", ")
-      %Ash.Error.Forbidden{} -> "You don't have permission to perform this action"
-      %Ash.Error.NotFound{} -> "Resource not found"
-      _ -> "An unexpected error occurred"
+      %Ash.Error.Invalid{errors: errors} ->
+        Enum.map_join(errors, ", ", &format_validation_error/1)
+
+      %Ash.Error.Forbidden{} ->
+        "You don't have permission to perform this action"
+
+      %Ash.Error.NotFound{} ->
+        "Resource not found"
+
+      _ ->
+        "An unexpected error occurred"
     end
   end
 

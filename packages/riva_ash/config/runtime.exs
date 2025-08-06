@@ -53,7 +53,7 @@ if config_env() == :prod do
   config :riva_ash, RivaAsh.Repo,
     # ssl: true,
     url: database_url,
-    pool_size: System.get_env("POOL_SIZE", "10") |> String.to_integer(),
+    pool_size: String.to_integer(System.get_env("POOL_SIZE", "10")),
     socket_options: maybe_ipv6
 
   # The secret key base is used to sign/encrypt cookies and other secrets.
@@ -81,7 +81,7 @@ if config_env() == :prod do
   # Host and port configuration with proper defaults
   # Code readability: Use clear, descriptive variable names
   host = System.get_env("PHX_HOST") || Application.compile_env(:riva_ash, :phx_host, "example.com")
-  port = System.get_env("PORT", "4000") |> String.to_integer()
+  port = String.to_integer(System.get_env("PORT", "4000"))
 
   # Endpoint configuration for production
   # Functional programming patterns: Use consistent endpoint configuration

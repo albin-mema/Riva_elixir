@@ -115,9 +115,8 @@ defmodule RivaAshWeb.BookingController do
   """
   @spec confirm(conn(), params()) :: conn()
   def confirm(conn, %{"booking_id" => booking_id} = params) do
-    with {:ok, result} <- process_booking_confirmation(booking_id, params) do
-      render_booking_confirmation_response(conn, result)
-    else
+    case process_booking_confirmation(booking_id, params) do
+      {:ok, result} -> render_booking_confirmation_response(conn, result)
       {:error, reason} -> ErrorHelpers.failure(reason)
     end
   end
@@ -155,13 +154,10 @@ defmodule RivaAshWeb.BookingController do
   """
   @spec client_bookings(conn(), params()) :: conn()
   def client_bookings(conn, %{"email" => email}) do
-    with {:ok, client} <- find_client_by_email(email) do
-      render_client_bookings_response(conn, client)
-    else
-      {:error, %Ash.Error.Query.NotFound{}} ->
-        render_no_bookings_found(conn)
-      {:error, reason} ->
-        ErrorHelpers.failure(reason)
+    case find_client_by_email(email) do
+      {:ok, client} -> render_client_bookings_response(conn, client)
+      {:error, %Ash.Error.Query.NotFound{}} -> render_no_bookings_found(conn)
+      {:error, reason} -> ErrorHelpers.failure(reason)
     end
   end
 
@@ -179,6 +175,10 @@ defmodule RivaAshWeb.BookingController do
         time_slots: format_time_slots(slots)
       }
     })
+  end
+
+  defp render_availability_response(conn, %{item_id: item_id, date: date, duration: duration, business_hours: business_hours, slots: slots}) do
+    render_availability_response(conn, item_id, date, duration, business_hours, slots)
   end
 
   defp render_booking_creation_response(conn, result) do
@@ -297,15 +297,14 @@ defmodule RivaAshWeb.BookingController do
 
   defp parse_booking_params(params) do
     with {:ok, client_info} <- extract_client_info(params),
-         {:ok, booking_info} <- extract_booking_info(params),
-         register_client <- Map.get(params, "register_client", false) do
+         {:ok, booking_info} <- extract_booking_info(params) do
       ErrorHelpers.success(%{
         client_info: client_info,
         item_id: booking_info.item_id,
         reserved_from: booking_info.reserved_from,
         reserved_until: booking_info.reserved_until,
         notes: booking_info[:notes],
-        register_client: register_client
+        register_client: Map.get(params, "register_client", false)
       })
     else
       {:error, reason} -> ErrorHelpers.failure(reason)

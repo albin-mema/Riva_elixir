@@ -263,9 +263,7 @@ defmodule RivaAshWeb.AuthenticationFlowTest do
     test "expired session token is handled gracefully", %{conn: conn, user: user} do
       # Create an expired token (this is a simulation - in real tests you'd need to mock time)
       expired_token =
-        Phoenix.Token.sign(RivaAshWeb.Endpoint, "user_auth", user.id,
-          signed_at: System.system_time(:second) - 86401
-        )
+        Phoenix.Token.sign(RivaAshWeb.Endpoint, "user_auth", user.id, signed_at: System.system_time(:second) - 86_401)
 
       conn =
         conn

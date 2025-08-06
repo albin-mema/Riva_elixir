@@ -186,31 +186,21 @@ defmodule RivaAshWeb.Components.Organisms.BusinessForm do
 
   # Helper function to build body classes
   @spec build_body_class() :: String.t()
-  defp build_body_class() do
-    ""
-  end
+  defp build_body_class, do: ""
 
   # Helper function to build form classes
   @spec build_form_class() :: String.t()
-  defp build_form_class() do
-    "space-y-6"
-  end
+  defp build_form_class, do: "space-y-6"
 
   # Helper function to build public settings classes
   @spec build_public_settings_class() :: String.t()
-  defp build_public_settings_class() do
-    "space-y-4 p-4 bg-blue-50 rounded-lg border border-blue-200"
-  end
+  defp build_public_settings_class, do: "space-y-4 p-4 bg-blue-50 rounded-lg border border-blue-200"
 
   # Helper function to build location classes
   @spec build_location_class() :: String.t()
-  defp build_location_class() do
-    "space-y-4 p-4 bg-green-50 rounded-lg border border-green-200"
-  end
+  defp build_location_class, do: "space-y-4 p-4 bg-green-50 rounded-lg border border-green-200"
 
   # Helper function to build actions classes
   @spec build_actions_class() :: String.t()
-  defp build_actions_class() do
-    "flex gap-3 pt-4"
-  end
+  defp build_actions_class, do: "flex gap-3 pt-4"
 end

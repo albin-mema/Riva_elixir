@@ -22,6 +22,7 @@ defmodule RivaAshWeb.LayoutLive do
         case load_layouts_data(socket, user) do
           {:ok, socket} ->
             {:ok, socket}
+
           {:error, reason} ->
             Logger.error("Failed to load layouts: #{inspect(reason)}")
             {:ok, redirect(socket, to: "/access-denied")}
@@ -107,13 +108,13 @@ defmodule RivaAshWeb.LayoutLive do
   def handle_event("activate_layout", %{"id" => id}, socket) do
     case LayoutService.activate_layout(id, socket.assigns.current_user) do
       {:ok, _layout} ->
-        {:noreply, 
+        {:noreply,
          socket
          |> put_flash(:info, "Layout activated successfully")
          |> reload_layouts()}
-      
+
       {:error, reason} ->
-        {:noreply, 
+        {:noreply,
          socket
          |> put_flash(:error, "Failed to activate layout: #{format_error(reason)}")}
     end
@@ -122,13 +123,13 @@ defmodule RivaAshWeb.LayoutLive do
   def handle_event("deactivate_layout", %{"id" => id}, socket) do
     case LayoutService.deactivate_layout(id, socket.assigns.current_user) do
       {:ok, _layout} ->
-        {:noreply, 
+        {:noreply,
          socket
          |> put_flash(:info, "Layout deactivated successfully")
          |> reload_layouts()}
-      
+
       {:error, reason} ->
-        {:noreply, 
+        {:noreply,
          socket
          |> put_flash(:error, "Failed to deactivate layout: #{format_error(reason)}")}
     end
@@ -137,13 +138,13 @@ defmodule RivaAshWeb.LayoutLive do
   def handle_event("delete_layout", %{"id" => id}, socket) do
     case LayoutService.delete_layout(id, socket.assigns.current_user) do
       {:ok, _layout} ->
-        {:noreply, 
+        {:noreply,
          socket
          |> put_flash(:info, "Layout deleted successfully")
          |> reload_layouts()}
-      
+
       {:error, reason} ->
-        {:noreply, 
+        {:noreply,
          socket
          |> put_flash(:error, "Failed to delete layout: #{format_error(reason)}")}
     end
@@ -164,9 +165,9 @@ defmodule RivaAshWeb.LayoutLive do
           |> assign(:layouts, layouts)
           |> assign(:meta, meta)
           |> assign(:loading, false)
-        
+
         {:ok, socket}
-      
+
       {:error, reason} ->
         {:error, reason}
     end
@@ -177,7 +178,7 @@ defmodule RivaAshWeb.LayoutLive do
       {:ok, {layouts, meta}} ->
         assign(socket, :layouts, layouts)
         |> assign(:meta, meta)
-      
+
       {:error, _reason} ->
         socket
     end
@@ -189,17 +190,24 @@ defmodule RivaAshWeb.LayoutLive do
 
   defp truncate_text(nil, _length), do: "N/A"
   defp truncate_text(text, length) when byte_size(text) <= length, do: text
+
   defp truncate_text(text, length) do
     String.slice(text, 0, length) <> "..."
   end
 
   defp format_error(reason) do
     case reason do
-      %Ash.Error.Invalid{errors: errors} -> 
-        errors |> Enum.map(&format_validation_error/1) |> Enum.join(", ")
-      %Ash.Error.Forbidden{} -> "You don't have permission to perform this action"
-      %Ash.Error.NotFound{} -> "Layout not found"
-      _ -> "An unexpected error occurred"
+      %Ash.Error.Invalid{errors: errors} ->
+        Enum.map_join(errors, ", ", &format_validation_error/1)
+
+      %Ash.Error.Forbidden{} ->
+        "You don't have permission to perform this action"
+
+      %Ash.Error.NotFound{} ->
+        "Layout not found"
+
+      _ ->
+        "An unexpected error occurred"
     end
   end
 

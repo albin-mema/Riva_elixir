@@ -8,9 +8,11 @@ defmodule RivaAsh.Resources.ClientTest do
     property "creates clients with valid randomized attributes" do
       File.write!("/tmp/property_test_running.txt", "🚀 Property test is running!\n", [:append])
       IO.puts("🚀 Property test is running!")
+
       check all(attrs <- client_attrs()) do
         File.write!("/tmp/property_test_running.txt", "Testing with attrs: #{inspect(attrs)}\n", [:append])
         IO.puts("Testing with attrs: #{inspect(attrs)}")
+
         case Client.create(attrs) do
           {:ok, client} ->
             assert client.name == attrs.name

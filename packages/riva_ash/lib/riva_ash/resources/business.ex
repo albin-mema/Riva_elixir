@@ -18,6 +18,7 @@ defmodule RivaAsh.Resources.Business do
 
   import RivaAsh.ResourceHelpers
 
+  # Define the type at the module level
   @type t :: %__MODULE__{
           id: String.t(),
           name: String.t(),
@@ -282,6 +283,13 @@ defmodule RivaAsh.Resources.Business do
       constraints(max_length: 500, trim?: true)
     end
 
+    attribute :is_active, :boolean do
+      allow_nil?(false)
+      default(true)
+      public?(true)
+      description("Whether the business is currently active")
+    end
+
     create_timestamp(:inserted_at)
     update_timestamp(:updated_at)
   end
@@ -304,7 +312,7 @@ defmodule RivaAsh.Resources.Business do
 
   @doc """
   Returns a list of businesses formatted for dropdown selection.
-  
+
   ## Returns
   A list of tuples `{id, name}` suitable for form dropdowns.
   """
@@ -317,12 +325,12 @@ defmodule RivaAsh.Resources.Business do
 
   @doc """
   Fetches the owner user for a business.
-  
+
   Since User is in a different domain, we handle this at the application level.
-  
+
   ## Parameters
   - business - A business record with owner_id field
-  
+
   ## Returns
   `{:ok, user | nil}` or `{:error, reason}`
   """
@@ -335,44 +343,45 @@ defmodule RivaAsh.Resources.Business do
 
   @doc """
   Fetches the owner user for a business by business ID.
-  
+
   ## Parameters
   - business_id - The UUID of the business
-  
+
   ## Returns
   `{:ok, user | nil}` or `{:error, reason}`
   """
   @spec get_owner_by_business_id(String.t()) :: {:ok, map() | nil} | {:error, any()}
   def get_owner_by_business_id(business_id) do
-    with {:ok, business} <- Ash.get(__MODULE__, business_id, domain: RivaAsh.Domain) do
-      get_owner(business)
+    case Ash.get(__MODULE__, business_id, domain: RivaAsh.Domain) do
+      {:ok, business} -> get_owner(business)
+      {:error, reason} -> {:error, reason}
     end
   end
 
   @doc """
   Determines if a business is currently active (not archived).
-  
+
   ## Parameters
   - business - A business record
-  
+
   ## Returns
   `true` if the business is active, `false` otherwise
   """
-  @spec is_active?(t()) :: boolean()
-  def is_active?(%__MODULE__{archived_at: nil}), do: true
-  def is_active?(%__MODULE__{}), do: false
+  @spec active?(map()) :: boolean()
+  def active?(%{archived_at: nil}), do: true
+  def active?(%{}), do: false
 
   @doc """
   Formats the business address for display.
-  
+
   ## Parameters
   - business - A business record
-  
+
   ## Returns
   A formatted address string or "No address provided"
   """
-  @spec formatted_address(t()) :: String.t()
-  def formatted_address(%__MODULE__{address: address, city: city, country: country}) do
+  @spec formatted_address(map()) :: String.t()
+  def formatted_address(%{address: address, city: city, country: country}) do
     [address, city, country]
     |> Enum.reject(&is_nil/1)
     |> Enum.join(", ")
@@ -384,17 +393,17 @@ defmodule RivaAsh.Resources.Business do
 
   @doc """
   Generates a search-friendly name for the business.
-  
+
   Combines name and location for better search results.
-  
+
   ## Parameters
   - business - A business record
-  
+
   ## Returns
   A formatted search string
   """
   @spec search_name(t()) :: String.t()
-  def search_name(%__MODULE__{name: name, city: city}) do
+  def search_name(%{name: name, city: city} = _business) do
     case city do
       nil -> name
       _ -> "#{name}, #{city}"
@@ -410,14 +419,16 @@ defmodule RivaAsh.Resources.Business do
   end
 
   defp apply_search_filter(query, search_term) do
+    search_pattern = "%#{search_term}%"
+
     Ash.Query.filter(
       query,
-      expr(
-        ilike(name, ^"%#{search_term}%") or
-          ilike(public_description, ^"%#{search_term}%") or
-          ilike(city, ^"%#{search_term}%") or
-          ilike(address, ^"%#{search_term}%")
-      )
+      or: [
+        expr(name(like(^search_pattern))),
+        expr(public_description(like(^search_pattern))),
+        expr(city(like(^search_pattern))),
+        expr(address(like(^search_pattern)))
+      ]
     )
   end
 
@@ -427,17 +438,17 @@ defmodule RivaAsh.Resources.Business do
   defp apply_location_filter(query, "", _country), do: query
 
   defp apply_location_filter(query, city, nil) do
-    Ash.Query.filter(query, expr(ilike(city, ^"%#{city}%")))
+    Ash.Query.filter(query, expr(city(like("%#{city}%"))))
   end
 
   defp apply_location_filter(query, city, country) do
     query
-    |> Ash.Query.filter(expr(ilike(city, ^"%#{city}%")))
-    |> Ash.Query.filter(expr(ilike(country, ^"%#{country}%")))
+    |> Ash.Query.filter(expr(city(like("%#{city}%"))))
+    |> Ash.Query.filter(expr(country(like("%#{country}%"))))
   end
 
   @spec apply_active_filter(Ash.Query.t()) :: Ash.Query.t()
   defp apply_active_filter(query) do
-    Ash.Query.filter(query, expr(is_nil(archived_at)))
+    Ash.Query.filter(query, expr(is_active == true and is_nil(archived_at)))
   end
 end

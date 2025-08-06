@@ -63,11 +63,21 @@ defmodule RivaAsh.Validations do
     end
   end
 
+  @spec get_required_attribute(map()) :: {:ok, any()} | {:error, :missing_attribute}
+  defp get_required_attribute(%{changeset: changeset, field: field}) do
+    get_required_attribute(changeset, field)
+  end
+
   @spec get_optional_attribute(changeset, atom()) :: {:ok, any()} | {:error, :missing_attribute}
   defp get_optional_attribute(changeset, field) do
     case Ash.Changeset.get_argument_or_attribute(changeset, field) do
       value -> {:ok, value}
     end
+  end
+
+  @spec get_optional_attribute(map()) :: {:ok, any()} | {:error, :missing_attribute}
+  defp get_optional_attribute(%{changeset: changeset, field: field}) do
+    get_optional_attribute(changeset, field)
   end
 
   @spec check_reservation_availability(
@@ -82,6 +92,19 @@ defmodule RivaAsh.Validations do
       {:ok, :no_overlap} -> :ok
       {:error, reason} -> {:error, %{field: :reserved_from, message: "Failed to check availability: #{reason}"}}
     end
+  end
+
+  @spec check_reservation_availability(
+          map()
+        ) :: validation_result()
+  defp check_reservation_availability(%{
+         item_id: item_id,
+         reserved_from: reserved_from,
+         reserved_until: reserved_until,
+         current_reservation_id: current_reservation_id,
+         opts: opts
+       }) do
+    check_reservation_availability(item_id, reserved_from, reserved_until, current_reservation_id, opts)
   end
 
   @doc """
@@ -100,13 +123,28 @@ defmodule RivaAsh.Validations do
         exclude_reservation_id \\ nil,
         opts \\ []
       ) do
-    with {:ok, exclude_statuses} <- get_exclude_statuses(opts),
-         {:ok, status_filter} <- build_status_filter(opts),
-         {:ok, final_status_filter} <- filter_statuses(status_filter, exclude_statuses) do
-      build_and_execute_overlap_query(item_id, reserved_from, reserved_until, exclude_reservation_id, final_status_filter)
-    else
+    case {get_exclude_statuses(opts), build_status_filter(opts), filter_statuses(status_filter, exclude_statuses)} do
+      {{:ok, exclude_statuses}, {:ok, status_filter}, {:ok, final_status_filter}} ->
+        build_and_execute_overlap_query(
+          item_id,
+          reserved_from,
+          reserved_until,
+          exclude_reservation_id,
+          final_status_filter
+        )
       {:error, reason} -> {:error, reason}
     end
+  end
+
+  @spec check_reservation_overlap(map()) :: overlap_result()
+  def check_reservation_overlap(%{
+         item_id: item_id,
+         reserved_from: reserved_from,
+         reserved_until: reserved_until,
+         exclude_reservation_id: exclude_reservation_id,
+         opts: opts
+       }) do
+    check_reservation_overlap(item_id, reserved_from, reserved_until, exclude_reservation_id, opts)
   end
 
   @spec get_exclude_statuses(opts) :: {:ok, list()} | {:error, String.t()}
@@ -117,16 +155,26 @@ defmodule RivaAsh.Validations do
     end
   end
 
+  @spec get_exclude_statuses(map()) :: {:ok, list()} | {:error, String.t()}
+  defp get_exclude_statuses(%{opts: opts}) do
+    get_exclude_statuses(opts)
+  end
+
   @spec build_status_filter(opts) :: {:ok, list()} | {:error, String.t()}
   defp build_status_filter(opts) do
-    with {:ok, include_provisional} <- validate_include_provisional(Keyword.get(opts, :include_provisional, true)) do
-      case include_provisional do
-        true -> {:ok, [:confirmed, :pending, :provisional]}
-        false -> {:ok, [:confirmed, :pending]}
-      end
-    else
+    case validate_include_provisional(Keyword.get(opts, :include_provisional, true)) do
+      {:ok, include_provisional} ->
+        case include_provisional do
+          true -> {:ok, [:confirmed, :pending, :provisional]}
+          false -> {:ok, [:confirmed, :pending]}
+        end
       {:error, reason} -> {:error, reason}
     end
+  end
+
+  @spec build_status_filter(map()) :: {:ok, list()} | {:error, String.t()}
+  defp build_status_filter(%{opts: opts}) do
+    build_status_filter(opts)
   end
 
   @spec validate_include_provisional(boolean()) :: {:ok, boolean()} | {:error, String.t()}
@@ -136,10 +184,23 @@ defmodule RivaAsh.Validations do
 
   defp validate_include_provisional(_), do: {:error, "Invalid include_provisional value"}
 
+  @spec validate_include_provisional(map()) :: {:ok, boolean()} | {:error, String.t()}
+  defp validate_include_provisional(%{value: value}) do
+    validate_include_provisional(value)
+  end
+
   @spec filter_statuses(list(), list()) :: {:ok, list()}
   defp filter_statuses(status_filter, exclude_statuses) do
     final_status_filter = status_filter -- exclude_statuses
     {:ok, final_status_filter}
+  end
+
+  @spec filter_statuses(map()) :: {:ok, list()}
+  defp filter_statuses(%{
+         status_filter: status_filter,
+         exclude_statuses: exclude_statuses
+       }) do
+    filter_statuses(status_filter, exclude_statuses)
   end
 
   @spec build_and_execute_overlap_query(
@@ -149,13 +210,32 @@ defmodule RivaAsh.Validations do
           item_id | nil,
           list()
         ) :: overlap_result()
-  defp build_and_execute_overlap_query(item_id, reserved_from, reserved_until, exclude_reservation_id, final_status_filter) do
-    try do
-      query = build_overlap_query(item_id, reserved_from, reserved_until, exclude_reservation_id, final_status_filter)
-      execute_overlap_query(query)
+  defp build_and_execute_overlap_query(
+         item_id,
+         reserved_from,
+         reserved_until,
+         exclude_reservation_id,
+         final_status_filter
+       ) do
+    query = build_overlap_query(item_id, reserved_from, reserved_until, exclude_reservation_id, final_status_filter)
+    execute_overlap_query(query)
     rescue
-      e -> {:error, "Exception during overlap check: #{inspect(e)}"}
-    end
+      e in [Ash.Error.Forbidden, Ash.Error.Invalid] ->
+        {:error, "Validation error during overlap check: #{inspect(e)}"}
+      e in ArgumentError ->
+        {:error, "Invalid argument during overlap check: #{inspect(e)}"}
+      e -> {:error, "Unexpected exception during overlap check: #{inspect(e)}"}
+  end
+
+  @spec build_and_execute_overlap_query(map()) :: overlap_result()
+  defp build_and_execute_overlap_query(%{
+         item_id: item_id,
+         reserved_from: reserved_from,
+         reserved_until: reserved_until,
+         exclude_reservation_id: exclude_reservation_id,
+         final_status_filter: final_status_filter
+       }) do
+    build_and_execute_overlap_query(item_id, reserved_from, reserved_until, exclude_reservation_id, final_status_filter)
   end
 
   @spec build_overlap_query(
@@ -190,6 +270,17 @@ defmodule RivaAsh.Validations do
     end
   end
 
+  @spec build_overlap_query(map()) :: Ash.Query.t()
+  defp build_overlap_query(%{
+         item_id: item_id,
+         reserved_from: reserved_from,
+         reserved_until: reserved_until,
+         exclude_reservation_id: exclude_reservation_id,
+         final_status_filter: final_status_filter
+       }) do
+    build_overlap_query(item_id, reserved_from, reserved_until, exclude_reservation_id, final_status_filter)
+  end
+
   @spec execute_overlap_query(Ash.Query.t()) :: overlap_result()
   defp execute_overlap_query(query) do
     case Ash.read(query, domain: RivaAsh.Domain) do
@@ -197,6 +288,11 @@ defmodule RivaAsh.Validations do
       {:ok, _overlapping} -> {:ok, :overlap_found}
       {:error, error} -> {:error, "Failed to read reservations: #{inspect(error)}"}
     end
+  end
+
+  @spec execute_overlap_query(map()) :: overlap_result()
+  defp execute_overlap_query(%{query: query}) do
+    execute_overlap_query(query)
   end
 
   @doc """
@@ -222,27 +318,39 @@ defmodule RivaAsh.Validations do
   def check_item_availability(item_id, reserved_from, reserved_until, opts \\ []) do
     check_holds = Keyword.get(opts, :check_holds, true)
 
-    try do
-      with {:ok, item} <- get_item(item_id),
-           {:ok, _} <- validate_item_is_active(item),
-           {:ok, _} <- validate_item_not_archived(item) do
-        result =
-          if item.is_always_available do
-            check_additional_constraints(item_id, reserved_from, reserved_until, check_holds)
-          else
-            check_schedule_and_exceptions(item, reserved_from, reserved_until, check_holds)
-          end
+    with {:ok, item} <- get_item(item_id),
+         {:ok, _} <- validate_item_is_active(item),
+         {:ok, _} <- validate_item_not_archived(item) do
+      result =
+        if item.is_always_available do
+          check_additional_constraints(item_id, reserved_from, reserved_until, check_holds)
+        else
+          check_schedule_and_exceptions(item, reserved_from, reserved_until, check_holds)
+        end
 
-        result
-      else
-        {:error, :item_not_found} -> {:ok, {:unavailable, "Item not found"}}
-        {:error, :item_inactive} -> {:ok, {:unavailable, "Item is not active"}}
-        {:error, :item_archived} -> {:ok, {:unavailable, "Item is archived"}}
-        {:error, error} -> {:error, "Failed to check availability: #{inspect(error)}"}
-      end
+      result
+    else
+      {:error, :item_not_found} -> {:ok, {:unavailable, "Item not found"}}
+      {:error, :item_inactive} -> {:ok, {:unavailable, "Item is not active"}}
+      {:error, :item_archived} -> {:ok, {:unavailable, "Item is archived"}}
+      {:error, error} -> {:error, "Failed to check availability: #{inspect(error)}"}
     rescue
-      e -> {:error, "Exception during availability check: #{inspect(e)}"}
+      e in [Ash.Error.Forbidden, Ash.Error.Invalid] ->
+        {:error, "Validation error during availability check: #{inspect(e)}"}
+      e in ArgumentError ->
+        {:error, "Invalid argument during availability check: #{inspect(e)}"}
+      e -> {:error, "Unexpected exception during availability check: #{inspect(e)}"}
     end
+  end
+
+  @spec check_item_availability(map()) :: availability_result()
+  def check_item_availability(%{
+         item_id: item_id,
+         reserved_from: reserved_from,
+         reserved_until: reserved_until,
+         opts: opts
+       }) do
+    check_item_availability(item_id, reserved_from, reserved_until, opts)
   end
 
   @spec get_item(item_id) :: {:ok, map()} | {:error, atom()}
@@ -253,13 +361,28 @@ defmodule RivaAsh.Validations do
     end
   end
 
+  @spec get_item(map()) :: {:ok, map()} | {:error, atom()}
+  defp get_item(%{item_id: item_id}) do
+    get_item(item_id)
+  end
+
   @spec validate_item_is_active(map()) :: {:ok, :ok} | {:error, :item_inactive}
   defp validate_item_is_active(%{is_active: true}), do: {:ok, :ok}
   defp validate_item_is_active(_), do: {:error, :item_inactive}
 
+  @spec validate_item_is_active(map()) :: {:ok, :ok} | {:error, :item_inactive}
+  defp validate_item_is_active(%{item: item}) do
+    validate_item_is_active(item)
+  end
+
   @spec validate_item_not_archived(map()) :: {:ok, :ok} | {:error, :item_archived}
   defp validate_item_not_archived(%{archived_at: nil}), do: {:ok, :ok}
   defp validate_item_not_archived(_), do: {:error, :item_archived}
+
+  @spec validate_item_not_archived(map()) :: {:ok, :ok} | {:error, :item_archived}
+  defp validate_item_not_archived(%{item: item}) do
+    validate_item_not_archived(item)
+  end
 
   @spec check_additional_constraints(item_id, reserved_from, reserved_until, boolean()) :: availability_result()
   defp check_additional_constraints(item_id, reserved_from, reserved_until, check_holds) do
@@ -268,6 +391,16 @@ defmodule RivaAsh.Validations do
     else
       {:ok, :available}
     end
+  end
+
+  @spec check_additional_constraints(map()) :: availability_result()
+  defp check_additional_constraints(%{
+         item_id: item_id,
+         reserved_from: reserved_from,
+         reserved_until: reserved_until,
+         check_holds: check_holds
+       }) do
+    check_additional_constraints(item_id, reserved_from, reserved_until, check_holds)
   end
 
   @spec check_schedule_and_exceptions(map(), reserved_from, reserved_until, boolean()) :: availability_result()
@@ -288,27 +421,50 @@ defmodule RivaAsh.Validations do
     end
   end
 
+  @spec check_schedule_and_exceptions(map()) :: availability_result()
+  defp check_schedule_and_exceptions(%{
+         item: item,
+         reserved_from: reserved_from,
+         reserved_until: reserved_until,
+         check_holds: check_holds
+       }) do
+    check_schedule_and_exceptions(item, reserved_from, reserved_until, check_holds)
+  end
+
   @spec get_availability_exceptions() :: {:ok, list()} | {:error, atom()}
-  defp get_availability_exceptions() do
-    case Ash.read(RivaAsh.Resources.AvailabilityException, domain: RivaAsh.Domain) do
+  defp get_availability_exceptions, do: case Ash.read(RivaAsh.Resources.AvailabilityException, domain: RivaAsh.Domain) do
       {:ok, exceptions} -> {:ok, exceptions}
       {:error, _} -> {:error, :exception_check_failed}
     end
+
+  @spec get_availability_exceptions(map()) :: {:ok, list()} | {:error, atom()}
+  defp get_availability_exceptions(%{domain: domain}) do
+    get_availability_exceptions()
   end
 
   @spec check_exceptions_for_date(list(), item_id, Date.t()) :: {:ok, :ok} | {:error, String.t()}
   defp check_exceptions_for_date(exceptions, item_id, reservation_date) do
-    has_exception = Enum.any?(exceptions, fn exception ->
-      exception.item_id == item_id and
-        Timex.compare(exception.exception_date, reservation_date) == 0 and
-        not exception.is_available
-    end)
+    has_exception =
+      Enum.any?(exceptions, fn exception ->
+        exception.item_id == item_id and
+          Timex.compare(exception.exception_date, reservation_date) == 0 and
+          not exception.is_available
+      end)
 
     if has_exception do
       {:error, "Item is unavailable due to scheduled exception"}
     else
       {:ok, :ok}
     end
+  end
+
+  @spec check_exceptions_for_date(map()) :: {:ok, :ok} | {:error, String.t()}
+  defp check_exceptions_for_date(%{
+         exceptions: exceptions,
+         item_id: item_id,
+         reservation_date: reservation_date
+       }) do
+    check_exceptions_for_date(exceptions, item_id, reservation_date)
   end
 
   @spec check_holds_or_availability(item_id, reserved_from, reserved_until, boolean()) :: availability_result()
@@ -320,36 +476,57 @@ defmodule RivaAsh.Validations do
     {:ok, :available}
   end
 
+  @spec check_holds_or_availability(map()) :: availability_result()
+  defp check_holds_or_availability(%{
+         item_id: item_id,
+         reserved_from: reserved_from,
+         reserved_until: reserved_until,
+         check_holds: check_holds
+       }) do
+    check_holds_or_availability(item_id, reserved_from, reserved_until, check_holds)
+  end
+
   @spec check_active_holds(item_id, reserved_from, reserved_until) :: availability_result()
   def check_active_holds(item_id, reserved_from, reserved_until) do
     now = Timex.now()
 
-    try do
-      query =
-        RivaAsh.Resources.ItemHold
-        |> Ash.Query.filter(expr(item_id == ^item_id))
-        |> Ash.Query.filter(expr(is_active == true))
-        |> Ash.Query.filter(expr(expires_at > ^now))
-        |> Ash.Query.filter(
-          expr(
-            fragment(
-              "? < ? AND ? > ?",
-              reserved_from,
-              ^reserved_until,
-              reserved_until,
-              ^reserved_from
-            )
+    query =
+      RivaAsh.Resources.ItemHold
+      |> Ash.Query.filter(expr(item_id == ^item_id))
+      |> Ash.Query.filter(expr(is_active == true))
+      |> Ash.Query.filter(expr(expires_at > ^now))
+      |> Ash.Query.filter(
+        expr(
+          fragment(
+            "? < ? AND ? > ?",
+            reserved_from,
+            ^reserved_until,
+            reserved_until,
+            ^reserved_from
           )
         )
+      )
 
-      case Ash.read(query, domain: RivaAsh.Domain) do
-        {:ok, []} -> {:ok, :available}
-        {:ok, _active_holds} -> {:ok, {:unavailable, "Item is currently held by another user"}}
-        {:error, error} -> {:error, "Failed to check active holds: #{inspect(error)}"}
-      end
+    case Ash.read(query, domain: RivaAsh.Domain) do
+      {:ok, []} -> {:ok, :available}
+      {:ok, _active_holds} -> {:ok, {:unavailable, "Item is currently held by another user"}}
+      {:error, error} -> {:error, "Failed to check active holds: #{inspect(error)}"}
     rescue
-      e -> {:error, "Exception during holds check: #{inspect(e)}"}
+      e in [Ash.Error.Forbidden, Ash.Error.Invalid] ->
+        {:error, "Validation error during holds check: #{inspect(e)}"}
+      e in ArgumentError ->
+        {:error, "Invalid argument during holds check: #{inspect(e)}"}
+      e -> {:error, "Unexpected exception during holds check: #{inspect(e)}"}
     end
+  end
+
+  @spec check_active_holds(map()) :: availability_result()
+  def check_active_holds(%{
+         item_id: item_id,
+         reserved_from: reserved_from,
+         reserved_until: reserved_until
+       }) do
+    check_active_holds(item_id, reserved_from, reserved_until)
   end
 
   @doc """
@@ -372,8 +549,7 @@ defmodule RivaAsh.Validations do
   defp validate_pricing_config(true, nil, nil) do
     {:error,
      field: :has_day_type_pricing,
-     message:
-       "When day type pricing is enabled, at least one of weekday_price or weekend_price must be set"}
+     message: "When day type pricing is enabled, at least one of weekday_price or weekend_price must be set"}
   end
 
   defp validate_pricing_config(true, weekday_price, weekend_price) do
@@ -382,6 +558,15 @@ defmodule RivaAsh.Validations do
 
   defp validate_pricing_config(false, _weekday_price, _weekend_price) do
     :ok
+  end
+
+  @spec validate_pricing_config(map()) :: :ok | {:error, map()}
+  defp validate_pricing_config(%{
+         has_day_type_pricing: has_day_type_pricing,
+         weekday_price: weekday_price,
+         weekend_price: weekend_price
+       }) do
+    validate_pricing_config(has_day_type_pricing, weekday_price, weekend_price)
   end
 
   @spec validate_price_non_negative(weekday_price, weekend_price) :: :ok | {:error, map()}
@@ -396,6 +581,14 @@ defmodule RivaAsh.Validations do
       true ->
         :ok
     end
+  end
+
+  @spec validate_price_non_negative(map()) :: :ok | {:error, map()}
+  defp validate_price_non_negative(%{
+         weekday_price: weekday_price,
+         weekend_price: weekend_price
+       }) do
+    validate_price_non_negative(weekday_price, weekend_price)
   end
 
   @doc """
@@ -415,12 +608,21 @@ defmodule RivaAsh.Validations do
   @spec validate_time_order(start_time | nil, end_time | nil) :: :ok | {:error, map()}
   defp validate_time_order(nil, _end_time), do: :ok
   defp validate_time_order(_start_time, nil), do: :ok
+
   defp validate_time_order(start_time, end_time) do
     if Timex.compare(end_time, start_time) == 1 do
       :ok
     else
       {:error, field: :end_time, message: "End time must be after start time"}
     end
+  end
+
+  @spec validate_time_order(map()) :: :ok | {:error, map()}
+  defp validate_time_order(%{
+         start_time: start_time,
+         end_time: end_time
+       }) do
+    validate_time_order(start_time, end_time)
   end
 
   @doc """
@@ -431,8 +633,10 @@ defmodule RivaAsh.Validations do
     case get_optional_attribute(changeset, :date) do
       {:ok, date} when not is_nil(date) ->
         validate_date_not_in_past(date)
+
       {:ok, _} ->
         :ok
+
       {:error, reason} ->
         {:error, reason}
     end
@@ -447,6 +651,11 @@ defmodule RivaAsh.Validations do
     else
       {:error, field: :date, message: "Date cannot be in the past"}
     end
+  end
+
+  @spec validate_date_not_in_past(map()) :: :ok | {:error, map()}
+  defp validate_date_not_in_past(%{date: date}) do
+    validate_date_not_in_past(date)
   end
 
   @doc """
@@ -467,8 +676,10 @@ defmodule RivaAsh.Validations do
     case get_optional_attribute(changeset, :email) do
       {:ok, email} when is_binary(email) ->
         validate_email_regex(email)
+
       {:ok, _} ->
         :ok
+
       {:error, reason} ->
         {:error, reason}
     end
@@ -486,6 +697,11 @@ defmodule RivaAsh.Validations do
     end
   end
 
+  @spec validate_email_regex(map()) :: :ok | {:error, map()}
+  defp validate_email_regex(%{email: email}) do
+    validate_email_regex(email)
+  end
+
   @doc """
   Validates phone number format.
   """
@@ -494,8 +710,10 @@ defmodule RivaAsh.Validations do
     case get_optional_attribute(changeset, :phone) do
       {:ok, phone} when is_binary(phone) ->
         validate_phone_regex(phone)
+
       {:ok, _} ->
         :ok
+
       {:error, reason} ->
         {:error, reason}
     end
@@ -512,6 +730,11 @@ defmodule RivaAsh.Validations do
     end
   end
 
+  @spec validate_phone_regex(map()) :: :ok | {:error, map()}
+  defp validate_phone_regex(%{phone: phone}) do
+    validate_phone_regex(phone)
+  end
+
   @doc """
   Sanitizes text input to prevent XSS.
   """
@@ -520,8 +743,10 @@ defmodule RivaAsh.Validations do
     case get_optional_attribute(changeset, :name) do
       {:ok, text} when is_binary(text) ->
         sanitize_text(text, changeset)
+
       {:ok, _} ->
         changeset
+
       {:error, reason} ->
         {:error, reason}
     end
@@ -535,6 +760,11 @@ defmodule RivaAsh.Validations do
       |> String.replace(~r/[<>\"'&]/, "")
 
     Ash.Changeset.change_attribute(changeset, :name, sanitized)
+  end
+
+  @spec sanitize_text(map()) :: changeset()
+  defp sanitize_text(%{text: text, changeset: changeset}) do
+    sanitize_text(text, changeset)
   end
 
   @doc """
@@ -593,6 +823,14 @@ defmodule RivaAsh.Validations do
     end
   end
 
+  @spec check_section_business_match(map()) :: :ok | {:error, map()}
+  defp check_section_business_match(%{
+         section_id: section_id,
+         business_id: business_id
+       }) do
+    check_section_business_match(section_id, business_id)
+  end
+
   @doc """
   Validates that an item_type belongs to the same business as the item.
   """
@@ -619,6 +857,14 @@ defmodule RivaAsh.Validations do
       {:error, _} ->
         {:error, field: :item_type_id, message: "Item type not found"}
     end
+  end
+
+  @spec check_item_type_business_match(map()) :: :ok | {:error, map()}
+  defp check_item_type_business_match(%{
+         item_type_id: item_type_id,
+         business_id: business_id
+       }) do
+    check_item_type_business_match(item_type_id, business_id)
   end
 
   @doc """
@@ -649,6 +895,14 @@ defmodule RivaAsh.Validations do
     end
   end
 
+  @spec check_plot_business_match(map()) :: :ok | {:error, map()}
+  defp check_plot_business_match(%{
+         plot_id: plot_id,
+         business_id: business_id
+       }) do
+    check_plot_business_match(plot_id, business_id)
+  end
+
   @doc """
   Validates that a client belongs to the same business as the reservation item.
   """
@@ -674,10 +928,28 @@ defmodule RivaAsh.Validations do
     end
   end
 
+  @spec check_client_item_business_match(map()) :: :ok | {:error, map()}
+  defp check_client_item_business_match(%{
+         client_id: client_id,
+         item_id: item_id
+       }) do
+    check_client_item_business_match(client_id, item_id)
+  end
+
   @spec check_business_match(business_id, business_id, atom()) :: :ok | {:error, map()}
   defp check_business_match(business_id, business_id, _field), do: :ok
+
   defp check_business_match(_business_id1, _business_id2, field) do
     {:error, field: field, message: "Client and item must belong to the same business"}
+  end
+
+  @spec check_business_match(map()) :: :ok | {:error, map()}
+  defp check_business_match(%{
+         business_id1: business_id1,
+         business_id2: business_id2,
+         field: field
+       }) do
+    check_business_match(business_id1, business_id2, field)
   end
 
   @doc """
@@ -705,6 +977,14 @@ defmodule RivaAsh.Validations do
     end
   end
 
+  @spec check_employee_item_business_match(map()) :: :ok | {:error, map()}
+  defp check_employee_item_business_match(%{
+         employee_id: employee_id,
+         item_id: item_id
+       }) do
+    check_employee_item_business_match(employee_id, item_id)
+  end
+
   @doc """
   Validates that an item and layout belong to the same business (for ItemPosition).
   """
@@ -730,14 +1010,21 @@ defmodule RivaAsh.Validations do
     end
   end
 
+  @spec check_item_layout_business_match(map()) :: :ok | {:error, map()}
+  defp check_item_layout_business_match(%{
+         item_id: item_id,
+         layout_id: layout_id
+       }) do
+    check_item_layout_business_match(item_id, layout_id)
+  end
+
   @doc """
   Validates that a reservation belongs to the same business as the payment.
   """
   @spec validate_reservation_payment_business_match(changeset, opts) :: :ok | {:error, map()}
   def validate_reservation_payment_business_match(changeset, _opts) do
-    with {:ok, reservation_id} <- get_required_attribute(changeset, :reservation_id) do
-      check_reservation_payment_business_match(changeset, reservation_id)
-    else
+    case get_required_attribute(changeset, :reservation_id) do
+      {:ok, reservation_id} -> check_reservation_payment_business_match(changeset, reservation_id)
       {:error, :missing_attribute} -> :ok
       {:error, reason} -> {:error, reason}
     end
@@ -756,9 +1043,7 @@ defmodule RivaAsh.Validations do
             if reservation.item.business_id == business_id do
               :ok
             else
-              {:error,
-               field: :reservation_id,
-               message: "Payment and reservation must belong to the same business"}
+              {:error, field: :reservation_id, message: "Payment and reservation must belong to the same business"}
             end
 
           :error ->
@@ -775,6 +1060,14 @@ defmodule RivaAsh.Validations do
       {:error, _} ->
         {:error, field: :reservation_id, message: "Reservation not found"}
     end
+  end
+
+  @spec check_reservation_payment_business_match(map()) :: :ok | {:error, map()}
+  defp check_reservation_payment_business_match(%{
+         changeset: changeset,
+         reservation_id: reservation_id
+       }) do
+    check_reservation_payment_business_match(changeset, reservation_id)
   end
 
   @doc """
@@ -802,6 +1095,14 @@ defmodule RivaAsh.Validations do
     end
   end
 
+  @spec check_employee_granter_business_match(map()) :: :ok | {:error, map()}
+  defp check_employee_granter_business_match(%{
+         employee_id: employee_id,
+         granted_by_id: granted_by_id
+       }) do
+    check_employee_granter_business_match(employee_id, granted_by_id)
+  end
+
   @doc """
   Validates that pricing rules don't have overlapping date ranges for the same business/item_type/pricing_type.
   """
@@ -819,7 +1120,8 @@ defmodule RivaAsh.Validations do
     end
   end
 
-  @spec check_pricing_date_overlap(changeset, business_id, item_type_id, pricing_type, effective_from, effective_until) :: :ok | {:error, map()}
+  @spec check_pricing_date_overlap(changeset, business_id, item_type_id, pricing_type, effective_from, effective_until) ::
+          :ok | {:error, map()}
   defp check_pricing_date_overlap(changeset, business_id, item_type_id, pricing_type, effective_from, effective_until) do
     current_id = Ash.Changeset.get_attribute(changeset, :id)
 
@@ -841,8 +1143,7 @@ defmodule RivaAsh.Validations do
     case Ash.read(query, domain: RivaAsh.Domain) do
       {:ok, existing_rules} ->
         if has_date_overlap?(existing_rules, effective_from, effective_until) do
-          {:error,
-           field: :effective_from, message: "Date range overlaps with existing pricing rule"}
+          {:error, field: :effective_from, message: "Date range overlaps with existing pricing rule"}
         else
           :ok
         end
@@ -851,6 +1152,30 @@ defmodule RivaAsh.Validations do
       {:error, _} ->
         :ok
     end
+  end
+
+  @spec check_pricing_date_overlap(map()) :: :ok | {:error, map()}
+  defp check_pricing_date_overlap(%{
+         changeset: changeset,
+         business_id: business_id,
+         item_type_id: item_type_id,
+         pricing_type: pricing_type,
+         effective_from: effective_from,
+         effective_until: effective_until
+       }) do
+    check_pricing_date_overlap(changeset, business_id, item_type_id, pricing_type, effective_from, effective_until)
+  end
+
+  @spec check_pricing_date_overlap(map()) :: :ok | {:error, map()}
+  defp check_pricing_date_overlap(%{
+         changeset: changeset,
+         business_id: business_id,
+         item_type_id: item_type_id,
+         pricing_type: pricing_type,
+         effective_from: effective_from,
+         effective_until: effective_until
+       }) do
+    check_pricing_date_overlap(changeset, business_id, item_type_id, pricing_type, effective_from, effective_until)
   end
 
   @doc """
@@ -902,9 +1227,7 @@ defmodule RivaAsh.Validations do
         :ok
 
       {:ok, _existing} ->
-        {:error,
-         field: :pricing_type,
-         message: "Only one active base pricing rule allowed per business/item_type"}
+        {:error, field: :pricing_type, message: "Only one active base pricing rule allowed per business/item_type"}
 
       {:error, _} ->
         :ok
@@ -913,6 +1236,16 @@ defmodule RivaAsh.Validations do
 
   defp check_single_active_base_pricing(_changeset, _business_id, _item_type_id, _pricing_type) do
     :ok
+  end
+
+  @spec check_single_active_base_pricing(map()) :: :ok | {:error, map()}
+  defp check_single_active_base_pricing(%{
+         changeset: changeset,
+         business_id: business_id,
+         item_type_id: item_type_id,
+         pricing_type: pricing_type
+       }) do
+    check_single_active_base_pricing(changeset, business_id, item_type_id, pricing_type)
   end
 
   # Helper function to check for date range overlaps
@@ -926,8 +1259,20 @@ defmodule RivaAsh.Validations do
     end)
   end
 
+  @spec has_date_overlap?(map()) :: boolean()
+  defp has_date_overlap?(%{
+         existing_rules: existing_rules,
+         new_from: new_from,
+         new_until: new_until
+       }) do
+    has_date_overlap?(existing_rules, new_from, new_until)
+  end
+
   # Helper function to check if two date ranges overlap
-  @spec date_ranges_overlap?({effective_from | nil, effective_until | nil}, {effective_from | nil, effective_until | nil}) :: boolean()
+  @spec date_ranges_overlap?(
+          {effective_from | nil, effective_until | nil},
+          {effective_from | nil, effective_until | nil}
+        ) :: boolean()
   defp date_ranges_overlap?({from1, until1}, {from2, until2}) do
     # Convert nil dates to appropriate boundaries
     from1 = from1 || Timex.parse!("1900-01-01", "{YYYY}-{0M}-{0D}")
@@ -937,5 +1282,13 @@ defmodule RivaAsh.Validations do
 
     # Check for overlap: start1 < end2 && start2 < end1
     Timex.compare(from1, until2) == -1 && Timex.compare(from2, until1) == -1
+  end
+
+  @spec date_ranges_overlap?(map()) :: boolean()
+  defp date_ranges_overlap?(%{
+         range1: {from1, until1},
+         range2: {from2, until2}
+       }) do
+    date_ranges_overlap?({from1, until1}, {from2, until2})
   end
 end

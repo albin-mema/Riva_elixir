@@ -101,9 +101,9 @@ defmodule RivaAsh.Permissions.Constants do
 
   @doc """
   Builds a permission string from action and resource parts.
-  
+
   ## Examples
-  
+
       iex> build_permission("create", "users")
       "can_create_users"
   """
@@ -115,12 +115,12 @@ defmodule RivaAsh.Permissions.Constants do
 
   @doc """
   Validates that a permission string is properly formatted.
-  
+
   ## Examples
-  
+
       iex> valid_permission_format?("can_create_users")
       true
-      
+
       iex> valid_permission_format?("invalid_permission")
       false
   """
@@ -141,6 +141,7 @@ defmodule RivaAsh.Permissions.Constants do
 
   @spec has_valid_separator?(boolean()) :: boolean()
   defp has_valid_separator?(false), do: false
+
   defp has_valid_separator?(true) do
     String.contains?(@permission_separator)
   end
@@ -354,11 +355,11 @@ defmodule RivaAsh.Permissions.Constants do
 
   @doc """
   Returns all available permissions as a list.
-  
+
   Useful for seeding, validation, or UI generation.
-  
+
   ## Returns
-  
+
   Returns `{:ok, [permission()]}` on success, `{:error, reason}` on failure.
   """
   @spec all_permissions() :: result()
@@ -409,11 +410,11 @@ defmodule RivaAsh.Permissions.Constants do
 
   @doc """
   Returns permissions grouped by category.
-  
+
   This matches the categories used in the Permission resource.
-  
+
   ## Returns
-  
+
   Returns `{:ok, %{category() => [permission()]}}` on success, `{:error, reason}` on failure.
   """
   @spec permissions_by_category() :: result()
@@ -542,12 +543,12 @@ defmodule RivaAsh.Permissions.Constants do
 
   @doc """
   Returns the category for a given permission.
-  
+
   ## Examples
-  
+
       iex> category_for_permission("can_create_users")
       {:ok, :reservations}
-      
+
       iex> category_for_permission("invalid_permission")
       {:error, "Permission not found"}
   """
@@ -569,12 +570,12 @@ defmodule RivaAsh.Permissions.Constants do
 
   @doc """
   Validates that a permission exists in the system.
-  
+
   ## Examples
-  
+
       iex> valid_permission?("can_create_users")
       {:ok, true}
-      
+
       iex> valid_permission?("invalid_permission")
       {:ok, false}
   """
@@ -590,11 +591,11 @@ defmodule RivaAsh.Permissions.Constants do
 
   @doc """
   Returns permission metadata including description and category.
-  
+
   This can be used for UI generation and documentation.
-  
+
   ## Returns
-  
+
   Returns `{:ok, %{permission() => permission_metadata()}}` on success, `{:error, reason}` on failure.
   """
   @spec permission_metadata() :: result()
@@ -608,241 +609,275 @@ defmodule RivaAsh.Permissions.Constants do
   @spec build_permission_metadata() :: map()
   defp build_permission_metadata do
     %{
-      @can_create_reservations => build_permission_metadata_entry(
-        @can_create_reservations,
-        "Can create new reservations for clients",
-        @reservation_category,
-        false,
-        true
-      ),
-      @can_view_all_reservations => build_permission_metadata_entry(
-        @can_view_all_reservations,
-        "Can view all reservations, not just own",
-        @reservation_category,
-        false,
-        true
-      ),
-      @can_modify_reservations => build_permission_metadata_entry(
-        @can_modify_reservations,
-        "Can modify existing reservations",
-        @reservation_category,
-        false,
-        true
-      ),
-      @can_cancel_reservations => build_permission_metadata_entry(
-        @can_cancel_reservations,
-        "Can cancel reservations",
-        @reservation_category,
-        false,
-        true
-      ),
-      @can_view_own_reservations => build_permission_metadata_entry(
-        @can_view_own_reservations,
-        "Can view own reservations only",
-        @reservation_category,
-        false,
-        false
-      ),
-      @can_view_employees => build_permission_metadata_entry(
-        @can_view_employees,
-        "Can view employee information",
-        @employee_category,
-        true,
-        true
-      ),
-      @can_create_employees => build_permission_metadata_entry(
-        @can_create_employees,
-        "Can create new employee accounts",
-        @employee_category,
-        true,
-        true
-      ),
-      @can_modify_employees => build_permission_metadata_entry(
-        @can_modify_employees,
-        "Can modify employee information",
-        @employee_category,
-        true,
-        true
-      ),
-      @can_give_permissions => build_permission_metadata_entry(
-        @can_give_permissions,
-        "Can grant permissions to other employees",
-        @employee_category,
-        true,
-        true
-      ),
-      @can_revoke_permissions => build_permission_metadata_entry(
-        @can_revoke_permissions,
-        "Can revoke permissions from other employees",
-        @employee_category,
-        true,
-        true
-      ),
-      @can_manage_business_settings => build_permission_metadata_entry(
-        @can_manage_business_settings,
-        "Can modify business settings and configuration",
-        @business_category,
-        false,
-        true
-      ),
-      @can_manage_items => build_permission_metadata_entry(
-        @can_manage_items,
-        "Can create, modify, and delete items",
-        @business_category,
-        false,
-        true
-      ),
-      @can_manage_schedules => build_permission_metadata_entry(
-        @can_manage_schedules,
-        "Can manage item schedules and availability",
-        @business_category,
-        false,
-        true
-      ),
-      @can_update_pricing => build_permission_metadata_entry(
-        @can_update_pricing,
-        "Can update pricing information",
-        @business_category,
-        true,
-        true
-      ),
-      @can_view_pricing => build_permission_metadata_entry(
-        @can_view_pricing,
-        "Can view pricing information",
-        @business_category,
-        true,
-        false
-      ),
-      @can_manage_layouts => build_permission_metadata_entry(
-        @can_manage_layouts,
-        "Can manage layout configurations",
-        @business_category,
-        false,
-        true
-      ),
-      @can_manage_sections => build_permission_metadata_entry(
-        @can_manage_sections,
-        "Can manage business sections",
-        @business_category,
-        false,
-        true
-      ),
-      @can_delete_plot => build_permission_metadata_entry(
-        @can_delete_plot,
-        "Can delete plots",
-        @plot_category,
-        false,
-        true
-      ),
-      @can_view_plot => build_permission_metadata_entry(
-        @can_view_plot,
-        "Can view plots",
-        @plot_category,
-        false,
-        false
-      ),
-      @can_create_item_hold => build_permission_metadata_entry(
-        @can_create_item_hold,
-        "Can create item holds",
-        @item_hold_category,
-        false,
-        true
-      ),
-      @can_release_item_hold => build_permission_metadata_entry(
-        @can_release_item_hold,
-        "Can release item holds",
-        @item_hold_category,
-        false,
-        true
-      ),
-      @can_view_clients => build_permission_metadata_entry(
-        @can_view_clients,
-        "Can view client information",
-        @client_category,
-        true,
-        true
-      ),
-      @can_create_clients => build_permission_metadata_entry(
-        @can_create_clients,
-        "Can create new client accounts",
-        @client_category,
-        true,
-        true
-      ),
-      @can_modify_clients => build_permission_metadata_entry(
-        @can_modify_clients,
-        "Can modify client information",
-        @client_category,
-        true,
-        true
-      ),
-      @can_process_payments => build_permission_metadata_entry(
-        @can_process_payments,
-        "Can process payments and transactions",
-        @payment_category,
-        true,
-        true
-      ),
-      @can_view_payments => build_permission_metadata_entry(
-        @can_view_payments,
-        "Can view payment information",
-        @payment_category,
-        true,
-        true
-      ),
-      @can_refund_payments => build_permission_metadata_entry(
-        @can_refund_payments,
-        "Can process refunds",
-        @payment_category,
-        true,
-        true
-      ),
-      @can_view_reports => build_permission_metadata_entry(
-        @can_view_reports,
-        "Can access reporting and analytics",
-        @report_category,
-        false,
-        true
-      ),
-      @can_export_data => build_permission_metadata_entry(
-        @can_export_data,
-        "Can export data and reports",
-        @report_category,
-        true,
-        true
-      ),
-      @can_view_analytics => build_permission_metadata_entry(
-        @can_view_analytics,
-        "Can view detailed analytics",
-        @report_category,
-        false,
-        true
-      ),
-      @can_access_admin_panel => build_permission_metadata_entry(
-        @can_access_admin_panel,
-        "Can access the admin panel interface",
-        @system_category,
-        true,
-        true
-      ),
-      @can_manage_system_settings => build_permission_metadata_entry(
-        @can_manage_system_settings,
-        "Can manage system-wide settings",
-        @system_category,
-        true,
-        true
-      ),
-      @can_view_audit_logs => build_permission_metadata_entry(
-        @can_view_audit_logs,
-        "Can view system audit logs",
-        @system_category,
-        true,
-        true
-      )
+      @can_create_reservations =>
+        build_permission_metadata_entry(
+          @can_create_reservations,
+          "Can create new reservations for clients",
+          @reservation_category,
+          false,
+          true
+        ),
+      @can_view_all_reservations =>
+        build_permission_metadata_entry(
+          @can_view_all_reservations,
+          "Can view all reservations, not just own",
+          @reservation_category,
+          false,
+          true
+        ),
+      @can_modify_reservations =>
+        build_permission_metadata_entry(
+          @can_modify_reservations,
+          "Can modify existing reservations",
+          @reservation_category,
+          false,
+          true
+        ),
+      @can_cancel_reservations =>
+        build_permission_metadata_entry(
+          @can_cancel_reservations,
+          "Can cancel reservations",
+          @reservation_category,
+          false,
+          true
+        ),
+      @can_view_own_reservations =>
+        build_permission_metadata_entry(
+          @can_view_own_reservations,
+          "Can view own reservations only",
+          @reservation_category,
+          false,
+          false
+        ),
+      @can_view_employees =>
+        build_permission_metadata_entry(
+          @can_view_employees,
+          "Can view employee information",
+          @employee_category,
+          true,
+          true
+        ),
+      @can_create_employees =>
+        build_permission_metadata_entry(
+          @can_create_employees,
+          "Can create new employee accounts",
+          @employee_category,
+          true,
+          true
+        ),
+      @can_modify_employees =>
+        build_permission_metadata_entry(
+          @can_modify_employees,
+          "Can modify employee information",
+          @employee_category,
+          true,
+          true
+        ),
+      @can_give_permissions =>
+        build_permission_metadata_entry(
+          @can_give_permissions,
+          "Can grant permissions to other employees",
+          @employee_category,
+          true,
+          true
+        ),
+      @can_revoke_permissions =>
+        build_permission_metadata_entry(
+          @can_revoke_permissions,
+          "Can revoke permissions from other employees",
+          @employee_category,
+          true,
+          true
+        ),
+      @can_manage_business_settings =>
+        build_permission_metadata_entry(
+          @can_manage_business_settings,
+          "Can modify business settings and configuration",
+          @business_category,
+          false,
+          true
+        ),
+      @can_manage_items =>
+        build_permission_metadata_entry(
+          @can_manage_items,
+          "Can create, modify, and delete items",
+          @business_category,
+          false,
+          true
+        ),
+      @can_manage_schedules =>
+        build_permission_metadata_entry(
+          @can_manage_schedules,
+          "Can manage item schedules and availability",
+          @business_category,
+          false,
+          true
+        ),
+      @can_update_pricing =>
+        build_permission_metadata_entry(
+          @can_update_pricing,
+          "Can update pricing information",
+          @business_category,
+          true,
+          true
+        ),
+      @can_view_pricing =>
+        build_permission_metadata_entry(
+          @can_view_pricing,
+          "Can view pricing information",
+          @business_category,
+          true,
+          false
+        ),
+      @can_manage_layouts =>
+        build_permission_metadata_entry(
+          @can_manage_layouts,
+          "Can manage layout configurations",
+          @business_category,
+          false,
+          true
+        ),
+      @can_manage_sections =>
+        build_permission_metadata_entry(
+          @can_manage_sections,
+          "Can manage business sections",
+          @business_category,
+          false,
+          true
+        ),
+      @can_delete_plot =>
+        build_permission_metadata_entry(
+          @can_delete_plot,
+          "Can delete plots",
+          @plot_category,
+          false,
+          true
+        ),
+      @can_view_plot =>
+        build_permission_metadata_entry(
+          @can_view_plot,
+          "Can view plots",
+          @plot_category,
+          false,
+          false
+        ),
+      @can_create_item_hold =>
+        build_permission_metadata_entry(
+          @can_create_item_hold,
+          "Can create item holds",
+          @item_hold_category,
+          false,
+          true
+        ),
+      @can_release_item_hold =>
+        build_permission_metadata_entry(
+          @can_release_item_hold,
+          "Can release item holds",
+          @item_hold_category,
+          false,
+          true
+        ),
+      @can_view_clients =>
+        build_permission_metadata_entry(
+          @can_view_clients,
+          "Can view client information",
+          @client_category,
+          true,
+          true
+        ),
+      @can_create_clients =>
+        build_permission_metadata_entry(
+          @can_create_clients,
+          "Can create new client accounts",
+          @client_category,
+          true,
+          true
+        ),
+      @can_modify_clients =>
+        build_permission_metadata_entry(
+          @can_modify_clients,
+          "Can modify client information",
+          @client_category,
+          true,
+          true
+        ),
+      @can_process_payments =>
+        build_permission_metadata_entry(
+          @can_process_payments,
+          "Can process payments and transactions",
+          @payment_category,
+          true,
+          true
+        ),
+      @can_view_payments =>
+        build_permission_metadata_entry(
+          @can_view_payments,
+          "Can view payment information",
+          @payment_category,
+          true,
+          true
+        ),
+      @can_refund_payments =>
+        build_permission_metadata_entry(
+          @can_refund_payments,
+          "Can process refunds",
+          @payment_category,
+          true,
+          true
+        ),
+      @can_view_reports =>
+        build_permission_metadata_entry(
+          @can_view_reports,
+          "Can access reporting and analytics",
+          @report_category,
+          false,
+          true
+        ),
+      @can_export_data =>
+        build_permission_metadata_entry(
+          @can_export_data,
+          "Can export data and reports",
+          @report_category,
+          true,
+          true
+        ),
+      @can_view_analytics =>
+        build_permission_metadata_entry(
+          @can_view_analytics,
+          "Can view detailed analytics",
+          @report_category,
+          false,
+          true
+        ),
+      @can_access_admin_panel =>
+        build_permission_metadata_entry(
+          @can_access_admin_panel,
+          "Can access the admin panel interface",
+          @system_category,
+          true,
+          true
+        ),
+      @can_manage_system_settings =>
+        build_permission_metadata_entry(
+          @can_manage_system_settings,
+          "Can manage system-wide settings",
+          @system_category,
+          true,
+          true
+        ),
+      @can_view_audit_logs =>
+        build_permission_metadata_entry(
+          @can_view_audit_logs,
+          "Can view system audit logs",
+          @system_category,
+          true,
+          true
+        )
     }
   end
 
-  @spec build_permission_metadata_entry(permission(), String.t(), category(), boolean(), boolean()) :: permission_metadata()
+  @spec build_permission_metadata_entry(permission(), String.t(), category(), boolean(), boolean()) ::
+          permission_metadata()
   defp build_permission_metadata_entry(permission, description, category, sensitive, requires_audit) do
     %__MODULE__{
       permission: permission,
@@ -859,9 +894,9 @@ defmodule RivaAsh.Permissions.Constants do
 
   @doc """
   Returns sensitive permissions that require special handling.
-  
+
   ## Examples
-  
+
       iex> sensitive_permissions()
       {:ok, ["can_give_permissions", "can_view_audit_logs"]}
   """
@@ -875,9 +910,9 @@ defmodule RivaAsh.Permissions.Constants do
 
   @doc """
   Returns permissions that require audit logging.
-  
+
   ## Examples
-  
+
       iex> audit_required_permissions()
       {:ok, ["can_create_reservations", "can_modify_employees"]}
   """
@@ -911,9 +946,9 @@ defmodule RivaAsh.Permissions.Constants do
 
   @doc """
   Validates a list of permissions.
-  
+
   ## Examples
-  
+
       iex> validate_permissions(["can_create_users", "invalid_permission"])
       {:error, "Invalid permission format: invalid_permission"}
   """
@@ -933,9 +968,9 @@ defmodule RivaAsh.Permissions.Constants do
 
   @doc """
   Gets permissions by category with validation.
-  
+
   ## Examples
-  
+
       iex> permissions_for_category(:reservations)
       {:ok, ["can_create_reservations", "can_view_all_reservations"]}
   """
@@ -953,12 +988,12 @@ defmodule RivaAsh.Permissions.Constants do
 
   @doc """
   Checks if a permission is sensitive.
-  
+
   ## Examples
-  
+
       iex> permission_sensitive?("can_view_audit_logs")
       {:ok, true}
-      
+
       iex> permission_sensitive?("can_view_own_reservations")
       {:ok, false}
   """
@@ -976,12 +1011,12 @@ defmodule RivaAsh.Permissions.Constants do
 
   @doc """
   Checks if a permission requires audit logging.
-  
+
   ## Examples
-  
+
       iex> permission_requires_audit?("can_create_reservations")
       {:ok, true}
-      
+
       iex> permission_requires_audit?("can_view_own_reservations")
       {:ok, false}
   """

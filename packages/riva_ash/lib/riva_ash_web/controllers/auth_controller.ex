@@ -61,12 +61,13 @@ defmodule RivaAshWeb.AuthController do
   """
   @spec sign_in_submit(conn(), params()) :: conn()
   def sign_in_submit(conn, %{"email" => email, "password" => password}) do
-    with {:ok, user, token} <- authenticate_user(email, password) do
-      conn
-      |> establish_user_session(user, token)
-      |> redirect_to_dashboard_after_auth()
-    else
-      {:error, reason} -> handle_sign_in_error(conn, reason)
+    case authenticate_user(email, password) do
+      {:ok, user, token} ->
+        conn
+        |> establish_user_session(user, token)
+        |> redirect_to_dashboard_after_auth()
+      {:error, reason} ->
+        handle_sign_in_error(conn, reason)
     end
   end
 
@@ -75,13 +76,13 @@ defmodule RivaAshWeb.AuthController do
   """
   @spec complete_sign_in(conn(), params()) :: conn()
   def complete_sign_in(conn, %{"token" => token, "user_id" => user_id}) do
-    with {:ok, ^user_id} <- verify_token(token),
-         {:ok, user} <- get_user_by_id(user_id) do
-      conn
-      |> establish_user_session(user, token)
-      |> redirect_to_dashboard_after_auth()
-    else
-      {:error, _reason} -> handle_invalid_token(conn)
+    case {verify_token(token), get_user_by_id(user_id)} do
+      {{:ok, ^user_id}, {:ok, user}} ->
+        conn
+        |> establish_user_session(user, token)
+        |> redirect_to_dashboard_after_auth()
+      {:error, _reason} ->
+        handle_invalid_token(conn)
     end
   end
 
@@ -172,7 +173,7 @@ defmodule RivaAshWeb.AuthController do
   end
 
   defp handle_sign_in_error(conn, reason) when is_binary(reason) do
-    IO.inspect(reason, label: "Sign in error")
+
     conn
     |> put_flash(:error, reason)
     |> redirect(to: "/sign-in")
@@ -208,6 +209,7 @@ defmodule RivaAshWeb.AuthController do
 
   defp handle_registration_error(conn, reason) do
     error_messages = format_changeset_errors(reason)
+
     conn
     |> put_flash(:error, "Registration failed: #{error_messages}")
     |> redirect(to: "/register")
@@ -216,9 +218,7 @@ defmodule RivaAshWeb.AuthController do
   # Error formatting functions
 
   defp format_changeset_errors(%Ash.Error.Invalid{} = error) do
-    error.errors
-    |> Enum.map(&format_ash_error/1)
-    |> Enum.join(", ")
+    Enum.map_join(error.errors, ", ", &format_ash_error/1)
   end
 
   defp format_changeset_errors(changeset) when is_struct(changeset) do

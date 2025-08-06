@@ -10,7 +10,7 @@ This document describes the implementation of a superadmin user type in the Riva
 
 The application now supports three user roles:
 - **superadmin**: Full system access for oversight and compliance
-- **admin**: Business-level administrative access
+- **admin**: Organization-level administrative access
 - **user**: Regular user access
 
 ### 2. Superadmin Capabilities
@@ -19,7 +19,7 @@ Superadmins can:
 - Access the AshAdmin interface at `/admin` to view all system data
 - View the superadmin dashboard at `/superadmin` for system overview
 - Manage user roles and permissions
-- Access all business data across the platform for compliance purposes
+- Access all organization data across the platform for compliance purposes
 - View audit trails and system activity logs
 
 ### 3. GDPR Compliance Features
@@ -149,7 +149,7 @@ The superadmin dashboard provides:
 4. **Activity Monitoring**: Monitor superadmin activity logs
 
 ### Data Access Guidelines
-1. **Purpose-Driven**: Access data only for legitimate business purposes
+1. **Purpose-Driven**: Access data only for legitimate operational purposes
 2. **Minimal Access**: Access only the data necessary for the task
 3. **Documentation**: Document the reason for data access
 4. **Time-Limited**: Limit access duration when possible

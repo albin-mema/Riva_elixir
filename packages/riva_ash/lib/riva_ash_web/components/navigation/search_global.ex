@@ -30,7 +30,10 @@ defmodule RivaAshWeb.Components.Navigation.SearchGlobal do
     |> Map.put_new(:input_container_class, build_input_container_class())
     |> Map.put_new(:actions_class, build_actions_class(assigns.loading, assigns.query, assigns.on_clear))
     |> Map.put_new(:results_class, build_results_class(assigns.show_results, assigns.results))
-    |> Map.put_new(:no_results_class, build_no_results_class(assigns.show_results, assigns.results, assigns.query, assigns.loading))
+    |> Map.put_new(
+      :no_results_class,
+      build_no_results_class(assigns.show_results, assigns.results, assigns.query, assigns.loading)
+    )
     |> render_search_global_component()
   end
 
@@ -49,12 +52,12 @@ defmodule RivaAshWeb.Components.Navigation.SearchGlobal do
           phx-debounce="300"
           class="search-input"
         />
-        
+
         <div class={@actions_class}>
           <div :if={@loading} class="search-loading">
             <.icon name={:magnifying_glass} class="animate-spin" />
           </div>
-          
+
           <.button
             :if={@query != "" && @on_clear}
             variant="ghost"
@@ -66,12 +69,12 @@ defmodule RivaAshWeb.Components.Navigation.SearchGlobal do
           </.button>
         </div>
       </div>
-      
+
       <div :if={@show_results && @results != []} class={@results_class}>
         <div class="results-header">
           <span>Search Results (<%= length(@results) %>)</span>
         </div>
-        
+
         <div class="results-list">
           <button
             :for={result <- Enum.take(@results, @max_results)}
@@ -83,13 +86,13 @@ defmodule RivaAshWeb.Components.Navigation.SearchGlobal do
             <div class="result-icon">
               <.icon name={get_result_icon(result.type)} />
             </div>
-            
+
             <div class="result-content">
               <div class="result-title"><%= result.title %></div>
               <div class="result-subtitle"><%= result.subtitle %></div>
               <div class="result-type"><%= humanize_type(result.type) %></div>
             </div>
-            
+
             <div class="result-meta">
               <span :if={result.status} class="result-status">
                 <%= result.status %>
@@ -97,12 +100,12 @@ defmodule RivaAshWeb.Components.Navigation.SearchGlobal do
             </div>
           </button>
         </div>
-        
+
         <div :if={length(@results) > @max_results} class="results-footer">
           <span>Showing <%= @max_results %> of <%= length(@results) %> results</span>
         </div>
       </div>
-      
+
       <div :if={@show_results && @results == [] && @query != "" && !@loading} class={@no_results_class}>
         <.icon name={:magnifying_glass} />
         <p>No results found for "<%= @query %>"</p>
@@ -116,21 +119,17 @@ defmodule RivaAshWeb.Components.Navigation.SearchGlobal do
   @spec build_container_class(String.t()) :: String.t()
   defp build_container_class(class) do
     ["global-search", class]
-    |> Enum.filter(& &1 != "")
+    |> Enum.filter(&(&1 != ""))
     |> Enum.join(" ")
   end
 
   # Helper function to build input container classes
   @spec build_input_container_class() :: String.t()
-  defp build_input_container_class() do
-    "search-input-container"
-  end
+  defp build_input_container_class, do: "search-input-container"
 
   # Helper function to build actions classes
   @spec build_actions_class(boolean(), String.t(), String.t() | nil) :: String.t()
-  defp build_actions_class(loading, query, on_clear) do
-    "search-actions"
-  end
+  defp build_actions_class(loading, query, on_clear), do: "search-actions"
 
   # Helper function to build results classes
   @spec build_results_class(boolean(), list()) :: String.t()

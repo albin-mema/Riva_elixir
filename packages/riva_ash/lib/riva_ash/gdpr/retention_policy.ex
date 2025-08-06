@@ -17,37 +17,40 @@ defmodule RivaAsh.GDPR.RetentionPolicy do
   require Ash.Query
   import Ash.Expr
 
-  @config Application.get_env(:riva_ash, :gdpr, %{})
-  
+  @config Application.compile_env(:riva_ash, :gdpr, %{})
+
   # Retention periods in days - configurable via application config
-  @retention_periods Map.merge(%{
-    # User account data - keep for 7 years after account closure (legal requirement)
-    user_accounts: 365 * 7,
+  @retention_periods Map.merge(
+                       %{
+                         # User account data - keep for 7 years after account closure (legal requirement)
+                         user_accounts: 365 * 7,
 
-    # Employee data - keep for 3 years after employment ends
-    employee_records: 365 * 3,
+                         # Employee data - keep for 3 years after employment ends
+                         employee_records: 365 * 3,
 
-    # Client data - keep for 2 years after last interaction
-    client_records: 365 * 2,
+                         # Client data - keep for 2 years after last interaction
+                         client_records: 365 * 2,
 
-    # Reservation data - keep for 5 years (business records requirement)
-    reservations: 365 * 5,
+                         # Reservation data - keep for 5 years (business records requirement)
+                         reservations: 365 * 5,
 
-    # Consent records - keep for 3 years after withdrawal
-    consent_records: 365 * 3,
+                         # Consent records - keep for 3 years after withdrawal
+                         consent_records: 365 * 3,
 
-    # Audit logs - keep for 1 year
-    audit_logs: 365,
+                         # Audit logs - keep for 1 year
+                         audit_logs: 365,
 
-    # Session data - keep for 30 days
-    session_data: 30,
+                         # Session data - keep for 30 days
+                         session_data: 30,
 
-    # System logs - keep for 90 days
-    system_logs: 90,
+                         # System logs - keep for 90 days
+                         system_logs: 90,
 
-    # Marketing data - delete immediately upon consent withdrawal
-    marketing_data: 0
-  }, Map.get(@config, :retention_periods, %{}))
+                         # Marketing data - delete immediately upon consent withdrawal
+                         marketing_data: 0
+                       },
+                       Map.get(@config, :retention_periods, %{})
+                     )
 
   @doc """
   Get retention period for a specific data type.
@@ -80,7 +83,7 @@ defmodule RivaAsh.GDPR.RetentionPolicy do
       |> add_cleanup_result(:audit_logs_processed, &cleanup_expired_audit_logs/0)
       |> add_cleanup_result(:sessions_processed, &cleanup_expired_sessions/0)
 
-    Logger.info("GDPR: Retention cleanup completed", extra: results)
+    Logger.info("GDPR: Retention cleanup completed")
     {:ok, results}
   end
 
@@ -92,7 +95,8 @@ defmodule RivaAsh.GDPR.RetentionPolicy do
   Check if data should be deleted based on retention policy.
   """
   @spec should_delete?(atom(), DateTime.t()) :: boolean()
-  def should_delete?(data_type, last_activity_date) when is_atom(data_type) and is_struct(last_activity_date, DateTime) do
+  def should_delete?(data_type, last_activity_date)
+      when is_atom(data_type) and is_struct(last_activity_date, DateTime) do
     retention_days = retention_period(data_type)
     cutoff_date = DateTime.utc_now() |> DateTime.add(-retention_days, :day)
 
@@ -108,12 +112,16 @@ defmodule RivaAsh.GDPR.RetentionPolicy do
   """
   @spec anonymize_record(map(), atom()) :: {:ok, map()} | {:error, String.t()}
   def anonymize_record(record, data_type) when is_map(record) and is_atom(data_type) do
-    anonymizer = Map.get(%{
-      :user_accounts => &anonymize_user/1,
-      :employee_records => &anonymize_employee/1,
-      :client_records => &anonymize_client/1,
-      :reservations => &anonymize_reservation/1
-    }, data_type)
+    anonymizer =
+      Map.get(
+        %{
+          :user_accounts => &anonymize_user/1,
+          :employee_records => &anonymize_employee/1,
+          :client_records => &anonymize_client/1,
+          :reservations => &anonymize_reservation/1
+        },
+        data_type
+      )
 
     case anonymizer do
       nil -> {:error, "Anonymization not supported for #{data_type}"}
@@ -143,8 +151,11 @@ defmodule RivaAsh.GDPR.RetentionPolicy do
 
     count
   rescue
+    error in [Ash.Error.Forbidden, Ash.Error.Invalid] ->
+      Logger.error("GDPR: Authorization error in user cleanup: #{inspect(error)}")
+      0
     error ->
-      Logger.error("GDPR: Error in user cleanup: #{inspect(error)}")
+      Logger.error("GDPR: Unexpected error in user cleanup: #{inspect(error)}")
       0
   end
 
@@ -210,8 +221,11 @@ defmodule RivaAsh.GDPR.RetentionPolicy do
 
     count
   rescue
+    error in [Ash.Error.Forbidden, Ash.Error.Invalid] ->
+      Logger.error("GDPR: Authorization error in consent cleanup: #{inspect(error)}")
+      0
     error ->
-      Logger.error("GDPR: Error in consent cleanup: #{inspect(error)}")
+      Logger.error("GDPR: Unexpected error in consent cleanup: #{inspect(error)}")
       0
   end
 
@@ -261,14 +275,17 @@ defmodule RivaAsh.GDPR.RetentionPolicy do
         {:error, reason} -> {:error, reason}
       end
     rescue
-      error -> {:error, error}
+      error in [Ash.Error.Forbidden, Ash.Error.Invalid] ->
+        {:error, "Authorization error: #{inspect(error)}"}
+      error ->
+        {:error, error}
     end
   end
 
-  defp delete_user_businesses(_user_id) do
+  defp delete_user_businesses(user_id) do
     # Placeholder implementation - needs actual Business resource handling
     # Example: Business |> Ash.Query.filter(owner_id == ^user_id) |> Ash.destroy_all()
-    Logger.info("GDPR: Business deletion placeholder for user_id: #{_user_id}")
+    Logger.info("GDPR: Business deletion placeholder for user_id: #{user_id}")
     :ok
   end
 
@@ -276,7 +293,9 @@ defmodule RivaAsh.GDPR.RetentionPolicy do
     ConsentRecord.by_user!(user_id)
     |> Enum.each(fn consent ->
       case Ash.destroy(consent) do
-        :ok -> :ok
+        :ok ->
+          :ok
+
         {:error, reason} ->
           Logger.error("GDPR: Failed to delete consent #{consent.id}: #{inspect(reason)}")
           {:error, reason}

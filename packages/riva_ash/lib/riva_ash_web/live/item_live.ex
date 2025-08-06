@@ -23,6 +23,7 @@ defmodule RivaAshWeb.ItemLive do
         case load_items_data(socket, user) do
           {:ok, socket} ->
             {:ok, socket}
+
           {:error, reason} ->
             Logger.error("Failed to load items: #{inspect(reason)}")
             {:ok, redirect(socket, to: "/access-denied")}
@@ -103,13 +104,13 @@ defmodule RivaAshWeb.ItemLive do
   def handle_event("delete_item", %{"id" => id}, socket) do
     case ItemService.delete_item(id, socket.assigns.current_user) do
       {:ok, _item} ->
-        {:noreply, 
+        {:noreply,
          socket
          |> put_flash(:info, "Item deleted successfully")
          |> reload_items()}
-      
+
       {:error, reason} ->
-        {:noreply, 
+        {:noreply,
          socket
          |> put_flash(:error, "Failed to delete item: #{format_error(reason)}")}
     end
@@ -130,9 +131,9 @@ defmodule RivaAshWeb.ItemLive do
           |> assign(:items, items)
           |> assign(:meta, meta)
           |> assign(:loading, false)
-        
+
         {:ok, socket}
-      
+
       {:error, reason} ->
         {:error, reason}
     end
@@ -143,7 +144,7 @@ defmodule RivaAshWeb.ItemLive do
       {:ok, {items, meta}} ->
         assign(socket, :items, items)
         |> assign(:meta, meta)
-      
+
       {:error, _reason} ->
         socket
     end
@@ -155,26 +156,35 @@ defmodule RivaAshWeb.ItemLive do
 
   defp truncate_text(nil, _length), do: "N/A"
   defp truncate_text(text, length) when byte_size(text) <= length, do: text
+
   defp truncate_text(text, length) do
     String.slice(text, 0, length) <> "..."
   end
 
   defp format_price(nil), do: "N/A"
+
   defp format_price(price) when is_number(price) do
     case Money.new(price, :USD) do
       {:ok, money} -> Money.to_string(money)
       {:error, _} -> "$#{:erlang.float_to_binary(price, decimals: 2)}"
     end
   end
+
   defp format_price(_price), do: "N/A"
 
   defp format_error(reason) do
     case reason do
-      %Ash.Error.Invalid{errors: errors} -> 
-        errors |> Enum.map(&format_validation_error/1) |> Enum.join(", ")
-      %Ash.Error.Forbidden{} -> "You don't have permission to perform this action"
-      %Ash.Error.NotFound{} -> "Item not found"
-      _ -> "An unexpected error occurred"
+      %Ash.Error.Invalid{errors: errors} ->
+        Enum.map_join(errors, ", ", &format_validation_error/1)
+
+      %Ash.Error.Forbidden{} ->
+        "You don't have permission to perform this action"
+
+      %Ash.Error.NotFound{} ->
+        "Item not found"
+
+      _ ->
+        "An unexpected error occurred"
     end
   end
 

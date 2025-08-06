@@ -1,7 +1,7 @@
 defmodule RivaAshWeb.Components.Atoms.Label do
   @moduledoc """
   Label component for form elements and content labeling.
-  
+
   Follows functional core, imperative shell pattern with comprehensive type safety.
   """
   use Phoenix.Component
@@ -13,15 +13,15 @@ defmodule RivaAshWeb.Components.Atoms.Label do
 
   @doc """
   Renders a label component with different variants and styles.
-  
+
   ## Examples
-    
+
       <.label for="username">Username</.label>
-      
+
       <.label variant="required" size="lg" weight="bold">
         Email Address
       </.label>
-      
+
       <.label variant="disabled" for="disabled-field">
         Disabled Field
       </.label>
@@ -153,6 +153,7 @@ defmodule RivaAshWeb.Components.Atoms.Label do
     # In a real implementation, you might want to log this error
     # and render a fallback label or error state
     IO.puts("Label error: #{reason}")
+
     ~H"""
     <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative">
       <span class="block sm:inline">Error: <%= reason %></span>

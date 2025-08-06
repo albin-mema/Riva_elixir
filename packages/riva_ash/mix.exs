@@ -183,24 +183,26 @@ defmodule RivaAsh.MixProject do
       "ecto.reset": ["ecto.drop", "ecto.setup"],
       "ecto.migrate": ["ecto.migrate", "ecto.dump"],
       "ecto.rollback": ["ecto.rollback"],
-      
+
       # === Testing ===
       test: fn args ->
         env = System.get_env("SKIP_DB")
         IO.puts("[mix alias test] SKIP_DB=#{inspect(env)} args=#{inspect(args)}")
 
-        truthy? = case env do
-          "true" -> true
-          "1" -> true
-          "yes" -> true
-          "on" -> true
-          _ -> false
-        end
+        truthy? =
+          case env do
+            "true" -> true
+            "1" -> true
+            "yes" -> true
+            "on" -> true
+            _ -> false
+          end
 
         if truthy? do
           IO.puts("[mix alias test] DB setup skipped due to SKIP_DB")
           # Run tests without DB. Load a unit-only test helper if present to avoid Repo/Sandbox.
           unit_helper = Path.join(["test", "unit_test_helper.exs"])
+
           if File.exists?(unit_helper) do
             IO.puts("[mix alias test] loading #{unit_helper}")
             Code.require_file(unit_helper)
@@ -218,13 +220,17 @@ defmodule RivaAsh.MixProject do
           Mix.Tasks.Test.run(args)
         end
       end,
-      
+
       # === Code Quality ===
       "credo.check": "credo --strict",
       "credo.suggest": "credo --strict --only",
+      "credo.fix": "mix format && mix credo --strict --fix",
+      "quality.check": ["format", "credo.check", "dialyzer.check"],
+      "quality.quick": ["credo.check", "dialyzer.check"],
+      "quality.full": ["format", "credo.check", "dialyzer.check", "sobelow.check", "test"],
       "dialyzer.check": "dialyzer",
       "sobelow.check": "sobelow --config",
-      
+
       # === Assets ===
       "assets.deploy": [
         "tailwind default --minify",
@@ -234,11 +240,11 @@ defmodule RivaAsh.MixProject do
       ],
       "assets.setup": ["tailwind.install --if-missing", "esbuild.install --if-missing"],
       "assets.build": ["tailwind default", "esbuild default"],
-      
+
       # === Documentation ===
       "docs.build": "mix docs",
       "docs.open": "mix docs",
-      
+
       # === Release ===
       "release.clean": ["clean", "clean deps"],
       "release.test": ["ecto.create --quiet", "ecto.migrate --quiet", "test"],

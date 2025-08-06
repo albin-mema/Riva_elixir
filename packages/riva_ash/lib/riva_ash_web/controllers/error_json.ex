@@ -1,7 +1,7 @@
 defmodule RivaAshWeb.ErrorJSON do
   @moduledoc """
   Error JSON response handler for Riva Ash web interface.
-  
+
   This module is invoked by your endpoint in case of errors on JSON requests.
   Provides standardized error response format for all JSON API errors.
 
@@ -18,11 +18,11 @@ defmodule RivaAshWeb.ErrorJSON do
 
   @doc """
   Renders error response for JSON requests.
-  
+
   ## Parameters
   - template: The error template name (e.g., "404.json", "500.json")
   - assigns: Additional assigns (currently unused)
-  
+
   ## Returns
   - Map with standardized error format
   """
@@ -33,10 +33,10 @@ defmodule RivaAshWeb.ErrorJSON do
 
   @doc """
   Renders validation errors for JSON requests.
-  
+
   ## Parameters
   - changeset: Ecto.Changeset with validation errors
-  
+
   ## Returns
   - Map with validation error details
   """
@@ -47,10 +47,10 @@ defmodule RivaAshWeb.ErrorJSON do
 
   @doc """
   Renders authorization errors for JSON requests.
-  
+
   ## Parameters
   - reason: Authorization error reason
-  
+
   ## Returns
   - Map with authorization error details
   """
@@ -61,11 +61,11 @@ defmodule RivaAshWeb.ErrorJSON do
 
   @doc """
   Renders not found errors for JSON requests.
-  
+
   ## Parameters
   - resource: Resource type that was not found
   - id: Resource ID that was not found (optional)
-  
+
   ## Returns
   - Map with not found error details
   """
@@ -77,10 +77,10 @@ defmodule RivaAshWeb.ErrorJSON do
 
   @doc """
   Renders Ash-specific errors for JSON requests.
-  
+
   ## Parameters
   - ash_error: Ash.Error struct with error details
-  
+
   ## Returns
   - Map with Ash error details
   """

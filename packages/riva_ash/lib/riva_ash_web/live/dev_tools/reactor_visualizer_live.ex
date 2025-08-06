@@ -140,6 +140,7 @@ defmodule RivaAshWeb.DevTools.ReactorVisualizerLive do
       case result do
         {:ok, outputs} ->
           handle_info({:execution_complete, outputs}, socket)
+
         {:error, error} ->
           handle_info({:execution_error, error}, socket)
       end
@@ -428,7 +429,7 @@ defmodule RivaAshWeb.DevTools.ReactorVisualizerLive do
     end
 
     # Helper functions
-    defp get_page_title, do: Application.get_env(:riva_ash, __MODULE__, [])[:page_title] || "Reactor Flow Visualizer"
+    defp get_page_title, do: Application.get_env(:riva_ash, __MODULE__, []) |> get_in([:page_title]) || "Reactor Flow Visualizer"
 
     # Reactor execution functions
     defp execute_reactor_with_tracking(_reactor, _inputs) do

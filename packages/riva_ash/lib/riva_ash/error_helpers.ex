@@ -77,15 +77,6 @@ defmodule RivaAsh.ErrorHelpers do
     }
   end
 
-  @spec format_validation_errors(list(any())) :: String.t()
-  defp format_validation_errors(errors) do
-    Enum.map_join(errors, ", ", &format_error/1)
-  end
-
-  @spec format_validation_error_details(list(any())) :: list(map())
-  defp format_validation_error_details(errors) do
-    Enum.map(errors, &format_error/1)
-  end
 
   @doc """
   Handles errors in a consistent way, logging them and returning a standardized error map.
@@ -116,7 +107,7 @@ defmodule RivaAsh.ErrorHelpers do
       iex> RivaAsh.ErrorHelpers.with_error_handling(fn -> {:error, "Something went wrong"} end)
       {:error, %{code: :error, message: "Something went wrong"}}
   """
-  @spec with_error_handling((() :: any())) :: {:ok, any()} | {:error, map()}
+  @spec with_error_handling((-> any())) :: {:ok, any()} | {:error, map()}
   def with_error_handling(fun) when is_function(fun, 0) do
     try do
       case fun.() do
@@ -144,7 +135,7 @@ defmodule RivaAsh.ErrorHelpers do
   @doc """
   Similar to `with_error_handling/1` but raises on error instead of returning a tuple.
   """
-  @spec with_error_handling!((() :: any())) :: any()
+  @spec with_error_handling!((-> any())) :: any()
   def with_error_handling!(fun) when is_function(fun, 0) do
     case with_error_handling(fun) do
       {:ok, result} -> result
@@ -171,11 +162,4 @@ defmodule RivaAsh.ErrorHelpers do
     end
   end
 
-  @spec validate_presence(any(), any()) :: {:ok, any()} | {:error, any()}
-  defp validate_presence(value, error_reason) do
-    case is_nil(value) do
-      true -> failure(error_reason)
-      false -> success(value)
-    end
-  end
 end

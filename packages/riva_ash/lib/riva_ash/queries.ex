@@ -14,7 +14,7 @@ defmodule RivaAsh.Queries do
   Uses optimized indexes and minimal data loading.
   """
   @spec check_item_availability(String.t(), DateTime.t(), DateTime.t()) ::
-        {:ok, :available} | {:error, any()}
+          {:ok, :available} | {:error, any()}
   def check_item_availability(item_id, start_datetime, end_datetime) do
     RivaAsh.Validations.check_item_availability(item_id, start_datetime, end_datetime)
   end
@@ -23,7 +23,7 @@ defmodule RivaAsh.Queries do
   Get all available items for a business on a specific date.
   """
   @spec available_items_for_business_and_date(String.t(), Date.t()) ::
-        {:ok, list(Item.t())} | {:error, any()}
+          {:ok, list(Item.t())} | {:error, any()}
   def available_items_for_business_and_date(business_id, date)
       when is_binary(business_id) and is_struct(date, Date) do
     with {:ok, start_datetime} <- create_start_datetime(date),
@@ -63,7 +63,7 @@ defmodule RivaAsh.Queries do
   end
 
   @spec filter_available_items(list(Item.t()), DateTime.t(), DateTime.t()) ::
-        {:ok, list(Item.t())} | {:error, any()}
+          {:ok, list(Item.t())} | {:error, any()}
   defp filter_available_items(items, start_datetime, end_datetime) do
     available_items =
       Enum.filter(items, fn item ->
@@ -80,7 +80,7 @@ defmodule RivaAsh.Queries do
   Get upcoming reservations for a business.
   """
   @spec upcoming_reservations_for_business(String.t(), non_neg_integer()) ::
-        {:ok, list(Reservation.t())} | {:error, any()}
+          {:ok, list(Reservation.t())} | {:error, any()}
   def upcoming_reservations_for_business(business_id, limit \\ 10)
       when is_binary(business_id) and is_integer(limit) and limit >= 0 do
     with {:ok, now} <- get_current_time(),
@@ -93,7 +93,7 @@ defmodule RivaAsh.Queries do
   end
 
   @spec get_current_time() :: {:ok, DateTime.t()} | {:error, any()}
-  defp get_current_time() do
+  defp get_current_time do
     case Timex.now() do
       %DateTime{} = datetime -> {:ok, datetime}
       error -> {:error, error}
@@ -101,7 +101,7 @@ defmodule RivaAsh.Queries do
   end
 
   @spec get_upcoming_reservations(String.t(), DateTime.t(), non_neg_integer()) ::
-        {:ok, list(Reservation.t())} | {:error, any()}
+          {:ok, list(Reservation.t())} | {:error, any()}
   defp get_upcoming_reservations(business_id, now, limit) do
     Reservation
     |> Ash.Query.filter(expr(item.section.plot.business_id == ^business_id))
@@ -116,19 +116,18 @@ defmodule RivaAsh.Queries do
   Get reservation history for a client.
   """
   @spec client_reservation_history(String.t(), non_neg_integer()) ::
-        {:ok, list(Reservation.t())} | {:error, any()}
+          {:ok, list(Reservation.t())} | {:error, any()}
   def client_reservation_history(client_id, limit \\ 50)
       when is_binary(client_id) and is_integer(limit) and limit >= 0 do
-    with {:ok, reservations} <- get_client_reservations(client_id, limit) do
-      {:ok, reservations}
-    else
+    case get_client_reservations(client_id, limit) do
+      {:ok, reservations} -> {:ok, reservations}
       {:error, reason} -> {:error, reason}
       error -> {:error, "Failed to get client reservation history: #{inspect(error)}"}
     end
   end
 
   @spec get_client_reservations(String.t(), non_neg_integer()) ::
-        {:ok, list(Reservation.t())} | {:error, any()}
+          {:ok, list(Reservation.t())} | {:error, any()}
   defp get_client_reservations(client_id, limit) do
     Reservation
     |> Ash.Query.filter(expr(client_id == ^client_id))
@@ -157,6 +156,7 @@ defmodule RivaAsh.Queries do
   @spec get_period(list()) :: {:ok, atom()} | {:error, any()}
   defp get_period(opts) do
     period = Keyword.get(opts, :period, :month)
+
     if is_atom(period) do
       {:ok, period}
     else
@@ -165,7 +165,7 @@ defmodule RivaAsh.Queries do
   end
 
   @spec get_reservations_for_period(String.t(), DateTime.t(), DateTime.t()) ::
-        {:ok, list(Reservation.t())} | {:error, any()}
+          {:ok, list(Reservation.t())} | {:error, any()}
   defp get_reservations_for_period(business_id, start_date, end_date) do
     Reservation
     |> Ash.Query.filter(expr(item.section.plot.business_id == ^business_id))
@@ -174,7 +174,7 @@ defmodule RivaAsh.Queries do
   end
 
   @spec calculate_metrics(list(Reservation.t()), atom(), DateTime.t(), DateTime.t()) ::
-        {:ok, map()} | {:error, any()}
+          {:ok, map()} | {:error, any()}
   defp calculate_metrics(reservations, period, start_date, end_date) do
     metrics = %{
       total_reservations: length(reservations),
@@ -193,7 +193,7 @@ defmodule RivaAsh.Queries do
   Get optimized business reservations with minimal data loading.
   """
   @spec business_reservations_optimized(String.t(), list()) ::
-        {:ok, list(Reservation.t())} | {:error, any()}
+          {:ok, list(Reservation.t())} | {:error, any()}
   def business_reservations_optimized(business_id, opts \\ [])
       when is_binary(business_id) and is_list(opts) do
     with {:ok, limit} <- get_limit(opts),
@@ -209,6 +209,7 @@ defmodule RivaAsh.Queries do
   @spec get_limit(list()) :: {:ok, non_neg_integer()} | {:error, any()}
   defp get_limit(opts) do
     limit = Keyword.get(opts, :limit, 100)
+
     if is_integer(limit) and limit >= 0 do
       {:ok, limit}
     else
@@ -219,6 +220,7 @@ defmodule RivaAsh.Queries do
   @spec get_status_filter(list()) :: {:ok, list(atom())} | {:error, any()}
   defp get_status_filter(opts) do
     status_filter = Keyword.get(opts, :status, [:confirmed, :pending])
+
     if is_list(status_filter) and Enum.all?(status_filter, &is_atom/1) do
       {:ok, status_filter}
     else
@@ -227,7 +229,7 @@ defmodule RivaAsh.Queries do
   end
 
   @spec get_business_reservations(String.t(), non_neg_integer(), list(atom())) ::
-        {:ok, list(Reservation.t())} | {:error, any()}
+          {:ok, list(Reservation.t())} | {:error, any()}
   defp get_business_reservations(business_id, limit, status_filter) do
     Reservation
     |> Ash.Query.filter(expr(item.section.plot.business_id == ^business_id))
@@ -241,7 +243,7 @@ defmodule RivaAsh.Queries do
   Find items with scheduling conflicts in a given time range.
   """
   @spec items_with_conflicts(String.t(), DateTime.t(), DateTime.t()) ::
-        {:ok, list(Item.t())} | {:error, any()}
+          {:ok, list(Item.t())} | {:error, any()}
   def items_with_conflicts(business_id, start_datetime, end_datetime)
       when is_binary(business_id) and is_struct(start_datetime, DateTime) and is_struct(end_datetime, DateTime) do
     with {:ok, items} <- get_business_items(business_id),
@@ -254,7 +256,7 @@ defmodule RivaAsh.Queries do
   end
 
   @spec find_conflicted_items(list(Item.t()), DateTime.t(), DateTime.t()) ::
-        {:ok, list(Item.t())} | {:error, any()}
+          {:ok, list(Item.t())} | {:error, any()}
   defp find_conflicted_items(items, start_datetime, end_datetime) do
     conflicted_items =
       Enum.filter(items, fn item ->
@@ -285,7 +287,7 @@ defmodule RivaAsh.Queries do
   end
 
   @spec get_employee_reservations(String.t(), DateTime.t(), DateTime.t()) ::
-        {:ok, list(Reservation.t())} | {:error, any()}
+          {:ok, list(Reservation.t())} | {:error, any()}
   defp get_employee_reservations(employee_id, start_date, end_date) do
     Reservation
     |> Ash.Query.filter(expr(employee_id == ^employee_id))
@@ -294,7 +296,7 @@ defmodule RivaAsh.Queries do
   end
 
   @spec calculate_workload(list(Reservation.t()), atom(), DateTime.t(), DateTime.t()) ::
-        {:ok, map()} | {:error, any()}
+          {:ok, map()} | {:error, any()}
   defp calculate_workload(reservations, period, start_date, end_date) do
     workload = %{
       total_reservations: length(reservations),
@@ -312,7 +314,7 @@ defmodule RivaAsh.Queries do
   Get popular items for a business based on reservation count.
   """
   @spec popular_items_for_business(String.t(), non_neg_integer()) ::
-        {:ok, list(Item.t())} | {:error, any()}
+          {:ok, list(Item.t())} | {:error, any()}
   def popular_items_for_business(business_id, limit \\ 10)
       when is_binary(business_id) and is_integer(limit) and limit >= 0 do
     with {:ok, items} <- get_business_items(business_id),
@@ -326,7 +328,7 @@ defmodule RivaAsh.Queries do
   end
 
   @spec calculate_item_popularity(list(Item.t())) ::
-        {:ok, list({Item.t(), non_neg_integer()})} | {:error, any()}
+          {:ok, list({Item.t(), non_neg_integer()})} | {:error, any()}
   defp calculate_item_popularity(items) do
     items_with_counts =
       Enum.map(items, fn item ->
@@ -349,7 +351,7 @@ defmodule RivaAsh.Queries do
   end
 
   @spec extract_popular_items(list({Item.t(), non_neg_integer()}), non_neg_integer()) ::
-        {:ok, list(Item.t())} | {:error, any()}
+          {:ok, list(Item.t())} | {:error, any()}
   defp extract_popular_items(items_with_counts, limit) do
     popular_items =
       items_with_counts
@@ -379,6 +381,7 @@ defmodule RivaAsh.Queries do
   @spec get_include_inactive(list()) :: {:ok, boolean()} | {:error, any()}
   defp get_include_inactive(opts) do
     include_inactive = Keyword.get(opts, :include_inactive, false)
+
     if is_boolean(include_inactive) do
       {:ok, include_inactive}
     else
@@ -387,7 +390,7 @@ defmodule RivaAsh.Queries do
   end
 
   @spec build_search_query(String.t(), String.t(), boolean()) ::
-        {:ok, Ash.Query.t()} | {:error, any()}
+          {:ok, Ash.Query.t()} | {:error, any()}
   defp build_search_query(business_id, search_term, include_inactive) do
     query =
       Item
@@ -419,7 +422,7 @@ defmodule RivaAsh.Queries do
   Get reservation calendar data for a business in a date range.
   """
   @spec reservation_calendar_data(String.t(), Date.t(), Date.t()) ::
-        {:ok, list(Reservation.t())} | {:error, any()}
+          {:ok, list(Reservation.t())} | {:error, any()}
   def reservation_calendar_data(business_id, start_date, end_date)
       when is_binary(business_id) and is_struct(start_date, Date) and is_struct(end_date, Date) do
     with {:ok, start_datetime} <- create_start_datetime(start_date),
@@ -433,7 +436,7 @@ defmodule RivaAsh.Queries do
   end
 
   @spec get_calendar_reservations(String.t(), DateTime.t(), DateTime.t()) ::
-        {:ok, list(Reservation.t())} | {:error, any()}
+          {:ok, list(Reservation.t())} | {:error, any()}
   defp get_calendar_reservations(business_id, start_datetime, end_datetime) do
     Reservation
     |> Ash.Query.filter(expr(item.section.plot.business_id == ^business_id))

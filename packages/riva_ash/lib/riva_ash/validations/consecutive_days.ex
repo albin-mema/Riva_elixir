@@ -43,9 +43,10 @@ defmodule RivaAsh.Validations.ConsecutiveDays do
   @spec consecutive_days?(DateTime.t(), DateTime.t()) :: boolean()
   defp consecutive_days?(reserved_from, reserved_until) do
     {from_date, until_date} = {Timex.to_date(reserved_from), Timex.to_date(reserved_until)}
-    
+
     case Timex.diff(until_date, from_date, :days) do
-      0 -> true  # Single day reservations are always valid
+      # Single day reservations are always valid
+      0 -> true
       days_diff when days_diff >= 1 -> consecutive_date_range?(from_date, until_date)
       _ -> false
     end
@@ -55,7 +56,7 @@ defmodule RivaAsh.Validations.ConsecutiveDays do
   defp consecutive_date_range?(start_date, end_date) do
     expected_dates = Timex.Interval.new(from: start_date, until: end_date) |> Enum.to_list()
     actual_days = Timex.diff(end_date, start_date, :days) + 1
-    
+
     length(expected_dates) == actual_days
   end
 

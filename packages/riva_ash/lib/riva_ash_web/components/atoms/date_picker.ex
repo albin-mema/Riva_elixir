@@ -112,20 +112,22 @@ defmodule RivaAshWeb.Components.Atoms.DatePicker do
   @spec build_input_class(String.t(), String.t(), Phoenix.HTML.FormField.t()) :: String.t()
   defp build_input_class(size, variant, field) do
     base_classes = "w-full rounded-md border px-3 py-2 shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-    
-    size_classes = case size do
-      "sm" -> "text-sm"
-      "lg" -> "text-lg"
-      _ -> "text-base"
-    end
 
-    variant_classes = case variant do
-      "error" -> "border-red-300 focus:border-red-500 focus:ring-red-500"
-      "success" -> "border-green-300 focus:border-green-500 focus:ring-green-500"
-      _ -> "border-gray-300 focus:border-blue-500 focus:ring-blue-500"
-    end
+    size_classes =
+      case size do
+        "sm" -> "text-sm"
+        "lg" -> "text-lg"
+        _ -> "text-base"
+      end
 
-    error_classes = if field && field.errors != [], do: "border-red-500", else: ""
+    variant_classes =
+      case variant do
+        "error" -> "border-red-300 focus:border-red-500 focus:ring-red-500"
+        "success" -> "border-green-300 focus:border-green-500 focus:ring-green-500"
+        _ -> "border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+      end
+
+    error_classes = if field && field.errors != [], "border-red-500", ""
 
     "#{base_classes} #{size_classes} #{variant_classes} #{error_classes}"
   end

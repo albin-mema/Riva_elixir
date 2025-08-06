@@ -362,7 +362,7 @@ defmodule RivaAshWeb.DevTools.PerformanceDashboardLive do
     end
 
     # Helper functions
-    defp get_page_title, do: Application.get_env(:riva_ash, __MODULE__, [])[:page_title] || "Performance Dashboard"
+    defp get_page_title, do: Application.get_env(:riva_ash, __MODULE__, []) |> get_in([:page_title]) || "Performance Dashboard"
 
     # Telemetry event handlers
     defp handle_telemetry_event(_event, _measurements, _metadata, _config), do: :ok

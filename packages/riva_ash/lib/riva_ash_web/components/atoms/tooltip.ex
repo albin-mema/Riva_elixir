@@ -89,7 +89,7 @@ defmodule RivaAshWeb.Components.Atoms.Tooltip do
       >
         <%= render_slot(@inner_block) %>
       </div>
-      
+
       <div
         class="tooltip-content"
         id={"tooltip-#{:crypto.strong_rand_bytes(8) |> Base.encode16()}"}

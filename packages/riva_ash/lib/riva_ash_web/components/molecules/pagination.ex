@@ -1,40 +1,40 @@
 defmodule RivaAshWeb.Components.Molecules.Pagination do
   @moduledoc """
   Pagination component for table navigation.
-  
+
   Provides a comprehensive pagination interface with page size selection,
   page navigation controls, and responsive page number display.
-  
+
   ## Styleguide Compliance
-  
+
   This component follows the Riva Ash styleguide principles:
-  
+
   ### Functional Programming Patterns
   - Uses pipeline operator (`|>`) for data transformation
   - Implements pure functions with no side effects
   - Uses pattern matching for data validation and processing
   - Follows single level of abstraction principle
-  
+
   ### Type Safety
   - Comprehensive type specifications using `@type` and `@spec`
   - Strong typing for all function parameters and return values
   - Type validation through pattern matching
-  
+
   ### Error Handling
   - Uses result tuples (`:ok | {:error, String.t()}`) for consistent error handling
   - Early validation with guard clauses
   - Clear error messages for invalid inputs
-  
+
   ### Code Abstraction
   - Separates concerns into focused helper functions
   - Extracts validation logic into dedicated functions
   - Uses functional composition for complex operations
-  
+
   ### Phoenix/Ash Patterns
   - Follows Phoenix LiveView component conventions
   - Uses proper attribute validation and building
   - Implements functional core, imperative shell pattern
-  
+
   ### LiveView Component Patterns
   - Uses proper slot and attribute handling
   - Implements accessibility features
@@ -64,9 +64,9 @@ defmodule RivaAshWeb.Components.Molecules.Pagination do
 
   @doc """
   Renders pagination controls.
-  
+
   ## Examples
-  
+
       <.pagination
         meta={%{current_page: 2, total_pages: 10, total_count: 95, page_size: 10}}
         path="/users"
@@ -75,16 +75,31 @@ defmodule RivaAshWeb.Components.Molecules.Pagination do
       />
   """
   @spec pagination(assigns :: assigns()) :: Phoenix.LiveView.Rendered.t()
-  attr(:meta, :map, required: true,
-    doc: "Pagination metadata with current_page, total_pages, total_count, and page_size")
-  attr(:path, :string, required: true,
-    doc: "Base path for pagination links")
-  attr(:show_page_size, :boolean, default: true,
-    doc: "Whether to show the page size selector")
-  attr(:page_sizes, :list, default: [10, 20, 50, 100],
-    doc: "Available page size options")
-  attr(:class, :string, default: "",
-    doc: "Additional CSS classes for the container")
+  attr(:meta, :map,
+    required: true,
+    doc: "Pagination metadata with current_page, total_pages, total_count, and page_size"
+  )
+
+  attr(:path, :string,
+    required: true,
+    doc: "Base path for pagination links"
+  )
+
+  attr(:show_page_size, :boolean,
+    default: true,
+    doc: "Whether to show the page size selector"
+  )
+
+  attr(:page_sizes, :list,
+    default: [10, 20, 50, 100],
+    doc: "Available page size options"
+  )
+
+  attr(:class, :string,
+    default: "",
+    doc: "Additional CSS classes for the container"
+  )
+
   attr(:rest, :global)
 
   @impl true
@@ -101,7 +116,7 @@ defmodule RivaAshWeb.Components.Molecules.Pagination do
     config = %{
       default_page_sizes: Application.get_env(:riva_ash, :default_page_sizes, [10, 20, 50, 100])
     }
-    
+
     # Build pagination data with defaults using functional pattern
     pagination_data = %{
       current_page: assigns.meta.current_page || 1,
@@ -132,20 +147,21 @@ defmodule RivaAshWeb.Components.Molecules.Pagination do
     cond do
       not is_integer(meta.current_page) or meta.current_page < 1 ->
         {:error, "current_page must be a positive integer"}
-      
+
       not is_integer(meta.total_pages) or meta.total_pages < 1 ->
         {:error, "total_pages must be a positive integer"}
-      
+
       not is_integer(meta.total_count) or meta.total_count < 0 ->
         {:error, "total_count must be a non-negative integer"}
-      
+
       not is_integer(meta.page_size) or meta.page_size < 1 ->
         {:error, "page_size must be a positive integer"}
-      
+
       meta.current_page > meta.total_pages ->
         {:error, "current_page cannot be greater than total_pages"}
-      
-      true -> :ok
+
+      true ->
+        :ok
     end
   end
 
@@ -155,17 +171,19 @@ defmodule RivaAshWeb.Components.Molecules.Pagination do
 
   @spec validate_page_sizes(list(integer())) :: :ok | {:error, String.t()}
   defp validate_page_sizes(sizes) when is_list(sizes) do
-    case Enum.all?(sizes, &is_integer(&1) and &1 > 0) do
+    case Enum.all?(sizes, &(is_integer(&1) and &1 > 0)) do
       true -> :ok
       false -> {:error, "page_sizes must be a list of positive integers"}
     end
   end
+
   defp validate_page_sizes(_), do: {:error, "page_sizes must be a list"}
 
   @spec render_pagination(assigns :: assigns()) :: Phoenix.LiveView.Rendered.t()
   defp render_pagination(assigns) do
-    %{current_page: current_page, total_pages: total_pages, total_count: total_count, page_size: page_size} = assigns.pagination_data
-    
+    %{current_page: current_page, total_pages: total_pages, total_count: total_count, page_size: page_size} =
+      assigns.pagination_data
+
     ~H"""
     <div class={["pagination-container flex items-center justify-between", @class]} {@rest}>
       <div class="pagination-info flex items-center gap-2">
@@ -190,11 +208,11 @@ defmodule RivaAshWeb.Components.Molecules.Pagination do
 
         <div class="pagination-buttons flex items-center gap-1">
           <%= render_previous_button(current_page, @path) %>
-          
+
           <%= for page <- calculate_page_range(current_page, total_pages) do %>
             <%= render_page_button(page, current_page, @path) %>
           <% end %>
-          
+
           <%= render_next_button(current_page, total_pages, @path) %>
         </div>
       </div>
@@ -209,7 +227,7 @@ defmodule RivaAshWeb.Components.Molecules.Pagination do
       start_item: (current_page - 1) * page_size + 1,
       end_item: min(current_page * page_size, total_count)
     }
-    
+
     # Build pagination text using functional composition
     "Showing #{pagination_range.start_item} to #{pagination_range.end_item} of #{total_count} results"
   end
@@ -228,10 +246,10 @@ defmodule RivaAshWeb.Components.Molecules.Pagination do
     cond do
       current <= 4 ->
         [1, 2, 3, 4, 5, :ellipsis, total]
-      
+
       current >= total - 3 ->
         [1, :ellipsis, total - 4, total - 3, total - 2, total - 1, total]
-      
+
       true ->
         [1, :ellipsis, current - 1, current, current + 1, :ellipsis, total]
     end
@@ -244,7 +262,7 @@ defmodule RivaAshWeb.Components.Molecules.Pagination do
       path: path,
       is_disabled: current_page <= 1
     }
-    
+
     ~H"""
     <UIButton.button
       variant="outline"
@@ -263,6 +281,7 @@ defmodule RivaAshWeb.Components.Molecules.Pagination do
   @spec render_page_button(integer() | atom(), integer(), String.t()) :: Phoenix.LiveView.Rendered.t()
   defp render_page_button(:ellipsis, _current_page, _path) do
     assigns = %{}
+
     ~H"""
     <span class="pagination-ellipsis px-2 py-1 text-sm text-muted-foreground">…</span>
     """
@@ -275,7 +294,7 @@ defmodule RivaAshWeb.Components.Molecules.Pagination do
       path: path,
       is_active: page == current_page
     }
-    
+
     ~H"""
     <UIButton.button
       variant={if @is_active, do: "default", else: "outline"}
@@ -298,7 +317,7 @@ defmodule RivaAshWeb.Components.Molecules.Pagination do
       path: path,
       is_disabled: current_page >= total_pages
     }
-    
+
     ~H"""
     <UIButton.button
       variant="outline"

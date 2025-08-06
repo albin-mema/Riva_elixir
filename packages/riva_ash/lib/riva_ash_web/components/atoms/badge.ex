@@ -6,7 +6,7 @@ defmodule RivaAshWeb.Components.Atoms.Badge do
   This module delegates to the canonical component to maintain backward compatibility.
 
   Note: Icon functionality is not supported in the canonical UI.Badge and will be ignored.
-  
+
   Follows functional core, imperative shell pattern with comprehensive type safety.
   """
   use Phoenix.Component
@@ -24,9 +24,9 @@ defmodule RivaAshWeb.Components.Atoms.Badge do
 
   Backwards-compatible API: maps legacy size to UI.Badge API.
   Note: icon, icon_position, and pill attributes are ignored as they're not supported in UI.Badge.
-  
+
   ## Examples
-    
+
       <.badge variant="success">Active</.badge>
       <.badge size="lg" variant="outline">Pending</.badge>
   """
@@ -127,6 +127,7 @@ defmodule RivaAshWeb.Components.Atoms.Badge do
     # In a real implementation, you might want to log this error
     # and render a fallback badge or error state
     IO.puts("Badge error: #{reason}")
+
     ~H"""
     <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative">
       <span class="block sm:inline">Error: <%= reason %></span>

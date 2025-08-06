@@ -4,10 +4,10 @@ defmodule RivaAshWeb.BookingControllerTest do
   import Phoenix.ConnTest
   alias RivaAsh.Factory
 
-  @avail_path &("/api/booking/availability/#{&1}")
+  @avail_path &"/api/booking/availability/#{&1}"
   @create_path "/api/booking/create"
   @items_path "/api/booking/items"
-  @client_bookings_path &("/api/booking/client/#{&1}")
+  @client_bookings_path &"/api/booking/client/#{&1}"
 
   @spec json_conn(Plug.Conn.t()) :: Plug.Conn.t()
   defp json_conn(conn) do
@@ -28,6 +28,7 @@ defmodule RivaAshWeb.BookingControllerTest do
 
       assert %{"data" => list} = json_response(conn, 200)
       assert is_list(list)
+
       assert Enum.any?(list, fn %{"id" => id, "name" => name} ->
                is_binary(id) and is_binary(name)
              end)
@@ -74,6 +75,7 @@ defmodule RivaAshWeb.BookingControllerTest do
              } = json_response(conn, 200)
 
       assert is_list(slots)
+
       assert Enum.all?(slots, fn %{"start_time" => s, "end_time" => e, "available" => a} ->
                is_binary(s) and is_binary(e) and is_boolean(a)
              end)

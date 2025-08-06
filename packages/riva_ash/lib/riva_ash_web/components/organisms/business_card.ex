@@ -70,27 +70,21 @@ defmodule RivaAshWeb.Components.Organisms.BusinessCard do
   @spec build_container_class(String.t()) :: String.t()
   defp build_container_class(class) do
     ["hover:shadow-md transition-shadow", class]
-    |> Enum.filter(& &1 != "")
+    |> Enum.filter(&(&1 != ""))
     |> Enum.join(" ")
   end
 
   # Helper function to build body classes
   @spec build_body_class() :: String.t()
-  defp build_body_class() do
-    "flex justify-between items-start"
-  end
+  defp build_body_class, do: "flex justify-between items-start"
 
   # Helper function to build content classes
   @spec build_content_class() :: String.t()
-  defp build_content_class() do
-    "flex-1 min-w-0"
-  end
+  defp build_content_class, do: "flex-1 min-w-0"
 
   # Helper function to build actions classes
   @spec build_actions_class() :: String.t()
-  defp build_actions_class() do
-    "flex flex-shrink-0 items-center gap-2 ml-4"
-  end
+  defp build_actions_class, do: "flex flex-shrink-0 items-center gap-2 ml-4"
 
   defp business_header(assigns) do
     ~H"""

@@ -51,7 +51,7 @@ defmodule RivaAshWeb.Components.Templates.FormViewTemplate do
           <%= render_slot(action) %>
         </:action>
       </.page_header>
-      
+
       <div :if={@show_progress} class={@progress_class}>
         <div class={@progress_header_class}>
           <span>Step <%= @current_step %> of <%= @total_steps %></span>
@@ -60,7 +60,7 @@ defmodule RivaAshWeb.Components.Templates.FormViewTemplate do
           <div style={"width: #{@current_step / @total_steps * 100}%"}></div>
         </div>
       </div>
-      
+
       <div class={@layout_class}>
         <main class={@main_class}>
           <.card>
@@ -72,7 +72,7 @@ defmodule RivaAshWeb.Components.Templates.FormViewTemplate do
             </:body>
           </.card>
         </main>
-        
+
         <aside :if={@sidebar_content != []} class={@sidebar_class}>
           <%= render_slot(@sidebar_content) %>
         </aside>
@@ -97,43 +97,43 @@ defmodule RivaAshWeb.Components.Templates.FormViewTemplate do
   # Helper function to build header classes
   @spec build_header_class(list()) :: String.t()
   defp build_header_class(actions) do
-    if actions != [], do: "mb-6", else: "mb-4"
+    if actions != [], "mb-6", "mb-4"
   end
 
   # Helper function to build title classes
   @spec build_title_class(String.t()) :: String.t()
   defp build_title_class(title) do
-    if title, do: "text-2xl font-bold", else: "hidden"
+    if title, "text-2xl font-bold", "hidden"
   end
 
   # Helper function to build description classes
   @spec build_description_class(String.t() | nil) :: String.t()
   defp build_description_class(description) do
-    if description, do: "text-muted-foreground", else: "hidden"
+    if description, "text-muted-foreground", "hidden"
   end
 
   # Helper function to build actions classes
   @spec build_actions_class(list()) :: String.t()
   defp build_actions_class(actions) do
-    if actions != [], do: "flex gap-2", else: "hidden"
+    if actions != [], "flex gap-2", "hidden"
   end
 
   # Helper function to build progress container classes
   @spec build_progress_class(boolean()) :: String.t()
   defp build_progress_class(show_progress) do
-    if show_progress, do: "form-progress mb-6", else: "hidden"
+    if show_progress, "form-progress mb-6", "hidden"
   end
 
   # Helper function to build progress header classes
   @spec build_progress_header_class(boolean()) :: String.t()
   defp build_progress_header_class(show_progress) do
-    if show_progress, do: "progress-header text-sm text-muted-foreground", else: "hidden"
+    if show_progress, "progress-header text-sm text-muted-foreground", "hidden"
   end
 
   # Helper function to build progress bar classes
   @spec build_progress_bar_class(boolean()) :: String.t()
   defp build_progress_bar_class(show_progress) do
-    if show_progress, do: "progress-bar w-full bg-muted rounded-full h-2", else: "hidden"
+    if show_progress, "progress-bar w-full bg-muted rounded-full h-2", "hidden"
   end
 
   # Helper function to build layout classes
@@ -145,12 +145,12 @@ defmodule RivaAshWeb.Components.Templates.FormViewTemplate do
   # Helper function to build main classes
   @spec build_main_class(list()) :: String.t()
   defp build_main_class(form_content) do
-    if form_content != [], do: "form-main lg:col-span-2", else: "hidden"
+    if form_content != [], "form-main lg:col-span-2", "hidden"
   end
 
   # Helper function to build sidebar classes
   @spec build_sidebar_class(list()) :: String.t()
   defp build_sidebar_class(sidebar_content) do
-    if sidebar_content != [], do: "form-sidebar lg:col-span-1", else: "hidden"
+    if sidebar_content != [], "form-sidebar lg:col-span-1", "hidden"
   end
 end

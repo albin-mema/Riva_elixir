@@ -30,19 +30,19 @@ defmodule RivaAsh.Resources.Plot do
   import RivaAsh.ResourceHelpers
 
   @type t :: %__MODULE__{
-    id: String.t(),
-    name: String.t(),
-    description: String.t() | nil,
-    business_id: String.t(),
-    address: String.t() | nil,
-    total_area: Decimal.t() | nil,
-    area_unit: String.t(),
-    coordinates: map() | nil,
-    is_active: boolean(),
-    inserted_at: DateTime.t(),
-    updated_at: DateTime.t(),
-    archived_at: DateTime.t() | nil
-  }
+          id: String.t(),
+          name: String.t(),
+          description: String.t() | nil,
+          business_id: String.t(),
+          address: String.t() | nil,
+          total_area: Decimal.t() | nil,
+          area_unit: String.t(),
+          coordinates: map() | nil,
+          is_active: boolean(),
+          inserted_at: DateTime.t(),
+          updated_at: DateTime.t(),
+          archived_at: DateTime.t() | nil
+        }
 
   standard_postgres("plots")
   standard_archive()
@@ -242,11 +242,10 @@ defmodule RivaAsh.Resources.Plot do
   ## Returns
   - `true` if the plot is active, `false` otherwise
   """
-  @spec is_active?(t()) :: boolean()
-  def is_active?(plot) do
-    with %{archived_at: nil} <- plot do
-      true
-    else
+  @spec active?(t()) :: boolean()
+  def active?(plot) do
+    case plot do
+      %{archived_at: nil} -> true
       _ -> false
     end
   end
@@ -321,9 +320,18 @@ defmodule RivaAsh.Resources.Plot do
   @spec formatted_address(t()) :: String.t()
   def formatted_address(plot) do
     case plot.address do
-      nil -> "No address specified"
-      address when is_binary(address) and String.trim(address) != "" -> address
-      _ -> "No address specified"
+      nil ->
+        "No address specified"
+
+      address when is_binary(address) ->
+        if String.trim(address) != "" do
+          address
+        else
+          "No address specified"
+        end
+
+      _ ->
+        "No address specified"
     end
   end
 
@@ -436,14 +444,14 @@ defmodule RivaAsh.Resources.Plot do
   """
   @spec formatted_info(t()) :: String.t()
   def formatted_info(plot) do
-    with true <- is_active?(plot),
-         business_name <- business_name(plot),
-         address <- formatted_address(plot),
-         total_area <- formatted_total_area(plot),
-         section_count <- section_count(plot),
-         layout_count <- layout_count(plot) do
-      "#{business_name} - #{plot.name}: #{address}, Area: #{total_area}, Sections: #{section_count}, Layouts: #{layout_count}"
-    else
+    case active?(plot) do
+      true ->
+        business_name = business_name(plot)
+        address = formatted_address(plot)
+        total_area = formatted_total_area(plot)
+        section_count = section_count(plot)
+        layout_count = layout_count(plot)
+        "#{business_name} - #{plot.name}: #{address}, Area: #{total_area}, Sections: #{section_count}, Layouts: #{layout_count}"
       false ->
         "Archived plot: #{plot.name}"
     end
@@ -460,7 +468,7 @@ defmodule RivaAsh.Resources.Plot do
   """
   @spec can_delete?(t()) :: boolean()
   def can_delete?(plot) do
-    not has_sections?(plot) and not has_layouts?(plot) and is_active?(plot)
+    not has_sections?(plot) and not has_layouts?(plot) and active?(plot)
   end
 
   @doc """
@@ -475,7 +483,7 @@ defmodule RivaAsh.Resources.Plot do
   @spec deletion_reason(t()) :: String.t() | nil
   def deletion_reason(plot) do
     cond do
-      not is_active?(plot) ->
+      not active?(plot) ->
         "Plot is already archived"
 
       has_sections?(plot) ->
@@ -554,15 +562,20 @@ defmodule RivaAsh.Resources.Plot do
   @spec formatted_coordinates(t()) :: String.t()
   def formatted_coordinates(plot) do
     case plot.coordinates do
-      nil -> "No coordinates specified"
+      nil ->
+        "No coordinates specified"
+
       coordinates when is_map(coordinates) ->
         case {Map.get(coordinates, :lat), Map.get(coordinates, :lng)} do
           {lat, lng} when is_number(lat) and is_number(lng) ->
             "Lat: #{lat}, Lng: #{lng}"
+
           _ ->
             "Coordinates: #{inspect(coordinates)}"
         end
-      _ -> "Invalid coordinates"
+
+      _ ->
+        "Invalid coordinates"
     end
   end
 
@@ -580,7 +593,7 @@ defmodule RivaAsh.Resources.Plot do
   def active_for_business(plots, business_id) do
     plots
     |> Enum.filter(&(&1.business_id == business_id))
-    |> Enum.filter(&is_active?/1)
+    |> Enum.filter(&active?/1)
   end
 
   @doc """
@@ -597,7 +610,7 @@ defmodule RivaAsh.Resources.Plot do
   def inactive_for_business(plots, business_id) do
     plots
     |> Enum.filter(&(&1.business_id == business_id))
-    |> Enum.filter(&(not is_active?(&1)))
+    |> Enum.filter(&(not active?(&1)))
   end
 
   relationships do
@@ -643,6 +656,6 @@ defmodule RivaAsh.Resources.Plot do
 
   @spec apply_active_filter(Ash.Query.t()) :: Ash.Query.t()
   defp apply_active_filter(query) do
-    Ash.Query.filter(query, expr(is_active == true and is_nil(archived_at)))
+    Ash.Query.filter(query, expr(active == true and is_nil(archived_at)))
   end
 end

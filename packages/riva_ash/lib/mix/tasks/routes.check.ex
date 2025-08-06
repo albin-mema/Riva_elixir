@@ -165,7 +165,7 @@ defmodule Mix.Tasks.Routes.Check do
   end
 
   defp test_specific_category(categorized, category_name, opts) do
-    category = String.to_atom(category_name)
+    category = String.to_existing_atom(category_name)
     routes = Map.get(categorized, category, [])
 
     if Enum.empty?(routes) do
@@ -255,25 +255,19 @@ defmodule Mix.Tasks.Routes.Check do
   end
 
   defp validate_plug(plug) do
-    if not is_atom(plug) do
+    if is_atom(plug) == false do
       raise "Invalid plug: #{inspect(plug)}"
     end
 
-    if !Code.ensure_loaded?(plug) do
+    if Code.ensure_loaded?(plug) == false do
       raise "Plug module not found: #{inspect(plug)}"
     end
   end
 
-
-
-  defp validate_pipelines(_), do: :ok
-
   defp print_results(results) do
     total = results.success + results.errors + results.skipped
 
-    IO.puts(
-      "  Results: ✅ #{results.success}/#{total} | ❌ #{results.errors} | ⏭️  #{results.skipped}"
-    )
+    IO.puts("  Results: ✅ #{results.success}/#{total} | ❌ #{results.errors} | ⏭️  #{results.skipped}")
 
     if results.errors > 0 do
       IO.puts("  ⚠️  Found #{results.errors} route errors that need attention!")

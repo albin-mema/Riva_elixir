@@ -1,7 +1,7 @@
 defmodule RivaAshWeb.AshAdminConfig do
   @moduledoc """
   Configuration for AshAdmin to handle authentication and actor setup.
-  
+
   This module provides the bridge between your application's authentication
   system and AshAdmin, enabling proper actor-based authorization and
   user context management within the admin interface.
@@ -13,14 +13,14 @@ defmodule RivaAshWeb.AshAdminConfig do
 
   @doc """
   Retrieves the current authenticated user from the connection.
-  
+
   Extracts the user that was set by the authentication plug
   (typically :require_authenticated_user) and returns it for
   use in AshAdmin operations.
-  
+
   ## Parameters
     - `conn`: The Phoenix connection containing assigns
-  
+
   ## Returns
     The current user struct or nil if no user is authenticated
   """
@@ -33,17 +33,17 @@ defmodule RivaAshWeb.AshAdminConfig do
 
   @doc """
   Sets the actor context for Ash operations based on the current user.
-  
+
   Configures Ash to use the current authenticated user for authorization
   and filtering purposes. This function should be called in the AshAdmin
   pipeline to ensure proper actor-based access control.
-  
+
   ## Parameters
     - `conn`: The Phoenix connection containing user context
-  
+
   ## Returns
     The connection with actor context set for Ash operations
-    
+
   ## TODO
     Update to use the correct Ash function for setting actor
     The Ash.set_actor!/2 function appears to be deprecated

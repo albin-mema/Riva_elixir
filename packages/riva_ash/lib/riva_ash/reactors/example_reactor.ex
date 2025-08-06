@@ -59,7 +59,7 @@ defmodule RivaAsh.Reactors.ExampleReactor do
 
     run(fn %{name: name, description: description}, _context ->
       Logger.info("Starting business creation with name: #{name}")
-      
+
       with :ok <- validate_business_name(name),
            {:ok, business} <- do_create_business(name, description) do
         Logger.info("Business created successfully: #{business.id}")
@@ -91,7 +91,7 @@ defmodule RivaAsh.Reactors.ExampleReactor do
 
   defp do_create_business(name, description) do
     Logger.debug("Creating business with name: #{name}")
-    
+
     business_attrs = %{
       name: name,
       description: description || ""
@@ -106,6 +106,7 @@ defmodule RivaAsh.Reactors.ExampleReactor do
       {:ok, business} ->
         Logger.debug("Business created successfully with ID: #{business.id}")
         {:ok, business}
+
       {:error, changeset} ->
         Logger.error("Business creation failed: #{inspect(changeset)}")
         {:error, "Failed to create business: #{format_changeset_errors(changeset)}"}
@@ -130,7 +131,7 @@ defmodule RivaAsh.Reactors.ExampleReactor do
 
     run(fn %{business_id: business_id}, _context ->
       Logger.info("Creating default item type for business: #{business_id}")
-      
+
       result =
         ItemType
         |> Ash.Changeset.for_create(:create, %{
@@ -144,6 +145,7 @@ defmodule RivaAsh.Reactors.ExampleReactor do
         {:ok, item_type} ->
           Logger.info("Item type created successfully: #{item_type.id}")
           {:ok, item_type}
+
         {:error, changeset} ->
           Logger.error("Item type creation failed: #{inspect(changeset)}")
           {:error, "Failed to create item type: #{format_changeset_errors(changeset)}"}
@@ -165,7 +167,7 @@ defmodule RivaAsh.Reactors.ExampleReactor do
 
     run(fn %{business_id: business_id, name: name, description: description}, _context ->
       Logger.info("Creating section for business: #{business_id}")
-      
+
       result =
         Section
         |> Ash.Changeset.for_create(:create, %{
@@ -179,6 +181,7 @@ defmodule RivaAsh.Reactors.ExampleReactor do
         {:ok, section} ->
           Logger.info("Section created successfully: #{section.id}")
           {:ok, section}
+
         {:error, changeset} ->
           Logger.error("Section creation failed: #{inspect(changeset)}")
           {:error, "Failed to create section: #{format_changeset_errors(changeset)}"}
@@ -209,7 +212,7 @@ defmodule RivaAsh.Reactors.ExampleReactor do
            },
            _context ->
       Logger.info("Creating item with name: #{name}")
-      
+
       result =
         Item
         |> Ash.Changeset.for_create(:create, %{
@@ -225,6 +228,7 @@ defmodule RivaAsh.Reactors.ExampleReactor do
         {:ok, item} ->
           Logger.info("Item created successfully: #{item.id}")
           {:ok, item}
+
         {:error, changeset} ->
           Logger.error("Item creation failed: #{inspect(changeset)}")
           {:error, "Failed to create item: #{format_changeset_errors(changeset)}"}

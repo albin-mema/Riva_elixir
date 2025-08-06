@@ -1,21 +1,21 @@
 defmodule RivaAshWeb.SuperadminDashboardLive do
   @moduledoc """
   Superadmin dashboard for system oversight and GDPR compliance.
-  
+
   This dashboard provides:
   - System-wide data overview for compliance monitoring
   - User management capabilities
   - GDPR compliance tools and reports
   - Audit trail access
   """
-  
+
   use RivaAshWeb, :live_view
   alias RivaAsh.Accounts.User
   alias RivaAsh.Accounts
   alias RivaAsh.Domain
   alias RivaAsh.Accounts.UserService
   alias RivaAsh.ErrorHelpers
-  
+
   def mount(_params, _session, socket) do
     # Verify superadmin access
     case socket.assigns.current_user do
@@ -23,17 +23,16 @@ defmodule RivaAshWeb.SuperadminDashboardLive do
         {:ok,
          socket
          |> assign(:page_title, get_page_title())
-         |> load_system_stats()
-        }
+         |> load_system_stats()}
+
       _ ->
         {:ok,
          socket
          |> put_flash(:error, "Access denied. Superadmin privileges required.")
-         |> redirect(to: "/access-denied")
-        }
+         |> redirect(to: "/access-denied")}
     end
   end
-  
+
   def render(assigns) do
     ~H"""
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -59,13 +58,13 @@ defmodule RivaAshWeb.SuperadminDashboardLive do
           </div>
         </div>
       </div>
-      
+
       <!-- Page Header -->
       <div class="mb-8">
         <h1 class="text-3xl font-bold text-gray-900">Superadmin Dashboard</h1>
         <p class="mt-2 text-gray-600">System oversight and GDPR compliance management</p>
       </div>
-      
+
       <!-- System Stats Grid -->
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         <div class="bg-white overflow-hidden shadow rounded-lg">
@@ -85,7 +84,7 @@ defmodule RivaAshWeb.SuperadminDashboardLive do
             </div>
           </div>
         </div>
-        
+
         <div class="bg-white overflow-hidden shadow rounded-lg">
           <div class="p-5">
             <div class="flex items-center">
@@ -103,7 +102,7 @@ defmodule RivaAshWeb.SuperadminDashboardLive do
             </div>
           </div>
         </div>
-        
+
         <div class="bg-white overflow-hidden shadow rounded-lg">
           <div class="p-5">
             <div class="flex items-center">
@@ -121,7 +120,7 @@ defmodule RivaAshWeb.SuperadminDashboardLive do
             </div>
           </div>
         </div>
-        
+
         <div class="bg-white overflow-hidden shadow rounded-lg">
           <div class="p-5">
             <div class="flex items-center">
@@ -140,7 +139,7 @@ defmodule RivaAshWeb.SuperadminDashboardLive do
           </div>
         </div>
       </div>
-      
+
       <!-- Quick Actions -->
       <div class="bg-white shadow rounded-lg mb-8">
         <div class="px-4 py-5 sm:p-6">
@@ -153,14 +152,14 @@ defmodule RivaAshWeb.SuperadminDashboardLive do
               </svg>
               Admin Interface
             </a>
-            
+
             <button type="button" class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
               <svg class="mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
               </svg>
               Generate GDPR Report
             </button>
-            
+
             <button type="button" class="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500">
               <svg class="mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
@@ -170,7 +169,7 @@ defmodule RivaAshWeb.SuperadminDashboardLive do
           </div>
         </div>
       </div>
-      
+
       <!-- Recent Activity -->
       <div class="bg-white shadow rounded-lg">
         <div class="px-4 py-5 sm:p-6">
@@ -184,13 +183,15 @@ defmodule RivaAshWeb.SuperadminDashboardLive do
     </div>
     """
   end
-  
+
   defp load_system_stats(socket) do
     case UserService.get_system_stats() do
       {:ok, stats} ->
         assign(socket, :stats, stats)
+
       {:error, error} ->
         error_message = ErrorHelpers.format_error(error)
+
         socket
         |> put_flash(:error, "Failed to load system stats: #{error_message}")
         |> assign(:stats, %{
@@ -201,6 +202,6 @@ defmodule RivaAshWeb.SuperadminDashboardLive do
         })
     end
   end
-  
+
   defp get_page_title, do: Application.get_env(:riva_ash, :superadmin_dashboard_page_title, "Superadmin Dashboard")
 end

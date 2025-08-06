@@ -23,10 +23,11 @@ defmodule Mix.Tasks.CreateSuperadmin do
   def run(args) do
     Mix.Task.run("app.start")
 
-    {opts, _args, _invalid} = OptionParser.parse(args,
-      switches: [email: :string, name: :string, password: :string],
-      aliases: [e: :email, n: :name, p: :password]
-    )
+    {opts, _args, _invalid} =
+      OptionParser.parse(args,
+        switches: [email: :string, name: :string, password: :string],
+        aliases: [e: :email, n: :name, p: :password]
+      )
 
     email = opts[:email] || prompt_for_email()
     name = opts[:name] || prompt_for_name()
@@ -65,9 +66,9 @@ defmodule Mix.Tasks.CreateSuperadmin do
       {:error, %Ash.Error.Invalid{errors: errors}} ->
         # Check if it's a unique constraint error (user already exists)
         case Enum.find(errors, fn error ->
-          match?(%Ash.Error.Changes.InvalidAttribute{field: :email}, error) or
-          match?(%Ash.Error.Changes.InvalidChanges{fields: [:email]}, error)
-        end) do
+               match?(%Ash.Error.Changes.InvalidAttribute{field: :email}, error) or
+                 match?(%Ash.Error.Changes.InvalidChanges{fields: [:email]}, error)
+             end) do
           nil ->
             {:error, %Ash.Error.Invalid{errors: errors}}
 

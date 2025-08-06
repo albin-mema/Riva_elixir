@@ -1,14 +1,14 @@
 defmodule RivaAsh do
   @moduledoc """
   Main entry point and utility functions for the Riva Ash application.
-  
+
   This module provides core functionality and serves as the primary
   interface for the application's main operations.
   """
 
   @doc """
   Returns a greeting message.
-  
+
   ## Examples
 
       iex> RivaAsh.hello()
@@ -20,16 +20,16 @@ defmodule RivaAsh do
 
   @doc """
   Initializes the application with default configuration.
-  
+
   This function sets up the basic application state and ensures
   all required components are properly configured.
-  
+
   ## Returns
   - `:ok` when initialization succeeds
   - `{:error, reason}` when initialization fails
-  
+
   ## Examples
-  
+
       iex> RivaAsh.initialize()
       :ok
   """
@@ -59,7 +59,7 @@ defmodule RivaAsh do
   @spec initialize_core_components() :: :ok | {:error, term()}
   defp initialize_core_components do
     components = [:logger, :telemetry, :pubsub]
-    
+
     Enum.reduce_while(components, :ok, fn component, :ok ->
       case initialize_component(component) do
         :ok -> {:cont, :ok}

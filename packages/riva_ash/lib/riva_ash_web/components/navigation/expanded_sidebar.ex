@@ -202,7 +202,7 @@ defmodule RivaAshWeb.Components.Navigation.ExpandedSidebar do
   @spec build_container_class(String.t(), boolean()) :: String.t()
   defp build_container_class(class, collapsed) do
     ["sidebar", if(collapsed, do: "collapsed", else: "expanded"), class]
-    |> Enum.filter(& &1 != "")
+    |> Enum.filter(&(&1 != ""))
     |> Enum.join(" ")
   end
 

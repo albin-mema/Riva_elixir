@@ -42,7 +42,7 @@ defmodule RivaAshWeb.Components.Organisms.CalendarView do
         <span><%= @current_date %></span>
         <.button phx-click={@on_navigate} phx-value-direction="next">Next</.button>
       </div>
-      
+
       <.tab_navigation
         tabs={[
           %{id: "day", label: "Day"},
@@ -53,7 +53,7 @@ defmodule RivaAshWeb.Components.Organisms.CalendarView do
         on_tab_change={@on_view_change}
         class={@tab_navigation_class}
       />
-      
+
       <div class={@content_class}>
         <!-- Calendar grid will go here -->
         <div :for={event <- @events}>
@@ -72,15 +72,11 @@ defmodule RivaAshWeb.Components.Organisms.CalendarView do
 
   # Helper function to build navigation classes
   @spec build_navigation_class() :: String.t()
-  defp build_navigation_class() do
-    ""
-  end
+  defp build_navigation_class, do: ""
 
   # Helper function to build tab navigation classes
   @spec build_tab_navigation_class() :: String.t()
-  defp build_tab_navigation_class() do
-    ""
-  end
+  defp build_tab_navigation_class, do: ""
 
   # Helper function to build content classes
   @spec build_content_class(boolean()) :: String.t()

@@ -2,11 +2,11 @@ if Mix.env() == :dev do
   defmodule RivaAshWeb.Storybook do
     @moduledoc """
     Phoenix Storybook configuration for component development and testing.
-    
+
     This module configures the interactive Storybook environment for developing
     and documenting UI components. It provides a sandboxed environment for
     component testing with proper asset loading and styling isolation.
-    
+
     Storybook is only available in the development environment for security
     and performance reasons.
     """
@@ -25,7 +25,7 @@ if Mix.env() == :dev do
 
     @doc """
     Returns the base configuration for the Storybook.
-    
+
     Provides access to the underlying Storybook configuration for
     custom integrations and extensions.
     """
@@ -42,7 +42,7 @@ if Mix.env() == :dev do
 
     @doc """
     Validates the Storybook configuration for common issues.
-    
+
     Performs runtime validation to ensure all required paths exist
     and configuration is properly set up for component development.
     """
@@ -58,7 +58,7 @@ if Mix.env() == :dev do
 
     @doc """
     Returns the list of available component categories.
-    
+
     Organizes components into logical categories for better navigation
     and discoverability in the Storybook interface.
     """
@@ -76,7 +76,7 @@ if Mix.env() == :dev do
 
     @doc """
     Checks if a specific story is available in the Storybook.
-    
+
     Provides programmatic access to story availability for
     dynamic content and conditional rendering.
     """
@@ -90,6 +90,7 @@ if Mix.env() == :dev do
     # Private helper functions
     defp validate_content_path do
       content_path = Path.expand("../../storybook", __DIR__)
+
       if File.exists?(content_path) do
         :ok
       else

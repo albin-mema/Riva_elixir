@@ -1,15 +1,15 @@
 defmodule RivaAshWeb.Components.Forms.LayoutForm do
   @moduledoc """
   Layout configuration form component.
-  
+
   This component follows the functional core, imperative shell pattern,
   with pure functions for data transformation and validation, and
   the LiveView component handling UI state and side effects.
-  
+
   ## Styleguide Compliance
-  
+
   This module follows the Riva Ash styleguide principles:
-  
+
   - **Functional Programming**: Uses pure functions, pattern matching, and pipelines
   - **Type Safety**: Comprehensive type specifications with @spec annotations
   - **Single Level of Abstraction**: Each function has a clear, focused responsibility
@@ -24,33 +24,33 @@ defmodule RivaAshWeb.Components.Forms.LayoutForm do
   import RivaAshWeb.Components.Atoms.Toggle
 
   @type assigns :: %{
-    optional(:form) => map(),
-    optional(:plots) => list(),
-    optional(:editing) => boolean(),
-    optional(:on_submit) => String.t(),
-    optional(:on_change) => String.t(),
-    optional(:on_cancel) => String.t(),
-    optional(:loading) => boolean(),
-    optional(:class) => String.t(),
-    optional(:rest) => any()
-  }
+          optional(:form) => map(),
+          optional(:plots) => list(),
+          optional(:editing) => boolean(),
+          optional(:on_submit) => String.t(),
+          optional(:on_change) => String.t(),
+          optional(:on_cancel) => String.t(),
+          optional(:loading) => boolean(),
+          optional(:class) => String.t(),
+          optional(:rest) => any()
+        }
 
   @type layout_form_data :: %{
-    name: String.t(),
-    plot_id: String.t() | integer(),
-    layout_type: String.t(),
-    grid_rows: integer(),
-    grid_columns: integer(),
-    width: integer(),
-    height: integer(),
-    background_color: String.t(),
-    background_image_url: String.t(),
-    is_active: boolean()
-  }
+          name: String.t(),
+          plot_id: String.t() | integer(),
+          layout_type: String.t(),
+          grid_rows: integer(),
+          grid_columns: integer(),
+          width: integer(),
+          height: integer(),
+          background_color: String.t(),
+          background_image_url: String.t(),
+          is_active: boolean()
+        }
 
   @doc """
   Renders a layout configuration form.
-  
+
   ## Examples
       <.layout_form
         form={@form}
@@ -165,7 +165,8 @@ defmodule RivaAshWeb.Components.Forms.LayoutForm do
     """
   end
 
-  @spec render_form_actions(editing :: boolean(), loading :: boolean(), on_cancel :: String.t()) :: Phoenix.LiveView.Rendered.t()
+  @spec render_form_actions(editing :: boolean(), loading :: boolean(), on_cancel :: String.t()) ::
+          Phoenix.LiveView.Rendered.t()
   defp render_form_actions(assigns) do
     ~H"""
     <div>
@@ -181,7 +182,7 @@ defmodule RivaAshWeb.Components.Forms.LayoutForm do
 
   @doc """
   Validates layout form data.
-  
+
   ## Returns
     {:ok, validated_data} | {:error, changeset}
   """
@@ -200,7 +201,7 @@ defmodule RivaAshWeb.Components.Forms.LayoutForm do
   defp validate_required_fields(params) when is_map(params) do
     required_fields = [:name, :plot_id, :layout_type]
     missing_fields = required_fields |> Enum.filter(&is_nil(Map.get(params, &1)))
-    
+
     case missing_fields do
       [] -> :ok
       _ -> {:error, %{missing_fields: missing_fields}}
@@ -208,14 +209,17 @@ defmodule RivaAshWeb.Components.Forms.LayoutForm do
   end
 
   defp validate_layout_type(nil), do: {:error, %{layout_type: "layout type is required"}}
+
   defp validate_layout_type(type) when is_binary(type) do
     valid_types = ["grid", "free", "linear"]
+
     if type in valid_types do
       :ok
     else
       {:error, %{layout_type: "must be one of: #{Enum.join(valid_types, ", ")}"}}
     end
   end
+
   defp validate_layout_type(_), do: {:error, %{layout_type: "must be a string"}}
 
   defp validate_dimensions(params) when is_map(params) do
@@ -228,9 +232,11 @@ defmodule RivaAshWeb.Components.Forms.LayoutForm do
   end
 
   defp validate_dimension(nil, _field), do: :ok
+
   defp validate_dimension(value, field) when is_number(value) and value > 0 do
     {:ok, value}
   end
+
   defp validate_dimension(_value, field), do: {:error, %{field => "must be a positive number"}}
 
   @doc """

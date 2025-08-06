@@ -1,7 +1,7 @@
 defmodule RivaAshWeb.BookingCalendarLive do
   @moduledoc """
   Calendar view LiveView for reservations and booking interface.
-  
+
   This LiveView follows Phoenix/Ash/Elixir patterns:
   - Uses AuthHelpers for authentication and business scoping
   - Delegates business logic to Booking context
@@ -32,7 +32,7 @@ defmodule RivaAshWeb.BookingCalendarLive do
          ) do
       {:ok, socket} ->
         current_date = Timex.today() |> Timex.format!("{YYYY}-{0M}-{0D}")
-        
+
         {:ok,
          socket
          |> assign(:current_date, current_date)
@@ -178,11 +178,12 @@ defmodule RivaAshWeb.BookingCalendarLive do
   end
 
   def handle_event("navigate_calendar", %{"direction" => direction}, socket) do
-    current_date = case direction do
-      "prev" -> Timex.subtract(socket.assigns.current_date, Timex.Duration.from_days(30))
-      "next" -> Timex.add(socket.assigns.current_date, Timex.Duration.from_days(30))
-      _ -> socket.assigns.current_date
-    end
+    current_date =
+      case direction do
+        "prev" -> Timex.subtract(socket.assigns.current_date, Timex.Duration.from_days(30))
+        "next" -> Timex.add(socket.assigns.current_date, Timex.Duration.from_days(30))
+        _ -> socket.assigns.current_date
+      end
 
     {:noreply,
      socket
@@ -255,9 +256,9 @@ defmodule RivaAshWeb.BookingCalendarLive do
         "item_id" => params["item_id"],
         "status" => params["status"]
       }
-      
+
       events = Enum.map(events, &format_event_for_calendar(&1))
-      
+
       {:ok,
        {events,
         Map.merge(filters, %{
@@ -287,8 +288,12 @@ defmodule RivaAshWeb.BookingCalendarLive do
   @doc """
   Determines calendar event color based on status.
   """
-  defp status_color(:confirmed), do: "#10b981"  # green
-  defp status_color(:pending), do: "#f59e0b"    # amber
-  defp status_color(:cancelled), do: "#ef4444"  # red
-  defp status_color(_), do: "#6b7280"          # gray
+  # green
+  defp status_color(:confirmed), do: "#10b981"
+  # amber
+  defp status_color(:pending), do: "#f59e0b"
+  # red
+  defp status_color(:cancelled), do: "#ef4444"
+  # gray
+  defp status_color(_), do: "#6b7280"
 end

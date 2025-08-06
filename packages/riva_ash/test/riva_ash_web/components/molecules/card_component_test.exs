@@ -9,6 +9,7 @@ defmodule RivaAshWeb.Components.Molecules.CardComponentTest do
   @spec test_renders_header_body_and_footer_slots_via_ui_card_container :: :ok
   test "renders header, body, and footer slots via UI.Card container" do
     assigns = %{}
+
     html =
       rendered_to_string(~H"""
       <Card.card>

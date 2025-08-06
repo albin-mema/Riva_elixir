@@ -8,25 +8,25 @@ defmodule RivaAsh.Resources.Reservation do
   """
 
   @type t :: %__MODULE__{
-    id: String.t(),
-    business_id: String.t(),
-    client_id: String.t(),
-    item_id: String.t(),
-    employee_id: String.t() | nil,
-    reserved_from: DateTime.t(),
-    reserved_until: DateTime.t(),
-    status: :pending | :provisional | :confirmed | :cancelled | :completed,
-    hold_expires_at: DateTime.t() | nil,
-    is_provisional: boolean(),
-    notes: String.t() | nil,
-    is_paid: boolean(),
-    total_amount: Decimal.t() | nil,
-    number_of_days: integer() | nil,
-    daily_rate: Decimal.t() | nil,
-    multi_day_discount: Decimal.t() | nil,
-    inserted_at: DateTime.t(),
-    updated_at: DateTime.t()
-  }
+          id: String.t(),
+          business_id: String.t(),
+          client_id: String.t(),
+          item_id: String.t(),
+          employee_id: String.t() | nil,
+          reserved_from: DateTime.t(),
+          reserved_until: DateTime.t(),
+          status: :pending | :provisional | :confirmed | :cancelled | :completed,
+          hold_expires_at: DateTime.t() | nil,
+          is_provisional: boolean(),
+          notes: String.t() | nil,
+          is_paid: boolean(),
+          total_amount: Decimal.t() | nil,
+          number_of_days: integer() | nil,
+          daily_rate: Decimal.t() | nil,
+          multi_day_discount: Decimal.t() | nil,
+          inserted_at: DateTime.t(),
+          updated_at: DateTime.t()
+        }
 
   use Ash.Resource,
     domain: RivaAsh.Domain,

@@ -1,15 +1,15 @@
 defmodule RivaAshWeb.Components.Forms.RecurringReservationInstanceForm do
   @moduledoc """
   Recurring reservation instance form component.
-  
+
   This component follows the functional core, imperative shell pattern,
   with pure functions for data transformation and validation, and
   the LiveView component handling UI state and side effects.
-  
+
   ## Styleguide Compliance
-  
+
   This module follows the Riva Ash styleguide principles:
-  
+
   - **Functional Programming**: Uses pure functions, pattern matching, and pipelines
   - **Type Safety**: Comprehensive type specifications with @spec annotations
   - **Single Level of Abstraction**: Each function has a clear, focused responsibility
@@ -24,29 +24,29 @@ defmodule RivaAshWeb.Components.Forms.RecurringReservationInstanceForm do
   import RivaAshWeb.Components.Molecules.FormField
 
   @type assigns :: %{
-    optional(:form) => map(),
-    optional(:editing) => boolean(),
-    optional(:loading) => boolean(),
-    optional(:recurring_reservations) => list(),
-    optional(:reservations) => list(),
-    optional(:on_submit) => String.t(),
-    optional(:on_change) => String.t(),
-    optional(:on_cancel) => String.t(),
-    optional(:class) => String.t()
-  }
+          optional(:form) => map(),
+          optional(:editing) => boolean(),
+          optional(:loading) => boolean(),
+          optional(:recurring_reservations) => list(),
+          optional(:reservations) => list(),
+          optional(:on_submit) => String.t(),
+          optional(:on_change) => String.t(),
+          optional(:on_cancel) => String.t(),
+          optional(:class) => String.t()
+        }
 
   @type recurring_instance_form_data :: %{
-    scheduled_date: Date.t(),
-    sequence_number: integer(),
-    status: String.t(),
-    recurring_reservation_id: String.t() | integer(),
-    notes: String.t(),
-    skip_reason: String.t(),
-    error_message: String.t(),
-    created_at: DateTime.t(),
-    failed_at: DateTime.t(),
-    reservation_id: String.t() | integer()
-  }
+          scheduled_date: Date.t(),
+          sequence_number: integer(),
+          status: String.t(),
+          recurring_reservation_id: String.t() | integer(),
+          notes: String.t(),
+          skip_reason: String.t(),
+          error_message: String.t(),
+          created_at: DateTime.t(),
+          failed_at: DateTime.t(),
+          reservation_id: String.t() | integer()
+        }
 
   @doc """
   Renders a recurring reservation instance form for creating or editing instances.
@@ -164,7 +164,8 @@ defmodule RivaAshWeb.Components.Forms.RecurringReservationInstanceForm do
     """
   end
 
-  @spec render_status_and_reservation_fields(form :: map(), recurring_reservations :: list()) :: Phoenix.LiveView.Rendered.t()
+  @spec render_status_and_reservation_fields(form :: map(), recurring_reservations :: list()) ::
+          Phoenix.LiveView.Rendered.t()
   defp render_status_and_reservation_fields(assigns) do
     ~H"""
     <div class="gap-4 grid grid-cols-1 md:grid-cols-2">
@@ -268,7 +269,8 @@ defmodule RivaAshWeb.Components.Forms.RecurringReservationInstanceForm do
     """
   end
 
-  @spec render_form_actions(editing :: boolean(), loading :: boolean(), on_cancel :: String.t()) :: Phoenix.LiveView.Rendered.t()
+  @spec render_form_actions(editing :: boolean(), loading :: boolean(), on_cancel :: String.t()) ::
+          Phoenix.LiveView.Rendered.t()
   defp render_form_actions(assigns) do
     ~H"""
     <div class="flex justify-end space-x-3 pt-4 border-t">
@@ -295,7 +297,7 @@ defmodule RivaAshWeb.Components.Forms.RecurringReservationInstanceForm do
 
   @doc """
   Validates recurring reservation instance form data.
-  
+
   ## Returns
     {:ok, validated_data} | {:error, changeset}
   """
@@ -314,7 +316,7 @@ defmodule RivaAshWeb.Components.Forms.RecurringReservationInstanceForm do
   defp validate_required_fields(params) when is_map(params) do
     required_fields = [:scheduled_date, :sequence_number, :status]
     missing_fields = required_fields |> Enum.filter(&is_nil(Map.get(params, &1)))
-    
+
     case missing_fields do
       [] -> :ok
       _ -> {:error, %{missing_fields: missing_fields}}
@@ -336,23 +338,28 @@ defmodule RivaAshWeb.Components.Forms.RecurringReservationInstanceForm do
 
   defp validate_sequence_number(nil), do: {:error, %{sequence_number: "sequence number is required"}}
   defp validate_sequence_number(number) when is_integer(number) and number > 0, do: :ok
+
   defp validate_sequence_number(number) when is_binary(number) do
     case Integer.parse(number) do
       {num, ""} when num > 0 -> :ok
       _ -> {:error, %{sequence_number: "must be a positive integer"}}
     end
   end
+
   defp validate_sequence_number(_), do: {:error, %{sequence_number: "must be a positive integer"}}
 
   defp validate_status_field(nil), do: {:error, %{status: "status is required"}}
+
   defp validate_status_field(status) when is_binary(status) do
     valid_statuses = ["pending", "confirmed", "failed", "skipped", "cancelled"]
+
     if status in valid_statuses do
       :ok
     else
       {:error, %{status: "must be one of: #{Enum.join(valid_statuses, ", ")}"}}
     end
   end
+
   defp validate_status_field(_), do: {:error, %{status: "must be a string"}}
 
   @doc """
@@ -376,12 +383,14 @@ defmodule RivaAshWeb.Components.Forms.RecurringReservationInstanceForm do
 
   defp parse_date(nil), do: nil
   defp parse_date(%Date{} = date), do: date
+
   defp parse_date(date_str) when is_binary(date_str) do
     case Date.from_iso8601(date_str) do
       {:ok, date} -> date
       _ -> nil
     end
   end
+
   defp parse_date(_), do: nil
 
   defp parse_integer(nil), do: nil
@@ -396,12 +405,14 @@ defmodule RivaAshWeb.Components.Forms.RecurringReservationInstanceForm do
 
   defp parse_datetime(nil), do: nil
   defp parse_datetime(%DateTime{} = dt), do: dt
+
   defp parse_datetime(datetime_str) when is_binary(datetime_str) do
     case DateTime.from_iso8601(datetime_str) do
       {:ok, dt, _offset} -> dt
       _ -> nil
     end
   end
+
   defp parse_datetime(_), do: nil
 
   # UI Helper functions

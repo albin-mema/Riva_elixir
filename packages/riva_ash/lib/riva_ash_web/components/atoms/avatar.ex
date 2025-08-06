@@ -1,7 +1,7 @@
 defmodule RivaAshWeb.Components.Atoms.Avatar do
   @moduledoc """
   Avatar component for users and businesses with fallbacks.
-  
+
   Follows functional core, imperative shell pattern with comprehensive type safety.
   """
   use Phoenix.Component
@@ -14,9 +14,9 @@ defmodule RivaAshWeb.Components.Atoms.Avatar do
 
   @doc """
   Renders an avatar with image or initials fallback.
-  
+
   ## Examples
-    
+
       <.avatar src="/path/to/image.jpg" alt="User" />
       <.avatar initials="JD" name="John Doe" size="lg" />
       <.avatar status="online" />
@@ -62,7 +62,7 @@ defmodule RivaAshWeb.Components.Atoms.Avatar do
 
   @spec validate_status(assigns :: assigns()) :: :ok | {:error, String.t()}
   defp validate_status(assigns) do
-    if assigns.status and not assigns.status in ~w(online away busy offline) do
+    if assigns.status and assigns.status not in ~w(online away busy offline) do
       {:error, "Invalid status. Must be one of: online, away, busy, offline"}
     else
       :ok
@@ -75,7 +75,7 @@ defmodule RivaAshWeb.Components.Atoms.Avatar do
     base = "relative inline-flex items-center justify-center overflow-hidden bg-muted"
     size = size_classes(assigns.size)
     shape = shape_classes(assigns.shape)
-    
+
     [base, size, shape, assigns.class]
     |> Enum.reject(&(&1 == ""))
     |> Enum.join(" ")
@@ -173,10 +173,12 @@ defmodule RivaAshWeb.Components.Atoms.Avatar do
         ~H"""
         <img src={@src} alt={@alt} class="w-full h-full object-cover" />
         """
+
       assigns.initials ->
         ~H"""
         <span class={initials_class(assigns)}><%= @initials %></span>
         """
+
       true ->
         ~H"""
         <.icon name={:user} size={icon_size(@size)} class="text-muted-foreground" />
@@ -196,6 +198,7 @@ defmodule RivaAshWeb.Components.Atoms.Avatar do
     # In a real implementation, you might want to log this error
     # and render a fallback avatar or error state
     IO.puts("Avatar error: #{reason}")
+
     ~H"""
     <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative">
       <span class="block sm:inline">Error: <%= reason %></span>

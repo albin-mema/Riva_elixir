@@ -70,7 +70,7 @@ defmodule RivaAsh.Reactors.ReservationReactor do
 
     run(fn %{client_id: client_id}, _context ->
       Logger.info("Validating client with ID: #{client_id}")
-      
+
       with :ok <- validate_client_id(client_id),
            {:ok, client} <- fetch_client(client_id),
            :ok <- check_client_active(client) do
@@ -101,7 +101,9 @@ defmodule RivaAsh.Reactors.ReservationReactor do
   end
 
   defp check_client_active(%{archived_at: nil}), do: :ok
-  defp check_client_active(%{archived_at: _archived_at}), do: {:error, "Client is archived and cannot make reservations"}
+
+  defp check_client_active(%{archived_at: _archived_at}),
+    do: {:error, "Client is archived and cannot make reservations"}
 
   # Step 2: Validate employee exists and is active
   step :validate_employee do
@@ -109,7 +111,7 @@ defmodule RivaAsh.Reactors.ReservationReactor do
 
     run(fn %{employee_id: employee_id}, _context ->
       Logger.info("Validating employee with ID: #{employee_id}")
-      
+
       case Employee.by_id(employee_id) do
         {:ok, employee} ->
           if employee.archived_at do
@@ -133,7 +135,7 @@ defmodule RivaAsh.Reactors.ReservationReactor do
 
     run(fn %{item_id: item_id}, _context ->
       Logger.info("Validating item with ID: #{item_id}")
-      
+
       case Item.by_id(item_id) do
         {:ok, item} ->
           if item.archived_at do
@@ -158,7 +160,7 @@ defmodule RivaAsh.Reactors.ReservationReactor do
 
     run(fn %{start_datetime: start_dt, end_datetime: end_dt}, _context ->
       Logger.info("Validating datetime range: #{start_dt} - #{end_dt}")
-      
+
       cond do
         Timex.compare(start_dt, end_dt) != -1 ->
           Logger.error("Datetime validation failed: Start datetime must be before end datetime")
@@ -187,7 +189,7 @@ defmodule RivaAsh.Reactors.ReservationReactor do
 
     run(fn %{item_id: item_id, start_datetime: start_dt, end_datetime: end_dt}, _context ->
       Logger.info("Checking availability for item #{item_id} during #{start_dt} - #{end_dt}")
-      
+
       case Availability.check_availability(item_id, start_dt, end_dt) do
         {:ok, true} ->
           Logger.info("Availability check successful: Item is available")
@@ -212,7 +214,7 @@ defmodule RivaAsh.Reactors.ReservationReactor do
 
     run(fn %{item: item, start_datetime: start_dt, end_datetime: end_dt}, _context ->
       Logger.info("Calculating pricing for item #{item.id} during #{start_dt} - #{end_dt}")
-      
+
       # Calculate number of days (minimum 1 day)
       hours = Timex.diff(end_dt, start_dt, :hours)
       days = max(1, ceil(hours / 24))
@@ -253,7 +255,7 @@ defmodule RivaAsh.Reactors.ReservationReactor do
 
     run(fn args, _context ->
       Logger.info("Creating reservation for client #{args.client_id}, item #{args.item_id}")
-      
+
       reservation_attrs = %{
         client_id: args.client_id,
         employee_id: args.employee_id,
@@ -290,9 +292,12 @@ defmodule RivaAsh.Reactors.ReservationReactor do
   # Helper function to format changeset errors
   defp format_changeset_errors(changeset) do
     case Ash.Changeset.errors(changeset) do
-      [] -> "Validation failed"
+      [] ->
+        "Validation failed"
+
       errors ->
-        error_messages = errors
+        error_messages =
+          errors
           |> Enum.map(fn error ->
             case error do
               %{message: message, field: field} -> "#{field}: #{message}"
@@ -300,6 +305,7 @@ defmodule RivaAsh.Reactors.ReservationReactor do
               error -> inspect(error)
             end
           end)
+
         Enum.join(error_messages, "; ")
     end
   end

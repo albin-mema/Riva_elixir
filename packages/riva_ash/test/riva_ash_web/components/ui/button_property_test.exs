@@ -90,7 +90,8 @@ defmodule RivaAshWeb.Components.UI.ButtonPropertyTest do
 
         # Should have appropriate data attributes for LiveView navigation
         case nav_type do
-          :href -> :ok  # No special data attributes for regular links
+          # No special data attributes for regular links
+          :href -> :ok
           :patch -> assert html =~ ~s(data-phx-link="patch")
           :navigate -> assert html =~ ~s(data-phx-link="redirect")
         end

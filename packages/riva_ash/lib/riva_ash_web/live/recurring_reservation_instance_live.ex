@@ -16,6 +16,7 @@ defmodule RivaAshWeb.RecurringReservationInstanceLive do
   alias RivaAsh.Resources.RecurringReservationInstance
   alias RivaAsh.Resources.RecurringReservation
   alias RivaAsh.Resources.Reservation
+  alias RivaAsh.Resources.Business
 
   @impl true
   def mount(_params, session, socket) do
@@ -23,7 +24,7 @@ defmodule RivaAshWeb.RecurringReservationInstanceLive do
       {:ok, user} ->
         try do
           # Get user's businesses first
-          businesses = RivaAsh.Resources.Business.read!(actor: user)
+          businesses = Business.read!(actor: user)
           business_ids = Enum.map(businesses, & &1.id)
 
           socket =
@@ -47,8 +48,7 @@ defmodule RivaAshWeb.RecurringReservationInstanceLive do
             {:ok, redirect(socket, to: "/access-denied")}
 
           error ->
-            {:ok,
-             socket |> assign(:error_message, "Failed to load data: #{Exception.message(error)}")}
+            {:ok, socket |> assign(:error_message, "Failed to load data: #{Exception.message(error)}")}
         end
 
       {:error, :not_authenticated} ->
@@ -212,7 +212,7 @@ defmodule RivaAshWeb.RecurringReservationInstanceLive do
                         else
                           "border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700"
                         end
-                      }"} aria-label={"Go to page #{page}" <> if page == @meta.current_page, do: " (current page)", else: ""} aria-current={if page == @meta.current_page, do: "page", else: "false"}><%= page %></.button>
+                     }"} aria-label={"Go to page #{page}" <> if(page == @meta.current_page, " (current page)", "")} aria-current={if(page == @meta.current_page, "page", "false")}><%= page %></.button>
                     <% end %>
                   </div>
                   <div class="-mt-px flex w-0 flex-1 justify-end">
@@ -357,13 +357,9 @@ defmodule RivaAshWeb.RecurringReservationInstanceLive do
   def handle_event("validate_instance", %{"form" => params}, socket) do
     form =
       if socket.assigns.editing_instance do
-        AshPhoenix.Form.for_update(socket.assigns.editing_instance, :update,
-          actor: socket.assigns.current_user
-        )
+        AshPhoenix.Form.for_update(socket.assigns.editing_instance, :update, actor: socket.assigns.current_user)
       else
-        AshPhoenix.Form.for_create(RecurringReservationInstance, :create,
-          actor: socket.assigns.current_user
-        )
+        AshPhoenix.Form.for_create(RecurringReservationInstance, :create, actor: socket.assigns.current_user)
       end
       |> AshPhoenix.Form.validate(params, errors: true)
       |> to_form()
@@ -395,10 +391,8 @@ defmodule RivaAshWeb.RecurringReservationInstanceLive do
 
       {:error, form} ->
         error_messages =
-          form
-          |> AshPhoenix.Form.errors()
-          |> Enum.map(fn {field, {message, _}} -> "#{field}: #{message}" end)
-          |> Enum.join(", ")
+          AshPhoenix.Form.errors(form)
+          |> Enum.map_join(", ", fn {field, {message, _}} -> "#{field}: #{message}" end)
 
         socket =
           socket
@@ -665,7 +659,8 @@ defmodule RivaAshWeb.RecurringReservationInstanceLive do
     end
   end
 
-  defp get_page_title, do: Application.get_env(:riva_ash, __MODULE__, [])[:page_title] || "Recurring Reservation Instances"
+  defp get_page_title,
+    do: Application.get_env(:riva_ash, __MODULE__, []) |> get_in([:page_title]) || "Recurring Reservation Instances"
 
   defp format_error_message(error) do
     case RivaAsh.ErrorHelpers.format_error(error) do

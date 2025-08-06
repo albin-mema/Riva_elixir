@@ -6,15 +6,12 @@ defmodule RivaAshWeb.PlotLive do
 
   # Explicitly set the authenticated layout
 
-
   import RivaAshWeb.Components.Organisms.PageHeader
 
   import RivaAshWeb.Components.Atoms.Button
   import RivaAshWeb.Components.Atoms.Spinner
   import RivaAshWeb.Components.Molecules.ConfirmDialog
   import RivaAshWeb.Components.Molecules.NotificationToast
-
-
 
   alias RivaAsh.Resources.Plot
   alias RivaAsh.Resources.Business
@@ -44,8 +41,7 @@ defmodule RivaAshWeb.PlotLive do
             {:ok, redirect(socket, to: "/access-denied")}
 
           error ->
-            {:ok,
-             socket |> assign(:error_message, "Failed to load plots: #{Exception.message(error)}")}
+            {:ok, socket |> assign(:error_message, "Failed to load plots: #{Exception.message(error)}")}
         end
 
       {:error, :not_authenticated} ->
@@ -264,12 +260,8 @@ defmodule RivaAshWeb.PlotLive do
     user_token = session["user_token"]
 
     if user_token do
-      with {:ok, user_id} <-
-             Phoenix.Token.verify(RivaAshWeb.Endpoint, "user_auth", user_token, max_age: 86_400)
-             |> RivaAsh.ErrorHelpers.to_result(),
-           {:ok, user} <-
-             Ash.get(RivaAsh.Accounts.User, user_id, domain: RivaAsh.Accounts)
-             |> RivaAsh.ErrorHelpers.to_result() do
+      with {:ok, user_id} <- Phoenix.Token.verify(RivaAshWeb.Endpoint, "user_auth", user_token, max_age: 86_400),
+           {:ok, user} <- Ash.get(RivaAsh.Accounts.User, user_id, domain: RivaAsh.Accounts) do
         RivaAsh.ErrorHelpers.success(user)
       else
         _ -> RivaAsh.ErrorHelpers.failure(:not_authenticated)
@@ -281,10 +273,8 @@ defmodule RivaAshWeb.PlotLive do
 
   defp delete_plot(plot_id, user) do
     try do
-      with {:ok, plot} <-
-             Ash.get(RivaAsh.Resources.Plot, plot_id, actor: user)
-             |> RivaAsh.ErrorHelpers.to_result(),
-           {:ok, _} <- Ash.destroy(plot, actor: user) |> RivaAsh.ErrorHelpers.to_result() do
+      with {:ok, plot} <- Ash.get(RivaAsh.Resources.Plot, plot_id, actor: user),
+           {:ok, _} <- Ash.destroy(plot, actor: user) do
         RivaAsh.ErrorHelpers.success(:ok)
       end
     rescue
@@ -293,7 +283,7 @@ defmodule RivaAshWeb.PlotLive do
     end
   end
 
-  defp get_page_title, do: Application.get_env(:riva_ash, __MODULE__, [])[:page_title] || "Plots"
+  defp get_page_title, do: Application.get_env(:riva_ash, __MODULE__, []) |> get_in([:page_title]) || "Plots"
 
   defp format_error_message(error) do
     case RivaAsh.ErrorHelpers.format_error(error) do

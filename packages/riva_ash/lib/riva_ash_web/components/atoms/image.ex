@@ -1,7 +1,7 @@
 defmodule RivaAshWeb.Components.Atoms.Image do
   @moduledoc """
   Image component for displaying images with responsive and accessibility features.
-  
+
   Follows functional core, imperative shell pattern with comprehensive type safety.
   """
   use Phoenix.Component
@@ -9,18 +9,18 @@ defmodule RivaAshWeb.Components.Atoms.Image do
   @type assigns :: map()
   @type variant :: :default | :rounded | :circle | :bordered
   @type size :: :xs | :sm | :md | :lg | :xl
-  @type fit :: :contain | :cover | :fill | :none | :scale-down
+  @type fit :: :contain | :cover | :fill | :none | :scale - down
   @type loading :: :lazy | :eager
 
   @doc """
   Renders an image component with different variants and responsive options.
-  
+
   ## Examples
-    
+
       <.image src="/path/to/image.jpg" alt="Description" />
-      
+
       <.image src="/path/to/image.jpg" variant="rounded" size="lg" fit="cover" />
-      
+
       <.image src="/path/to/image.jpg" variant="circle" size="xl" loading="lazy">
         <.image_fallback>
           <span class="text-gray-500">No image</span>
@@ -167,10 +167,10 @@ defmodule RivaAshWeb.Components.Atoms.Image do
   defp render_image(assigns) do
     ~H"""
     <div class="relative inline-block">
-      <img 
-        src={@src} 
-        alt={@alt} 
-        class={@image_class} 
+      <img
+        src={@src}
+        alt={@alt}
+        class={@image_class}
         loading={@loading}
         {@rest}
       />
@@ -198,6 +198,7 @@ defmodule RivaAshWeb.Components.Atoms.Image do
     # In a real implementation, you might want to log this error
     # and render a fallback image or error state
     IO.puts("Image error: #{reason}")
+
     ~H"""
     <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative">
       <span class="block sm:inline">Error: <%= reason %></span>

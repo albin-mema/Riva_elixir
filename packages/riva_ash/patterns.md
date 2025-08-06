@@ -1,10 +1,10 @@
-# Riva Ash Application Architectural Patterns
+# Reservation System Architectural Patterns
 
-This document outlines the key architectural patterns used in the Riva Ash application. These patterns provide a consistent approach to solving common problems and ensure maintainability, scalability, and clarity across the codebase.
+This document outlines the key architectural patterns used in the Reservation System application. These patterns provide a consistent approach to solving common problems and ensure maintainability, scalability, and clarity across the codebase.
 
 ## How to Contribute to Architectural Patterns
 
-We welcome contributions to improve and extend the architectural patterns used in the Riva Ash application. This section outlines the process for proposing new patterns, updating existing ones, and following documentation guidelines.
+We welcome contributions to improve and extend the architectural patterns used in the Reservation System application. This section outlines the process for proposing new patterns, updating existing ones, and following documentation guidelines.
 
 > **Note**: For general code contributions, database changes, and development workflow, see the main project documentation: [README.md](../../README.md), [DEVELOPMENT_WORKFLOW.md](../../documentation/DEVELOPMENT_WORKFLOW.md), and [SETUP_GUIDE.md](../../documentation/SETUP_GUIDE.md).
 
@@ -23,7 +23,7 @@ To propose a new architectural pattern:
 
 1. **Identify the Need**:
    - Clearly articulate the problem the pattern solves
-   - Explain why it's needed in the Riva Ash application
+   - Explain why it's needed in the Reservation System application
    - Provide real-world examples from the codebase where this pattern would be beneficial
 
 2. **Research Existing Patterns**:
@@ -35,7 +35,7 @@ To propose a new architectural pattern:
    - Write a detailed description following the standard pattern documentation structure:
      - Description and purpose
      - Key components
-     - Example implementation with real Riva Ash code
+     - Example implementation with real Reservation System code
      - When to apply
      - Best practices
      - Anti-patterns to avoid

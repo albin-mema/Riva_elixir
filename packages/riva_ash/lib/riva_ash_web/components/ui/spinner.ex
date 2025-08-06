@@ -1,7 +1,7 @@
 defmodule RivaAshWeb.Components.UI.Spinner do
   @moduledoc """
   Implements a spinner component using the design system.
-  
+
   A canonical loading spinner component that provides consistent
   loading states across the application.
   """
@@ -9,7 +9,7 @@ defmodule RivaAshWeb.Components.UI.Spinner do
 
   @doc """
   Renders a spinner component using the design system.
-  
+
   Supports various sizes and can optionally display a loading label.
   """
   attr :size, :string, default: "default", values: ~w(default xs sm lg xl)
@@ -82,7 +82,7 @@ defmodule RivaAshWeb.Components.UI.Spinner do
   # Helper function to build wrapper classes
   @spec build_wrapper_class(boolean()) :: String.t()
   defp build_wrapper_class(show_label) do
-    if show_label, do: "flex items-center justify-center", else: "flex justify-center"
+    if show_label, "flex items-center justify-center", "flex justify-center"
   end
 
   defp container_class(assigns) do
@@ -113,7 +113,8 @@ defmodule RivaAshWeb.Components.UI.Spinner do
       "sm" -> "h-4 w-4"
       "lg" -> "h-6 w-6"
       "xl" -> "h-8 w-8"
-      _ -> "h-5 w-5"  # default
+      # default
+      _ -> "h-5 w-5"
     end
   end
 
@@ -123,7 +124,8 @@ defmodule RivaAshWeb.Components.UI.Spinner do
       "sm" -> "text-sm"
       "lg" -> "text-base"
       "xl" -> "text-lg"
-      _ -> "text-sm"  # default
+      # default
+      _ -> "text-sm"
     end
   end
 end

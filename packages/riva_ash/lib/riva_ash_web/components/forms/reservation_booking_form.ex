@@ -1,15 +1,15 @@
 defmodule RivaAshWeb.Components.Forms.ReservationBookingForm do
   @moduledoc """
   Reservation booking form component.
-  
+
   This component follows the functional core, imperative shell pattern,
   with pure functions for data transformation and validation, and
   the LiveView component handling UI state and side effects.
-  
+
   ## Styleguide Compliance
-  
+
   This module follows the Riva Ash styleguide principles:
-  
+
   - **Functional Programming**: Uses pure functions, pattern matching, and pipelines
   - **Type Safety**: Comprehensive type specifications with @spec annotations
   - **Single Level of Abstraction**: Each function has a clear, focused responsibility
@@ -25,44 +25,44 @@ defmodule RivaAshWeb.Components.Forms.ReservationBookingForm do
   import RivaAshWeb.Components.Interactive.TimeSlotPicker
 
   @type assigns :: %{
-    optional(:form) => map(),
-    optional(:step) => integer(),
-    optional(:total_steps) => integer(),
-    optional(:clients) => list(),
-    optional(:items) => list(),
-    optional(:available_slots) => list(),
-    optional(:selected_slots) => list(),
-    optional(:pricing_info) => map(),
-    optional(:on_submit) => String.t(),
-    optional(:on_change) => String.t(),
-    optional(:on_next_step) => String.t(),
-    optional(:on_prev_step) => String.t(),
-    optional(:on_cancel) => String.t(),
-    optional(:on_slot_select) => String.t(),
-    optional(:on_slot_deselect) => String.t(),
-    optional(:loading) => boolean(),
-    optional(:class) => String.t(),
-    optional(:rest) => any()
-  }
+          optional(:form) => map(),
+          optional(:step) => integer(),
+          optional(:total_steps) => integer(),
+          optional(:clients) => list(),
+          optional(:items) => list(),
+          optional(:available_slots) => list(),
+          optional(:selected_slots) => list(),
+          optional(:pricing_info) => map(),
+          optional(:on_submit) => String.t(),
+          optional(:on_change) => String.t(),
+          optional(:on_next_step) => String.t(),
+          optional(:on_prev_step) => String.t(),
+          optional(:on_cancel) => String.t(),
+          optional(:on_slot_select) => String.t(),
+          optional(:on_slot_deselect) => String.t(),
+          optional(:loading) => boolean(),
+          optional(:class) => String.t(),
+          optional(:rest) => any()
+        }
 
   @type booking_form_data :: %{
-    client_id: String.t() | integer(),
-    client_notes: String.t(),
-    item_id: String.t() | integer(),
-    reservation_date: Date.t(),
-    payment_method: String.t(),
-    selected_slots: list()
-  }
+          client_id: String.t() | integer(),
+          client_notes: String.t(),
+          item_id: String.t() | integer(),
+          reservation_date: Date.t(),
+          payment_method: String.t(),
+          selected_slots: list()
+        }
 
   @type pricing_info :: %{
-    subtotal: float(),
-    tax: float(),
-    total: float()
-  }
+          subtotal: float(),
+          tax: float(),
+          total: float()
+        }
 
   @doc """
   Renders a reservation booking form.
-  
+
   ## Examples
       <.reservation_booking_form
         form={@form}
@@ -167,14 +167,14 @@ defmodule RivaAshWeb.Components.Forms.ReservationBookingForm do
   end
 
   @spec render_current_step(
-    step :: integer(),
-    form :: map(),
-    clients :: list(),
-    items :: list(),
-    available_slots :: list(),
-    selected_slots :: list(),
-    pricing_info :: map()
-  ) :: Phoenix.LiveView.Rendered.t()
+          step :: integer(),
+          form :: map(),
+          clients :: list(),
+          items :: list(),
+          available_slots :: list(),
+          selected_slots :: list(),
+          pricing_info :: map()
+        ) :: Phoenix.LiveView.Rendered.t()
   defp render_current_step(assigns) do
     ~H"""
     <div :if={@step == 1}>
@@ -212,7 +212,8 @@ defmodule RivaAshWeb.Components.Forms.ReservationBookingForm do
     """
   end
 
-  @spec render_datetime_selection(form :: map(), available_slots :: list(), selected_slots :: list()) :: Phoenix.LiveView.Rendered.t()
+  @spec render_datetime_selection(form :: map(), available_slots :: list(), selected_slots :: list()) ::
+          Phoenix.LiveView.Rendered.t()
   defp render_datetime_selection(assigns) do
     ~H"""
     <h3>Select Date & Time</h3>
@@ -229,12 +230,12 @@ defmodule RivaAshWeb.Components.Forms.ReservationBookingForm do
   end
 
   @spec render_confirmation(
-    form :: map(),
-    clients :: list(),
-    items :: list(),
-    selected_slots :: list(),
-    pricing_info :: map()
-  ) :: Phoenix.LiveView.Rendered.t()
+          form :: map(),
+          clients :: list(),
+          items :: list(),
+          selected_slots :: list(),
+          pricing_info :: map()
+        ) :: Phoenix.LiveView.Rendered.t()
   defp render_confirmation(assigns) do
     ~H"""
     <h3>Confirm Reservation</h3>
@@ -261,7 +262,8 @@ defmodule RivaAshWeb.Components.Forms.ReservationBookingForm do
     """
   end
 
-  @spec render_reservation_summary(form :: map(), clients :: list(), items :: list(), selected_slots :: list()) :: Phoenix.LiveView.Rendered.t()
+  @spec render_reservation_summary(form :: map(), clients :: list(), items :: list(), selected_slots :: list()) ::
+          Phoenix.LiveView.Rendered.t()
   defp render_reservation_summary(assigns) do
     ~H"""
     <div>
@@ -294,14 +296,14 @@ defmodule RivaAshWeb.Components.Forms.ReservationBookingForm do
   end
 
   @spec render_step_navigation(
-    step :: integer(),
-    total_steps :: integer(),
-    loading :: boolean(),
-    on_prev_step :: String.t(),
-    on_next_step :: String.t(),
-    on_submit :: String.t(),
-    on_cancel :: String.t()
-  ) :: Phoenix.LiveView.Rendered.t()
+          step :: integer(),
+          total_steps :: integer(),
+          loading :: boolean(),
+          on_prev_step :: String.t(),
+          on_next_step :: String.t(),
+          on_submit :: String.t(),
+          on_cancel :: String.t()
+        ) :: Phoenix.LiveView.Rendered.t()
   defp render_step_navigation(assigns) do
     ~H"""
     <div>
@@ -339,7 +341,7 @@ defmodule RivaAshWeb.Components.Forms.ReservationBookingForm do
 
   @doc """
   Validates reservation booking form data for current step.
-  
+
   ## Returns
     {:ok, validated_data} | {:error, changeset}
   """
@@ -393,7 +395,7 @@ defmodule RivaAshWeb.Components.Forms.ReservationBookingForm do
 
   defp validate_required_fields(params, fields) when is_map(params) and is_list(fields) do
     missing_fields = fields |> Enum.filter(&is_nil(Map.get(params, &1)))
-    
+
     case missing_fields do
       [] -> :ok
       _ -> {:error, %{missing_fields: missing_fields}}
@@ -401,6 +403,7 @@ defmodule RivaAshWeb.Components.Forms.ReservationBookingForm do
   end
 
   defp validate_client_exists(nil), do: {:error, %{client_id: "client is required"}}
+
   defp validate_client_exists(client_id) when is_list(@clients) do
     case Enum.find(@clients, fn {_, id} -> id == client_id end) do
       {_name, ^client_id} -> :ok
@@ -409,6 +412,7 @@ defmodule RivaAshWeb.Components.Forms.ReservationBookingForm do
   end
 
   defp validate_item_exists(nil), do: {:error, %{item_id: "item is required"}}
+
   defp validate_item_exists(item_id) when is_list(@items) do
     case Enum.find(@items, fn {_, id} -> id == item_id end) do
       {_name, ^item_id} -> :ok
@@ -421,14 +425,17 @@ defmodule RivaAshWeb.Components.Forms.ReservationBookingForm do
   defp validate_date(_), do: {:error, %{reservation_date: "invalid date format"}}
 
   defp validate_payment_method(nil), do: {:error, %{payment_method: "payment method is required"}}
+
   defp validate_payment_method(method) when is_binary(method) do
     valid_methods = ["cash", "credit_card", "bank_transfer"]
+
     if method in valid_methods do
       :ok
     else
       {:error, %{payment_method: "must be one of: #{Enum.join(valid_methods, ", ")}"}}
     end
   end
+
   defp validate_payment_method(_), do: {:error, %{payment_method: "must be a string"}}
 
   @doc """
@@ -490,12 +497,14 @@ defmodule RivaAshWeb.Components.Forms.ReservationBookingForm do
 
   defp parse_date(nil), do: nil
   defp parse_date(%Date{} = date), do: date
+
   defp parse_date(date_str) when is_binary(date_str) do
     case Date.from_iso8601(date_str) do
       {:ok, date} -> date
       _ -> nil
     end
   end
+
   defp parse_date(_), do: nil
 
   # UI Helper functions

@@ -36,6 +36,7 @@ defmodule RivaAshWeb.UIDemoController do
     case prepare_demo_data() do
       {:ok, demo_data} ->
         render(conn, :index, demo_data)
+
       {:error, reason} ->
         render_error_page(conn, reason)
     end
@@ -60,10 +61,12 @@ defmodule RivaAshWeb.UIDemoController do
     case get_component_info(component_name) do
       {:ok, component_data} ->
         render(conn, :show, component_data)
+
       {:error, :not_found} ->
         conn
         |> put_status(:not_found)
         |> render_error_page("Component '#{component_name}' not found")
+
       {:error, reason} ->
         render_error_page(conn, reason)
     end
@@ -83,6 +86,7 @@ defmodule RivaAshWeb.UIDemoController do
     case get_component_catalog() do
       {:ok, catalog} ->
         json(conn, catalog)
+
       {:error, reason} ->
         conn
         |> put_status(:internal_server_error)
@@ -192,31 +196,62 @@ defmodule RivaAshWeb.UIDemoController do
           name: "atoms",
           title: "Atoms",
           components: [
-            "button", "input", "badge", "avatar", "icon", "divider",
-            "spinner", "tooltip", "tag", "alert", "progress", "skeleton"
+            "button",
+            "input",
+            "badge",
+            "avatar",
+            "icon",
+            "divider",
+            "spinner",
+            "tooltip",
+            "tag",
+            "alert",
+            "progress",
+            "skeleton"
           ]
         },
         %{
           name: "molecules",
           title: "Molecules",
           components: [
-            "form_group", "card", "modal", "dropdown", "tabs", "accordion",
-            "stepper", "search_bar", "date_picker", "time_picker", "rating", "chips"
+            "form_group",
+            "card",
+            "modal",
+            "dropdown",
+            "tabs",
+            "accordion",
+            "stepper",
+            "search_bar",
+            "date_picker",
+            "time_picker",
+            "rating",
+            "chips"
           ]
         },
         %{
           name: "organisms",
           title: "Organisms",
           components: [
-            "navigation", "header", "footer", "sidebar", "dashboard",
-            "data_table", "calendar", "gallery", "comments", "user_profile"
+            "navigation",
+            "header",
+            "footer",
+            "sidebar",
+            "dashboard",
+            "data_table",
+            "calendar",
+            "gallery",
+            "comments",
+            "user_profile"
           ]
         },
         %{
           name: "templates",
           title: "Templates",
           components: [
-            "login_page", "dashboard_layout", "settings_page", "profile_page"
+            "login_page",
+            "dashboard_layout",
+            "settings_page",
+            "profile_page"
           ]
         }
       ],

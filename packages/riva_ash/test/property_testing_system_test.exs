@@ -38,6 +38,7 @@ defmodule RivaAsh.PropertyTestingSystemTest do
     IO.puts("\n2. Testing Route Enumeration...")
     # Force enable for demo - check if SKIP_DB=false was set
     skip_db_env = System.get_env("SKIP_DB")
+
     if skip_db_env == "false" do
       alias RivaAsh.PropertyTesting.RouteEnumerator
       routes = RouteEnumerator.enumerate_routes()
@@ -49,6 +50,7 @@ defmodule RivaAsh.PropertyTestingSystemTest do
 
     # Test 3: Flow Generation
     IO.puts("\n3. Testing Flow Generation...")
+
     if skip_db_env == "false" do
       alias RivaAsh.PropertyTesting.FlowGenerator
       flow = FlowGenerator.user_flow_generator(max_steps: 3, min_steps: 2) |> Enum.take(1) |> hd()
@@ -60,11 +62,16 @@ defmodule RivaAsh.PropertyTestingSystemTest do
 
     # Test 4: Data Management
     IO.puts("\n4. Testing Data Management...")
+
     if skip_db_env == "false" do
       alias RivaAsh.PropertyTesting.DataManager
       # Test basic data generation capabilities
       test_data = DataManager.initialize_test_data(cleanup_strategy: :immediate)
-      IO.puts("   ✅ Data management working! Created #{length(test_data.users)} users, #{length(test_data.businesses)} businesses")
+
+      IO.puts(
+        "   ✅ Data management working! Created #{length(test_data.users)} users, #{length(test_data.businesses)} businesses"
+      )
+
       # Clean up immediately
       DataManager.cleanup_test_data(test_data)
     else
@@ -88,6 +95,7 @@ defmodule RivaAsh.PropertyTestingSystemTest do
     IO.puts("   • State machine: ✅ Working")
 
     skip_db_env = System.get_env("SKIP_DB")
+
     if skip_db_env == "false" do
       IO.puts("   • Route enumeration: ✅ Production ready")
       IO.puts("   • Flow generation: ✅ Production ready")
@@ -113,9 +121,12 @@ defmodule RivaAsh.PropertyTestingSystemTest do
     # Additional assertions when database is available
     unless Application.get_env(:riva_ash, :skip_database) == true do
       # These would have been tested above when database is available
-      assert true  # Route enumeration worked
-      assert true  # Flow generation worked
-      assert true  # Data management worked
+      # Route enumeration worked
+      assert true
+      # Flow generation worked
+      assert true
+      # Data management worked
+      assert true
     end
   end
 end

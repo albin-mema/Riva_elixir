@@ -2,7 +2,7 @@ defmodule RivaAsh.Resources.EmployeePermission do
   @moduledoc """
   Join table linking employees to their assigned permissions.
   Tracks who granted the permission and when for audit purposes.
-  
+
   This resource manages permission assignments for employees, ensuring proper
   authorization and audit tracking for all permission changes.
   """
@@ -171,33 +171,32 @@ defmodule RivaAsh.Resources.EmployeePermission do
       public?(true)
       description("The employee who granted this permission")
     end
-  
+
     # Helper functions for business logic and data validation
-  
+
     @doc """
     Checks if the employee permission is currently active (not archived).
-    
+
     ## Parameters
     - employee_permission: The employee permission record to check
-    
+
     ## Returns
     - `true` if the permission is active, `false` otherwise
     """
-    @spec is_active?(t()) :: boolean()
-    def is_active?(employee_permission) do
-      with %{archived_at: nil} <- employee_permission do
-        true
-      else
+    @spec active?(t()) :: boolean()
+    def active?(employee_permission) do
+      case employee_permission do
+        %{archived_at: nil} -> true
         _ -> false
       end
     end
-  
+
     @doc """
     Gets the display name of the permission assigned to the employee.
-    
+
     ## Parameters
     - employee_permission: The employee permission record
-    
+
     ## Returns
     - String with the permission name or "Unknown permission"
     """
@@ -208,13 +207,13 @@ defmodule RivaAsh.Resources.EmployeePermission do
         _ -> "Unknown permission"
       end
     end
-  
+
     @doc """
     Gets the display name of the employee who was granted the permission.
-    
+
     ## Parameters
     - employee_permission: The employee permission record
-    
+
     ## Returns
     - String with the employee's display name
     """
@@ -223,20 +222,24 @@ defmodule RivaAsh.Resources.EmployeePermission do
       case employee_permission.employee do
         %{first_name: first, last_name: last} when is_binary(first) and is_binary(last) ->
           "#{first} #{last}"
+
         %{first_name: first} when is_binary(first) ->
           first
+
         %{last_name: last} when is_binary(last) ->
           last
-        _ -> "Unknown employee"
+
+        _ ->
+          "Unknown employee"
       end
     end
-  
+
     @doc """
     Gets the display name of the employee who granted the permission.
-    
+
     ## Parameters
     - employee_permission: The employee permission record
-    
+
     ## Returns
     - String with the granter's display name
     """
@@ -245,46 +248,58 @@ defmodule RivaAsh.Resources.EmployeePermission do
       case employee_permission.granted_by do
         %{first_name: first, last_name: last} when is_binary(first) and is_binary(last) ->
           "#{first} #{last}"
+
         %{first_name: first} when is_binary(first) ->
           first
+
         %{last_name: last} when is_binary(last) ->
           last
-        _ -> "Unknown granter"
+
+        _ ->
+          "Unknown granter"
       end
     end
-  
+
     @doc """
     Formats the permission assignment information for display.
-    
+
     ## Parameters
     - employee_permission: The employee permission record
-    
+
     ## Returns
     - String with formatted permission assignment details
     """
     @spec formatted_assignment(t()) :: String.t()
     def formatted_assignment(employee_permission) do
-      with true <- is_active?(employee_permission),
-           permission_name <- permission_name(employee_permission),
-           employee_name <- employee_display_name(employee_permission),
-           granter_name <- granter_display_name(employee_permission),
-           notes when is_binary(notes) <- employee_permission.notes do
-        "#{employee_name} was granted '#{permission_name}' by #{granter_name}. Notes: #{notes}"
+      if active?(employee_permission) do
+        format_active_assignment(employee_permission)
       else
-        false ->
-          "#{employee_display_name(employee_permission)} has archived permission '#{permission_name(employee_permission)}'"
-        
-        nil ->
-          "#{employee_display_name(employee_permission)} was granted '#{permission_name(employee_permission)}' by #{granter_display_name(employee_permission)}"
+        format_archived_assignment(employee_permission)
       end
     end
-  
+
+    # Private helper functions
+    defp format_active_assignment(employee_permission) do
+      permission_name = permission_name(employee_permission)
+      employee_name = employee_display_name(employee_permission)
+      granter_name = granter_display_name(employee_permission)
+
+      case employee_permission.notes do
+        notes when is_binary(notes) -> "#{employee_name} was granted '#{permission_name}' by #{granter_name}. Notes: #{notes}"
+        nil -> "#{employee_name} was granted '#{permission_name}' by #{granter_name}"
+      end
+    end
+
+    defp format_archived_assignment(employee_permission) do
+      "#{employee_display_name(employee_permission)} has archived permission '#{permission_name(employee_permission)}'"
+    end
+
     @doc """
     Calculates how many days ago the permission was granted.
-    
+
     ## Parameters
     - employee_permission: The employee permission record
-    
+
     ## Returns
     - Integer representing days since grant, or nil if not granted
     """
@@ -293,19 +308,19 @@ defmodule RivaAsh.Resources.EmployeePermission do
       case employee_permission.inserted_at do
         %DateTime{} = inserted_at ->
           DateTime.diff(DateTime.utc_now(), inserted_at, :day)
-        
+
         _ ->
           nil
       end
     end
-  
+
     @doc """
     Checks if the permission was granted within the last specified number of days.
-    
+
     ## Parameters
     - employee_permission: The employee permission record
     - days: Number of days to check against
-    
+
     ## Returns
     - `true` if granted within the specified days, `false` otherwise
     """
@@ -314,17 +329,18 @@ defmodule RivaAsh.Resources.EmployeePermission do
       case days_since_granted(employee_permission) do
         granted_days when is_integer(granted_days) and granted_days <= days ->
           true
+
         _ ->
           false
       end
     end
-  
+
     @doc """
     Validates that the employee permission has all required relationships.
-    
+
     ## Parameters
     - employee_permission: The employee permission record to validate
-    
+
     ## Returns
     - `{:ok, employee_permission}` if valid
     - `{:error, reason}` if invalid
@@ -334,49 +350,51 @@ defmodule RivaAsh.Resources.EmployeePermission do
       cond do
         is_nil(employee_permission.employee) ->
           {:error, "Employee relationship is missing"}
-        
+
         is_nil(employee_permission.permission) ->
           {:error, "Permission relationship is missing"}
-        
+
         is_nil(employee_permission.granted_by) ->
           {:error, "Granted by relationship is missing"}
-        
+
         true ->
           {:ok, employee_permission}
       end
     end
-  
+
     @doc """
     Checks if the specified employee can be granted the specified permission.
-    
+
     ## Parameters
     - employee_id: ID of the employee to check
     - permission_id: ID of the permission to check
     - granted_by_id: ID of the employee granting the permission
-    
+
     ## Returns
     - `{:ok, boolean()}` with whether the assignment is valid
     - `{:error, reason}` if validation fails
     """
     @spec can_grant_permission?(String.t(), String.t(), String.t()) :: {:ok, boolean()} | {:error, String.t()}
     def can_grant_permission?(employee_id, permission_id, granted_by_id) do
-      with {:ok, true} <- validate_employee_business_match(employee_id, granted_by_id),
-           {:ok, true} <- validate_permission_exists(permission_id) do
-        {:ok, true}
-      else
+      case validate_employee_business_match(employee_id, granted_by_id) do
+        {:ok, true} ->
+          case validate_permission_exists(permission_id) do
+            {:ok, true} -> {:ok, true}
+            {:error, reason} -> {:error, reason}
+          end
         {:error, reason} -> {:error, reason}
         false -> {:error, "Invalid permission assignment"}
       end
     end
-  
+
     # Private helper functions
-  
+
     defp validate_employee_business_match(employee_id, granted_by_id) do
       # This would typically check if both employees belong to the same business
       # For now, we'll assume this validation is handled elsewhere
       {:ok, true}
     end
-  
+
     defp validate_permission_exists(permission_id) do
       # This would typically check if the permission exists
       # For now, we'll assume this validation is handled elsewhere

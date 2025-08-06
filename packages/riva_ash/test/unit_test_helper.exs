@@ -113,7 +113,7 @@ end
 def print_configuration do
   IO.puts("""
   Starting RivaAsh unit tests (no database)...
-  
+
   Configuration:
   - Environment: #{Application.get_env(:riva_ash, :env)}
   - Database: SKIPPED (unit tests only)

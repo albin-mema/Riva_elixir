@@ -40,14 +40,14 @@ defmodule RivaAshWeb.Components.Navigation.BreadcrumbTrail do
           </a>
           <.icon name={@separator} class={["separator", @separator_class]} />
         </li>
-        
+
         <!-- Handle truncation if too many items -->
         <%= if length(@items) > @max_items do %>
           <li>
             <span class="breadcrumb-item truncated">...</span>
             <.icon name={@separator} class={["separator", @separator_class]} />
           </li>
-          
+
           <!-- Show only last few items -->
           <li :for={{item, index} <- Enum.with_index(Enum.take(@items, -(@max_items - 1)))}>
             <%= if item[:current] do %>
@@ -90,7 +90,7 @@ defmodule RivaAshWeb.Components.Navigation.BreadcrumbTrail do
   # Helper function to build home classes
   @spec build_home_class(boolean()) :: String.t()
   defp build_home_class(show_home) do
-    if show_home, do: "", else: "hidden"
+    if show_home, "", "hidden"
   end
 
   # Helper function to build separator classes

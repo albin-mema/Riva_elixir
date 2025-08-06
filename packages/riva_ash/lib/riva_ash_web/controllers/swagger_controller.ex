@@ -40,6 +40,7 @@ defmodule RivaAshWeb.SwaggerController do
         conn
         |> put_resp_content_type("text/html")
         |> send_resp(200, html)
+
       {:error, reason} ->
         conn
         |> put_status(:internal_server_error)
@@ -115,7 +116,7 @@ defmodule RivaAshWeb.SwaggerController do
             <h1>Riva Ash API Documentation</h1>
             <p>Interactive API reference for the Riva Ash platform</p>
         </div>
-        
+
         <div class="swagger-container">
             <div id="swagger-ui"></div>
         </div>

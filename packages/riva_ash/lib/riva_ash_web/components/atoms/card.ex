@@ -1,7 +1,7 @@
 defmodule RivaAshWeb.Components.Atoms.Card do
   @moduledoc """
   Card component for displaying content in a styled container.
-  
+
   Follows functional core, imperative shell pattern with comprehensive type safety.
   """
   use Phoenix.Component
@@ -13,9 +13,9 @@ defmodule RivaAshWeb.Components.Atoms.Card do
 
   @doc """
   Renders a card component with different variants and sizes.
-  
+
   ## Examples
-    
+
       <.card>
         <.card_header>
           <h3 class="text-lg font-semibold">Card Title</h3>
@@ -27,7 +27,7 @@ defmodule RivaAshWeb.Components.Atoms.Card do
           <button class="bg-blue-500 text-white px-4 py-2 rounded">Action</button>
         </.card_footer>
       </.card>
-      
+
       <.card variant="elevated" size="lg">
         <.card_header>
           <h3 class="text-xl font-bold">Large Elevated Card</h3>
@@ -148,11 +148,11 @@ defmodule RivaAshWeb.Components.Atoms.Card do
           <%= render_slot(@header) %>
         </.card_header>
       <% end %>
-      
+
       <.card_body>
         <%= render_slot(@body) %>
       </.card_body>
-      
+
       <%= if @footer do %>
         <.card_footer>
           <%= render_slot(@footer) %>
@@ -199,6 +199,7 @@ defmodule RivaAshWeb.Components.Atoms.Card do
     # In a real implementation, you might want to log this error
     # and render a fallback card or error state
     IO.puts("Card error: #{reason}")
+
     ~H"""
     <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative">
       <span class="block sm:inline">Error: <%= reason %></span>

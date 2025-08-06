@@ -67,19 +67,19 @@ defmodule RivaAshWeb.Components.UI.Textarea do
   # Helper function to build wrapper classes
   @spec build_wrapper_class(Phoenix.HTML.FormField.t() | nil) :: String.t()
   defp build_wrapper_class(field) do
-    if field, do: "relative w-full", else: "w-full"
+    if field, "relative w-full", "w-full"
   end
 
   # Helper function to build error classes
   @spec build_error_class(Phoenix.HTML.FormField.t() | nil) :: String.t()
   defp build_error_class(field) do
-    if has_error?(field), do: "text-sm text-destructive mt-1", else: "hidden"
+    if has_error?(field), "text-sm text-destructive mt-1", "hidden"
   end
 
   # Helper function to build required classes
   @spec build_required_class(boolean()) :: String.t()
   defp build_required_class(required) do
-    if required, do: "required", else: ""
+    if required, "required", ""
   end
 
   # Helper function to build rows classes
@@ -108,7 +108,8 @@ defmodule RivaAshWeb.Components.UI.Textarea do
   end
 
   defp textarea_class(assigns) do
-    base = "flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+    base =
+      "flex w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
 
     variant = variant_classes(assigns.variant)
     size = size_classes(assigns.size)

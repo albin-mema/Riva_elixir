@@ -21,7 +21,8 @@ defmodule RivaAsh.Jobs.GDPRRetentionJobTest do
     @spec test_only_older_than_threshold_gets_processed :: :ok
     test "only older-than-threshold gets processed" do
       base = ~U[2025-01-01 00:00:00Z]
-      threshold_seconds = 86_400 * 30 # 30 days assumed in policy for example
+      # 30 days assumed in policy for example
+      threshold_seconds = 86_400 * 30
 
       with_frozen_time(base, fn ->
         {:ok, _pid} = start_supervised(GDPRRetentionJob)

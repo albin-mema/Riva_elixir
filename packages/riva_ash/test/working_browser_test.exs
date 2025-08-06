@@ -43,7 +43,7 @@ defmodule WorkingBrowserTest do
         # Fall back to just keeping the browser open so you can see the page
         IO.puts("🌐 Browser should be open showing the registration page")
         # Keep browser open for 10 seconds
-        Process.sleep(10000)
+        Process.sleep(10_000)
     end
   end
 end

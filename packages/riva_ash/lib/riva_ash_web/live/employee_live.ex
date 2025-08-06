@@ -1,7 +1,7 @@
 defmodule RivaAshWeb.EmployeeLive do
   @moduledoc """
   LiveView for managing Employees.
-  
+
   This LiveView follows Phoenix/Ash/Elixir patterns:
   - Uses AuthHelpers for authentication and business scoping
   - Delegates business logic to Employee context
@@ -41,7 +41,10 @@ defmodule RivaAshWeb.EmployeeLive do
       {:ok, socket} ->
         {:ok,
          socket
-         |> assign(:form, AshPhoenix.Form.for_create(Employee, :create, actor: socket.assigns.current_user) |> to_form())
+         |> assign(
+           :form,
+           AshPhoenix.Form.for_create(Employee, :create, actor: socket.assigns.current_user) |> to_form()
+         )
          |> assign(:show_form, false)
          |> assign(:editing_employee, nil)
          |> assign(:loading, false)
@@ -263,9 +266,7 @@ defmodule RivaAshWeb.EmployeeLive do
   def handle_event("validate_employee", %{"form" => params}, socket) do
     form =
       if socket.assigns.editing_employee do
-        AshPhoenix.Form.for_update(socket.assigns.editing_employee, :update,
-          actor: socket.assigns.current_user
-        )
+        AshPhoenix.Form.for_update(socket.assigns.editing_employee, :update, actor: socket.assigns.current_user)
       else
         AshPhoenix.Form.for_create(Employee, :create, actor: socket.assigns.current_user)
       end

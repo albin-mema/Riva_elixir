@@ -20,13 +20,13 @@ defmodule RivaAsh.Resources.Section do
   import RivaAsh.ResourceHelpers
 
   @type t :: %__MODULE__{
-    id: String.t(),
-    name: String.t(),
-    description: String.t() | nil,
-    plot_id: String.t(),
-    inserted_at: DateTime.t(),
-    updated_at: DateTime.t()
-  }
+          id: String.t(),
+          name: String.t(),
+          description: String.t() | nil,
+          plot_id: String.t(),
+          inserted_at: DateTime.t(),
+          updated_at: DateTime.t()
+        }
 
   standard_postgres("sections")
   standard_archive()

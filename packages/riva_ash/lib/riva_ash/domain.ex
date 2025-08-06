@@ -1,7 +1,7 @@
 defmodule RivaAsh.Domain do
   @moduledoc """
   Central Ash domain configuration for the Riva Ash application.
-  
+
   This module defines the complete domain structure including all resources,
   extensions, and API configurations. It serves as the central hub for
   all domain-related functionality.
@@ -49,7 +49,7 @@ defmodule RivaAsh.Domain do
     resource(RivaAsh.Resources.Employee)
     resource(RivaAsh.Resources.Permission)
     resource(RivaAsh.Resources.EmployeePermission)
-    
+
     # Reservation and booking resources
     resource(RivaAsh.Resources.Reservation)
     resource(RivaAsh.Resources.Pricing)
@@ -89,10 +89,10 @@ defmodule RivaAsh.Domain do
       tag("Recurring Reservations")
       tag("Recurring Reservation Instances")
       tag("GDPR Consent Records")
-      
+
       # Group resources logically
       group_by(:resource)
-      
+
       # Additional OpenAPI configuration
       # security([%{"bearerAuth" => []}])
     end
@@ -129,7 +129,7 @@ defmodule RivaAsh.Domain do
       RivaAsh.Resources.Reservation,
       RivaAsh.Resources.Business
     ]
-    
+
     Enum.reduce_while(required_resources, :ok, fn resource, :ok ->
       if resource_configured?(resource) do
         {:cont, :ok}

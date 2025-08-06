@@ -45,6 +45,7 @@ defmodule RivaAshWeb.HealthControllerTest do
           body = json_response(conn, status)
           assert Map.has_key?(body, "database")
           assert body["database"] in ["connected", "disconnected"]
+
         _ ->
           flunk("Unexpected status from /health/db: #{conn.status}")
       end

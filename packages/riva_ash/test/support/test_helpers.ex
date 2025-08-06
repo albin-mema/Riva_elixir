@@ -20,6 +20,7 @@ defmodule RivaAsh.TestHelpers do
   import Phoenix.ConnTest
   import Plug.Conn
   require Ash.Query
+
   defmacro __using__(_opts) do
     quote do
       import ExUnit.Assertions
@@ -31,6 +32,12 @@ defmodule RivaAsh.TestHelpers do
       alias RivaAsh.Domain
       alias RivaAsh.Accounts
       alias Plug.Conn
+      alias RivaAsh.Resources.Plot
+      alias RivaAsh.Resources.Section
+      alias RivaAsh.Resources.ItemType
+      alias RivaAsh.Resources.Client
+      alias RivaAsh.Resources.RecurringReservation
+      alias RivaAsh.Resources.RecurringReservationInstance
 
       # Setup the SQL sandbox for tests.
       setup tags do
@@ -43,7 +50,6 @@ defmodule RivaAsh.TestHelpers do
       end
     end
   end
-
 
   @doc """
   Run a function in a sandbox transaction.
@@ -244,7 +250,7 @@ defmodule RivaAsh.TestHelpers do
 
     attrs = Map.merge(defaults, attrs)
 
-    RivaAsh.Resources.Business
+    Business
     |> Ash.Changeset.for_create(:create, attrs)
     |> Ash.create(actor: actor, domain: RivaAsh.Domain)
   end
@@ -283,33 +289,36 @@ defmodule RivaAsh.TestHelpers do
   """
   @spec create_section(map(), any(), any()) :: {:ok, any()} | {:error, any()}
   def create_section(attrs, business, actor) do
-
     # First create a plot for the business if not provided
-    plot = case Map.get(attrs, :plot_id) do
-      nil ->
-        plot_attrs = %{
-          name: "Test Plot #{System.unique_integer([:positive, :monotonic])}",
-          description: "A test plot",
-          business_id: business.id
-        }
-        case RivaAsh.Resources.Plot
-             |> Ash.Changeset.for_create(:create, plot_attrs)
-             |> Ash.create(actor: actor, domain: RivaAsh.Domain) do
-          {:ok, plot} -> plot
-          {:error, error} -> raise "Failed to create test plot: #{inspect(error)}"
-        end
-      _plot_id -> nil
-    end
+    plot =
+      case Map.get(attrs, :plot_id) do
+        nil ->
+          plot_attrs = %{
+            name: "Test Plot #{System.unique_integer([:positive, :monotonic])}",
+            description: "A test plot",
+            business_id: business.id
+          }
+
+          case Plot
+               |> Ash.Changeset.for_create(:create, plot_attrs)
+               |> Ash.create(actor: actor, domain: RivaAsh.Domain) do
+            {:ok, plot} -> plot
+            {:error, error} -> raise "Failed to create test plot: #{inspect(error)}"
+          end
+
+        _plot_id ->
+          nil
+      end
 
     defaults = %{
       name: "Test Section #{System.unique_integer([:positive, :monotonic])}",
       description: "A test section",
-      plot_id: plot && plot.id || attrs[:plot_id]
+      plot_id: (plot && plot.id) || attrs[:plot_id]
     }
 
     attrs = Map.merge(defaults, attrs)
 
-    RivaAsh.Resources.Section
+    Section
     |> Ash.Changeset.for_create(:create, attrs)
     |> Ash.create(actor: actor, domain: RivaAsh.Domain)
   end
@@ -342,10 +351,11 @@ defmodule RivaAsh.TestHelpers do
     # Load the section with its plot to get business_id
     import Ash.Expr
 
-    section_with_plot = RivaAsh.Resources.Section
-    |> Ash.Query.load(:plot)
-    |> Ash.Query.filter(expr(id == ^section.id))
-    |> Ash.read_one!(domain: RivaAsh.Domain)
+    section_with_plot =
+      Section
+      |> Ash.Query.load(:plot)
+      |> Ash.Query.filter(expr(id == ^section.id))
+      |> Ash.read_one!(domain: RivaAsh.Domain)
 
     business_id = section_with_plot.plot.business_id
 
@@ -356,9 +366,10 @@ defmodule RivaAsh.TestHelpers do
       default_capacity: 1
     }
 
-    {:ok, item_type} = RivaAsh.Resources.ItemType
-    |> Ash.Changeset.for_create(:create, item_type_attrs)
-    |> Ash.create(domain: RivaAsh.Domain)
+    {:ok, item_type} =
+      RivaAsh.Resources.ItemType
+      |> Ash.Changeset.for_create(:create, item_type_attrs)
+      |> Ash.create(domain: RivaAsh.Domain)
 
     item_attrs = %{
       name: "Test Item #{System.unique_integer([:positive, :monotonic])}",
@@ -368,7 +379,7 @@ defmodule RivaAsh.TestHelpers do
       capacity: 1
     }
 
-    case RivaAsh.Resources.Item.create(item_attrs) do
+    case Item.create(item_attrs) do
       {:ok, item} -> item
       {:error, error} -> raise "Failed to create test item: #{inspect(error)}"
     end
@@ -390,10 +401,11 @@ defmodule RivaAsh.TestHelpers do
     import Ash.Expr
 
     # Load the item with its relationships to get business_id
-    item_with_relations = RivaAsh.Resources.Item
-    |> Ash.Query.load(section: :plot)
-    |> Ash.Query.filter(expr(id == ^item.id))
-    |> Ash.read_one!(domain: RivaAsh.Domain)
+    item_with_relations =
+      Item
+      |> Ash.Query.load(section: :plot)
+      |> Ash.Query.filter(expr(id == ^item.id))
+      |> Ash.read_one!(domain: RivaAsh.Domain)
 
     business_id = item_with_relations.section.plot.business_id
 
@@ -405,9 +417,10 @@ defmodule RivaAsh.TestHelpers do
       business_id: business_id
     }
 
-    {:ok, client} = RivaAsh.Resources.Client
-    |> Ash.Changeset.for_create(:create, client_attrs)
-    |> Ash.create(actor: user, domain: RivaAsh.Domain)
+    {:ok, client} =
+      Client
+      |> Ash.Changeset.for_create(:create, client_attrs)
+      |> Ash.create(actor: user, domain: RivaAsh.Domain)
 
     recurring_reservation_attrs = %{
       client_id: client.id,
@@ -421,7 +434,7 @@ defmodule RivaAsh.TestHelpers do
       notes: "Test notes"
     }
 
-    case RivaAsh.Resources.RecurringReservation.create(recurring_reservation_attrs) do
+    case RecurringReservation.create(recurring_reservation_attrs) do
       {:ok, recurring_reservation} -> recurring_reservation
       {:error, error} -> raise "Failed to create test recurring reservation: #{inspect(error)}"
     end
@@ -442,7 +455,7 @@ defmodule RivaAsh.TestHelpers do
 
     attrs = Map.merge(defaults, attrs)
 
-    case RivaAsh.Resources.RecurringReservationInstance.create(attrs) do
+    case RecurringReservationInstance.create(attrs) do
       {:ok, instance} -> instance
       {:error, error} -> raise "Failed to create test recurring reservation instance: #{inspect(error)}"
     end

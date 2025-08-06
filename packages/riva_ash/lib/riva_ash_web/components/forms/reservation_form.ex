@@ -1,15 +1,15 @@
 defmodule RivaAshWeb.Components.Forms.ReservationForm do
   @moduledoc """
   Reservation form component using atomic design system.
-  
+
   This component follows the functional core, imperative shell pattern,
   with pure functions for data transformation and validation, and
   the LiveView component handling UI state and side effects.
-  
+
   ## Styleguide Compliance
-  
+
   This module follows the Riva Ash styleguide principles:
-  
+
   - **Functional Programming**: Uses pure functions, pattern matching, and pipelines
   - **Type Safety**: Comprehensive type specifications with @spec annotations
   - **Single Level of Abstraction**: Each function has a clear, focused responsibility
@@ -26,31 +26,31 @@ defmodule RivaAshWeb.Components.Forms.ReservationForm do
   import RivaAshWeb.Components.Atoms.TimePicker
 
   @type assigns :: %{
-    optional(:form) => map(),
-    optional(:editing) => boolean(),
-    optional(:loading) => boolean(),
-    optional(:clients) => list(),
-    optional(:items) => list(),
-    optional(:employees) => list(),
-    optional(:on_submit) => String.t(),
-    optional(:on_change) => String.t(),
-    optional(:on_cancel) => String.t(),
-    optional(:class) => String.t(),
-    optional(:rest) => any()
-  }
+          optional(:form) => map(),
+          optional(:editing) => boolean(),
+          optional(:loading) => boolean(),
+          optional(:clients) => list(),
+          optional(:items) => list(),
+          optional(:employees) => list(),
+          optional(:on_submit) => String.t(),
+          optional(:on_change) => String.t(),
+          optional(:on_cancel) => String.t(),
+          optional(:class) => String.t(),
+          optional(:rest) => any()
+        }
 
   @type reservation_form_data :: %{
-    client_id: String.t() | integer(),
-    item_id: String.t() | integer(),
-    reserved_from: DateTime.t(),
-    reserved_until: DateTime.t(),
-    employee_id: String.t() | integer() | nil,
-    notes: String.t()
-  }
+          client_id: String.t() | integer(),
+          item_id: String.t() | integer(),
+          reserved_from: DateTime.t(),
+          reserved_until: DateTime.t(),
+          employee_id: String.t() | integer() | nil,
+          notes: String.t()
+        }
 
   @doc """
   Renders a reservation form for creating or editing reservations.
-  
+
   ## Examples
       <.reservation_form
         form={@form}
@@ -178,7 +178,8 @@ defmodule RivaAshWeb.Components.Forms.ReservationForm do
     """
   end
 
-  @spec render_form_actions(editing :: boolean(), loading :: boolean(), on_cancel :: String.t()) :: Phoenix.LiveView.Rendered.t()
+  @spec render_form_actions(editing :: boolean(), loading :: boolean(), on_cancel :: String.t()) ::
+          Phoenix.LiveView.Rendered.t()
   defp render_form_actions(assigns) do
     ~H"""
     <div class="flex justify-end space-x-3 pt-4 border-t">
@@ -196,7 +197,7 @@ defmodule RivaAshWeb.Components.Forms.ReservationForm do
 
   @doc """
   Validates reservation form data.
-  
+
   ## Returns
     {:ok, validated_data} | {:error, changeset}
   """
@@ -216,7 +217,7 @@ defmodule RivaAshWeb.Components.Forms.ReservationForm do
   defp validate_required_fields(params) when is_map(params) do
     required_fields = [:client_id, :item_id, :reserved_from, :reserved_until]
     missing_fields = required_fields |> Enum.filter(&is_nil(Map.get(params, &1)))
-    
+
     case missing_fields do
       [] -> :ok
       _ -> {:error, %{missing_fields: missing_fields}}
@@ -225,18 +226,24 @@ defmodule RivaAshWeb.Components.Forms.ReservationForm do
 
   defp validate_datetime_range(params) when is_map(params) do
     with {:ok, from} <- get_datetime(params[:reserved_from]),
-         {:ok, until} <- get_datetime(params[:reserved_until]) do
-      if DateTime.compare(from, until) == :lt do
-        :ok
-      else
-        {:error, %{datetime_range: "Reserved from must be before reserved until"}}
-      end
+         {:ok, until} <- get_datetime(params[:reserved_until]),
+         :ok <- validate_datetime_order(from, until) do
+      :ok
     else
       {:error, reason} -> {:error, reason}
     end
   end
 
+  defp validate_datetime_order(from, until) do
+    if DateTime.compare(from, until) == :lt do
+      :ok
+    else
+      {:error, %{datetime_range: "Reserved from must be before reserved until"}}
+    end
+  end
+
   defp validate_client_exists(nil, _), do: :ok
+
   defp validate_client_exists(client_id, clients) when is_list(clients) do
     case Enum.find(clients, fn {_, id} -> id == client_id end) do
       {_name, ^client_id} -> :ok
@@ -245,6 +252,7 @@ defmodule RivaAshWeb.Components.Forms.ReservationForm do
   end
 
   defp validate_item_exists(nil, _), do: :ok
+
   defp validate_item_exists(item_id, items) when is_list(items) do
     case Enum.find(items, fn {_, id} -> id == item_id end) do
       {_name, ^item_id} -> :ok

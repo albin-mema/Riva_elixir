@@ -1,15 +1,15 @@
-# Business Card Component Specification
+# Organization Card Component Specification
 
 ## Component Name
-Business Card
+Organization Card
 
 ## Description
-A business card component for displaying business information in a structured card format. Shows key details about a business including name, description, contact information, and status.
+An organization card component for displaying organization information in a structured card format. Shows key details about an organization including name, description, contact information, and status.
 
 ## Props/Attributes
 | Prop | Type | Default | Description |
 |------|------|---------|-------------|
-| `business` | map | %{} | Business data with id, name, description, address, phone, email, website, business_type, is_active, inserted_at, updated_at, and owner_id |
+| `organization` | map | %{} | Organization data with id, name, description, address, phone, email, website, organization_type, is_active, inserted_at, updated_at, and owner_id |
 | `current_user` | map | %{} | Current user data with id and email |
 | `is_admin` | boolean | false | Whether the current user is an admin |
 | `on_edit` | string | "" | Event to send when edit action is triggered |

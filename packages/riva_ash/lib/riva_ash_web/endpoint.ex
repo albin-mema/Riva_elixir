@@ -9,7 +9,8 @@ defmodule RivaAshWeb.Endpoint do
   with proper session management, CORS support, and development tools.
   """
 
-  @type session_option :: {:store, :cookie} | {:key, String.t()} | {:signing_salt, String.t()} | {:same_site, String.t()}
+  @type session_option ::
+          {:store, :cookie} | {:key, String.t()} | {:signing_salt, String.t()} | {:same_site, String.t()}
   @type session_options :: [session_option()]
 
   @doc """
