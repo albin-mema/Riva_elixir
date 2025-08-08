@@ -1,3 +1,7 @@
+alias Mix.Tasks.Routes
+alias Mix.Task
+alias Phoenix.Router
+
 defmodule Mix.Tasks.Routes.Check do
   @moduledoc """
   Mix task to check all routes for potential errors and crashes.
@@ -26,7 +30,7 @@ defmodule Mix.Tasks.Routes.Check do
   @shortdoc "Check all application routes for potential errors"
 
   def run(args) do
-    {opts, _, _} =
+    {opts, _unmatched, _unmatched} =
       OptionParser.parse(args,
         switches: [
           verbose: :boolean,
@@ -55,14 +59,12 @@ defmodule Mix.Tasks.Routes.Check do
   end
 
   defp get_all_routes do
-    try do
-      # Use Phoenix.Router.routes/1 to get routes
-      Phoenix.Router.routes(RivaAshWeb.Router)
-    rescue
-      error ->
-        IO.puts("❌ Could not load routes: #{inspect(error)}")
-        []
-    end
+    # Use Phoenix.Router.routes/1 to get routes
+    Phoenix.Router.routes(RivaAshWeb.Router)
+  rescue
+    error ->
+      IO.puts("❌ Could not load routes: #{inspect(error)}")
+      []
   end
 
   defp categorize_routes(routes) do
@@ -109,7 +111,7 @@ defmodule Mix.Tasks.Routes.Check do
           plug_name = to_string(plug)
           String.contains?(plug_name, "Live")
 
-        _ ->
+        _plug_not_live ->
           false
       end
     end)
@@ -125,7 +127,7 @@ defmodule Mix.Tasks.Routes.Check do
       pipelines when is_list(pipelines) ->
         Enum.member?(pipelines, :require_authenticated_user)
 
-      _ ->
+      _pipeline_not_found ->
         false
     end
   end

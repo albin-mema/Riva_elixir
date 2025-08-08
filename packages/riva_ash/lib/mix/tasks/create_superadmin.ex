@@ -1,3 +1,10 @@
+alias Ash.Changeset
+alias Ash.Error
+alias Ash.Error.Changes
+alias Mix.Task
+alias Mix.Tasks
+alias RivaAsh.Accounts
+
 defmodule Mix.Tasks.CreateSuperadmin do
   @moduledoc """
   Mix task to create a superadmin user for system oversight and GDPR compliance.
@@ -15,8 +22,6 @@ defmodule Mix.Tasks.CreateSuperadmin do
   """
 
   use Mix.Task
-  alias RivaAsh.Accounts.User
-  alias RivaAsh.Accounts
 
   @shortdoc "Creates a superadmin user for system oversight"
 
@@ -52,55 +57,73 @@ defmodule Mix.Tasks.CreateSuperadmin do
   defp create_superadmin(email, name, password) do
     # Try to create new superadmin user directly
     # If user exists, we'll get a unique constraint error and handle it
-    case User
-         |> Ash.Changeset.for_create(:register_with_password, %{
-           email: email,
-           name: name,
-           password: password,
-           role: "superadmin"
-         })
-         |> Ash.create(domain: Accounts, actor: %{role: "superadmin"}) do
+    case create_user_with_superadmin_role(email, name, password) do
       {:ok, user} ->
         {:ok, user}
 
       {:error, %Ash.Error.Invalid{errors: errors}} ->
-        # Check if it's a unique constraint error (user already exists)
-        case Enum.find(errors, fn error ->
-               match?(%Ash.Error.Changes.InvalidAttribute{field: :email}, error) or
-                 match?(%Ash.Error.Changes.InvalidChanges{fields: [:email]}, error)
-             end) do
-          nil ->
-            {:error, %Ash.Error.Invalid{errors: errors}}
-
-          _unique_error ->
-            # User exists, try to promote them
-            promote_existing_user(email)
-        end
+        handle_unique_constraint_error(errors, email)
 
       {:error, error} ->
         {:error, error}
     end
   end
 
+  defp create_user_with_superadmin_role(email, name, password) do
+    User
+    |> Ash.Changeset.for_create(:register_with_password, %{
+      email: email,
+      name: name,
+      password: password,
+      role: "superadmin"
+    })
+    |> Ash.create(domain: Accounts, actor: %{role: "superadmin"})
+  end
+
+  defp handle_unique_constraint_error(errors, email) do
+    # Check if it's a unique constraint error (user already exists)
+    case Enum.find(errors, fn error ->
+           match?(%Ash.Error.Changes.InvalidAttribute{field: :email}, error) or
+             match?(%Ash.Error.Changes.InvalidChanges{fields: [:email]}, error)
+         end) do
+      nil ->
+        {:error, %Ash.Error.Invalid{errors: errors}}
+
+      _unique_error ->
+        # User exists, try to promote them
+        promote_existing_user(email)
+    end
+  end
+
   defp promote_existing_user(email) do
     Mix.shell().info("User with email #{email} already exists. Promoting to superadmin...")
 
-    # Find the user and promote them
-    case Ash.read(User, domain: Accounts) do
-      {:ok, users} ->
-        case Enum.find(users, fn user -> user.email == email end) do
-          nil ->
-            {:error, "User not found"}
+    case find_user_by_email(email) do
+      {:ok, nil} ->
+        {:error, "User not found"}
 
-          existing_user ->
-            existing_user
-            |> Ash.Changeset.for_update(:promote_to_superadmin, %{})
-            |> Ash.update(domain: Accounts, actor: %{role: "superadmin"})
-        end
+      {:ok, existing_user} ->
+        promote_user_to_superadmin(existing_user)
 
       {:error, error} ->
         {:error, error}
     end
+  end
+
+  defp find_user_by_email(email) do
+    case Ash.read(User, domain: Accounts) do
+      {:ok, users} ->
+        {:ok, Enum.find(users, fn user -> user.email == email end)}
+
+      {:error, error} ->
+        {:error, error}
+    end
+  end
+
+  defp promote_user_to_superadmin(existing_user) do
+    existing_user
+    |> Ash.Changeset.for_update(:promote_to_superadmin, %{})
+    |> Ash.update(domain: Accounts, actor: %{role: "superadmin"})
   end
 
   defp prompt_for_email do

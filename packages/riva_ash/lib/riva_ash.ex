@@ -47,13 +47,11 @@ defmodule RivaAsh do
 
   @spec configure_default_settings() :: :ok | {:error, term()}
   defp configure_default_settings do
-    try do
-      Application.put_env(:riva_ash, :default_timeout, 30_000)
-      Application.put_env(:riva_ash, :max_retries, 3)
-      :ok
-    rescue
-      error -> {:error, "Failed to configure default settings: #{inspect(error)}"}
-    end
+    Application.put_env(:riva_ash, :default_timeout, 30_000)
+    Application.put_env(:riva_ash, :max_retries, 3)
+    :ok
+  rescue
+    error -> {:error, "Failed to configure default settings: #{inspect(error)}"}
   end
 
   @spec initialize_core_components() :: :ok | {:error, term()}

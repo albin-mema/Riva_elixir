@@ -1,3 +1,6 @@
+alias Mix.Task
+alias Mix.Tasks
+
 defmodule Mix.Tasks.Erd do
   @moduledoc """
   Generates and optionally displays an ERD for the application.
@@ -27,48 +30,48 @@ defmodule Mix.Tasks.Erd do
 
   @impl true
   def run(args) do
-    try do
-      {opts, _} = OptionParser.parse!(args, strict: @switches)
-      format = opts[:format] || "mmd"
-      type = opts[:type] || "er"
+    {opts, _unmatched} = OptionParser.parse!(args, strict: @switches)
+    format = opts[:format] || "mmd"
+    type = opts[:type] || "er"
 
-      case generate_diagram(type, format) do
-        :ok ->
-          output_file = "lib/riva_ash/domain-mermaid-#{type}-diagram.#{format}"
+    case generate_diagram(type, format) do
+      :ok ->
+        handle_successful_generation(type, format, opts)
 
-          if File.exists?(output_file) do
-            if opts[:open] do
-              open_diagram(output_file, format)
-            else
-              IO.puts("\nERD generated at: #{output_file}")
-              IO.puts("To view: mix erd --open")
-            end
-          else
-            IO.puts("Failed to generate ERD: output file not found")
-          end
-
-        {:error, error} ->
-          IO.puts("Failed to generate ERD: #{inspect(error)}")
-      end
-    rescue
-      error ->
+      {:error, error} ->
         IO.puts("Failed to generate ERD: #{inspect(error)}")
+    end
+  rescue
+    error ->
+      IO.puts("Failed to generate ERD: #{inspect(error)}")
+  end
+
+  defp handle_successful_generation(type, format, opts) do
+    output_file = "lib/riva_ash/domain-mermaid-#{type}-diagram.#{format}"
+
+    if File.exists?(output_file) do
+      if opts[:open] do
+        open_diagram(output_file, format)
+      else
+        IO.puts("\nERD generated at: #{output_file}")
+        IO.puts("To view: mix erd --open")
+      end
+    else
+      IO.puts("Failed to generate ERD: output file not found")
     end
   end
 
   defp generate_diagram(type, format) do
-    try do
-      Mix.Task.run("ash.generate_resource_diagrams", [
-        "--type",
-        type,
-        "--format",
-        format
-      ])
+    Mix.Task.run("ash.generate_resource_diagrams", [
+      "--type",
+      type,
+      "--format",
+      format
+    ])
 
-      :ok
-    rescue
-      error -> {:error, error}
-    end
+    :ok
+  rescue
+    error -> {:error, error}
   end
 
   defp open_diagram(file, format) when format not in ["svg", "mmd"] do
