@@ -1,3 +1,9 @@
+alias RivaAshWeb.Components.Forms, as: Forms
+alias RivaAshWeb.Components.Molecules, as: Molecules
+alias RivaAshWeb.Components.Atoms, as: Atoms
+alias RivaAshWeb.Components.Interactive, as: Interactive
+alias Phoenix.LiveView.Rendered, as: Rendered
+
 defmodule RivaAshWeb.Components.Forms.ReservationBookingForm do
   @moduledoc """
   Reservation booking form component.
@@ -405,7 +411,7 @@ defmodule RivaAshWeb.Components.Forms.ReservationBookingForm do
   defp validate_client_exists(nil), do: {:error, %{client_id: "client is required"}}
 
   defp validate_client_exists(client_id) when is_list(@clients) do
-    case Enum.find(@clients, fn {_, id} -> id == client_id end) do
+    case Enum.find(@clients, fn {_name, id} -> id == client_id end) do
       {_name, ^client_id} -> :ok
       _ -> {:error, %{client_id: "client not found"}}
     end
@@ -414,7 +420,7 @@ defmodule RivaAshWeb.Components.Forms.ReservationBookingForm do
   defp validate_item_exists(nil), do: {:error, %{item_id: "item is required"}}
 
   defp validate_item_exists(item_id) when is_list(@items) do
-    case Enum.find(@items, fn {_, id} -> id == item_id end) do
+    case Enum.find(@items, fn {_name, id} -> id == item_id end) do
       {_name, ^item_id} -> :ok
       _ -> {:error, %{item_id: "item not found"}}
     end
@@ -509,21 +515,21 @@ defmodule RivaAshWeb.Components.Forms.ReservationBookingForm do
 
   # UI Helper functions
   defp get_client_name(clients, client_id) do
-    case Enum.find(clients, fn {_, id} -> id == client_id end) do
-      {name, _} -> name
+    case Enum.find(clients, fn {_name, id} -> id == client_id end) do
+      {name, _id} -> name
       _ -> "Unknown"
     end
   end
 
   defp get_item_name(items, item_id) do
-    case Enum.find(items, fn {_, id} -> id == item_id end) do
-      {name, _} -> name
+    case Enum.find(items, fn {_name, id} -> id == item_id end) do
+      {name, _id} -> name
       _ -> "Unknown"
     end
   end
 
   defp find_item(items, item_id) when is_list(items) do
-    case Enum.find(items, fn {_, id} -> id == item_id end) do
+    case Enum.find(items, fn {_name, id} -> id == item_id end) do
       {_name, ^item_id} = item -> item
       _ -> nil
     end

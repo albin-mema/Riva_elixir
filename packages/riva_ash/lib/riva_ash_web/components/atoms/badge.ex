@@ -1,3 +1,9 @@
+alias RivaAshWeb.Components.Atoms, as: Atoms
+alias RivaAshWeb.Components.UI.Badge, as: Badge
+alias RivaAshWeb.Components.UI, as: UI
+alias UI.Badge, as: Badge
+alias Phoenix.LiveView.Rendered, as: Rendered
+
 defmodule RivaAshWeb.Components.Atoms.Badge do
   @moduledoc """
   Deprecated wrapper around the canonical design-system badge.
@@ -47,7 +53,7 @@ defmodule RivaAshWeb.Components.Atoms.Badge do
       assigns = validated_assigns |> assign(:ui_size, ui_size)
       render_badge(assigns)
     else
-      {:error, reason} -> render_error(reason)
+      {:error, reason} -> render_error(%{reason: reason})
     end
   end
 
@@ -123,14 +129,17 @@ defmodule RivaAshWeb.Components.Atoms.Badge do
     """
   end
 
-  defp render_error(reason) do
+  defp render_error(assigns) do
     # In a real implementation, you might want to log this error
     # and render a fallback badge or error state
+    reason = Map.get(assigns, :reason, "Invalid badge parameters")
     IO.puts("Badge error: #{reason}")
 
+    assigns = %{reason: reason}
+
     ~H"""
-    <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative">
-      <span class="block sm:inline">Error: <%= reason %></span>
+    <div class="relative bg-red-100 px-4 py-3 border border-red-400 rounded text-red-700">
+      <span class="block sm:inline">Error: <%= @reason %></span>
     </div>
     """
   end

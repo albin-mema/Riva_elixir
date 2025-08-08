@@ -1,3 +1,7 @@
+alias RivaAsh.Resources, as: Resources
+alias Plug.Conn, as: Conn
+alias Ash.Error.Query, as: Query
+
 defmodule RivaAshWeb.BookingController do
   @moduledoc """
   Client-facing booking API endpoints.
@@ -177,7 +181,13 @@ defmodule RivaAshWeb.BookingController do
     })
   end
 
-  defp render_availability_response(conn, %{item_id: item_id, date: date, duration: duration, business_hours: business_hours, slots: slots}) do
+  defp render_availability_response(conn, %{
+         item_id: item_id,
+         date: date,
+         duration: duration,
+         business_hours: business_hours,
+         slots: slots
+       }) do
     render_availability_response(conn, item_id, date, duration, business_hours, slots)
   end
 
@@ -261,7 +271,7 @@ defmodule RivaAshWeb.BookingController do
     |> Date.from_iso8601()
     |> case do
       {:ok, date} -> ErrorHelpers.success(date)
-      {:error, _} -> ErrorHelpers.failure("Invalid date format. Use YYYY-MM-DD")
+      {:error, _unmatched} -> ErrorHelpers.failure("Invalid date format. Use YYYY-MM-DD")
     end
   end
 
@@ -270,12 +280,12 @@ defmodule RivaAshWeb.BookingController do
   defp parse_duration(duration_string) when is_binary(duration_string) do
     case Integer.parse(duration_string) do
       {duration, ""} when duration > 0 -> duration
-      _ -> 60
+      _unmatchedunmatched -> 60
     end
   end
 
   defp parse_duration(duration) when is_integer(duration) and duration > 0, do: duration
-  defp parse_duration(_), do: 60
+  defp parse_unmatchedduration(_unmatched), do: 60
 
   defp parse_business_hours(params) do
     start_hour = parse_hour(params["start_hour"], 9)
@@ -288,12 +298,12 @@ defmodule RivaAshWeb.BookingController do
   defp parse_hour(hour_string, default) when is_binary(hour_string) do
     case Integer.parse(hour_string) do
       {hour, ""} when hour >= 0 and hour <= 23 -> hour
-      _ -> default
+      _unmatchedunmatched -> default
     end
   end
 
   defp parse_hour(hour, _default) when is_integer(hour) and hour >= 0 and hour <= 23, do: hour
-  defp parse_hour(_, default), do: default
+  defp parse_hour(_unmatched, default), do: default
 
   defp parse_booking_params(params) do
     with {:ok, client_info} <- extract_client_info(params),
@@ -320,12 +330,12 @@ defmodule RivaAshWeb.BookingController do
           phone: client_params["phone"]
         })
 
-      _ ->
+      _unmatchedunmatched ->
         ErrorHelpers.failure("Client name is required")
     end
   end
 
-  defp extract_client_info(_), do: ErrorHelpers.failure("Client information is required")
+  defp extract_unmatchedclient_unmatchedinfo(_unmatched), do: ErrorHelpers.failure("Client information is required")
 
   defp extract_booking_info(%{"booking" => booking_params}) do
     with {:ok, reserved_from} <- parse_datetime(booking_params["reserved_from"]),
@@ -341,7 +351,7 @@ defmodule RivaAshWeb.BookingController do
     end
   end
 
-  defp extract_booking_info(_), do: ErrorHelpers.failure("Booking information is required")
+  defp extract_unmatchedbooking_unmatchedinfo(_unmatched), do: ErrorHelpers.failure("Booking information is required")
 
   defp parse_datetime(nil), do: ErrorHelpers.failure("DateTime is required")
 
@@ -350,7 +360,7 @@ defmodule RivaAshWeb.BookingController do
     |> DateTime.from_iso8601()
     |> case do
       {:ok, datetime, _offset} -> ErrorHelpers.success(datetime)
-      {:error, _} -> ErrorHelpers.failure("Invalid datetime format. Use ISO8601 format")
+      {:error, _unmatched} -> ErrorHelpers.failure("Invalid datetime format. Use ISO8601 format")
     end
   end
 

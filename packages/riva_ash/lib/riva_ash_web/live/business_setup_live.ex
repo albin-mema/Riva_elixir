@@ -1,3 +1,11 @@
+alias RivaAsh.Resources, as: Resources
+alias RivaAshWeb.Components.Organisms, as: Organisms
+alias RivaAshWeb.Components.Molecules, as: Molecules
+alias RivaAshWeb.Components.Atoms, as: Atoms
+alias RivaAshWeb.Components.Interactive, as: Interactive
+alias RivaAshWeb.Live, as: Live
+alias Phoenix.Component, as: Component
+
 defmodule RivaAshWeb.BusinessSetupLive do
   @moduledoc """
   Business Setup Wizard - Guided multi-step setup flow.
@@ -69,7 +77,7 @@ defmodule RivaAshWeb.BusinessSetupLive do
          |> assign(:loading, false)
          |> assign(:errors, [])}
 
-      {:error, _} = error ->
+      {:error, _unmatched} = error ->
         {:ok, error}
     end
   end
@@ -389,6 +397,10 @@ defmodule RivaAshWeb.BusinessSetupLive do
   end
 
   defp render_schedule_step(assigns) do
+    assigns =
+      assigns
+      |> Phoenix.Component.assign_new(:setup_data, fn -> %{} end)
+
     ~H"""
     <div class="space-y-6">
       <div>
@@ -399,18 +411,20 @@ defmodule RivaAshWeb.BusinessSetupLive do
       <.form id="schedule-form" for={@changeset} phx-submit="save_schedule_step" class="space-y-6">
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
           <%= for day <- ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"] do %>
+            <% day_key = String.downcase(day) %>
+            <% day_map = Map.get(@setup_data[:schedule] || %{}, day_key, %{}) %>
             <div class="border border-gray-200 rounded-lg p-4">
               <h4 class="font-medium text-gray-900 mb-3"><%= day %></h4>
               <div class="space-y-3">
                 <div class="flex items-center space-x-2">
                   <input
                     type="checkbox"
-                    name="schedule[<%= String.downcase(day) %>][enabled]"
-                    id="schedule_<%= String.downcase(day) %>_enabled"
+                    name={"schedule[#{day_key}][enabled]"}
+                    id={"schedule_#{day_key}_enabled"}
                     class="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                    checked={@setup_data[:schedule][String.downcase(day)]["enabled"] || false}
+                    checked={Map.get(day_map, "enabled", false)}
                   />
-                  <label for="schedule_<%= String.downcase(day) %>_enabled" class="text-sm text-gray-700">
+                  <label for={"schedule_#{day_key}_enabled"} class="text-sm text-gray-700">
                     Open
                   </label>
                 </div>
@@ -419,18 +433,18 @@ defmodule RivaAshWeb.BusinessSetupLive do
                     <label class="block text-xs text-gray-500 mb-1">Open Time</label>
                     <input
                       type="time"
-                      name="schedule[<%= String.downcase(day) %>][open_time]"
+                      name={"schedule[#{day_key}][open_time]"}
                       class="w-full px-2 py-1 border border-gray-300 rounded text-sm"
-                      value={@setup_data[:schedule][String.downcase(day)]["open_time"] || ""}
+                      value={Map.get(day_map, "open_time", "")}
                     />
                   </div>
                   <div>
                     <label class="block text-xs text-gray-500 mb-1">Close Time</label>
                     <input
                       type="time"
-                      name="schedule[<%= String.downcase(day) %>][close_time]"
+                      name={"schedule[#{day_key}][close_time]"}
                       class="w-full px-2 py-1 border border-gray-300 rounded text-sm"
-                      value={@setup_data[:schedule][String.downcase(day)]["close_time"] || ""}
+                      value={Map.get(day_map, "close_time", "")}
                     />
                   </div>
                 </div>
@@ -573,7 +587,7 @@ defmodule RivaAshWeb.BusinessSetupLive do
               </div>
               <div>
                 <dt class="text-sm font-medium text-gray-500">Operating Hours</dt>
-                <dd class="text-sm text-gray-900"><%= Enum.count(@setup_data[:schedule] || [], fn {_, day} -> day["enabled"] end) %> days</dd>
+                <dd class="text-sm text-gray-900"><%= Enum.count(@setup_data[:schedule] || [], fn {_unmatched, day} -> day["enabled"] end) %> days</dd>
               </div>
             </dl>
           </.card_body>

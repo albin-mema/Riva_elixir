@@ -1,3 +1,8 @@
+alias RivaAsh.Validations, as: Validations
+alias Ash.Resource, as: Resource
+alias Ash.Error.Changes, as: Changes
+alias Ash.Changeset, as: Changeset
+
 defmodule RivaAsh.Validations.ReservationTimeSlot do
   @moduledoc """
   Validates that a reservation's time slot doesn't overlap with existing reservations for the same item.

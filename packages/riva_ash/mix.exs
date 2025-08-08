@@ -177,6 +177,9 @@ defmodule RivaAsh.MixProject do
   @spec aliases :: keyword()
   defp aliases do
     [
+      # === I18n ===
+      "i18n.extract": ["gettext.extract --merge"],
+      "i18n.check": ["gettext.extract --merge --check-up-to-date"],
       # === Setup & Database ===
       setup: ["deps.get", "ecto.setup"],
       "ecto.setup": ["ecto.create", "ecto.migrate", "run priv/repo/seeds.exs"],

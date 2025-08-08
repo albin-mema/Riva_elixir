@@ -1,3 +1,9 @@
+alias RivaAshWeb.Components.Organisms, as: Organisms
+alias RivaAshWeb.Components.Molecules, as: Molecules
+alias RivaAshWeb.Components.Atoms, as: Atoms
+alias RivaAshWeb.Live, as: Live
+alias Ash.Error, as: Error
+
 defmodule RivaAshWeb.FinancialOperationsLive do
   @moduledoc """
   Financial Operations - Unified financial interface.
@@ -22,6 +28,7 @@ defmodule RivaAshWeb.FinancialOperationsLive do
   import RivaAshWeb.Components.Organisms.PageHeader
   import RivaAshWeb.Components.Molecules.Card
   import RivaAshWeb.Components.Atoms.Button
+  import RivaAshWeb.Components.Atoms.Badge
   import RivaAshWeb.Live.AuthHelpers
 
   @impl true
@@ -36,7 +43,7 @@ defmodule RivaAshWeb.FinancialOperationsLive do
       {:ok, socket} ->
         {:ok, assign(socket, loading: true)}
 
-      {:error, _} = error ->
+      {:error, _unmatched} = error ->
         {:ok, error}
     end
   end
@@ -543,7 +550,7 @@ defmodule RivaAshWeb.FinancialOperationsLive do
     "$#{Decimal.to_string(decimal, :normal)}"
   end
 
-  defp format_currency(_), do: "$0.00"
+  defp format_unmatchedcurrency(_unmatched), do: "$0.00"
 
   @doc """
   Determines the badge variant based on status.
@@ -552,5 +559,5 @@ defmodule RivaAshWeb.FinancialOperationsLive do
   defp status_variant(:pending), do: "secondary"
   defp status_variant(:completed), do: "default"
   defp status_variant(:cancelled), do: "destructive"
-  defp status_variant(_), do: "secondary"
+  defp status_unmatchedvariant(_unmatched), do: "secondary"
 end

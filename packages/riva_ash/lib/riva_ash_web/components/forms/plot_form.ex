@@ -1,3 +1,8 @@
+alias RivaAshWeb.Components.Forms, as: Forms
+alias RivaAshWeb.Components.Molecules, as: Molecules
+alias RivaAshWeb.Components.Atoms, as: Atoms
+alias Phoenix.LiveView.Rendered, as: Rendered
+
 defmodule RivaAshWeb.Components.Forms.PlotForm do
   @moduledoc """
   Plot creation and editing form component.
@@ -97,7 +102,7 @@ defmodule RivaAshWeb.Components.Forms.PlotForm do
     """
   end
 
-  @spec render_basic_fields(form :: map()) :: Phoenix.LiveView.Rendered.t()
+  @spec render_basic_fields(assigns :: map()) :: Phoenix.LiveView.Rendered.t()
   defp render_basic_fields(assigns) do
     ~H"""
     <.form_field field={@form[:name]} label="Plot Name" required />
@@ -108,7 +113,7 @@ defmodule RivaAshWeb.Components.Forms.PlotForm do
     """
   end
 
-  @spec render_location_fields(form :: map()) :: Phoenix.LiveView.Rendered.t()
+  @spec render_location_fields(assigns :: map()) :: Phoenix.LiveView.Rendered.t()
   defp render_location_fields(assigns) do
     ~H"""
     <div>
@@ -119,8 +124,7 @@ defmodule RivaAshWeb.Components.Forms.PlotForm do
     """
   end
 
-  @spec render_form_actions(editing :: boolean(), loading :: boolean(), on_cancel :: String.t()) ::
-          Phoenix.LiveView.Rendered.t()
+  @spec render_form_actions(assigns :: map()) :: Phoenix.LiveView.Rendered.t()
   defp render_form_actions(assigns) do
     ~H"""
     <div>
@@ -175,7 +179,7 @@ defmodule RivaAshWeb.Components.Forms.PlotForm do
     case params[:total_area] do
       nil -> :ok
       area when is_number(area) and area >= 0 -> :ok
-      _ -> {:error, %{area: "must be a positive number"}}
+      _ -> {:error, %{total_area: "must be a positive number"}}
     end
   end
 

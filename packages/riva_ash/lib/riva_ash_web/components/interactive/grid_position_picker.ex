@@ -1,3 +1,7 @@
+alias RivaAshWeb.Components.Interactive, as: Interactive
+alias Phoenix.LiveView.Rendered, as: Rendered
+alias Phoenix.LiveView, as: LiveView
+
 defmodule RivaAshWeb.Components.Interactive.GridPositionPicker do
   @moduledoc """
   Grid position selector component for row/column positioning.

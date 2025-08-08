@@ -1,3 +1,6 @@
+alias RivaAshWeb.DevTools, as: DevTools
+alias RivaAsh.DevTools, as: DevTools
+
 defmodule RivaAshWeb.DevTools.ReactorVisualizerLive do
   @moduledoc """
   Visualizes and executes Reactor flows step-by-step.
@@ -251,7 +254,7 @@ defmodule RivaAshWeb.DevTools.ReactorVisualizerLive do
                     <%= for {key, value} <- @inputs do %>
                       <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">
-                          <%= key |> to_string() |> String.replace("_", " ") |> String.capitalize() %>
+                          <%= key |> to_string() |> String.replace("_unmatched", " ") |> String.capitalize() %>
                         </label>
                         <textarea
                           phx-change="update_input"
@@ -429,7 +432,8 @@ defmodule RivaAshWeb.DevTools.ReactorVisualizerLive do
     end
 
     # Helper functions
-    defp get_page_title, do: Application.get_env(:riva_ash, __MODULE__, []) |> get_in([:page_title]) || "Reactor Flow Visualizer"
+    defp get_page_title,
+      do: Application.get_env(:riva_ash, __MODULE__, []) |> get_in([:page_title]) || "Reactor Flow Visualizer"
 
     # Reactor execution functions
     defp execute_reactor_with_tracking(_reactor, _inputs) do

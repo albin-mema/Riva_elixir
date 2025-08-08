@@ -1,3 +1,6 @@
+alias RivaAshWeb.Components.Molecules, as: Molecules
+alias Phoenix.LiveView.Rendered, as: Rendered
+
 defmodule RivaAshWeb.Components.Molecules.ProgressBar do
   @moduledoc """
   Progress bar component for indicating completion status.
@@ -171,41 +174,43 @@ defmodule RivaAshWeb.Components.Molecules.ProgressBar do
 
   @spec validate_value(integer()) :: :ok | {:error, String.t()}
   defp validate_value(value) when is_integer(value), do: :ok
-  defp validate_value(_), do: {:error, "value must be an integer"}
+  defp validate_unmatchedvalue(_unmatched), do: {:error, "value must be an integer"}
 
   @spec validate_max(integer()) :: :ok | {:error, String.t()}
   defp validate_max(max) when is_integer(max) and max > 0, do: :ok
-  defp validate_max(_), do: {:error, "max must be a positive integer"}
+  defp validate_unmatchedmax(_unmatched), do: {:error, "max must be a positive integer"}
 
   @spec validate_label(String.t() | nil) :: :ok | {:error, String.t()}
   defp validate_label(nil), do: :ok
   defp validate_label(label) when is_binary(label), do: :ok
-  defp validate_label(_), do: {:error, "label must be a string or nil"}
+  defp validate_unmatchedlabel(_unmatched), do: {:error, "label must be a string or nil"}
 
   @spec validate_show_percentage(boolean()) :: :ok | {:error, String.t()}
   defp validate_show_percentage(show_percentage) when is_boolean(show_percentage), do: :ok
-  defp validate_show_percentage(_), do: {:error, "show_percentage must be a boolean"}
+
+  defp validate_unmatchedshow_unmatchedpercentage(_unmatched),
+    do: {:error, "show_unmatchedpercentage must be a boolean"}
 
   @spec validate_size(String.t()) :: :ok | {:error, String.t()}
   defp validate_size("sm"), do: :ok
   defp validate_size("md"), do: :ok
   defp validate_size("lg"), do: :ok
-  defp validate_size(_), do: {:error, "size must be one of: sm, md, lg"}
+  defp validate_unmatchedsize(_unmatched), do: {:error, "size must be one of: sm, md, lg"}
 
   @spec validate_variant(String.t()) :: :ok | {:error, String.t()}
   defp validate_variant("default"), do: :ok
   defp validate_variant("success"), do: :ok
   defp validate_variant("warning"), do: :ok
   defp validate_variant("error"), do: :ok
-  defp validate_variant(_), do: {:error, "variant must be one of: default, success, warning, error"}
+  defp validate_unmatchedvariant(_unmatched), do: {:error, "variant must be one of: default, success, warning, error"}
 
   @spec validate_animated(boolean()) :: :ok | {:error, String.t()}
   defp validate_animated(animated) when is_boolean(animated), do: :ok
-  defp validate_animated(_), do: {:error, "animated must be a boolean"}
+  defp validate_unmatchedanimated(_unmatched), do: {:error, "animated must be a boolean"}
 
   @spec validate_class(String.t()) :: :ok | {:error, String.t()}
   defp validate_class(class) when is_binary(class), do: :ok
-  defp validate_class(_), do: {:error, "class must be a string"}
+  defp validate_unmatchedclass(_unmatched), do: {:error, "class must be a string"}
 
   @spec render_progress_bar(assigns :: assigns()) :: Phoenix.LiveView.Rendered.t()
   defp render_progress_bar(assigns) do

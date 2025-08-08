@@ -1,3 +1,8 @@
+alias RivaAshWeb.Components.Interactive, as: Interactive
+alias RivaAshWeb.Components.Atoms, as: Atoms
+alias Phoenix.LiveView.Rendered, as: Rendered
+alias Phoenix.LiveView, as: LiveView
+
 defmodule RivaAshWeb.Components.Interactive.WeeklyCalendar do
   @moduledoc """
   Weekly calendar component with time slots.
@@ -430,7 +435,7 @@ defmodule RivaAshWeb.Components.Interactive.WeeklyCalendar do
         week_num = String.to_integer(week_num)
         "Week #{week_num}, #{year}"
 
-      _ ->
+      _unmatchedunmatched ->
         week
     end
   end

@@ -1,3 +1,10 @@
+alias RivaAsh.Resources, as: Resources
+alias RivaAsh.Inventory, as: Inventory
+alias RivaAsh.Live, as: Live
+alias RivaAshWeb.Components.Organisms, as: Organisms
+alias RivaAshWeb.Components.Molecules, as: Molecules
+alias RivaAshWeb.Components.Atoms, as: Atoms
+
 defmodule RivaAshWeb.InventoryManagementLive do
   @moduledoc """
   Inventory Management - Unified resource management interface.
@@ -41,7 +48,7 @@ defmodule RivaAshWeb.InventoryManagementLive do
             {:ok, redirect(socket, to: "/access-denied")}
         end
 
-      {:error, _} ->
+      {:error, _unmatched} ->
         {:ok, redirect(socket, to: "/sign-in")}
     end
   end
@@ -253,7 +260,7 @@ defmodule RivaAshWeb.InventoryManagementLive do
                         :available -> "text-green-600"
                         :occupied -> "text-yellow-600"
                         :maintenance -> "text-red-600"
-                        _ -> "text-gray-600"
+                        _unmatchedunmatched -> "text-gray-600"
                       end
                     ]}>
                       <%= String.capitalize(to_string(InventoryService.get_item_status(@selected_item))) %>
@@ -293,7 +300,7 @@ defmodule RivaAshWeb.InventoryManagementLive do
                   :available -> "bg-green-100 text-green-800"
                   :occupied -> "bg-yellow-100 text-yellow-800"
                   :maintenance -> "bg-red-100 text-red-800"
-                  _ -> "bg-gray-100 text-gray-800"
+                  _unmatchedunmatched -> "bg-gray-100 text-gray-800"
                 end
               ]}>
                 <%= String.capitalize(to_string(InventoryService.get_item_status(item))) %>
@@ -378,7 +385,7 @@ defmodule RivaAshWeb.InventoryManagementLive do
                       :available -> "bg-green-100 text-green-800"
                       :occupied -> "bg-yellow-100 text-yellow-800"
                       :maintenance -> "bg-red-100 text-red-800"
-                      _ -> "bg-gray-100 text-gray-800"
+                      _unmatchedunmatched -> "bg-gray-100 text-gray-800"
                     end
                   ]}>
                     <%= String.capitalize(to_string(InventoryService.get_item_status(item))) %>

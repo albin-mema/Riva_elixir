@@ -16,9 +16,13 @@ config :riva_ash, RivaAsh.Repo,
   password: System.get_env("DB_PASSWORD") || Application.compile_env(:riva_ash, :db_password, "postgres"),
   hostname: System.get_env("DB_HOSTNAME") || Application.compile_env(:riva_ash, :db_hostname, "localhost"),
   database: System.get_env("DB_NAME") || "riva_ash_test#{System.get_env("MIX_TEST_PARTITION")}",
-  port: System.get_env("DB_PORT", "5432") |> String.to_integer(),
+  port: String.to_integer(System.get_env("DB_PORT", "5432")),
   pool: Ecto.Adapters.SQL.Sandbox,
-  pool_size: if(System.get_env("DB_POOL_SIZE"), do: String.to_integer(System.get_env("DB_POOL_SIZE")), else: Application.compile_env(:riva_ash, :db_pool_size, 10)),
+  pool_size:
+    if(System.get_env("DB_POOL_SIZE"),
+      do: String.to_integer(System.get_env("DB_POOL_SIZE")),
+      else: Application.compile_env(:riva_ash, :db_pool_size, 10)
+    ),
   ownership_timeout: Application.compile_env(:riva_ash, :db_ownership_timeout, 15_000),
   timeout: Application.compile_env(:riva_ash, :db_timeout, 15_000),
   ssl: false,
@@ -28,10 +32,15 @@ config :riva_ash, RivaAsh.Repo,
 # Enable server for browser tests
 # Code readability: Use clear, descriptive configuration values
 config :riva_ash, RivaAshWeb.Endpoint,
-  http: [ip: {127, 0, 0, 1}, port: System.get_env("PORT", "4002") |> String.to_integer()],
+  http: [ip: {127, 0, 0, 1}, port: String.to_integer(System.get_env("PORT", "4002"))],
   # Test secret - safe to commit, not used in production
-  secret_key_base: System.get_env("SECRET_KEY_BASE") ||
-    Application.compile_env(:riva_ash, :test_secret_key_base, "test_secret_key_base_change_me_in_production_this_needs_to_be_at_least_64_bytes_long_for_security"),
+  secret_key_base:
+    System.get_env("SECRET_KEY_BASE") ||
+      Application.compile_env(
+        :riva_ash,
+        :test_secret_key_base,
+        "test_secret_key_base_change_me_in_production_this_needs_to_be_at_least_64_bytes_long_for_security"
+      ),
   server: true
 
 # Configure Ecto repos
@@ -64,8 +73,8 @@ config :phoenix_test,
 # Configuration patterns: Use application configuration instead of hardcoded values
 # Functional programming patterns: Use consistent boolean evaluation
 config :riva_ash, :property_testing,
-  max_flow_length: System.get_env("PROPERTY_MAX_FLOW_LENGTH", "10") |> String.to_integer(),
-  browser_timeout: System.get_env("PROPERTY_BROWSER_TIMEOUT", "30000") |> String.to_integer(),
+  max_flow_length: String.to_integer(System.get_env("PROPERTY_MAX_FLOW_LENGTH", "10")),
+  browser_timeout: String.to_integer(System.get_env("PROPERTY_BROWSER_TIMEOUT", "30000")),
   cleanup_strategy: Application.compile_env(:riva_ash, :property_cleanup_strategy, :after_each),
   excluded_routes: Application.compile_env(:riva_ash, :property_excluded_routes, ["/admin/dangerous-action"]),
   log_successful_flows: System.get_env("LOG_SUCCESSFUL_FLOWS", "true") == "true",

@@ -1,3 +1,8 @@
+alias RivaAshWeb.Components.Interactive, as: Interactive
+alias RivaAshWeb.Components.Atoms, as: Atoms
+alias Phoenix.LiveView.Rendered, as: Rendered
+alias Phoenix.LiveView, as: LiveView
+
 defmodule RivaAshWeb.Components.Interactive.AvailabilityGrid do
   @moduledoc """
   Weekly availability grid editor component.

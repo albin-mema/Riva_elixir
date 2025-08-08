@@ -1,3 +1,6 @@
+alias RivaAshWeb.Error, as: Error
+alias RivaAsh.ErrorService, as: ErrorService
+
 defmodule RivaAshWeb.Error.AccessDeniedLive do
   @moduledoc """
   LiveView for 403 Access Denied errors.

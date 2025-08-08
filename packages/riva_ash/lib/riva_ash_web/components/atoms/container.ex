@@ -1,3 +1,6 @@
+alias RivaAshWeb.Components.Atoms, as: Atoms
+alias Phoenix.LiveView.Rendered, as: Rendered
+
 defmodule RivaAshWeb.Components.Atoms.Container do
   @moduledoc """
   Container component for constraining content width and centering.
@@ -43,7 +46,7 @@ defmodule RivaAshWeb.Components.Atoms.Container do
       assigns = validated_assigns |> assign(:container_class, container_class)
       render_container(assigns)
     else
-      {:error, reason} -> render_error(reason)
+      {:error, reason} -> render_error(%{reason: reason})
     end
   end
 
@@ -125,14 +128,17 @@ defmodule RivaAshWeb.Components.Atoms.Container do
     """
   end
 
-  defp render_error(reason) do
+  defp render_error(assigns) do
     # In a real implementation, you might want to log this error
     # and render a fallback container or error state
+    reason = Map.get(assigns, :reason, "Invalid container parameters")
     IO.puts("Container error: #{reason}")
+
+    assigns = %{reason: reason}
 
     ~H"""
     <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative">
-      <span class="block sm:inline">Error: <%= reason %></span>
+      <span class="block sm:inline">Error: <%= @reason %></span>
     </div>
     """
   end

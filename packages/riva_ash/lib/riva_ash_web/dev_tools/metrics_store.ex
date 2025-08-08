@@ -1,3 +1,5 @@
+alias RivaAshWeb.DevTools, as: DevTools
+
 defmodule RivaAshWeb.DevTools.MetricsStore do
   @moduledoc """
   Persistent storage for devtools metrics and telemetry data.

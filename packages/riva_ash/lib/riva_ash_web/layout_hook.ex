@@ -110,7 +110,7 @@ defmodule RivaAshWeb.LayoutHook do
       [{layout, function}] when is_atom(layout) and is_atom(function) ->
         {layout, function}
 
-      _ ->
+      _unmatchedunmatched ->
         nil
     end
   end

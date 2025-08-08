@@ -1,3 +1,6 @@
+alias RivaAshWeb.Components.Atoms, as: Atoms
+alias RivaAshWeb.Components.UI, as: UI
+
 defmodule RivaAshWeb.Components.Atoms.AllAtoms do
   @moduledoc """
   This module serves as a central point for importing all atomic components.

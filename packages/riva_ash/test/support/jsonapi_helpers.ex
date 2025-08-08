@@ -1,3 +1,5 @@
+alias RivaAsh.Test, as: Test
+
 defmodule RivaAsh.Test.JsonApiHelpers do
   @moduledoc """
   JSON:API testing helpers wrapping Plug/Phoenix Conn helpers.
@@ -13,7 +15,7 @@ defmodule RivaAsh.Test.JsonApiHelpers do
 
       json = json_response(conn, 201)
       assert_pagination_links(json)
-      assert_error_shape(%{"errors" => [%{"status" => _, "detail" => _}]})
+      assert_error_shape(%{"errors" => [%{"status" => _unmatched, "detail" => _unmatched}]})
 
 
   All requests automatically set:

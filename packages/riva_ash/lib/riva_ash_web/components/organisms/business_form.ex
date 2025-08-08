@@ -1,3 +1,8 @@
+alias RivaAshWeb.Components.Organisms, as: Organisms
+alias RivaAshWeb.Components.UI, as: UI
+alias RivaAshWeb.Components.Molecules, as: Molecules
+alias Phoenix.LiveView.Rendered, as: Rendered
+
 defmodule RivaAshWeb.Components.Organisms.BusinessForm do
   @moduledoc """
   BusinessForm organism component for creating and editing businesses.

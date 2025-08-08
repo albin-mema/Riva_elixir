@@ -1,3 +1,6 @@
+alias RivaAshWeb.Components, as: Components
+alias RivaAshWeb.Components.UI, as: UI
+
 defmodule RivaAshWeb.Components.UI do
   @moduledoc """
   Main entry point for the UI component library.

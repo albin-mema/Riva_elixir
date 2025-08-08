@@ -1,3 +1,7 @@
+alias RivaAshWeb.Components.Organisms, as: Organisms
+alias RivaAshWeb.Components.Molecules, as: Molecules
+alias Phoenix.LiveView.Rendered, as: Rendered
+
 defmodule RivaAshWeb.Components.Organisms.DataTable do
   @moduledoc """
   Reusable data table component with Flop integration.

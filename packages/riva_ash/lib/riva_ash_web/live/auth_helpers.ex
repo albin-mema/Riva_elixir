@@ -1,3 +1,12 @@
+alias RivaAshWeb.Live, as: Live
+alias RivaAsh.Resources, as: Resources
+alias RivaAsh.Accounts, as: Accounts
+alias Ash.Error, as: Error
+alias Phoenix.Token, as: Token
+alias Phoenix.Component, as: Component
+alias Phoenix.LiveView, as: LiveView
+alias RivaAshWeb.Live.AuthHelpers, as: AuthHelpers
+
 defmodule RivaAshWeb.Live.AuthHelpers do
   @moduledoc """
   Authentication helpers for LiveViews.
@@ -48,7 +57,7 @@ defmodule RivaAshWeb.Live.AuthHelpers do
         {:error, :invalid} -> ErrorHelpers.failure(:invalid_token)
         {:error, :expired} -> ErrorHelpers.failure(:token_expired)
         {:error, :not_found} -> ErrorHelpers.failure(:user_not_found)
-        _ -> ErrorHelpers.failure(:not_authenticated)
+        _unmatchedunmatched -> ErrorHelpers.failure(:not_unmatchedunmatchedauthenticated)
       end
     else
       ErrorHelpers.failure(:not_authenticated)
@@ -68,13 +77,13 @@ defmodule RivaAshWeb.Live.AuthHelpers do
   """
   def handle_ash_error(socket, error) do
     case error do
-      %Forbidden{errors: [%{message: message} | _]} ->
+      %Forbidden{errors: [%{message: message} | _unmatched]} ->
         {:ok,
          socket
          |> put_flash(:error, message)
          |> redirect(to: "/access-denied")}
 
-      %Invalid{errors: [%{message: message} | _]} ->
+      %Invalid{errors: [%{message: message} | _unmatched]} ->
         {:ok,
          socket
          |> put_flash(:error, message)
@@ -92,7 +101,7 @@ defmodule RivaAshWeb.Live.AuthHelpers do
          |> put_flash(:error, "Invalid request parameters")
          |> redirect(to: "/access-denied")}
 
-      _ ->
+      _unmatchedunmatched ->
         # For other errors, redirect to 404
         {:ok,
          socket
@@ -189,19 +198,21 @@ defmodule RivaAshWeb.Live.AuthHelpers do
   Properly handles Ash errors and provides meaningful error messages.
   """
   def load_business_scoped_resources(user, resource_module, business_path) do
-    # Get user's businesses first
-    businesses = Business.read!(actor: user)
-    business_ids = Enum.map(businesses, & &1.id)
+    try do
+      # Get user's businesses first
+      businesses = Business.read!(actor: user)
+      business_ids = Enum.map(businesses, & &1.id)
 
-    # Build the filter based on the business path
-    filter = build_business_filter(business_path, business_ids)
+      # Build the filter based on the business path
+      filter = build_business_filter(business_path, business_ids)
 
-    # Load the resources with the filter
-    resource_module.read!(actor: user, filter: filter)
+      # Load the resources with the filter
+      resource_module.read!(actor: user, filter: filter)
     rescue
       error in [Forbidden, Invalid] ->
         # Re-raise the error to be handled by the calling LiveView
         reraise error, __STACKTRACE__
+    end
   end
 
   @doc """
@@ -217,22 +228,24 @@ defmodule RivaAshWeb.Live.AuthHelpers do
   def mount_business_scoped(socket, session, resource_module, business_path, page_title) do
     case get_current_user_from_session(session) do
       {:ok, user} ->
-        resources = load_business_scoped_resources(user, resource_module, business_path)
+        try do
+          resources = load_business_scoped_resources(user, resource_module, business_path)
 
-        socket =
-          socket
-          |> Phoenix.Component.assign(:current_user, user)
-          |> Phoenix.Component.assign(:page_title, page_title)
-          |> Phoenix.Component.assign(resource_key(resource_module), resources)
-          # Placeholder for pagination/metadata
-          |> Phoenix.Component.assign(:meta, %{})
+          socket =
+            socket
+            |> Phoenix.Component.assign(:current_user, user)
+            |> Phoenix.Component.assign(:page_title, page_title)
+            |> Phoenix.Component.assign(resource_key(resource_module), resources)
+            # Placeholder for pagination/metadata
+            |> Phoenix.Component.assign(:meta, %{})
 
-        {:ok, socket}
-      rescue
-        error in [Forbidden, Invalid] ->
-          {:ok, handle_ash_error(socket, error)}
+          {:ok, socket}
+        rescue
+          error in [Forbidden, Invalid] ->
+            handle_ash_error(socket, error)
+        end
 
-      {:error, _} ->
+      {:error, _unmatched} ->
         {:ok, Phoenix.LiveView.redirect(socket, to: "/sign-in")}
     end
   end
@@ -290,7 +303,7 @@ defmodule RivaAshWeb.Live.AuthHelpers do
       %Invalid{} ->
         {:ok, redirect(socket, to: "/access-denied")}
 
-      _ ->
+      _unmatchedunmatched ->
         {:ok,
          socket
          |> put_flash(:error, "An unexpected error occurred")
@@ -307,5 +320,5 @@ defmodule RivaAshWeb.Live.AuthHelpers do
   defp auth_error_message(:token_expired), do: "Authentication token has expired"
   defp auth_error_message(:user_not_found), do: "User not found"
   defp auth_error_message(:not_authenticated), do: "Please sign in to continue"
-  defp auth_error_message(_), do: "Authentication failed"
+  defp auth_unmatchederror_unmatchedmessage(_unmatched), do: "Authentication failed"
 end

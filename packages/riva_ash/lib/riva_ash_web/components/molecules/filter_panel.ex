@@ -1,3 +1,7 @@
+alias RivaAshWeb.Components.Molecules, as: Molecules
+alias RivaAshWeb.Components.UI, as: UI
+alias Phoenix.LiveView.Rendered, as: Rendered
+
 defmodule RivaAshWeb.Components.Molecules.FilterPanel do
   @moduledoc """
   Advanced filtering interface for data tables.
@@ -170,7 +174,7 @@ defmodule RivaAshWeb.Components.Molecules.FilterPanel do
     end
   end
 
-  defp validate_filters(_), do: {:error, "filters must be a list"}
+  defp validate_unmatchedfilters(_unmatched), do: {:error, "filters must be a list"}
 
   @spec valid_filter?(map()) :: boolean()
   defp valid_filter?(filter) do
@@ -182,27 +186,27 @@ defmodule RivaAshWeb.Components.Molecules.FilterPanel do
 
   @spec validate_values(map()) :: :ok | {:error, String.t()}
   defp validate_values(values) when is_map(values), do: :ok
-  defp validate_values(_), do: {:error, "values must be a map"}
+  defp validate_unmatchedvalues(_unmatched), do: {:error, "values must be a map"}
 
   @spec validate_on_apply(String.t()) :: :ok | {:error, String.t()}
   defp validate_on_apply(on_apply) when is_binary(on_apply) and on_apply != "", do: :ok
-  defp validate_on_apply(_), do: {:error, "on_apply must be a non-empty string"}
+  defp validate_unmatchedon_unmatchedapply(_unmatched), do: {:error, "on_unmatchedapply must be a non-empty string"}
 
   @spec validate_on_clear(String.t()) :: :ok | {:error, String.t()}
   defp validate_on_clear(on_clear) when is_binary(on_clear) and on_clear != "", do: :ok
-  defp validate_on_clear(_), do: {:error, "on_clear must be a non-empty string"}
+  defp validate_unmatchedon_unmatchedclear(_unmatched), do: {:error, "on_unmatchedclear must be a non-empty string"}
 
   @spec validate_collapsible(boolean()) :: :ok | {:error, String.t()}
   defp validate_collapsible(collapsible) when is_boolean(collapsible), do: :ok
-  defp validate_collapsible(_), do: {:error, "collapsible must be a boolean"}
+  defp validate_unmatchedcollapsible(_unmatched), do: {:error, "collapsible must be a boolean"}
 
   @spec validate_expanded(boolean()) :: :ok | {:error, String.t()}
   defp validate_expanded(expanded) when is_boolean(expanded), do: :ok
-  defp validate_expanded(_), do: {:error, "expanded must be a boolean"}
+  defp validate_unmatchedexpanded(_unmatched), do: {:error, "expanded must be a boolean"}
 
   @spec validate_class(String.t()) :: :ok | {:error, String.t()}
   defp validate_class(class) when is_binary(class), do: :ok
-  defp validate_class(_), do: {:error, "class must be a string"}
+  defp validate_unmatchedclass(_unmatched), do: {:error, "class must be a string"}
 
   @spec render_filter_panel(assigns :: assigns()) :: Phoenix.LiveView.Rendered.t()
   defp render_filter_panel(assigns) do
@@ -249,7 +253,7 @@ defmodule RivaAshWeb.Components.Molecules.FilterPanel do
       <UIText.text variant="h6">Filters</UIText.text>
       <%= if @collapsible do %>
         <UIButton.button variant="ghost" size="sm" phx-click="toggle-filters">
-         <UIIcon.icon name={if(@expanded, :chevron_up, :chevron_down)} size="sm" />
+         <UIIcon.icon name={@expanded && :chevron_up || :chevron_down} size="sm" />
         </UIButton.button>
       <% end %>
     </div>

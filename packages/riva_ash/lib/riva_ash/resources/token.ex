@@ -1,3 +1,5 @@
+alias RivaAsh.Accounts, as: Accounts
+
 defmodule RivaAsh.Accounts.Token do
   @moduledoc """
   Token resource for user authentication and session management.

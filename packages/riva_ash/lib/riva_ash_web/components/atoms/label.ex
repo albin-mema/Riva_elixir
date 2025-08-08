@@ -1,3 +1,6 @@
+alias RivaAshWeb.Components.Atoms, as: Atoms
+alias Phoenix.LiveView.Rendered, as: Rendered
+
 defmodule RivaAshWeb.Components.Atoms.Label do
   @moduledoc """
   Label component for form elements and content labeling.
@@ -143,7 +146,7 @@ defmodule RivaAshWeb.Components.Atoms.Label do
     <label for={@for} class={@label_class} {@rest}>
       <%= render_slot(@inner_block) %>
       <%= if assigns.variant == "required" do %>
-        <span class="text-red-500 ml-1">*</span>
+        <span class="ml-1 text-red-500">*</span>
       <% end %>
     </label>
     """
@@ -154,9 +157,11 @@ defmodule RivaAshWeb.Components.Atoms.Label do
     # and render a fallback label or error state
     IO.puts("Label error: #{reason}")
 
+    assigns = %{reason: reason}
+
     ~H"""
-    <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative">
-      <span class="block sm:inline">Error: <%= reason %></span>
+    <div class="relative bg-red-100 px-4 py-3 border border-red-400 rounded text-red-700">
+      <span class="block sm:inline">Error: <%= @reason %></span>
     </div>
     """
   end

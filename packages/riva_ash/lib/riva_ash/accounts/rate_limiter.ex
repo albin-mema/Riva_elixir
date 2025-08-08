@@ -99,7 +99,7 @@ defmodule RivaAsh.Accounts.RateLimiter do
       attempts when attempts >= @default_max_attempts ->
         {:reply, {:error, :rate_limited}, state}
 
-      _ ->
+      _attempts_below_limit ->
         {:reply, {:ok, :allowed}, state}
     end
   end
@@ -153,7 +153,7 @@ defmodule RivaAsh.Accounts.RateLimiter do
     current_window = div(current_time, @default_window_seconds)
     oldest_window = current_window - 2
 
-    :ets.match_delete(@table_name, {{:"$1", :"$2"}, :_})
+    :ets.match_delete(@table_name, {{:"$1", :"$2"}, :_ets_value})
     |> Enum.filter(&should_delete_window?(&1, oldest_window))
     |> Enum.each(&delete_old_entry/1)
   end

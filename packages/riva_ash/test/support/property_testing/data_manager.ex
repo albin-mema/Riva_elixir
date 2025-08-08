@@ -1,3 +1,15 @@
+alias RivaAsh.PropertyTesting, as: PropertyTesting
+alias RivaAsh.Accounts, as: Accounts
+alias RivaAsh.Resources, as: Resources
+alias Ash.Changeset, as: Changeset
+alias Ash.Query, as: Query
+alias Faker.Person, as: Person
+alias Faker.Internet, as: Internet
+alias Faker.Company, as: Company
+alias Faker.Phone, as: Phone
+alias Faker.Commerce, as: Commerce
+alias Faker.Lorem, as: Lorem
+
 defmodule RivaAsh.PropertyTesting.DataManager do
   @moduledoc """
   Manages test data creation and cleanup for property-based browser testing.
@@ -151,14 +163,14 @@ defmodule RivaAsh.PropertyTesting.DataManager do
         {:ok, user} ->
           user
 
-        {:error, _} ->
+        {:error, _unmatched} ->
           # User might already exist, try to find it
           case User
                |> Ash.Query.for_read(:read)
                |> Ash.Query.filter(expr(email == ^user_attrs.email))
                |> Ash.read_one(domain: RivaAsh.Accounts) do
             {:ok, user} -> user
-            _ -> nil
+            _unmatchedunmatched -> nil
           end
       end
     end)
@@ -272,35 +284,35 @@ defmodule RivaAsh.PropertyTesting.DataManager do
   defp delete_user(user_id) do
     case Ash.get(User, user_id, domain: RivaAsh.Accounts) do
       {:ok, user} -> Ash.destroy(user, domain: RivaAsh.Accounts)
-      _ -> :ok
+      _unmatchedunmatched -> :ok
     end
   end
 
   defp delete_business(business_id) do
     case Ash.get(Business, business_id) do
       {:ok, business} -> Ash.destroy(business)
-      _ -> :ok
+      _unmatchedunmatched -> :ok
     end
   end
 
   defp delete_client(client_id) do
     case Ash.get(Client, client_id) do
       {:ok, client} -> Ash.destroy(client)
-      _ -> :ok
+      _unmatchedunmatched -> :ok
     end
   end
 
   defp delete_item(item_id) do
     case Ash.get(Item, item_id) do
       {:ok, item} -> Ash.destroy(item)
-      _ -> :ok
+      _unmatchedunmatched -> :ok
     end
   end
 
   defp delete_employee(employee_id) do
     case Ash.get(Employee, employee_id) do
       {:ok, employee} -> Ash.destroy(employee)
-      _ -> :ok
+      _unmatchedunmatched -> :ok
     end
   end
 
@@ -379,7 +391,7 @@ defmodule RivaAsh.PropertyTesting.DataManager do
   defp get_resource_type(%Client{}), do: :client
   defp get_resource_type(%Item{}), do: :item
   defp get_resource_type(%Employee{}), do: :employee
-  defp get_resource_type(_), do: :unknown
+  defp get_unmatchedresource_unmatchedtype(_unmatched), do: :unknown
 
   defp reset_database_sequences do
     # Reset auto-increment sequences if needed

@@ -1,3 +1,9 @@
+alias Ash.Changeset, as: Changeset
+alias Ash.Error, as: Error
+alias Ash.Query, as: Query
+alias RivaAsh.Resources, as: Resources
+alias RivaAsh.Authorization, as: Authorization
+
 defmodule RivaAsh.Validations do
   @moduledoc """
   Shared validation functions for common business logic across resources.
@@ -94,9 +100,7 @@ defmodule RivaAsh.Validations do
     end
   end
 
-  @spec check_reservation_availability(
-          map()
-        ) :: validation_result()
+  @spec check_reservation_availability(map()) :: validation_result()
   defp check_reservation_availability(%{
          item_id: item_id,
          reserved_from: reserved_from,
@@ -123,27 +127,29 @@ defmodule RivaAsh.Validations do
         exclude_reservation_id \\ nil,
         opts \\ []
       ) do
-    case {get_exclude_statuses(opts), build_status_filter(opts), filter_statuses(status_filter, exclude_statuses)} do
-      {{:ok, exclude_statuses}, {:ok, status_filter}, {:ok, final_status_filter}} ->
-        build_and_execute_overlap_query(
-          item_id,
-          reserved_from,
-          reserved_until,
-          exclude_reservation_id,
-          final_status_filter
-        )
+    with {:ok, exclude_statuses} <- get_exclude_statuses(opts),
+         {:ok, status_filter} <- build_status_filter(opts),
+         {:ok, final_status_filter} <- filter_statuses(status_filter, exclude_statuses) do
+      build_and_execute_overlap_query(
+        item_id,
+        reserved_from,
+        reserved_until,
+        exclude_reservation_id,
+        final_status_filter
+      )
+    else
       {:error, reason} -> {:error, reason}
     end
   end
 
   @spec check_reservation_overlap(map()) :: overlap_result()
   def check_reservation_overlap(%{
-         item_id: item_id,
-         reserved_from: reserved_from,
-         reserved_until: reserved_until,
-         exclude_reservation_id: exclude_reservation_id,
-         opts: opts
-       }) do
+        item_id: item_id,
+        reserved_from: reserved_from,
+        reserved_until: reserved_until,
+        exclude_reservation_id: exclude_reservation_id,
+        opts: opts
+      }) do
     check_reservation_overlap(item_id, reserved_from, reserved_until, exclude_reservation_id, opts)
   end
 
@@ -151,7 +157,7 @@ defmodule RivaAsh.Validations do
   defp get_exclude_statuses(opts) do
     case Keyword.get(opts, :exclude_statuses, [:cancelled, :completed]) do
       statuses when is_list(statuses) -> {:ok, statuses}
-      _ -> {:error, "Invalid exclude_statuses format"}
+      _ -> {:error, "Invalid exclude statuses format"}
     end
   end
 
@@ -168,7 +174,9 @@ defmodule RivaAsh.Validations do
           true -> {:ok, [:confirmed, :pending, :provisional]}
           false -> {:ok, [:confirmed, :pending]}
         end
-      {:error, reason} -> {:error, reason}
+
+      {:error, reason} ->
+        {:error, reason}
     end
   end
 
@@ -219,12 +227,15 @@ defmodule RivaAsh.Validations do
        ) do
     query = build_overlap_query(item_id, reserved_from, reserved_until, exclude_reservation_id, final_status_filter)
     execute_overlap_query(query)
-    rescue
-      e in [Ash.Error.Forbidden, Ash.Error.Invalid] ->
-        {:error, "Validation error during overlap check: #{inspect(e)}"}
-      e in ArgumentError ->
-        {:error, "Invalid argument during overlap check: #{inspect(e)}"}
-      e -> {:error, "Unexpected exception during overlap check: #{inspect(e)}"}
+  rescue
+    e in [Ash.Error.Forbidden, Ash.Error.Invalid] ->
+      {:error, "Validation error during overlap check: #{inspect(e)}"}
+
+    e in ArgumentError ->
+      {:error, "Invalid argument during overlap check: #{inspect(e)}"}
+
+    e ->
+      {:error, "Unexpected exception during overlap check: #{inspect(e)}"}
   end
 
   @spec build_and_execute_overlap_query(map()) :: overlap_result()
@@ -318,38 +329,40 @@ defmodule RivaAsh.Validations do
   def check_item_availability(item_id, reserved_from, reserved_until, opts \\ []) do
     check_holds = Keyword.get(opts, :check_holds, true)
 
-    with {:ok, item} <- get_item(item_id),
-         {:ok, _} <- validate_item_is_active(item),
-         {:ok, _} <- validate_item_not_archived(item) do
-      result =
+    try do
+      with {:ok, item} <- get_item(item_id),
+           {:ok, _} <- validate_item_is_active(item),
+           {:ok, _} <- validate_item_not_archived(item) do
         if item.is_always_available do
           check_additional_constraints(item_id, reserved_from, reserved_until, check_holds)
         else
           check_schedule_and_exceptions(item, reserved_from, reserved_until, check_holds)
         end
-
-      result
-    else
-      {:error, :item_not_found} -> {:ok, {:unavailable, "Item not found"}}
-      {:error, :item_inactive} -> {:ok, {:unavailable, "Item is not active"}}
-      {:error, :item_archived} -> {:ok, {:unavailable, "Item is archived"}}
-      {:error, error} -> {:error, "Failed to check availability: #{inspect(error)}"}
+      else
+        {:error, :item_not_found} -> {:ok, {:unavailable, "Item not found"}}
+        {:error, :item_inactive} -> {:ok, {:unavailable, "Item is not active"}}
+        {:error, :item_archived} -> {:ok, {:unavailable, "Item is archived"}}
+        {:error, error} -> {:error, "Failed to check availability: #{inspect(error)}"}
+      end
     rescue
       e in [Ash.Error.Forbidden, Ash.Error.Invalid] ->
         {:error, "Validation error during availability check: #{inspect(e)}"}
+
       e in ArgumentError ->
         {:error, "Invalid argument during availability check: #{inspect(e)}"}
-      e -> {:error, "Unexpected exception during availability check: #{inspect(e)}"}
+
+      e ->
+        {:error, "Unexpected exception during availability check: #{inspect(e)}"}
     end
   end
 
   @spec check_item_availability(map()) :: availability_result()
   def check_item_availability(%{
-         item_id: item_id,
-         reserved_from: reserved_from,
-         reserved_until: reserved_until,
-         opts: opts
-       }) do
+        item_id: item_id,
+        reserved_from: reserved_from,
+        reserved_until: reserved_until,
+        opts: opts
+      }) do
     check_item_availability(item_id, reserved_from, reserved_until, opts)
   end
 
@@ -432,10 +445,12 @@ defmodule RivaAsh.Validations do
   end
 
   @spec get_availability_exceptions() :: {:ok, list()} | {:error, atom()}
-  defp get_availability_exceptions, do: case Ash.read(RivaAsh.Resources.AvailabilityException, domain: RivaAsh.Domain) do
+  defp get_availability_exceptions() do
+    case Ash.read(RivaAsh.Resources.AvailabilityException, domain: RivaAsh.Domain) do
       {:ok, exceptions} -> {:ok, exceptions}
       {:error, _} -> {:error, :exception_check_failed}
     end
+  end
 
   @spec get_availability_exceptions(map()) :: {:ok, list()} | {:error, atom()}
   defp get_availability_exceptions(%{domain: domain}) do
@@ -507,25 +522,30 @@ defmodule RivaAsh.Validations do
         )
       )
 
-    case Ash.read(query, domain: RivaAsh.Domain) do
-      {:ok, []} -> {:ok, :available}
-      {:ok, _active_holds} -> {:ok, {:unavailable, "Item is currently held by another user"}}
-      {:error, error} -> {:error, "Failed to check active holds: #{inspect(error)}"}
+    try do
+      case Ash.read(query, domain: RivaAsh.Domain) do
+        {:ok, []} -> {:ok, :available}
+        {:ok, _active_holds} -> {:ok, {:unavailable, "Item is currently held by another user"}}
+        {:error, error} -> {:error, "Failed to check active holds: #{inspect(error)}"}
+      end
     rescue
       e in [Ash.Error.Forbidden, Ash.Error.Invalid] ->
         {:error, "Validation error during holds check: #{inspect(e)}"}
+
       e in ArgumentError ->
         {:error, "Invalid argument during holds check: #{inspect(e)}"}
-      e -> {:error, "Unexpected exception during holds check: #{inspect(e)}"}
+
+      e ->
+        {:error, "Unexpected exception during holds check: #{inspect(e)}"}
     end
   end
 
   @spec check_active_holds(map()) :: availability_result()
   def check_active_holds(%{
-         item_id: item_id,
-         reserved_from: reserved_from,
-         reserved_until: reserved_until
-       }) do
+        item_id: item_id,
+        reserved_from: reserved_from,
+        reserved_until: reserved_until
+      }) do
     check_active_holds(item_id, reserved_from, reserved_until)
   end
 
@@ -688,7 +708,7 @@ defmodule RivaAsh.Validations do
   @spec validate_email_regex(email) :: :ok | {:error, map()}
   defp validate_email_regex(email) do
     email_regex =
-      ~r/^[a-zA-Z0-9.!#$%&'*+\/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/
+      ~r/^[a-zA-Z0-9.!#$%&'*+\/=?^_unmatched`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/
 
     if Regex.match?(email_regex, email) do
       :ok
@@ -711,7 +731,7 @@ defmodule RivaAsh.Validations do
       {:ok, phone} when is_binary(phone) ->
         validate_phone_regex(phone)
 
-      {:ok, _} ->
+      {:ok, _unmatched} ->
         :ok
 
       {:error, reason} ->
@@ -854,7 +874,7 @@ defmodule RivaAsh.Validations do
       {:ok, %{business_id: _other_business_id}} ->
         {:error, field: :item_type_id, message: "Item type must belong to the same business"}
 
-      {:error, _} ->
+      {:error, _unmatched} ->
         {:error, field: :item_type_id, message: "Item type not found"}
     end
   end
@@ -890,7 +910,7 @@ defmodule RivaAsh.Validations do
       {:ok, %{business_id: _other_business_id}} ->
         {:error, field: :plot_id, message: "Plot must belong to the same business"}
 
-      {:error, _} ->
+      {:error, _unmatched} ->
         {:error, field: :plot_id, message: "Plot not found"}
     end
   end
@@ -923,7 +943,7 @@ defmodule RivaAsh.Validations do
          {:ok, item} <- Ash.get(RivaAsh.Resources.Item, item_id, domain: RivaAsh.Domain) do
       check_business_match(client.business_id, item.business_id, :client_id)
     else
-      {:error, _} ->
+      {:error, _unmatched} ->
         {:error, field: :client_id, message: "Client or item not found"}
     end
   end
@@ -972,7 +992,7 @@ defmodule RivaAsh.Validations do
          {:ok, item} <- Ash.get(RivaAsh.Resources.Item, item_id, domain: RivaAsh.Domain) do
       check_business_match(employee.business_id, item.business_id, :employee_id)
     else
-      {:error, _} ->
+      {:error, _unmatched} ->
         {:error, field: :employee_id, message: "Employee or item not found"}
     end
   end
@@ -1005,7 +1025,7 @@ defmodule RivaAsh.Validations do
          {:ok, layout} <- Ash.get(RivaAsh.Resources.Layout, layout_id, domain: RivaAsh.Domain, load: [:plot]) do
       check_business_match(item.business_id, layout.plot.business_id, :layout_id)
     else
-      {:error, _} ->
+      {:error, _unmatched} ->
         {:error, field: :layout_id, message: "Item or layout not found"}
     end
   end
@@ -1057,7 +1077,7 @@ defmodule RivaAsh.Validations do
             :ok
         end
 
-      {:error, _} ->
+      {:error, _unmatched} ->
         {:error, field: :reservation_id, message: "Reservation not found"}
     end
   end
@@ -1090,7 +1110,7 @@ defmodule RivaAsh.Validations do
          {:ok, granter} <- Ash.get(RivaAsh.Resources.Employee, granted_by_id, domain: RivaAsh.Domain) do
       check_business_match(employee.business_id, granter.business_id, :granted_by_id)
     else
-      {:error, _} ->
+      {:error, _unmatched} ->
         {:error, field: :granted_by_id, message: "Employee or granter not found"}
     end
   end
@@ -1149,7 +1169,7 @@ defmodule RivaAsh.Validations do
         end
 
       # Skip validation if query fails
-      {:error, _} ->
+      {:error, _unmatched} ->
         :ok
     end
   end
@@ -1229,7 +1249,7 @@ defmodule RivaAsh.Validations do
       {:ok, _existing} ->
         {:error, field: :pricing_type, message: "Only one active base pricing rule allowed per business/item_type"}
 
-      {:error, _} ->
+      {:error, _unmatched} ->
         :ok
     end
   end

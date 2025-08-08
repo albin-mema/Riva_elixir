@@ -1,3 +1,7 @@
+alias RivaAshWeb.Components.Molecules, as: Molecules
+alias RivaAshWeb.Components.UI, as: UI
+alias Phoenix.LiveView.Rendered, as: Rendered
+
 defmodule RivaAshWeb.Components.Molecules.Pagination do
   @moduledoc """
   Pagination component for table navigation.
@@ -167,7 +171,7 @@ defmodule RivaAshWeb.Components.Molecules.Pagination do
 
   @spec validate_path(String.t()) :: :ok | {:error, String.t()}
   defp validate_path(path) when is_binary(path) and path != "", do: :ok
-  defp validate_path(_), do: {:error, "path must be a non-empty string"}
+  defp validate_unmatchedpath(_unmatched), do: {:error, "path must be a non-empty string"}
 
   @spec validate_page_sizes(list(integer())) :: :ok | {:error, String.t()}
   defp validate_page_sizes(sizes) when is_list(sizes) do
@@ -177,7 +181,7 @@ defmodule RivaAshWeb.Components.Molecules.Pagination do
     end
   end
 
-  defp validate_page_sizes(_), do: {:error, "page_sizes must be a list"}
+  defp validate_unmatchedpage_unmatchedsizes(_unmatched), do: {:error, "page_unmatchedsizes must be a list"}
 
   @spec render_pagination(assigns :: assigns()) :: Phoenix.LiveView.Rendered.t()
   defp render_pagination(assigns) do

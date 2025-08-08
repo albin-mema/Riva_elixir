@@ -1,3 +1,5 @@
+alias RivaAsh.Repo, as: Repo
+
 defmodule RivaAshWeb.HealthController do
   @moduledoc """
   Controller for handling health check endpoints.
@@ -52,6 +54,7 @@ defmodule RivaAshWeb.HealthController do
     case verify_database_connectivity() do
       {:ok, _result} ->
         send_healthy_response(conn)
+
       {:error, _reason} ->
         send_unhealthy_response(conn)
     end
@@ -72,6 +75,7 @@ defmodule RivaAshWeb.HealthController do
     case {check_database_status(), collect_service_metrics()} do
       {{:ok, db_status}, {:ok, service_metrics}} ->
         send_detailed_healthy_response(conn, db_status, service_metrics)
+
       {:error, reason} ->
         send_detailed_unhealthy_response(conn, reason)
     end
@@ -115,7 +119,7 @@ defmodule RivaAshWeb.HealthController do
   end
 
   defp get_memory_usage do
-    {memory, _} = :erlang.memory()
+    {memory, _unmatched} = :erlang.memory()
     format_bytes(memory)
   end
 

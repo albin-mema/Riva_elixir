@@ -1,3 +1,9 @@
+alias RivaAshWeb.Auth, as: Auth
+alias RivaAsh.Accounts, as: Accounts
+alias Phoenix.Token, as: Token
+alias Ash.Error, as: Error
+alias Phoenix.LiveView, as: LiveView
+
 defmodule RivaAshWeb.Auth.SignInLive do
   @moduledoc """
   User sign-in LiveView.
@@ -184,7 +190,7 @@ defmodule RivaAshWeb.Auth.SignInLive do
         error_message = "Invalid email or password"
         {:noreply, assign(socket, loading: false, error_message: error_message)}
 
-      {:error, %Ash.Error.Invalid{errors: [%{message: message} | _]}} ->
+      {:error, %Ash.Error.Invalid{errors: [%{message: message} | _unmatched]}} ->
         error_message = message
         {:noreply, assign(socket, loading: false, error_message: error_message)}
 
@@ -207,7 +213,7 @@ defmodule RivaAshWeb.Auth.SignInLive do
     case Phoenix.LiveView.get_connect_info(socket, :peer_data) do
       %{address: ip_address} -> ip_address
       # Default to localhost if not available
-      _ -> {127, 0, 0, 1}
+      _unmatchedunmatched -> {127, 0, 0, 1}
     end
   end
 

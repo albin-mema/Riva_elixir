@@ -1,3 +1,6 @@
+alias Ecto.Adapters.SQL.Sandbox, as: Sandbox
+alias Phoenix.ConnTest, as: ConnTest
+
 defmodule RivaAshWeb.FeatureCase do
   @moduledoc """
   This module defines the test case to be used by

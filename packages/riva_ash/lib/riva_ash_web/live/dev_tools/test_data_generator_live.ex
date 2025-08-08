@@ -1,3 +1,9 @@
+alias RivaAshWeb.DevTools, as: DevTools
+alias RivaAsh.Resources, as: Resources
+alias RivaAsh.Accounts, as: Accounts
+alias RivaAsh.Reactors, as: Reactors
+alias Ash.Changeset, as: Changeset
+
 defmodule RivaAshWeb.DevTools.TestDataGeneratorLive do
   @moduledoc """
   Generate realistic test data for development and testing.
@@ -60,7 +66,7 @@ defmodule RivaAshWeb.DevTools.TestDataGeneratorLive do
           field when field in [:with_reservations, :with_employees, :with_items] ->
             value == "true"
 
-          _ ->
+          _unmatchedunmatched ->
             value
         end
 
@@ -280,7 +286,7 @@ defmodule RivaAshWeb.DevTools.TestDataGeneratorLive do
                     <%= for {key, value} <- @generation_options do %>
                       <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">
-                          <%= key |> to_string() |> String.replace("_", " ") |> String.capitalize() %>
+                          <%= key |> to_string() |> String.replace("_unmatched", " ") |> String.capitalize() %>
                         </label>
                         <%= if is_boolean(value) do %>
                           <select phx-change="update_option" phx-value-field={key} class="w-full border border-gray-300 rounded px-3 py-2">
@@ -404,15 +410,15 @@ defmodule RivaAshWeb.DevTools.TestDataGeneratorLive do
       try do
         case resource.read(domain: get_domain(resource)) do
           {:ok, records} -> length(records)
-          _ -> 0
+          _unmatchedunmatched -> 0
         end
       rescue
-        _ -> 0
+        _unmatchedunmatched -> 0
       end
     end
 
     defp get_domain(User), do: RivaAsh.Accounts
-    defp get_domain(_), do: RivaAsh.Domain
+    defp get_unmatcheddomain(_unmatched), do: RivaAsh.Domain
 
     defp get_template_options(:complete_business) do
       %{
@@ -454,7 +460,7 @@ defmodule RivaAshWeb.DevTools.TestDataGeneratorLive do
       }
     end
 
-    defp get_template_options(_), do: %{}
+    defp get_unmatchedtemplate_unmatchedoptions(_unmatched), do: %{}
 
     defp generate_template_data(template, options) do
       send(self(), {:generation_log, "Starting #{template} generation with options: #{inspect(options)}"})
@@ -472,7 +478,7 @@ defmodule RivaAshWeb.DevTools.TestDataGeneratorLive do
         :bulk_data ->
           generate_bulk_data(options)
 
-        _ ->
+        _unmatchedunmatched ->
           {:error, "Unknown template"}
       end
     end

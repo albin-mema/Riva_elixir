@@ -1,3 +1,8 @@
+alias RivaAshWeb.Components.Forms, as: Forms
+alias RivaAshWeb.Components.Molecules, as: Molecules
+alias RivaAshWeb.Components.Atoms, as: Atoms
+alias Phoenix.LiveView.Rendered, as: Rendered
+
 defmodule RivaAshWeb.Components.Forms.LayoutForm do
   @moduledoc """
   Layout configuration form component.
@@ -105,7 +110,7 @@ defmodule RivaAshWeb.Components.Forms.LayoutForm do
     """
   end
 
-  @spec render_basic_fields(form :: map(), plots :: list()) :: Phoenix.LiveView.Rendered.t()
+  @spec render_basic_fields(assigns :: map()) :: Phoenix.LiveView.Rendered.t()
   defp render_basic_fields(assigns) do
     ~H"""
     <.form_field field={@form[:name]} label="Layout Name" required />
@@ -113,7 +118,7 @@ defmodule RivaAshWeb.Components.Forms.LayoutForm do
     """
   end
 
-  @spec render_layout_type_field(form :: map()) :: Phoenix.LiveView.Rendered.t()
+  @spec render_layout_type_field(assigns :: map()) :: Phoenix.LiveView.Rendered.t()
   defp render_layout_type_field(assigns) do
     ~H"""
     <div>
@@ -123,7 +128,7 @@ defmodule RivaAshWeb.Components.Forms.LayoutForm do
     """
   end
 
-  @spec render_grid_configuration(form :: map()) :: Phoenix.LiveView.Rendered.t()
+  @spec render_grid_configuration(assigns :: map()) :: Phoenix.LiveView.Rendered.t()
   defp render_grid_configuration(assigns) do
     ~H"""
     <div :if={show_grid_configuration?(@form[:layout_type].value)}>
@@ -134,7 +139,7 @@ defmodule RivaAshWeb.Components.Forms.LayoutForm do
     """
   end
 
-  @spec render_dimensions(form :: map()) :: Phoenix.LiveView.Rendered.t()
+  @spec render_dimensions(assigns :: map()) :: Phoenix.LiveView.Rendered.t()
   defp render_dimensions(assigns) do
     ~H"""
     <div>
@@ -145,7 +150,7 @@ defmodule RivaAshWeb.Components.Forms.LayoutForm do
     """
   end
 
-  @spec render_appearance(form :: map()) :: Phoenix.LiveView.Rendered.t()
+  @spec render_appearance(assigns :: map()) :: Phoenix.LiveView.Rendered.t()
   defp render_appearance(assigns) do
     ~H"""
     <div>
@@ -156,7 +161,7 @@ defmodule RivaAshWeb.Components.Forms.LayoutForm do
     """
   end
 
-  @spec render_active_toggle(form :: map()) :: Phoenix.LiveView.Rendered.t()
+  @spec render_active_toggle(assigns :: map()) :: Phoenix.LiveView.Rendered.t()
   defp render_active_toggle(assigns) do
     ~H"""
     <div>
@@ -165,8 +170,7 @@ defmodule RivaAshWeb.Components.Forms.LayoutForm do
     """
   end
 
-  @spec render_form_actions(editing :: boolean(), loading :: boolean(), on_cancel :: String.t()) ::
-          Phoenix.LiveView.Rendered.t()
+  @spec render_form_actions(assigns :: map()) :: Phoenix.LiveView.Rendered.t()
   defp render_form_actions(assigns) do
     ~H"""
     <div>
@@ -282,7 +286,7 @@ defmodule RivaAshWeb.Components.Forms.LayoutForm do
 
   @spec layout_type_options() :: list({String.t(), String.t()})
   defp layout_type_options do
-    Application.compile_env(:riva_ash, :layout_type_options, [
+    Application.get_env(:riva_ash, :layout_type_options, [
       {"Grid Layout", "grid"},
       {"Free Layout", "free"},
       {"Linear Layout", "linear"}

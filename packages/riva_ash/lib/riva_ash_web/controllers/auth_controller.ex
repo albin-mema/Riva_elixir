@@ -1,3 +1,9 @@
+alias Plug.Conn, as: Conn
+alias Ecto.Changeset, as: Changeset
+alias Phoenix.Token, as: Token
+alias RivaAsh.Accounts, as: Accounts
+alias Ash.Error, as: Error
+
 defmodule RivaAshWeb.AuthController do
   @moduledoc """
   Authentication controller for handling user authentication flows.
@@ -66,6 +72,7 @@ defmodule RivaAshWeb.AuthController do
         conn
         |> establish_user_session(user, token)
         |> redirect_to_dashboard_after_auth()
+
       {:error, reason} ->
         handle_sign_in_error(conn, reason)
     end
@@ -81,6 +88,7 @@ defmodule RivaAshWeb.AuthController do
         conn
         |> establish_user_session(user, token)
         |> redirect_to_dashboard_after_auth()
+
       {:error, _reason} ->
         handle_invalid_token(conn)
     end
@@ -173,7 +181,6 @@ defmodule RivaAshWeb.AuthController do
   end
 
   defp handle_sign_in_error(conn, reason) when is_binary(reason) do
-
     conn
     |> put_flash(:error, reason)
     |> redirect(to: "/sign-in")
@@ -231,7 +238,7 @@ defmodule RivaAshWeb.AuthController do
         end)
         |> Enum.join(", ")
 
-      _ ->
+      _unmatchedunmatched ->
         "Registration failed"
     end
   end
@@ -243,5 +250,5 @@ defmodule RivaAshWeb.AuthController do
   defp format_ash_error(%{input: input}), do: "Invalid input: #{input}"
   defp format_ash_error(%{field: field}) when is_atom(field), do: "Invalid field: #{field}"
   defp format_ash_error(error) when is_binary(error), do: error
-  defp format_ash_error(_), do: "Registration failed"
+  defp format_unmatchedash_unmatchederror(_unmatched), do: "Registration failed"
 end

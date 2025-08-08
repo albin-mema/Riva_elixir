@@ -1,3 +1,6 @@
+alias RivaAshWeb.Components.Atoms, as: Atoms
+alias Phoenix.LiveView.Rendered, as: Rendered
+
 defmodule RivaAshWeb.Components.Atoms.Spinner do
   @moduledoc """
   Loading spinner component with various styles.
@@ -165,9 +168,11 @@ defmodule RivaAshWeb.Components.Atoms.Spinner do
     # and render a fallback spinner or error state
     IO.puts("Spinner error: #{reason}")
 
+    assigns = %{reason: reason}
+
     ~H"""
-    <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative">
-      <span class="block sm:inline">Error: <%= reason %></span>
+    <div class="relative bg-red-100 px-4 py-3 border border-red-400 rounded text-red-700">
+      <span class="block sm:inline">Error: <%= @reason %></span>
     </div>
     """
   end

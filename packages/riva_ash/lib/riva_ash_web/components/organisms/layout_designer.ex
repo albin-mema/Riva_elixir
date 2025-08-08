@@ -1,3 +1,7 @@
+alias RivaAshWeb.Components.Organisms, as: Organisms
+alias RivaAshWeb.Components.Atoms, as: Atoms
+alias Phoenix.LiveView.Rendered, as: Rendered
+
 defmodule RivaAshWeb.Components.Organisms.LayoutDesigner do
   @moduledoc """
   Grid-based layout designer component for plots and sections.
@@ -76,5 +80,6 @@ defmodule RivaAshWeb.Components.Organisms.LayoutDesigner do
 
   # Helper function to build cell classes
   @spec build_cell_class() :: String.t()
-  defp build_cell_class, do: "border border-gray-200 rounded bg-gray-50 min-h-16 flex items-center justify-center text-gray-400 text-sm"
+  defp build_cell_class,
+    do: "border border-gray-200 rounded bg-gray-50 min-h-16 flex items-center justify-center text-gray-400 text-sm"
 end

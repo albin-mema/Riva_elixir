@@ -1,3 +1,8 @@
+alias RivaAsh.Test, as: Test
+alias RivaAshWeb.Router, as: Router
+alias Ecto.Adapters.SQL.Sandbox, as: Sandbox
+alias Phoenix.ConnTest, as: ConnTest
+
 defmodule RivaAshWeb.ConnCase do
   @moduledoc """
   This module defines the test case to be used by

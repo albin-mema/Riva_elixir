@@ -1,3 +1,6 @@
+alias RivaAshWeb.Components.UI, as: UI
+alias Phoenix.LiveView.Rendered, as: Rendered
+
 defmodule RivaAshWeb.Components.UI.Alert do
   @moduledoc """
   Implements an alert component using the design system.
@@ -44,7 +47,11 @@ defmodule RivaAshWeb.Components.UI.Alert do
   # Helper function to build title classes
   @spec build_title_class(String.t() | nil) :: String.t()
   defp build_title_class(title) do
-    if title, "mb-1 font-medium leading-none tracking-tight", "hidden"
+    if is_nil(title) or title == "" do
+      "hidden"
+    else
+      "mb-1 font-medium leading-none tracking-tight"
+    end
   end
 
   # Helper function to build content classes
@@ -76,7 +83,7 @@ defmodule RivaAshWeb.Components.UI.Alert do
       "warning" ->
         "border-amber-500/50 text-amber-500 dark:border-amber-500 [&>svg]:text-amber-500"
 
-      _ ->
+      _unmatchedunmatched ->
         "bg-background text-foreground"
     end
   end

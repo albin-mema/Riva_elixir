@@ -154,6 +154,7 @@ defmodule RivaAsh.GDPR.RetentionPolicy do
     error in [Ash.Error.Forbidden, Ash.Error.Invalid] ->
       Logger.error("GDPR: Authorization error in user cleanup: #{inspect(error)}")
       0
+
     error ->
       Logger.error("GDPR: Unexpected error in user cleanup: #{inspect(error)}")
       0
@@ -224,6 +225,7 @@ defmodule RivaAsh.GDPR.RetentionPolicy do
     error in [Ash.Error.Forbidden, Ash.Error.Invalid] ->
       Logger.error("GDPR: Authorization error in consent cleanup: #{inspect(error)}")
       0
+
     error ->
       Logger.error("GDPR: Unexpected error in consent cleanup: #{inspect(error)}")
       0
@@ -277,6 +279,7 @@ defmodule RivaAsh.GDPR.RetentionPolicy do
     rescue
       error in [Ash.Error.Forbidden, Ash.Error.Invalid] ->
         {:error, "Authorization error: #{inspect(error)}"}
+
       error ->
         {:error, error}
     end
@@ -302,7 +305,7 @@ defmodule RivaAsh.GDPR.RetentionPolicy do
       end
     end)
   rescue
-    _ -> :ok
+    _unmatchedunmatched -> :ok
   end
 
   # Anonymization functions
@@ -365,21 +368,21 @@ defmodule RivaAsh.GDPR.RetentionPolicy do
   defp count_active_users do
     User.read!(filter: expr(is_nil(archived_at)), domain: RivaAsh.Accounts) |> length()
   rescue
-    _ -> 0
+    _unmatchedunmatched -> 0
   end
 
   @spec count_archived_users() :: integer()
   defp count_archived_users do
     User.read!(filter: expr(not is_nil(archived_at)), domain: RivaAsh.Accounts) |> length()
   rescue
-    _ -> 0
+    _unmatchedunmatched -> 0
   end
 
   @spec count_consent_records() :: integer()
   defp count_consent_records do
     ConsentRecord.read!() |> length()
   rescue
-    _ -> 0
+    _unmatchedunmatched -> 0
   end
 
   @spec count_expired_data() :: integer()

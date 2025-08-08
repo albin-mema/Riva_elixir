@@ -1,3 +1,7 @@
+alias RivaAshWeb.Components.Navigation, as: Navigation
+alias RivaAshWeb.Components.Atoms, as: Atoms
+alias Phoenix.LiveView.Rendered, as: Rendered
+
 defmodule RivaAshWeb.Components.Navigation.NotificationCenter do
   @moduledoc """
   Notification management center component.
@@ -137,7 +141,7 @@ defmodule RivaAshWeb.Components.Navigation.NotificationCenter do
 
   # Helper function to build panel classes
   @spec build_panel_class(boolean()) :: String.t()
-  defp build_panel_class(show_panel), do: if show_panel, do: "notification-panel", else: "hidden"
+  defp build_panel_class(show_panel), do: if(show_panel, do: "notification-panel", else: "hidden")
 
   # Helper function to build header classes
   @spec build_header_class(integer()) :: String.t()
@@ -158,7 +162,7 @@ defmodule RivaAshWeb.Components.Navigation.NotificationCenter do
       "client_registered" -> :user_plus
       "system_alert" -> :exclamation_triangle
       "reminder" -> :clock
-      _ -> :bell
+      _unmatchedunmatched -> :bell
     end
   end
 

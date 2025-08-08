@@ -260,6 +260,10 @@ end)
 
 IO.puts("✅ Created #{length(all_reservations)} reservations")
 
+# Create chat rooms
+IO.puts("Creating chat rooms...")
+Code.eval_file("priv/repo/seeds/chat_rooms.exs")
+
 # Summary
 IO.puts("\n🎉 Seeding completed successfully!")
 IO.puts("📊 Summary:")
@@ -270,4 +274,5 @@ IO.puts("  👤 Clients: #{length(all_clients)}")
 IO.puts("  📂 Sections: #{length(all_sections)}")
 IO.puts("  📦 Items: #{length(all_items)}")
 IO.puts("  📅 Reservations: #{length(all_reservations)}")
+IO.puts("  💬 Chat rooms: Created for each business")
 IO.puts("\n✨ Your database is now populated with realistic test data!")

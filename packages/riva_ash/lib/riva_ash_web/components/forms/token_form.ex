@@ -1,3 +1,8 @@
+alias RivaAshWeb.Components.Forms, as: Forms
+alias RivaAshWeb.Components.Molecules, as: Molecules
+alias RivaAshWeb.Components.Atoms, as: Atoms
+alias Phoenix.LiveView.Rendered, as: Rendered
+
 defmodule RivaAshWeb.Components.Forms.TokenForm do
   @moduledoc """
   Form component for creating and editing API tokens using atomic design system.
@@ -113,7 +118,7 @@ defmodule RivaAshWeb.Components.Forms.TokenForm do
     """
   end
 
-  @spec render_form_fields(form :: map(), users :: list()) :: Phoenix.LiveView.Rendered.t()
+  @spec render_form_fields(assigns :: map()) :: Phoenix.LiveView.Rendered.t()
   defp render_form_fields(assigns) do
     ~H"""
     <.select_field
@@ -141,8 +146,7 @@ defmodule RivaAshWeb.Components.Forms.TokenForm do
     """
   end
 
-  @spec render_form_actions(loading :: boolean(), on_cancel :: String.t(), editing :: boolean()) ::
-          Phoenix.LiveView.Rendered.t()
+  @spec render_form_actions(assigns :: map()) :: Phoenix.LiveView.Rendered.t()
   defp render_form_actions(assigns) do
     ~H"""
     <div class="flex justify-end space-x-3 pt-4 border-t">

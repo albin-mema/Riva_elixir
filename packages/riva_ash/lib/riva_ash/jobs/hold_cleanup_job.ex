@@ -352,7 +352,7 @@ defmodule RivaAsh.Jobs.HoldCleanupJob do
 
   @spec extract_errors([{atom(), term()}]) :: [term()]
   defp extract_errors(results) do
-    Enum.filter(results, &match?({:error, _}, &1))
+    Enum.filter(results, &match?({:error, _unmatched}, &1))
   end
 
   @spec handle_batch_errors([term()]) :: :ok

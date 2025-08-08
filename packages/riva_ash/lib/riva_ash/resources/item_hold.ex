@@ -1,3 +1,7 @@
+alias RivaAsh.Resources, as: Resources
+alias Ash.Changeset, as: Changeset
+alias Ash.Query, as: Query
+
 defmodule RivaAsh.Resources.ItemHold do
   @moduledoc """
   Represents a temporary hold on an item during the booking process.
@@ -355,7 +359,9 @@ defmodule RivaAsh.Resources.ItemHold do
           :gt -> true
           _ -> false
         end
-      _ -> false
+
+      _ ->
+        false
     end
   end
 
@@ -376,7 +382,9 @@ defmodule RivaAsh.Resources.ItemHold do
           :lt -> true
           _ -> false
         end
-      _ -> false
+
+      _ ->
+        false
     end
   end
 
@@ -397,7 +405,9 @@ defmodule RivaAsh.Resources.ItemHold do
           {:ok, remaining} -> {:ok, remaining}
           {:error, reason} -> {:error, reason}
         end
-      false -> {:error, "Hold is not active"}
+
+      false ->
+        {:error, "Hold is not active"}
     end
   end
 
@@ -555,7 +565,9 @@ defmodule RivaAsh.Resources.ItemHold do
           {:ok, remaining} -> remaining > 300
           _ -> false
         end
-      _ -> false
+
+      _ ->
+        false
     end
   end
 
@@ -576,7 +588,9 @@ defmodule RivaAsh.Resources.ItemHold do
           {:ok, remaining} -> min(div(remaining, 60), 10)
           _ -> 0
         end
-      _ -> 0
+
+      _ ->
+        0
     end
   end
 
@@ -602,6 +616,7 @@ defmodule RivaAsh.Resources.ItemHold do
                 end
             end
         end
+
       false ->
         "Hold on '#{item_hold.item.name}' has expired"
     end

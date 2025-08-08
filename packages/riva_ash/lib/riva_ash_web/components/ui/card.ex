@@ -1,3 +1,6 @@
+alias RivaAshWeb.Components.UI, as: UI
+alias Phoenix.LiveView.Rendered, as: Rendered
+
 defmodule RivaAshWeb.Components.UI.Card do
   @moduledoc """
   Implements a card component using the design system.
@@ -41,7 +44,7 @@ defmodule RivaAshWeb.Components.UI.Card do
       "outlined" -> "border-2 border-border"
       "elevated" -> "shadow-lg"
       "compact" -> "p-4"
-      _ -> ""
+      _unmatchedunmatched -> ""
     end
   end
 

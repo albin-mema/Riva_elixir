@@ -1,3 +1,6 @@
+alias RivaAsh.Resources, as: Resources
+alias RivaAsh.Factory, as: Factory
+
 defmodule RivaAsh.PropertyHelpers do
   use Timex
 
@@ -50,12 +53,12 @@ defmodule RivaAsh.PropertyHelpers do
     Enum.any?(errors, fn error ->
       case error do
         %{field: ^field} -> true
-        _ -> false
+        _unmatchedunmatched -> false
       end
     end)
   end
 
-  def has_error_on_field?(_, _), do: false
+  def has_unmatchederror_unmatchedon_unmatchedfield?(_unmatched, _unmatched), do: false
 
   @doc """
   Generate a property test for resource validation.
@@ -144,7 +147,7 @@ defmodule RivaAsh.PropertyHelpers do
                 raise "Referenced resource #{atom} not found in scenario"
               end
 
-            _ ->
+            _unmatchedunmatched ->
               Map.put(spec_acc, key, value)
           end
         end)

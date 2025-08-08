@@ -1,3 +1,6 @@
+alias RivaAsh.Resources, as: Resources
+alias RivaAsh.Validations, as: Validations
+
 defmodule RivaAsh.Resources.ItemSchedule do
   @moduledoc """
   Represents recurring availability schedules for items.

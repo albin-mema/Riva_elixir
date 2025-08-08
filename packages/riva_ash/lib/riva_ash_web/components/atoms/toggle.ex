@@ -1,3 +1,6 @@
+alias RivaAshWeb.Components.Atoms, as: Atoms
+alias Phoenix.HTML, as: HTML
+
 defmodule RivaAshWeb.Components.Atoms.Toggle do
   @moduledoc """
   Toggle/switch component for boolean values.

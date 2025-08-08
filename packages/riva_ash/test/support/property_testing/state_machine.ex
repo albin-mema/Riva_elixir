@@ -1,3 +1,5 @@
+alias RivaAsh.PropertyTesting, as: PropertyTesting
+
 defmodule RivaAsh.PropertyTesting.StateMachine do
   @moduledoc """
   State machine for modeling user navigation flows in property-based browser testing.
@@ -226,20 +228,20 @@ defmodule RivaAsh.PropertyTesting.StateMachine do
   Check if a state represents an error condition.
   """
   def error_state?(:error), do: true
-  def error_state?(_), do: false
+  def error_state?(_unmatched), do: false
 
   @doc """
   Check if a state allows access to protected resources.
   """
   def authenticated_state?(:authenticated), do: true
   def authenticated_state?(:admin), do: true
-  def authenticated_state?(_), do: false
+  def authenticated_state?(_unmatched), do: false
 
   @doc """
   Check if a state allows admin actions.
   """
   def admin_state?(:admin), do: true
-  def admin_state?(_), do: false
+  def admin_state?(_unmatched), do: false
 
   @doc """
   Get recovery actions for error states.

@@ -1,3 +1,13 @@
+alias RivaAshWeb.Components.Organisms, as: Organisms
+alias RivaAshWeb.Components.Atoms, as: Atoms
+alias RivaAshWeb.Components.Molecules, as: Molecules
+alias RivaAsh.Resources, as: Resources
+alias Ash.Error, as: Error
+alias Flop.Phoenix, as: Phoenix
+alias Phoenix.Token, as: Token
+alias RivaAsh.Accounts, as: Accounts
+alias RivaAsh.ErrorHelpers, as: ErrorHelpers
+
 defmodule RivaAshWeb.PlotLive do
   @moduledoc """
   LiveView for managing Plots.
@@ -62,7 +72,7 @@ defmodule RivaAshWeb.PlotLive do
         |> assign(:meta, meta)
         |> then(&{:noreply, &1})
 
-      _ ->
+      _unmatchedunmatched ->
         socket =
           socket
           |> assign(:plots, [])
@@ -218,7 +228,7 @@ defmodule RivaAshWeb.PlotLive do
       |> assign(:confirm_delete_id, nil)
 
     case delete_plot(plot_id, socket.assigns.current_user) do
-      {:ok, _} ->
+      {:ok, _unmatched} ->
         # Instead of manually refreshing, we'll push a patch to reload with current params
         socket =
           socket
@@ -264,7 +274,7 @@ defmodule RivaAshWeb.PlotLive do
            {:ok, user} <- Ash.get(RivaAsh.Accounts.User, user_id, domain: RivaAsh.Accounts) do
         RivaAsh.ErrorHelpers.success(user)
       else
-        _ -> RivaAsh.ErrorHelpers.failure(:not_authenticated)
+        _unmatchedunmatched -> RivaAsh.ErrorHelpers.failure(:not_unmatchedunmatchedauthenticated)
       end
     else
       RivaAsh.ErrorHelpers.failure(:not_authenticated)
@@ -274,7 +284,7 @@ defmodule RivaAshWeb.PlotLive do
   defp delete_plot(plot_id, user) do
     try do
       with {:ok, plot} <- Ash.get(RivaAsh.Resources.Plot, plot_id, actor: user),
-           {:ok, _} <- Ash.destroy(plot, actor: user) do
+           {:ok, _unmatched} <- Ash.destroy(plot, actor: user) do
         RivaAsh.ErrorHelpers.success(:ok)
       end
     rescue
@@ -288,7 +298,7 @@ defmodule RivaAshWeb.PlotLive do
   defp format_error_message(error) do
     case RivaAsh.ErrorHelpers.format_error(error) do
       %{message: message} -> message
-      _ -> "An unexpected error occurred"
+      _unmatchedunmatched -> "An unexpected error occurred"
     end
   end
 
@@ -328,7 +338,8 @@ defmodule RivaAshWeb.PlotLive do
 
   defp apply_sorting(plots, %Flop{order_by: order_by, order_directions: order_directions}) do
     # Default to :asc if no directions provided
-    directions = order_directions || Enum.map(order_by, fn _ -> :asc end)
+    directions =
+      order_unmatchedunmatcheddirections || Enum.map(order_unmatchedunmatchedby, fn _unmatchedunmatched -> :asc end)
 
     # Zip order_by and directions, pad directions with :asc if needed
     order_specs =
@@ -347,8 +358,8 @@ defmodule RivaAshWeb.PlotLive do
 
     case {val1, val2} do
       {same, same} -> compare_plots(plot1, plot2, rest)
-      {nil, _} -> direction == :desc
-      {_, nil} -> direction == :asc
+      {nil, _unmatched} -> direction == :desc
+      {_unmatched, nil} -> direction == :asc
       {v1, v2} when direction == :asc -> v1 <= v2
       {v1, v2} when direction == :desc -> v1 >= v2
     end
@@ -362,7 +373,7 @@ defmodule RivaAshWeb.PlotLive do
       :updated_at -> plot.updated_at
       :is_active -> plot.is_active
       :business_id -> plot.business_id
-      _ -> nil
+      _unmatchedunmatched -> nil
     end
   end
 
@@ -469,7 +480,7 @@ defmodule RivaAshWeb.PlotLive do
           opts: []
         }
 
-      _ ->
+      _unmatchedunmatched ->
         %Flop.Meta{
           current_page: 1,
           current_offset: 0,
@@ -489,10 +500,10 @@ defmodule RivaAshWeb.PlotLive do
       # Get plots for user's businesses
       case Plot.read(actor: user, filter: [business_id: [in: business_ids]]) do
         {:ok, plots} -> plots
-        _ -> []
+        _unmatchedunmatched -> []
       end
     rescue
-      _ -> []
+      _unmatchedunmatched -> []
     end
   end
 end

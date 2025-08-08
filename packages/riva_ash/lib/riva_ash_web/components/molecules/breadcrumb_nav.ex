@@ -1,3 +1,7 @@
+alias RivaAshWeb.Components.Molecules, as: Molecules
+alias RivaAshWeb.Components.Atoms, as: Atoms
+alias Phoenix.LiveView.Rendered, as: Rendered
+
 defmodule RivaAshWeb.Components.Molecules.BreadcrumbNav do
   @moduledoc """
   Breadcrumb navigation component.
@@ -140,7 +144,7 @@ defmodule RivaAshWeb.Components.Molecules.BreadcrumbNav do
     end
   end
 
-  defp validate_items(_), do: {:error, "Items must be a non-empty list"}
+  defp validate_unmatcheditems(_unmatched), do: {:error, "Items must be a non-empty list"}
 
   @spec valid_breadcrumb_item?(map()) :: boolean()
   defp valid_breadcrumb_item?(item) do
@@ -152,11 +156,11 @@ defmodule RivaAshWeb.Components.Molecules.BreadcrumbNav do
 
   @spec validate_separator(atom()) :: :ok | {:error, String.t()}
   defp validate_separator(separator) when is_atom(separator), do: :ok
-  defp validate_separator(_), do: {:error, "Separator must be an atom"}
+  defp validate_unmatchedseparator(_unmatched), do: {:error, "Separator must be an atom"}
 
   @spec validate_home_path(String.t()) :: :ok | {:error, String.t()}
   defp validate_home_path(path) when is_binary(path), do: :ok
-  defp validate_home_path(_), do: {:error, "Home path must be a string"}
+  defp validate_unmatchedhome_unmatchedpath(_unmatched), do: {:error, "Home path must be a string"}
 
   @spec render_breadcrumb_navigation(assigns :: assigns()) :: Phoenix.LiveView.Rendered.t()
   defp render_breadcrumb_navigation(assigns) do
@@ -176,7 +180,7 @@ defmodule RivaAshWeb.Components.Molecules.BreadcrumbNav do
 
         <%= for {item, index} <- Enum.with_index(@items) do %>
           <li class="breadcrumb-item">
-            <%= render_breadcrumb_item(item.label, item.href, item.current, @separator, index, length(@items)) %>
+            <%= render_breadcrumb_item(%{label: item.label, href: item.href, current: item.current, separator: @separator, index: index, total_items: length(@items)}) %>
           </li>
         <% end %>
       </ol>
@@ -186,36 +190,35 @@ defmodule RivaAshWeb.Components.Molecules.BreadcrumbNav do
 
   # Rendering functions with proper separation of concerns
 
-  @spec render_breadcrumb_item(String.t(), String.t(), boolean(), atom(), integer(), integer()) ::
-          Phoenix.LiveView.Rendered.t()
-  defp render_breadcrumb_item(label, href, current, separator, index, total_items) do
+  @spec render_breadcrumb_item(map()) :: Phoenix.LiveView.Rendered.t()
+  defp render_breadcrumb_item(assigns) do
     ~H"""
-    <>
-      <%= if current do %>
-        <span class="text-foreground font-medium"><%= label %></span>
+    <span>
+      <%= if @current do %>
+        <span class="text-foreground font-medium"><%= @label %></span>
       <% else %>
-        <a href={href} class="text-muted-foreground hover:text-foreground transition-colors">
-          <%= label %>
+        <a href={@href} class="text-muted-foreground hover:text-foreground transition-colors">
+          <%= @label %>
         </a>
       <% end %>
 
-      <%= if index < total_items - 1 do %>
-        <.icon name={separator} class="w-4 h-4 text-muted-foreground" />
+      <%= if @index < @total_items - 1 do %>
+        <.icon name={@separator} class="w-4 h-4 text-muted-foreground" />
       <% end %>
-    </>
+    </span>
     """
   end
 
-  @spec render_breadcrumb_item(map()) :: Phoenix.LiveView.Rendered.t()
-  defp render_breadcrumb_item(%{
-         label: label,
-         href: href,
-         current: current,
-         separator: separator,
-         index: index,
-         total_items: total_items
-       }) do
-    render_breadcrumb_item(label, href, current, separator, index, total_items)
+  # Backward compatibility shim if any internal calls still use tuple args (none expected after refactor).
+  defp render_breadcrumb_item(label, href, current, separator, index, total_items) do
+    render_breadcrumb_item(%{
+      label: label,
+      href: href,
+      current: current,
+      separator: separator,
+      index: index,
+      total_items: total_items
+    })
   end
 
   # Functional programming with pattern matching for immutable data

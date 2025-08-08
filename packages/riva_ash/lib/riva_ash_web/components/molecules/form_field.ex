@@ -1,3 +1,9 @@
+alias RivaAshWeb.Components.Molecules, as: Molecules
+alias RivaAshWeb.Components.UI, as: UI
+alias Phoenix.HTML.FormField, as: FormField
+alias Phoenix.LiveView.Rendered, as: Rendered
+alias Phoenix.HTML, as: HTML
+
 defmodule RivaAshWeb.Components.Molecules.FormField do
   @moduledoc """
   FormField component that combines label, input, and error messages.
@@ -188,14 +194,16 @@ defmodule RivaAshWeb.Components.Molecules.FormField do
     end
   end
 
-  defp validate_field(_), do: {:error, "field must be a valid Phoenix.HTML.FormField"}
+  defp validate_unmatchedfield(_unmatched), do: {:error, "field must be a valid Phoenix.HTML.FormField"}
 
   @spec validate_icon_position(icon_position() | String.t()) :: :ok | {:error, String.t()}
   defp validate_icon_position(:left), do: :ok
   defp validate_icon_position(:right), do: :ok
   defp validate_icon_position("left"), do: :ok
   defp validate_icon_position("right"), do: :ok
-  defp validate_icon_position(_), do: {:error, "icon_position must be 'left' or 'right'"}
+
+  defp validate_unmatchedicon_unmatchedposition(_unmatched),
+    do: {:error, "icon_unmatchedposition must be 'left' or 'right'"}
 
   @spec validate_input_type(form_field_type() | String.t()) :: :ok | {:error, String.t()}
   defp validate_input_type(:text), do: :ok
@@ -205,7 +213,7 @@ defmodule RivaAshWeb.Components.Molecules.FormField do
   defp validate_input_type(:tel), do: :ok
   defp validate_input_type(:url), do: :ok
   defp validate_input_type(type) when type in ~w(text email password number tel url), do: :ok
-  defp validate_input_type(_), do: {:error, "type must be a valid input type"}
+  defp validate_unmatchedinput_unmatchedtype(_unmatched), do: {:error, "type must be a valid input type"}
 
   @spec render_form_field(assigns :: assigns()) :: Phoenix.LiveView.Rendered.t()
   defp render_form_field(assigns) do
@@ -422,7 +430,7 @@ defmodule RivaAshWeb.Components.Molecules.FormField do
 
   @spec validate_rows(integer()) :: :ok | {:error, String.t()}
   defp validate_rows(rows) when is_integer(rows) and rows > 0, do: :ok
-  defp validate_rows(_), do: {:error, "rows must be a positive integer"}
+  defp validate_unmatchedrows(_unmatched), do: {:error, "rows must be a positive integer"}
 
   @spec render_textarea_field(assigns :: map()) :: Phoenix.LiveView.Rendered.t()
   defp render_textarea_field(assigns) do
@@ -520,7 +528,7 @@ defmodule RivaAshWeb.Components.Molecules.FormField do
     end
   end
 
-  defp validate_options(_), do: {:error, "options must be a list"}
+  defp validate_unmatchedoptions(_unmatched), do: {:error, "options must be a list"}
 
   @spec valid_option?(map()) :: boolean()
   defp valid_option?(option) do
@@ -603,7 +611,7 @@ defmodule RivaAshWeb.Components.Molecules.FormField do
 
   @spec validate_label(String.t()) :: :ok | {:error, String.t()}
   defp validate_label(label) when is_binary(label) and label != "", do: :ok
-  defp validate_label(_), do: {:error, "label must be a non-empty string"}
+  defp validate_unmatchedlabel(_unmatched), do: {:error, "label must be a non-empty string"}
 
   @spec render_checkbox_field(assigns :: map()) :: Phoenix.LiveView.Rendered.t()
   defp render_checkbox_field(assigns) do

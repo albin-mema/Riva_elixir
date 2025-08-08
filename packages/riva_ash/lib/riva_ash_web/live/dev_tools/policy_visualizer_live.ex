@@ -1,3 +1,6 @@
+alias RivaAshWeb.DevTools, as: DevTools
+alias RivaAsh.DevTools, as: DevTools
+
 defmodule RivaAshWeb.DevTools.PolicyVisualizerLive do
   @moduledoc """
   Advanced policy decision tree visualizer.
@@ -155,7 +158,7 @@ defmodule RivaAshWeb.DevTools.PolicyVisualizerLive do
                         case @evaluation_result.decision do
                           :authorized -> "bg-green-100 text-green-800"
                           :forbidden -> "bg-red-100 text-red-800"
-                          _ -> "bg-yellow-100 text-yellow-800"
+                          _unmatchedunmatched -> "bg-yellow-100 text-yellow-800"
                         end
                       ]}>
                         <%= @evaluation_result.decision |> to_string() |> String.capitalize() %>
@@ -198,7 +201,7 @@ defmodule RivaAshWeb.DevTools.PolicyVisualizerLive do
                             :authorized -> "border-green-300 bg-green-50"
                             :forbidden -> "border-red-300 bg-red-50"
                             :unknown -> "border-yellow-300 bg-yellow-50"
-                            _ -> "border-gray-300 bg-gray-50"
+                            _unmatchedunmatched -> "border-gray-300 bg-gray-50"
                           end
                         ]}>
                           <div class="flex items-center justify-between mb-2">
@@ -209,7 +212,7 @@ defmodule RivaAshWeb.DevTools.PolicyVisualizerLive do
                                   :authorized -> "bg-green-600 text-white"
                                   :forbidden -> "bg-red-600 text-white"
                                   :unknown -> "bg-yellow-600 text-white"
-                                  _ -> "bg-gray-600 text-white"
+                                  _unmatchedunmatched -> "bg-gray-600 text-white"
                                 end
                               ]}>
                                 <%= index + 1 %>
@@ -224,7 +227,7 @@ defmodule RivaAshWeb.DevTools.PolicyVisualizerLive do
                                   :authorized -> "bg-green-100 text-green-800"
                                   :forbidden -> "bg-red-100 text-red-800"
                                   :unknown -> "bg-yellow-100 text-yellow-800"
-                                  _ -> "bg-gray-100 text-gray-800"
+                                  _unmatchedunmatched -> "bg-gray-100 text-gray-800"
                                 end
                               ]}>
                                 <%= step.result %>
@@ -306,7 +309,7 @@ defmodule RivaAshWeb.DevTools.PolicyVisualizerLive do
             :authorized -> "border-green-300 bg-green-50"
             :forbidden -> "border-red-300 bg-red-50"
             :unknown -> "border-yellow-300 bg-yellow-50"
-            _ -> "border-gray-300 bg-gray-50"
+            _unmatchedunmatched -> "border-gray-300 bg-gray-50"
           end
         ]}>
           <div class={[
@@ -315,7 +318,7 @@ defmodule RivaAshWeb.DevTools.PolicyVisualizerLive do
               :authorized -> "bg-green-500"
               :forbidden -> "bg-red-500"
               :unknown -> "bg-yellow-500"
-              _ -> "bg-gray-400"
+              _unmatchedunmatched -> "bg-gray-400"
             end
           ]}></div>
 
@@ -333,7 +336,7 @@ defmodule RivaAshWeb.DevTools.PolicyVisualizerLive do
                 :authorized -> "bg-green-100 text-green-800"
                 :forbidden -> "bg-red-100 text-red-800"
                 :unknown -> "bg-yellow-100 text-yellow-800"
-                _ -> "bg-gray-100 text-gray-800"
+                _unmatchedunmatched -> "bg-gray-100 text-gray-800"
               end
             ]}>
               <%= @trace_result %>

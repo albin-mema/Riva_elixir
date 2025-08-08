@@ -1,3 +1,9 @@
+alias RivaAsh.Validations, as: Validations
+alias Ash.Resource, as: Resource
+alias Ash.Error.Changes, as: Changes
+alias Ash.Changeset, as: Changeset
+alias Timex.Interval, as: Interval
+
 defmodule RivaAsh.Validations.ConsecutiveDays do
   @moduledoc """
   Validates that multi-day reservations span consecutive calendar days.

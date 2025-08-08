@@ -1,3 +1,6 @@
+alias RivaAshWeb.Components.Atoms, as: Atoms
+alias Phoenix.LiveView.Rendered, as: Rendered
+
 defmodule RivaAshWeb.Components.Atoms.Tooltip do
   @moduledoc """
   Tooltip component for hover help text with accessibility support.

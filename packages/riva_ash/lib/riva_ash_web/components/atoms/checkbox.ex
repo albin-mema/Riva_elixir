@@ -1,3 +1,9 @@
+alias RivaAshWeb.Components.Atoms, as: Atoms
+alias RivaAshWeb.Components.UI.Checkbox, as: Checkbox
+alias RivaAshWeb.Components.UI, as: UI
+alias Phoenix.HTML, as: HTML
+alias Phoenix.Component, as: Component
+
 defmodule RivaAshWeb.Components.Atoms.Checkbox do
   @moduledoc """
   Deprecated wrapper around the canonical design-system checkbox.
@@ -56,5 +62,5 @@ defmodule RivaAshWeb.Components.Atoms.Checkbox do
   defp map_legacy_size("sm"), do: "sm"
   defp map_legacy_size("md"), do: "default"
   defp map_legacy_size("lg"), do: "lg"
-  defp map_legacy_size(_size), do: "default"
+  defp map_legacy_size(_), do: "default"
 end

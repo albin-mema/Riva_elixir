@@ -1,3 +1,6 @@
+alias RivaAshWeb.Components.Atoms, as: Atoms
+alias Phoenix.LiveView.Rendered, as: Rendered
+
 defmodule RivaAshWeb.Components.Atoms.Card do
   @moduledoc """
   Card component for displaying content in a styled container.
@@ -18,19 +21,19 @@ defmodule RivaAshWeb.Components.Atoms.Card do
 
       <.card>
         <.card_header>
-          <h3 class="text-lg font-semibold">Card Title</h3>
+          <h3 class="font-semibold text-lg">Card Title</h3>
         </.card_header>
         <.card_body>
           <p>Card content goes here</p>
         </.card_body>
         <.card_footer>
-          <button class="bg-blue-500 text-white px-4 py-2 rounded">Action</button>
+          <button class="bg-blue-500 px-4 py-2 rounded text-white">Action</button>
         </.card_footer>
       </.card>
 
       <.card variant="elevated" size="lg">
         <.card_header>
-          <h3 class="text-xl font-bold">Large Elevated Card</h3>
+          <h3 class="font-bold text-xl">Large Elevated Card</h3>
         </.card_header>
         <.card_body>
           <p>Content with elevated styling</p>
@@ -200,9 +203,11 @@ defmodule RivaAshWeb.Components.Atoms.Card do
     # and render a fallback card or error state
     IO.puts("Card error: #{reason}")
 
+    assigns = %{reason: reason}
+
     ~H"""
-    <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative">
-      <span class="block sm:inline">Error: <%= reason %></span>
+    <div class="relative bg-red-100 px-4 py-3 border border-red-400 rounded text-red-700">
+      <span class="block sm:inline">Error: <%= @reason %></span>
     </div>
     """
   end

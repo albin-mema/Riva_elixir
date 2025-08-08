@@ -1,3 +1,7 @@
+alias Phoenix.LiveView, as: LiveView
+alias Phoenix.LiveView.Rendered, as: Rendered
+alias Phoenix.Flash, as: Flash
+
 defmodule RivaAshWeb.CoreComponents do
   @moduledoc """
   Provides core UI components.

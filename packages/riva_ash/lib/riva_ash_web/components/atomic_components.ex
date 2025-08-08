@@ -1,3 +1,13 @@
+alias RivaAshWeb.Components, as: Components
+alias RivaAshWeb.Components.UI, as: UI
+alias RivaAshWeb.Components.Atoms, as: Atoms
+alias RivaAshWeb.Components.Molecules, as: Molecules
+alias RivaAshWeb.Components.Organisms, as: Organisms
+alias RivaAshWeb.Components.Templates, as: Templates
+alias RivaAshWeb.Components.Forms, as: Forms
+alias RivaAshWeb.Components.Interactive, as: Interactive
+alias RivaAshWeb.Components.Navigation, as: Navigation
+
 defmodule RivaAshWeb.Components.AtomicComponents do
   @moduledoc """
   Central module that exports all atomic design components.
@@ -108,6 +118,11 @@ defmodule RivaAshWeb.Components.AtomicComponents do
       # Use modern UI components where available
       import RivaAshWeb.Components.UI
 
+      # Chat components
+      import RivaAshWeb.Components.Atoms.ChatMessage
+      import RivaAshWeb.Components.Atoms.ChatInput
+      import RivaAshWeb.Components.Atoms.RoomListItem
+
       # Legacy atomic components for specialized use cases
       import RivaAshWeb.Components.Atoms.Avatar
       import RivaAshWeb.Components.Atoms.DatePicker
@@ -144,6 +159,8 @@ defmodule RivaAshWeb.Components.AtomicComponents do
       import RivaAshWeb.Components.Molecules.ActionMenu
       import RivaAshWeb.Components.Molecules.BreadcrumbNav
       import RivaAshWeb.Components.Molecules.Card
+      import RivaAshWeb.Components.Molecules.ChatMessagesList
+      import RivaAshWeb.Components.Molecules.RoomList
       import RivaAshWeb.Components.Molecules.ConfirmDialog
       import RivaAshWeb.Components.Molecules.EmptyState
       import RivaAshWeb.Components.Molecules.FilterPanel
@@ -181,6 +198,7 @@ defmodule RivaAshWeb.Components.AtomicComponents do
       import RivaAshWeb.Components.Organisms.BusinessCard
       import RivaAshWeb.Components.Organisms.BusinessForm
       import RivaAshWeb.Components.Organisms.CalendarView
+      import RivaAshWeb.Components.Organisms.ChatInterface
       import RivaAshWeb.Components.Organisms.ClientForm
       import RivaAshWeb.Components.Organisms.DashboardStats
       import RivaAshWeb.Components.Organisms.DataTable

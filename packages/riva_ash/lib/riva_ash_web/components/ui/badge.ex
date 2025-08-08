@@ -1,3 +1,6 @@
+alias RivaAshWeb.Components.UI, as: UI
+alias Phoenix.LiveView.Rendered, as: Rendered
+
 defmodule RivaAshWeb.Components.UI.Badge do
   @moduledoc """
   Implements a badge component using the design system.
@@ -45,7 +48,7 @@ defmodule RivaAshWeb.Components.UI.Badge do
       "outline" -> "text-foreground"
       "success" -> "text-green-800 dark:text-green-100"
       "warning" -> "text-yellow-800 dark:text-yellow-100"
-      _ -> "text-primary-foreground"
+      _unmatchedunmatched -> "text-primary-foreground"
     end
   end
 
@@ -67,7 +70,7 @@ defmodule RivaAshWeb.Components.UI.Badge do
       "outline" -> "text-foreground"
       "success" -> "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100"
       "warning" -> "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-100"
-      _ -> "bg-primary text-primary-foreground"
+      _unmatchedunmatched -> "bg-primary text-primary-foreground"
     end
   end
 
@@ -75,7 +78,7 @@ defmodule RivaAshWeb.Components.UI.Badge do
     case size do
       "sm" -> "px-2 py-0.5 text-xs"
       "lg" -> "px-3 py-1 text-sm"
-      _ -> "px-2.5 py-0.5 text-xs"
+      _unmatchedunmatched -> "px-2.5 py-0.5 text-xs"
     end
   end
 end

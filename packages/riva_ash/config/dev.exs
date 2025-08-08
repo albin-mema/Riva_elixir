@@ -61,9 +61,7 @@ config :riva_ash, RivaAshWeb.Endpoint,
 # Configuration patterns: Use application config rather than hardcoding to allow overrides
 # Functional programming patterns: Use consistent boolean evaluation
 config :riva_ash,
-  dev_routes:
-    String.downcase(System.get_env("DEV_ROUTES", "false"))
-    |> (&(&1 in ["1", "true", "yes", "on"])).()
+  dev_routes: String.downcase(System.get_env("DEV_ROUTES", "false")) in ["1", "true", "yes", "on"]
 
 # Enable detailed logging for authentication
 # Code readability: Use consistent logging format across environments

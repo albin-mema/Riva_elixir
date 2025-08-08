@@ -1,3 +1,9 @@
+alias RivaAsh.Mermaid, as: Mermaid
+alias Ash.Domain, as: Domain
+alias Ash.Domain.Info, as: Info
+alias Ash.Resource, as: Resource
+alias Ash.Resource.Info, as: Info
+
 defmodule RivaAsh.Mermaid do
   @moduledoc """
   Generates Mermaid.js diagrams from Ash resources.
@@ -27,7 +33,7 @@ defmodule RivaAsh.Mermaid do
     Enum.map(resources, fn resource ->
       case resource_to_mermaid(resource) do
         {:ok, result} -> result
-        {:error, _} -> ""
+        {:error, _unmatched} -> ""
       end
     end)
   end
@@ -93,8 +99,8 @@ defmodule RivaAsh.Mermaid do
   end
 
   @spec extract_attribute_type(list()) :: String.t()
-  defp extract_attribute_type([t | _]), do: inspect(t)
-  defp extract_attribute_type(_), do: "any"
+  defp extract_attribute_type([t | _unmatched]), do: inspect(t)
+  defp extract_unmatchedattribute_unmatchedtype(_unmatched), do: "any"
 
   @spec format_relationships(String.t(), list()) :: {:ok, String.t()} | {:error, list()}
   defp format_relationships(resource_name, relationships) when is_binary(resource_name) and is_list(relationships) do
@@ -113,7 +119,7 @@ defmodule RivaAsh.Mermaid do
 
   @spec extract_relationship_errors(list({:ok, String.t()} | {:error, any()})) :: list(any())
   defp extract_relationship_errors(relationship_results) do
-    Enum.filter(relationship_results, &match?({:error, _}, &1))
+    Enum.filter(relationship_results, &match?({:error, _unmatched}, &1))
   end
 
   @spec extract_relationship_strings(list({:ok, String.t()} | {:error, any()})) :: list(String.t())
@@ -142,7 +148,7 @@ defmodule RivaAsh.Mermaid do
   defp format_destination_resource(destination) when is_atom(destination) or is_binary(destination) do
     case destination do
       mod when is_atom(mod) -> {:ok, mod |> Module.split() |> List.last()}
-      _ -> {:ok, "#{destination}"}
+      _unmatchedunmatched -> {:ok, "#{destination}"}
     end
   end
 
@@ -161,7 +167,7 @@ defmodule RivaAsh.Mermaid do
       :belongs_to ->
         "    #{source_resource} ||--o{ #{dest_resource} : " <>
           if(cardinality == :one, do: "belongs_to", else: "has_many") <>
-          "_#{name}"
+          "_unmatched#{name}"
 
       :has_many ->
         "    #{source_resource} ||--o{ #{dest_resource} : has_many_#{name}"
@@ -172,7 +178,7 @@ defmodule RivaAsh.Mermaid do
       :many_to_many ->
         "    #{source_resource} }o--o{ #{dest_resource} : many_to_many_#{name}"
 
-      _ ->
+      _unmatchedunmatched ->
         "    #{source_resource} -- #{dest_resource} : #{name} (#{inspect(type)})"
     end
   end

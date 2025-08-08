@@ -1,3 +1,10 @@
+alias RivaAshWeb.Components.Organisms, as: Organisms
+alias RivaAshWeb.Components.Atoms, as: Atoms
+alias RivaAsh.Resources, as: Resources
+alias RivaAsh.Item, as: Item
+alias RivaAsh.Live, as: Live
+alias Ash.Error, as: Error
+
 defmodule RivaAshWeb.ItemLive do
   @moduledoc """
   LiveView for managing Items.
@@ -29,7 +36,7 @@ defmodule RivaAshWeb.ItemLive do
             {:ok, redirect(socket, to: "/access-denied")}
         end
 
-      {:error, _} ->
+      {:error, _unmatched} ->
         {:ok, redirect(socket, to: "/sign-in")}
     end
   end
@@ -66,7 +73,7 @@ defmodule RivaAshWeb.ItemLive do
               :available -> "bg-green-100 text-green-800"
               :occupied -> "bg-yellow-100 text-yellow-800"
               :maintenance -> "bg-red-100 text-red-800"
-              _ -> "bg-gray-100 text-gray-800"
+              _unmatchedunmatched -> "bg-gray-100 text-gray-800"
             end
           ]}>
             <%= String.capitalize(to_string(ItemService.get_item_status(item))) %>
@@ -166,7 +173,7 @@ defmodule RivaAshWeb.ItemLive do
   defp format_price(price) when is_number(price) do
     case Money.new(price, :USD) do
       {:ok, money} -> Money.to_string(money)
-      {:error, _} -> "$#{:erlang.float_to_binary(price, decimals: 2)}"
+      {:error, _unmatched} -> "$#{:erlang.float_to_binary(price, decimals: 2)}"
     end
   end
 
@@ -183,16 +190,16 @@ defmodule RivaAshWeb.ItemLive do
       %Ash.Error.NotFound{} ->
         "Item not found"
 
-      _ ->
+      _unmatchedunmatched ->
         "An unexpected error occurred"
     end
   end
 
   defp format_validation_error(error) do
     case error do
-      {message, _} -> message
+      {message, _unmatched} -> message
       message when is_binary(message) -> message
-      _ -> "Invalid input"
+      _unmatchedunmatched -> "Invalid input"
     end
   end
 end

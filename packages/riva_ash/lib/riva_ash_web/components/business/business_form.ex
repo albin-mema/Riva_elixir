@@ -1,3 +1,7 @@
+alias RivaAshWeb.Components.Business, as: Business
+alias Phoenix.LiveView.Rendered, as: Rendered
+alias Phoenix.HTML, as: HTML
+
 defmodule RivaAshWeb.Components.Business.BusinessForm do
   @moduledoc """
   Reusable business form component for creating and editing businesses.

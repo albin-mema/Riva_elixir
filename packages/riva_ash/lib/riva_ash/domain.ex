@@ -152,7 +152,7 @@ defmodule RivaAsh.Domain do
   end
 
   @spec resource_configured?(module()) :: boolean()
-  defp resource_configured?(resource) do
+  defp resource_configured?(_resource) do
     # Check if resource is properly configured
     true
   end
@@ -179,7 +179,7 @@ defmodule RivaAsh.Domain do
   # Type safety: Use proper type specifications for public functions
 
   @spec get_resource(atom()) :: module() | nil
-  def get_resource(resource_name) do
+  def get_resource(_resource_name) do
     # Helper function to get resource by name
     nil
   end

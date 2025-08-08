@@ -20,7 +20,6 @@ defmodule RivaAsh.Policies.OwnershipCheck do
   use Ash.Policy.SimpleCheck
 
   require Logger
-  alias RivaAsh.Policies.AuthorizationContext
 
   @type actor :: map()
   @type context :: map()

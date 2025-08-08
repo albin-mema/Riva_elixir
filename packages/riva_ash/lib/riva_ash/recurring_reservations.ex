@@ -12,7 +12,6 @@ defmodule RivaAsh.RecurringReservations do
   use Timex
 
   alias RivaAsh.Resources.{RecurringReservation, RecurringReservationInstance, Reservation}
-  alias RivaAsh.ErrorHelpers
 
   @doc """
   Creates a new recurring reservation and optionally generates instances immediately.
@@ -116,7 +115,7 @@ defmodule RivaAsh.RecurringReservations do
   @spec cancel_recurring_reservation(String.t(), String.t() | nil) ::
           {:ok, RecurringReservation.t()} | {:error, any()}
   def cancel_recurring_reservation(recurring_reservation_id, reason \\ nil)
-       when is_binary(recurring_reservation_id) do
+      when is_binary(recurring_reservation_id) do
     with {:ok, recurring_reservation} <- get_recurring_reservation(recurring_reservation_id),
          {:ok, _} <- cancel_pending_instances(recurring_reservation_id, reason),
          {:ok, result} <- update_recurring_reservation_status(recurring_reservation, :cancelled) do
@@ -181,7 +180,9 @@ defmodule RivaAsh.RecurringReservations do
           |> Enum.sort_by(& &1.sequence_number)
 
         {:ok, pending_instances}
-      {:error, reason} -> {:error, reason}
+
+      {:error, reason} ->
+        {:error, reason}
     end
   end
 

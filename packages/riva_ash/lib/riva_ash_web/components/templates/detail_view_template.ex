@@ -1,3 +1,8 @@
+alias RivaAshWeb.Components.Templates, as: Templates
+alias RivaAshWeb.Components.Organisms, as: Organisms
+alias RivaAshWeb.Components.Molecules, as: Molecules
+alias Phoenix.LiveView.Rendered, as: Rendered
+
 defmodule RivaAshWeb.Components.Templates.DetailViewTemplate do
   @moduledoc """
   Resource detail page template with tabs and actions.
@@ -90,7 +95,7 @@ defmodule RivaAshWeb.Components.Templates.DetailViewTemplate do
       case variant do
         "compact" -> "space-y-4"
         "card" -> "bg-card rounded-lg p-6 shadow-sm space-y-6"
-        _ -> "space-y-6"
+        _unmatchedunmatched -> "space-y-6"
       end
 
     Enum.join([base, class], " ")
@@ -99,48 +104,104 @@ defmodule RivaAshWeb.Components.Templates.DetailViewTemplate do
   # Helper function to build header classes
   @spec build_header_class(list()) :: String.t()
   defp build_header_class(actions) do
-    if actions != [], "mb-6", "mb-4"
+    class =
+      if actions != [] do
+        "mb-6"
+      else
+        "mb-4"
+      end
+
+    class
   end
 
   # Helper function to build title classes
   @spec build_title_class(String.t()) :: String.t()
   defp build_title_class(title) do
-    if title, "text-2xl font-bold", "hidden"
+    class =
+      if title do
+        "text-2xl font-bold"
+      else
+        "hidden"
+      end
+
+    class
   end
 
   # Helper function to build description classes
   @spec build_description_class(String.t() | nil) :: String.t()
   defp build_description_class(description) do
-    if description, "text-muted-foreground", "hidden"
+    class =
+      if description do
+        "text-muted-foreground"
+      else
+        "hidden"
+      end
+
+    class
   end
 
   # Helper function to build actions classes
   @spec build_actions_class(list()) :: String.t()
   defp build_actions_class(actions) do
-    if actions != [], "flex gap-2", "hidden"
+    class =
+      if actions != [] do
+        "flex gap-2"
+      else
+        "hidden"
+      end
+
+    class
   end
 
   # Helper function to build header content classes
   @spec build_header_content_class(list()) :: String.t()
   defp build_header_content_class(header_content) do
-    if header_content != [], "detail-header mb-6", "hidden"
+    class =
+      if header_content != [] do
+        "detail-header mb-6"
+      else
+        "hidden"
+      end
+
+    class
   end
 
   # Helper function to build tabs container classes
   @spec build_tabs_class(list()) :: String.t()
   defp build_tabs_class(tabs) do
-    if tabs != [], "detail-tabs mb-6", "hidden"
+    class =
+      if tabs != [] do
+        "detail-tabs mb-6"
+      else
+        "hidden"
+      end
+
+    class
   end
 
   # Helper function to build tab navigation classes
   @spec build_tab_navigation_class(list()) :: String.t()
   defp build_tab_navigation_class(tabs) do
-    if tabs != [], "w-full", "hidden"
+    class =
+      if tabs != [] do
+        "w-full"
+      else
+        "hidden"
+      end
+
+    class
   end
 
   # Helper function to build content classes
   @spec build_content_class(list()) :: String.t()
   defp build_content_class(tab_content) do
-    if tab_content != [], "detail-content", "hidden"
+    class =
+      if tab_content != [] do
+        "detail-content"
+      else
+        "hidden"
+      end
+
+    class
   end
 end

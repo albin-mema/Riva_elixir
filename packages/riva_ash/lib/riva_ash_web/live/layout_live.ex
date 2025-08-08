@@ -1,3 +1,10 @@
+alias RivaAshWeb.Components.Organisms, as: Organisms
+alias RivaAshWeb.Components.Atoms, as: Atoms
+alias RivaAsh.Resources, as: Resources
+alias RivaAsh.Layout, as: Layout
+alias RivaAsh.Live, as: Live
+alias Ash.Error, as: Error
+
 defmodule RivaAshWeb.LayoutLive do
   @moduledoc """
   LiveView for managing Layouts.
@@ -28,7 +35,7 @@ defmodule RivaAshWeb.LayoutLive do
             {:ok, redirect(socket, to: "/access-denied")}
         end
 
-      {:error, _} ->
+      {:error, _unmatched} ->
         {:ok, redirect(socket, to: "/sign-in")}
     end
   end
@@ -71,7 +78,7 @@ defmodule RivaAshWeb.LayoutLive do
             case layout.status do
               :active -> "bg-green-100 text-green-800"
               :inactive -> "bg-gray-100 text-gray-800"
-              _ -> "bg-gray-100 text-gray-800"
+              _unmatchedunmatched -> "bg-gray-100 text-gray-800"
             end
           ]}>
             <%= String.capitalize(to_string(layout.status)) %>
@@ -206,16 +213,16 @@ defmodule RivaAshWeb.LayoutLive do
       %Ash.Error.NotFound{} ->
         "Layout not found"
 
-      _ ->
+      _unmatchedunmatched ->
         "An unexpected error occurred"
     end
   end
 
   defp format_validation_error(error) do
     case error do
-      {message, _} -> message
+      {message, _unmatched} -> message
       message when is_binary(message) -> message
-      _ -> "Invalid input"
+      _unmatchedunmatched -> "Invalid input"
     end
   end
 end

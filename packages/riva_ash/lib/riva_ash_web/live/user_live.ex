@@ -1,3 +1,8 @@
+alias RivaAshWeb.Components.Organisms, as: Organisms
+alias RivaAshWeb.Components.Atoms, as: Atoms
+alias RivaAshWeb.Live, as: Live
+alias RivaAsh.Accounts, as: Accounts
+
 defmodule RivaAshWeb.UserLive do
   @moduledoc """
   LiveView for managing Users.
@@ -39,7 +44,7 @@ defmodule RivaAshWeb.UserLive do
           {:ok, redirect(socket, to: "/access-denied")}
         end
 
-      {:error, _} ->
+      {:error, _unmatched} ->
         {:ok, redirect(socket, to: "/sign-in")}
     end
   end

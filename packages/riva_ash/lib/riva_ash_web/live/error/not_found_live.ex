@@ -1,3 +1,5 @@
+alias RivaAshWeb.Error, as: Error
+
 defmodule RivaAshWeb.Error.NotFoundLive do
   @moduledoc """
   LiveView for 404 Not Found errors.

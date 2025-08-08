@@ -1,3 +1,6 @@
+alias RivaAsh.PropertyTesting, as: PropertyTesting
+alias RivaAsh.Factory, as: Factory
+
 defmodule RivaAsh.PropertyTesting.FlowGenerator do
   @moduledoc """
   Property-based generators for creating random user navigation flows.
@@ -245,7 +248,7 @@ defmodule RivaAsh.PropertyTesting.FlowGenerator do
         :anonymous -> :public
         :authenticated -> :authenticated
         :admin -> :admin
-        _ -> :public
+        _unmatchedunmatched -> :public
       end
 
     routes = RouteEnumerator.parameterless_routes(category)

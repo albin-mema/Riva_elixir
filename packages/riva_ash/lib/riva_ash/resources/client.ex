@@ -1,3 +1,9 @@
+alias RivaAsh.Resources, as: Resources
+alias Ash.Policy, as: Policy
+alias RivaAsh.Validations, as: Validations
+alias Ash.Changeset, as: Changeset
+alias RivaAsh.Resources.Business, as: Business
+
 defmodule RivaAsh.Resources.Client do
   @moduledoc """
   Represents a client who can make reservations.
@@ -151,7 +157,7 @@ defmodule RivaAsh.Resources.Client do
       # validate(&RivaAsh.Validations.validate_business_access/2)
 
       # Ensure email is provided for registered clients
-      validate(fn changeset, _ ->
+      validate(fn changeset, _context ->
         if Ash.Changeset.get_attribute(changeset, :is_registered) do
           case Ash.Changeset.get_attribute(changeset, :email) do
             nil -> {:error, field: :email, message: "is required for registered clients"}
@@ -203,7 +209,7 @@ defmodule RivaAsh.Resources.Client do
 
       validate(present([:name]))
 
-      validate(fn changeset, _ ->
+      validate(fn changeset, _context ->
         email = Ash.Changeset.get_attribute(changeset, :email)
         phone = Ash.Changeset.get_attribute(changeset, :phone)
 
@@ -227,7 +233,7 @@ defmodule RivaAsh.Resources.Client do
       require_atomic?(false)
 
       # Only allow updating unregistered clients
-      validate(fn changeset, _ ->
+      validate(fn changeset, _context ->
         if Ash.Changeset.get_data(changeset, :is_registered) == true do
           {:error, field: :is_registered, message: "already registered"}
         else
@@ -263,7 +269,7 @@ defmodule RivaAsh.Resources.Client do
       accept([:verification_token])
       require_atomic?(false)
 
-      validate(fn changeset, _ ->
+      validate(fn changeset, _context ->
         if Ash.Changeset.get_data(changeset, :email_verified) == true do
           {:error, field: :email_verified, message: "already verified"}
         else
@@ -290,7 +296,7 @@ defmodule RivaAsh.Resources.Client do
     create :find_or_create_for_booking do
       accept([:name, :email, :phone])
 
-      validate(fn changeset, _ ->
+      validate(fn changeset, _context ->
         email = Ash.Changeset.get_attribute(changeset, :email)
         phone = Ash.Changeset.get_attribute(changeset, :phone)
 
@@ -366,11 +372,14 @@ defmodule RivaAsh.Resources.Client do
       argument(:business_ids, {:array, :uuid}, allow_nil?: false)
 
       filter(expr(business_id in ^arg(:business_ids)))
-      filter(expr(
-        contains(name, ^arg(:search_term)) or
-        contains(email, ^arg(:search_term)) or
-        contains(phone, ^arg(:search_term))
-      ))
+
+      filter(
+        expr(
+          contains(name, ^arg(:search_term)) or
+            contains(email, ^arg(:search_term)) or
+            contains(phone, ^arg(:search_term))
+        )
+      )
 
       prepare(build(load: [:business]))
     end
@@ -467,7 +476,7 @@ defmodule RivaAsh.Resources.Client do
 
   validations do
     # Email is required for registered clients
-    validate(fn changeset, _ ->
+    validate(fn changeset, _context ->
       if Ash.Changeset.get_attribute(changeset, :is_registered) == true do
         case Ash.Changeset.get_attribute(changeset, :email) do
           nil -> {:error, field: :email, message: "is required for registered clients"}
@@ -490,7 +499,7 @@ defmodule RivaAsh.Resources.Client do
     # validate(&RivaAsh.Validations.sanitize_text_input/2)
 
     # Business logic validation for registered clients
-    validate(fn changeset, _ ->
+    validate(fn changeset, _context ->
       if Ash.Changeset.get_attribute(changeset, :is_registered) == true do
         case Ash.Changeset.get_attribute(changeset, :email) do
           email when is_binary(email) and email != "" -> :ok
@@ -535,8 +544,12 @@ defmodule RivaAsh.Resources.Client do
           {:ok, business} -> {:ok, business}
           {:error, reason} -> {:error, reason}
         end
-      {:error, reason} -> {:error, reason}
-      error -> {:error, "Failed to load business: #{inspect(error)}"}
+
+      {:error, reason} ->
+        {:error, reason}
+
+      error ->
+        {:error, "Failed to load business: #{inspect(error)}"}
     end
   end
 
@@ -628,8 +641,6 @@ defmodule RivaAsh.Resources.Client do
   defp generate_verification_token do
     :crypto.strong_rand_bytes(32) |> Base.url_encode64(padding: false)
   end
-
-
 
   relationships do
     belongs_to :business, RivaAsh.Resources.Business do

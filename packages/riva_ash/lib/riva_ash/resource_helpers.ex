@@ -27,7 +27,7 @@ defmodule RivaAsh.ResourceHelpers do
          {:ok, description} <- validate_description(Keyword.get(opts, :description, "Name of the resource")) do
       build_name_attribute(min_length, max_length, description)
     else
-      {:error, reason} -> raise ArgumentError, "Invalid name_attribute options: #{reason}"
+      {:error, reason} -> raise ArgumentError, "Invalid name_attribute options: #{inspect(reason)}"
     end
   end
 
@@ -109,7 +109,7 @@ defmodule RivaAsh.ResourceHelpers do
          {:ok, required} <- validate_required(Keyword.get(opts, :required, false)) do
       build_description_attribute(max_length, required)
     else
-      {:error, reason} -> raise ArgumentError, "Invalid description_attribute options: #{reason}"
+      {:error, reason} -> raise ArgumentError, "Invalid description_attribute options: #{inspect(reason)}"
     end
   end
 
@@ -174,7 +174,7 @@ defmodule RivaAsh.ResourceHelpers do
            validate_create_version_on_destroy(Keyword.get(opts, :create_version_on_destroy?, true)) do
       build_paper_trail_config(ignore_attributes, create_version_on_destroy)
     else
-      {:error, reason} -> raise ArgumentError, "Invalid standard_paper_trail options: #{reason}"
+      {:error, reason} -> raise ArgumentError, "Invalid standard_paper_trail options: #{inspect(reason)}"
     end
   end
 

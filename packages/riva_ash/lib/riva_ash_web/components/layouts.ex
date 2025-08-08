@@ -1,3 +1,5 @@
+alias Phoenix.LiveView.Rendered, as: Rendered
+
 defmodule RivaAshWeb.Layouts do
   @moduledoc """
   This module contains different layouts used by your application.
@@ -101,7 +103,7 @@ defmodule RivaAshWeb.Layouts do
     |> case do
       nil -> @default_app_name
       title when is_binary(title) -> title
-      _ -> @default_app_name
+      _unmatchedunmatched -> @default_unmatchedunmatchedapp_unmatchedunmatchedname
     end
   end
 
@@ -175,8 +177,8 @@ defmodule RivaAshWeb.Layouts do
   - CSRF token string or empty string on error
   """
   @spec safe_get_csrf_token() :: String.t()
-  defp safe_get_csrf_token, do: case Controller.get_csrf_token() do
+  defp safe_get_csrf_token, do: case(Controller.get_csrf_token()) do
     token when is_binary(token) -> token
-    _ -> ""
+    _unmatchedunmatched -> ""
   end
 end

@@ -1,3 +1,6 @@
+alias RivaAshWeb.Components.Atoms, as: Atoms
+alias Phoenix.LiveView.Rendered, as: Rendered
+
 defmodule RivaAshWeb.Components.Atoms.Avatar do
   @moduledoc """
   Avatar component for users and businesses with fallbacks.
@@ -38,7 +41,7 @@ defmodule RivaAshWeb.Components.Atoms.Avatar do
       assigns = validated_assigns |> assign(:avatar_class, avatar_class)
       render_avatar(assigns)
     else
-      {:error, reason} -> render_error(reason)
+      {:error, reason} -> render_error(%{reason: reason})
     end
   end
 
@@ -194,14 +197,17 @@ defmodule RivaAshWeb.Components.Atoms.Avatar do
     end
   end
 
-  defp render_error(reason) do
+  defp render_error(assigns) do
     # In a real implementation, you might want to log this error
     # and render a fallback avatar or error state
+    reason = Map.get(assigns, :reason, "Invalid avatar parameters")
     IO.puts("Avatar error: #{reason}")
 
+    assigns = %{reason: reason}
+
     ~H"""
-    <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative">
-      <span class="block sm:inline">Error: <%= reason %></span>
+    <div class="relative bg-red-100 px-4 py-3 border border-red-400 rounded text-red-700">
+      <span class="block sm:inline">Error: <%= @reason %></span>
     </div>
     """
   end

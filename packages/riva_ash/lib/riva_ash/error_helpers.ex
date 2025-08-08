@@ -77,7 +77,6 @@ defmodule RivaAsh.ErrorHelpers do
     }
   end
 
-
   @doc """
   Handles errors in a consistent way, logging them and returning a standardized error map.
   """
@@ -161,5 +160,4 @@ defmodule RivaAsh.ErrorHelpers do
       false -> success(value)
     end
   end
-
 end

@@ -1,3 +1,7 @@
+alias RivaAsh.Resources, as: Resources
+alias Ash.Policy, as: Policy
+alias Ash.Query, as: Query
+
 defmodule RivaAsh.Resources.Plot do
   @moduledoc """
   Represents a physical land area owned or managed by a business.
@@ -451,7 +455,9 @@ defmodule RivaAsh.Resources.Plot do
         total_area = formatted_total_area(plot)
         section_count = section_count(plot)
         layout_count = layout_count(plot)
+
         "#{business_name} - #{plot.name}: #{address}, Area: #{total_area}, Sections: #{section_count}, Layouts: #{layout_count}"
+
       false ->
         "Archived plot: #{plot.name}"
     end
@@ -650,12 +656,12 @@ defmodule RivaAsh.Resources.Plot do
   @spec apply_business_filter(Ash.Query.t(), String.t() | nil) :: Ash.Query.t()
   defp apply_business_filter(query, nil), do: query
 
-  defp apply_business_filter(query, business_id) do
-    Ash.Query.filter(query, expr(business_id == ^business_id))
+  defp apply_business_filter(query, business_id) when is_binary(business_id) do
+    Ash.Query.filter(query, business_id: business_id)
   end
 
   @spec apply_active_filter(Ash.Query.t()) :: Ash.Query.t()
   defp apply_active_filter(query) do
-    Ash.Query.filter(query, expr(active == true and is_nil(archived_at)))
+    Ash.Query.filter(query, is_active: true, archived_at: nil)
   end
 end

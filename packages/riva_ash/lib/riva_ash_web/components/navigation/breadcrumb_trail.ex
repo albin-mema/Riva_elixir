@@ -1,9 +1,14 @@
+alias RivaAshWeb.Components.Navigation, as: Navigation
+alias RivaAshWeb.Components.Atoms, as: Atoms
+alias Phoenix.LiveView.Rendered, as: Rendered
+
 defmodule RivaAshWeb.Components.Navigation.BreadcrumbTrail do
   @moduledoc """
   Dynamic breadcrumb navigation component.
   """
   use Phoenix.Component
   import RivaAshWeb.Components.Atoms.Icon
+  import RivaAshWeb.Gettext, only: [dgettext: 2]
 
   @doc """
   Renders dynamic breadcrumb navigation.
@@ -36,7 +41,7 @@ defmodule RivaAshWeb.Components.Navigation.BreadcrumbTrail do
         <li :if={@show_home}>
           <a href={@home_path} class={["breadcrumb-item home", @home_class]}>
             <.icon name={:home} />
-            <span>Home</span>
+            <span><%= dgettext("navigation", "Home") %></span>
           </a>
           <.icon name={@separator} class={["separator", @separator_class]} />
         </li>
@@ -44,7 +49,7 @@ defmodule RivaAshWeb.Components.Navigation.BreadcrumbTrail do
         <!-- Handle truncation if too many items -->
         <%= if length(@items) > @max_items do %>
           <li>
-            <span class="breadcrumb-item truncated">...</span>
+            <span class="breadcrumb-item truncated"><%= dgettext("navigation", "…") %></span>
             <.icon name={@separator} class={["separator", @separator_class]} />
           </li>
 
@@ -90,7 +95,7 @@ defmodule RivaAshWeb.Components.Navigation.BreadcrumbTrail do
   # Helper function to build home classes
   @spec build_home_class(boolean()) :: String.t()
   defp build_home_class(show_home) do
-    if show_home, "", "hidden"
+    if show_home, do: "", else: "hidden"
   end
 
   # Helper function to build separator classes

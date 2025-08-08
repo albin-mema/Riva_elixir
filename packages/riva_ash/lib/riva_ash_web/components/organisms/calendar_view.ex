@@ -1,3 +1,8 @@
+alias RivaAshWeb.Components.Organisms, as: Organisms
+alias RivaAshWeb.Components.Atoms, as: Atoms
+alias RivaAshWeb.Components.Molecules, as: Molecules
+alias Phoenix.LiveView.Rendered, as: Rendered
+
 defmodule RivaAshWeb.Components.Organisms.CalendarView do
   @moduledoc """
   Calendar view component for displaying reservations and events.

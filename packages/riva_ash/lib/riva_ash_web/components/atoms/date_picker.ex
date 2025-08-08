@@ -1,3 +1,8 @@
+alias RivaAshWeb.Components.Atoms, as: Atoms
+alias Phoenix.HTML.FormField, as: FormField
+alias Phoenix.LiveView.Rendered, as: Rendered
+alias Phoenix.HTML, as: HTML
+
 defmodule RivaAshWeb.Components.Atoms.DatePicker do
   @moduledoc """
   Date picker component with calendar popup.
@@ -117,17 +122,17 @@ defmodule RivaAshWeb.Components.Atoms.DatePicker do
       case size do
         "sm" -> "text-sm"
         "lg" -> "text-lg"
-        _ -> "text-base"
+        _other_size -> "text-base"
       end
 
     variant_classes =
       case variant do
         "error" -> "border-red-300 focus:border-red-500 focus:ring-red-500"
         "success" -> "border-green-300 focus:border-green-500 focus:ring-green-500"
-        _ -> "border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+        _other_variant -> "border-gray-300 focus:border-blue-500 focus:ring-blue-500"
       end
 
-    error_classes = if field && field.errors != [], "border-red-500", ""
+    error_classes = if(field && field.errors != [], "border-red-500", "")
 
     "#{base_classes} #{size_classes} #{variant_classes} #{error_classes}"
   end

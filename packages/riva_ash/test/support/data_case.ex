@@ -1,3 +1,10 @@
+alias RivaAsh.Test, as: Test
+alias RivaAsh.DataCase, as: DataCase
+alias RivaAsh.Repo, as: Repo
+alias Ecto.Adapters.SQL, as: SQL
+alias Ecto.Adapters.SQL.Sandbox, as: Sandbox
+alias Ecto.Changeset, as: Changeset
+
 defmodule RivaAsh.DataCase do
   @moduledoc """
   This module defines the setup for tests requiring
@@ -54,7 +61,7 @@ defmodule RivaAsh.DataCase do
         pid = Ecto.Adapters.SQL.Sandbox.start_owner!(RivaAsh.Repo, shared: not tags[:async] or tags[:shared_db])
         on_exit(fn -> Ecto.Adapters.SQL.Sandbox.stop_owner(pid) end)
 
-      _ ->
+      _unmatchedunmatched ->
         Ecto.Adapters.SQL.Sandbox.checkout(RivaAsh.Repo)
         on_exit(fn -> Ecto.Adapters.SQL.Sandbox.checkin(RivaAsh.Repo) end)
     end
@@ -70,7 +77,7 @@ defmodule RivaAsh.DataCase do
   """
   def errors_on(changeset) do
     Ecto.Changeset.traverse_errors(changeset, fn {message, opts} ->
-      Regex.replace(~r"%{(\w+)}", message, fn _, key ->
+      Regex.replace(~r"%{(\w+)}", message, fn _unmatched, key ->
         opts |> Keyword.get(String.to_existing_atom(key), key) |> to_string()
       end)
     end)

@@ -1,3 +1,11 @@
+alias RivaAshWeb.Components.Organisms, as: Organisms
+alias RivaAshWeb.Components.Atoms, as: Atoms
+alias RivaAshWeb.Components.Molecules, as: Molecules
+alias RivaAshWeb.Components.Forms, as: Forms
+alias RivaAshWeb.Live, as: Live
+alias RivaAsh.Accounts, as: Accounts
+alias AshPhoenix.Form, as: Form
+
 defmodule RivaAshWeb.TokenLive do
   @moduledoc """
   LiveView for managing API Tokens.
@@ -51,7 +59,7 @@ defmodule RivaAshWeb.TokenLive do
           {:ok, redirect(socket, to: "/access-denied")}
         end
 
-      {:error, _} ->
+      {:error, _unmatched} ->
         {:ok, redirect(socket, to: "/sign-in")}
     end
   end
@@ -72,7 +80,7 @@ defmodule RivaAshWeb.TokenLive do
         |> assign(:users, users)
         |> then(&{:noreply, &1})
 
-      _ ->
+      _unmatchedunmatched ->
         socket =
           socket
           |> assign(:tokens, [])
@@ -224,7 +232,7 @@ defmodule RivaAshWeb.TokenLive do
                         else
                           "border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700"
                         end
-                     }"} aria-label={"Go to page #{page}" <> if(page == @meta.current_page, " (current page)", "")} aria-current={if(page == @meta.current_page, "page", "false")}><%= page %></.button>
+                     }"} aria-label={"Go to page #{page}" <> Kernel.if(page == @meta.current_page, " (current page)", "")} aria-current={Kernel.if(page == @meta.current_page, "page", "false")}><%= page %></.button>
                     <% end %>
                   </div>
                   <div class="-mt-px flex w-0 flex-1 justify-end">
@@ -454,7 +462,8 @@ defmodule RivaAshWeb.TokenLive do
 
   defp apply_sorting(tokens, %Flop{order_by: order_by, order_directions: order_directions}) do
     # Default to :asc if no directions provided
-    directions = order_directions || Enum.map(order_by, fn _ -> :asc end)
+    directions =
+      order_unmatchedunmatcheddirections || Enum.map(order_unmatchedunmatchedby, fn _unmatchedunmatched -> :asc end)
 
     # Zip order_by and directions, pad directions with :asc if needed
     order_specs =
@@ -473,8 +482,8 @@ defmodule RivaAshWeb.TokenLive do
 
     case {val1, val2} do
       {same, same} -> compare_tokens(token1, token2, rest)
-      {nil, _} -> direction == :desc
-      {_, nil} -> direction == :asc
+      {nil, _unmatched} -> direction == :desc
+      {_unmatched, nil} -> direction == :asc
       {v1, v2} when direction == :asc -> v1 <= v2
       {v1, v2} when direction == :desc -> v1 >= v2
     end
@@ -487,7 +496,7 @@ defmodule RivaAshWeb.TokenLive do
       :expires_at -> token.expires_at
       :inserted_at -> token.inserted_at
       :updated_at -> token.updated_at
-      _ -> nil
+      _unmatchedunmatched -> nil
     end
   end
 
@@ -594,7 +603,7 @@ defmodule RivaAshWeb.TokenLive do
           opts: []
         }
 
-      _ ->
+      _unmatchedunmatched ->
         %Flop.Meta{
           current_page: 1,
           current_offset: 0,
@@ -613,10 +622,10 @@ defmodule RivaAshWeb.TokenLive do
     try do
       case Token.read(actor: user) do
         {:ok, tokens} -> tokens
-        _ -> []
+        _unmatchedunmatched -> []
       end
     rescue
-      _ -> []
+      _unmatchedunmatched -> []
     end
   end
 
@@ -624,10 +633,10 @@ defmodule RivaAshWeb.TokenLive do
     try do
       case User.read(actor: user) do
         {:ok, users} -> users
-        _ -> []
+        _unmatchedunmatched -> []
       end
     rescue
-      _ -> []
+      _unmatchedunmatched -> []
     end
   end
 

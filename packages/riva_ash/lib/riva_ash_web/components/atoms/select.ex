@@ -1,3 +1,10 @@
+alias RivaAshWeb.Components.Atoms, as: Atoms
+alias RivaAshWeb.Components.UI.Select, as: Select
+alias RivaAshWeb.Components.UI, as: UI
+alias UI.Select, as: Select
+alias Phoenix.HTML, as: HTML
+alias Phoenix.Component, as: Component
+
 defmodule RivaAshWeb.Components.Atoms.Select do
   @moduledoc """
   Deprecated wrapper around the canonical design-system select.
@@ -58,5 +65,5 @@ defmodule RivaAshWeb.Components.Atoms.Select do
   defp map_legacy_size("sm"), do: "sm"
   defp map_legacy_size("md"), do: "default"
   defp map_legacy_size("lg"), do: "lg"
-  defp map_legacy_size(_size), do: "default"
+  defp map_legacy_size(_), do: "default"
 end

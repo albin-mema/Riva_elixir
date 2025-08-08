@@ -1,3 +1,5 @@
+alias RivaAsh.StorybookTesting, as: StorybookTesting
+
 defmodule RivaAsh.StorybookTesting.PropertyGenerators do
   @moduledoc """
   Property-based test generators for Storybook components.

@@ -1,3 +1,6 @@
+alias RivaAshWeb.Components.Atoms, as: Atoms
+alias Phoenix.LiveView.Rendered, as: Rendered
+
 defmodule RivaAshWeb.Components.Atoms.Link do
   @moduledoc """
   Link component for navigation and interactive elements.
@@ -176,8 +179,10 @@ defmodule RivaAshWeb.Components.Atoms.Link do
   # Imperative Shell: Rendering functions
   defp render_link(assigns) do
     ~H"""
-    <%= if assigns.to do %>
-      <%= live_patch(render_slot(@inner_block), to: @to, class: @link_class, @rest) %>
+    <%= if @to do %>
+      <%= live_patch Keyword.merge([to: @to, class: @link_class], @rest || []) do %>
+        <%= render_slot(@inner_block) %>
+      <% end %>
     <% else %>
       <a href={@href} class={@link_class} {@rest}>
         <%= render_slot(@inner_block) %>
@@ -191,9 +196,11 @@ defmodule RivaAshWeb.Components.Atoms.Link do
     # and render a fallback link or error state
     IO.puts("Link error: #{reason}")
 
+    assigns = %{reason: reason}
+
     ~H"""
-    <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative">
-      <span class="block sm:inline">Error: <%= reason %></span>
+    <div class="relative bg-red-100 px-4 py-3 border border-red-400 rounded text-red-700">
+      <span class="block sm:inline">Error: <%= @reason %></span>
     </div>
     """
   end

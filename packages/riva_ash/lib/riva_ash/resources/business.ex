@@ -199,22 +199,27 @@ defmodule RivaAsh.Resources.Business do
         city = Ash.Query.get_argument(query, :city)
         country = Ash.Query.get_argument(query, :country)
 
-        query = if search_term && search_term != "" do
-          Ash.Query.filter(query, expr(
-            contains(name, ^search_term) or
-            contains(public_description, ^search_term) or
-            contains(city, ^search_term) or
-            contains(address, ^search_term)
-          ))
-        else
-          query
-        end
+        query =
+          if search_term && search_term != "" do
+            Ash.Query.filter(
+              query,
+              expr(
+                contains(name, ^search_term) or
+                  contains(public_description, ^search_term) or
+                  contains(city, ^search_term) or
+                  contains(address, ^search_term)
+              )
+            )
+          else
+            query
+          end
 
-        query = if city && city != "" do
-          Ash.Query.filter(query, expr(contains(city, ^city)))
-        else
-          query
-        end
+        query =
+          if city && city != "" do
+            Ash.Query.filter(query, expr(contains(city, ^city)))
+          else
+            query
+          end
 
         if country && country != "" do
           Ash.Query.filter(query, expr(contains(country, ^country)))
@@ -455,5 +460,4 @@ defmodule RivaAsh.Resources.Business do
   end
 
   # Private helper functions for search filtering
-
 end

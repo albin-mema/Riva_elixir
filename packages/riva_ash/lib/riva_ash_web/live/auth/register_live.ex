@@ -1,3 +1,7 @@
+alias RivaAshWeb.Auth, as: Auth
+alias RivaAsh.Accounts, as: Accounts
+alias AshPhoenix.Form, as: Form
+
 defmodule RivaAshWeb.Auth.RegisterLive do
   @moduledoc """
   User registration LiveView.
@@ -219,11 +223,12 @@ defmodule RivaAshWeb.Auth.RegisterLive do
   """
   defp format_registration_errors(errors) when is_list(errors) do
     case errors do
-      [%{message: message} | _] -> message
+      [%{message: message} | _unmatched] -> message
       [] -> "Registration failed. Please check the form for errors."
-      _ -> "Registration failed due to invalid data."
+      _unmatchedunmatched -> "Registration failed due to invalid data."
     end
   end
 
-  defp format_registration_errors(_), do: "Registration failed. Please check the form for errors."
+  defp format_unmatchedregistration_unmatchederrors(_unmatched),
+    do: "Registration failed. Please check the form for errors."
 end

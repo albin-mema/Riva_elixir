@@ -1,3 +1,8 @@
+alias RivaAshWeb.Components.Atoms, as: Atoms
+alias Phoenix.HTML.FormField, as: FormField
+alias Phoenix.LiveView.Rendered, as: Rendered
+alias Phoenix.HTML, as: HTML
+
 defmodule RivaAshWeb.Components.Atoms.ColorPicker do
   @moduledoc """
   Color picker component for color selection with validation and accessibility.
@@ -75,8 +80,8 @@ defmodule RivaAshWeb.Components.Atoms.ColorPicker do
   @spec validate_default_color(String.t()) :: :ok | {:error, String.t()}
   defp validate_default_color(color) do
     case parse_color(color) do
-      {:ok, _} -> :ok
-      {:error, _} -> {:error, "Invalid default color format"}
+      {:ok, _unmatched} -> :ok
+      {:error, _unmatched} -> {:error, "Invalid default color format"}
     end
   end
 
@@ -84,8 +89,8 @@ defmodule RivaAshWeb.Components.Atoms.ColorPicker do
   defp validate_disabled_colors(colors) do
     Enum.reduce_while(colors, :ok, fn color, :ok ->
       case parse_color(color) do
-        {:ok, _} -> {:cont, :ok}
-        {:error, _} -> {:halt, {:error, "Invalid color in disabled_colors list"}}
+        {:ok, _unmatched} -> {:cont, :ok}
+        {:error, _unmatched} -> {:halt, {:error, "Invalid color in disabled_colors list"}}
       end
     end)
   end
@@ -239,7 +244,7 @@ defmodule RivaAshWeb.Components.Atoms.ColorPicker do
         _ -> "border-gray-300 focus:border-blue-500 focus:ring-blue-500"
       end
 
-    error_classes = if field && field.errors != [], "border-red-500", ""
+    error_classes = if(field && field.errors != [], "border-red-500", "")
 
     "#{base_classes} #{size_classes} #{variant_classes} #{error_classes}"
   end
@@ -262,7 +267,7 @@ defmodule RivaAshWeb.Components.Atoms.ColorPicker do
         _ -> "border-gray-300 focus:border-blue-500 focus:ring-blue-500"
       end
 
-    error_classes = if field && field.errors != [], "border-red-500", ""
+    error_classes = if(field && field.errors != [], "border-red-500", "")
 
     "#{base_classes} #{size_classes} #{variant_classes} #{error_classes}"
   end

@@ -1,3 +1,8 @@
+alias RivaAshWeb.Components.Organisms, as: Organisms
+alias RivaAshWeb.Components.Molecules, as: Molecules
+alias RivaAshWeb.Components.Atoms, as: Atoms
+alias Phoenix.LiveView.Rendered, as: Rendered
+
 defmodule RivaAshWeb.Components.Organisms.DashboardStats do
   @moduledoc """
   Dashboard statistics widget component.
@@ -31,18 +36,20 @@ defmodule RivaAshWeb.Components.Organisms.DashboardStats do
     <!-- Dashboard stats implementation will go here -->
     <div {@rest} class={@container_class}>
       <div class={@stats_class}>
-        <.card class={@card_class}>
-          <:body>
-            <div>
-              <.icon name={stat.icon} />
+        <%= for stat <- @stats do %>
+          <.card class={@card_class}>
+            <:body>
               <div>
-                <h3><%= stat.value %></h3>
-                <p><%= stat.label %></p>
-                <span :if={stat.change}><%= stat.change %>%</span>
+                <.icon name={stat.icon} />
+                <div>
+                  <h3><%= stat.value %></h3>
+                  <p><%= stat.label %></p>
+                  <span :if={stat.change}><%= stat.change %>%</span>
+                </div>
               </div>
-            </div>
-          </:body>
-        </.card>
+            </:body>
+          </.card>
+        <% end %>
       </div>
     </div>
     """

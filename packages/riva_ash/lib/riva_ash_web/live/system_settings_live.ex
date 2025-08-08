@@ -1,3 +1,10 @@
+alias RivaAsh.Resources, as: Resources
+alias RivaAsh.System, as: System
+alias RivaAshWeb.Components.Organisms, as: Organisms
+alias RivaAshWeb.Components.Molecules, as: Molecules
+alias RivaAshWeb.Components.Atoms, as: Atoms
+alias RivaAshWeb.Live, as: Live
+
 defmodule RivaAshWeb.SystemSettingsLive do
   @moduledoc """
   System Settings - System administration interface.
@@ -39,7 +46,7 @@ defmodule RivaAshWeb.SystemSettingsLive do
             {:ok, redirect(socket, to: "/access-denied")}
         end
 
-      {:error, _} ->
+      {:error, _unmatched} ->
         {:ok, redirect(socket, to: "/sign-in")}
     end
   end

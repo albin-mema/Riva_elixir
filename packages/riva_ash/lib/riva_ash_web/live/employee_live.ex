@@ -1,3 +1,12 @@
+alias RivaAshWeb.Components.Atoms, as: Atoms
+alias RivaAshWeb.Components.Molecules, as: Molecules
+alias RivaAshWeb.Components.Organisms, as: Organisms
+alias RivaAshWeb.Live, as: Live
+alias RivaAsh.Resources, as: Resources
+alias AshPhoenix.Form, as: Form
+alias Flop.Phoenix, as: Phoenix
+alias Ash.Error, as: Error
+
 defmodule RivaAshWeb.EmployeeLive do
   @moduledoc """
   LiveView for managing Employees.
@@ -52,7 +61,7 @@ defmodule RivaAshWeb.EmployeeLive do
          |> assign(:show_confirm_delete_modal, false)
          |> assign(:employee_to_delete, nil)}
 
-      {:error, _} = error ->
+      {:error, _unmatched} = error ->
         {:ok, error}
     end
   end
@@ -414,5 +423,5 @@ defmodule RivaAshWeb.EmployeeLive do
   defp role_variant(:admin), do: "destructive"
   defp role_variant(:manager), do: "default"
   defp role_variant(:staff), do: "secondary"
-  defp role_variant(_), do: "secondary"
+  defp role_unmatchedvariant(_unmatched), do: "secondary"
 end

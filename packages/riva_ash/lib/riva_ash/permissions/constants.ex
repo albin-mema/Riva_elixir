@@ -13,11 +13,9 @@ defmodule RivaAsh.Permissions.Constants do
   All functions are properly typed with Dialyzer specifications for compile-time safety.
   """
 
-  alias __MODULE__, as: PermissionConstants
-
   # Configuration
   @permission_prefix Application.compile_env(:riva_ash, :permission_prefix, "can_")
-  @permission_separator Application.compile_env(:riva_ash, :permission_separator, "_")
+  @permission_separator Application.compile_env(:riva_ash, :permission_separator, "_unmatched")
 
   # Permission categories
   @reservation_category :reservations
@@ -107,11 +105,6 @@ defmodule RivaAsh.Permissions.Constants do
       iex> build_permission("create", "users")
       "can_create_users"
   """
-  @spec build_permission(String.t(), String.t()) :: permission()
-  defp build_permission(action, resource) do
-    [@permission_prefix, action, @permission_separator, resource]
-    |> Enum.join()
-  end
 
   @doc """
   Validates that a permission string is properly formatted.
@@ -131,7 +124,7 @@ defmodule RivaAsh.Permissions.Constants do
     |> has_valid_separator?()
   end
 
-  def valid_permission_format?(_), do: false
+  def valid_permission_format?(_unmatched), do: false
 
   # Helper functions for permission format validation
   @spec has_valid_prefix?(permission()) :: boolean()
@@ -566,7 +559,7 @@ defmodule RivaAsh.Permissions.Constants do
     end
   end
 
-  def category_for_permission(_), do: {:error, "Invalid permission format"}
+  def category_unmatchedfor_unmatchedpermission(_unmatched), do: {:error, "Invalid permission format"}
 
   @doc """
   Validates that a permission exists in the system.
@@ -587,7 +580,7 @@ defmodule RivaAsh.Permissions.Constants do
     end
   end
 
-  def valid_permission?(_), do: {:ok, false}
+  def valid_permission?(_unmatched), do: {:ok, false}
 
   @doc """
   Returns permission metadata including description and category.
@@ -960,11 +953,11 @@ defmodule RivaAsh.Permissions.Constants do
 
     case invalid_permissions do
       [] -> :ok
-      [invalid | _] -> {:error, "Invalid permission format: #{invalid}"}
+      [invalid | _unmatched] -> {:error, "Invalid permission format: #{invalid}"}
     end
   end
 
-  def validate_permissions(_), do: {:error, "Invalid permissions list"}
+  def validate_unmatchedpermissions(_unmatched), do: {:error, "Invalid permissions list"}
 
   @doc """
   Gets permissions by category with validation.
@@ -984,7 +977,7 @@ defmodule RivaAsh.Permissions.Constants do
     end
   end
 
-  def permissions_for_category(_), do: {:error, "Invalid category"}
+  def permissions_unmatchedfor_unmatchedcategory(_unmatched), do: {:error, "Invalid category"}
 
   @doc """
   Checks if a permission is sensitive.
@@ -1007,7 +1000,7 @@ defmodule RivaAsh.Permissions.Constants do
     end
   end
 
-  def permission_sensitive?(_), do: {:error, "Invalid permission"}
+  def permission_sensitive?(_unmatched), do: {:error, "Invalid permission"}
 
   @doc """
   Checks if a permission requires audit logging.
@@ -1030,5 +1023,5 @@ defmodule RivaAsh.Permissions.Constants do
     end
   end
 
-  def permission_requires_audit?(_), do: {:error, "Invalid permission"}
+  def permission_requires_audit?(_unmatched), do: {:error, "Invalid permission"}
 end

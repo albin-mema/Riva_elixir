@@ -1,3 +1,10 @@
+alias Phoenix.LiveView, as: LiveView
+alias RivaAshWeb.Live.Hooks, as: Hooks
+alias RivaAshWeb.Plugs, as: Plugs
+alias Absinthe.Plug, as: Plug
+alias RivaAshWeb.Dev, as: Dev
+alias RivaAshWeb.DevTools, as: DevTools
+
 defmodule RivaAshWeb.Router do
   @moduledoc """
   Phoenix router configuration for Riva Ash web interface.
@@ -20,17 +27,18 @@ defmodule RivaAshWeb.Router do
   import Plug.Conn
   import Phoenix.Controller
   import Phoenix.LiveView.Router
+  alias RivaAshWeb.Live.Hooks.LocaleHook
   import AshAdmin.Router
 
   alias RivaAshWeb.{AuthHelpers, Controllers}
 
-  # PhoenixStorybook.Router import (disabled for now)
-  # @compile {:no_warn_undefined, PhoenixStorybook.Router}
-  #
-  # # Only import and define storybook functions in dev environment
-  # if Mix.env() == :dev do
-  #   import PhoenixStorybook.Router
-  # end
+  # PhoenixStorybook.Router import
+  @compile {:no_warn_undefined, PhoenixStorybook.Router}
+
+  # Only import and define storybook functions in dev environment
+  if Mix.env() == :dev do
+    import PhoenixStorybook.Router
+  end
 
   @type pipeline_name :: :api | :browser | :authenticated_layout | :browser_no_layout | :require_authenticated_user
   @type route_scope :: String.t()
@@ -47,6 +55,8 @@ defmodule RivaAshWeb.Router do
   pipeline :browser do
     plug(:accepts, ["html"])
     plug(:fetch_session)
+    # ensure locale set early; persists param to session
+    plug(RivaAshWeb.Plugs.Locale)
     plug(:fetch_live_flash)
     plug(:put_root_layout, html: {RivaAshWeb.Layouts, :root})
     plug(:protect_from_forgery)
@@ -61,6 +71,7 @@ defmodule RivaAshWeb.Router do
   pipeline :browser_no_layout do
     plug(:accepts, ["html"])
     plug(:fetch_session)
+    plug(RivaAshWeb.Plugs.Locale)
     plug(:fetch_live_flash)
     plug(:put_root_layout, false)
     plug(:protect_from_forgery)
@@ -88,23 +99,24 @@ defmodule RivaAshWeb.Router do
   if Mix.env() == :dev do
     scope "/" do
       pipe_through([:api])
+
       forward("/graphiql", Absinthe.Plug.GraphiQL,
         schema: RivaAshWeb.Schema,
         interface: :simple
       )
     end
 
-    # Storybook routes (disabled for now)
-    # if Mix.env() == :dev do
-    #   scope "/" do
-    #     storybook_assets()
-    #   end
+    # Storybook routes
+    if Mix.env() == :dev do
+      scope "/" do
+        storybook_assets()
+      end
 
-    #   scope "/", RivaAshWeb do
-    #     pipe_through(:browser)
-    #     live_storybook "/storybook", backend_module: RivaAshWeb.Storybook
-    #   end
-    # end
+      scope "/", RivaAshWeb do
+        pipe_through(:browser)
+        live_storybook("/storybook", backend_module: RivaAshWeb.Storybook)
+      end
+    end
 
     if Mix.env() == :dev and Code.ensure_loaded?(RivaAshWeb.Dev.Router) do
       forward("/dev", RivaAshWeb.Dev.Router)
@@ -161,6 +173,9 @@ defmodule RivaAshWeb.Router do
   # Public routes (no authentication required)
   scope "/", RivaAshWeb do
     pipe_through([:browser])
+    # LiveView locale on_mount hook ensures locale is set for LV processes.
+    # Add on_mount here so all LiveViews in this scope inherit it.
+    on_mount LocaleHook
 
     get("/", Controllers.AuthController, :redirect_to_dashboard)
 
@@ -188,6 +203,9 @@ defmodule RivaAshWeb.Router do
     live("/inventory", InventoryManagementLive, :index)
     live("/people", PeopleManagementLive, :index)
     live("/finance", FinancialOperationsLive, :index)
+
+    # Chat Routes
+    live("/chat", ChatLive, :index)
     live("/settings", SystemSettingsLive, :index)
 
     # Legacy resource routes (kept for backward compatibility during transition)

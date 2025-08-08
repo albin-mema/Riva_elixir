@@ -1,3 +1,8 @@
+alias RivaAshWeb.Components.Interactive, as: Interactive
+alias RivaAshWeb.Components.Molecules, as: Molecules
+alias Phoenix.LiveView.Rendered, as: Rendered
+alias Phoenix.LiveView, as: LiveView
+
 defmodule RivaAshWeb.Components.Interactive.RecurrencePattern do
   @moduledoc """
   Recurring reservation pattern setup component.

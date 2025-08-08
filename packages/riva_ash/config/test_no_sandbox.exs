@@ -11,8 +11,8 @@ config :riva_ash, RivaAsh.Repo,
     System.get_env("DB_NAME") ||
       Application.compile_env(:riva_ash, :test_no_sandbox_database, "riva_ash_test_no_sandbox"),
   pool: DBConnection.ConnectionPool,
-  pool_size: System.get_env("DB_POOL_SIZE", "10") |> String.to_integer(),
-  timeout: System.get_env("DB_TIMEOUT_MS", "5000") |> String.to_integer(),
+  pool_size: String.to_integer(System.get_env("DB_POOL_SIZE", "10")),
+  timeout: String.to_integer(System.get_env("DB_TIMEOUT_MS", "5000")),
   ssl: false
 
 # Configure the endpoint

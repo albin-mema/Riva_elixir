@@ -222,57 +222,25 @@ defmodule RivaAsh.Resources.ItemType do
     )
   end
 
-  # Public helper functions
-  @spec choices_for_select :: [{String.t(), String.t()}]
-  def choices_for_select do
-    __MODULE__
-    |> Ash.read!()
-    |> Enum.map(&{&1.id, display_name(&1)})
-  end
-
-  @spec get_business(String.t()) :: {:ok, RivaAsh.Resources.Business.t()} | {:error, String.t()}
-  def get_business(item_type_id) do
-    with {:ok, item_type} <- __MODULE__.by_id(item_type_id),
-         {:ok, business} <- Ash.load(item_type, :business) do
-      {:ok, business}
-    else
-      {:error, reason} -> {:error, reason}
-      error -> {:error, "Failed to load business: #{inspect(error)}"}
-    end
-  end
-
-  @spec get_business_by_item_type_id(String.t()) :: {:ok, RivaAsh.Resources.Business.t()} | {:error, String.t()}
-  def get_business_by_item_type_id(item_type_id) do
-    case __MODULE__.by_id(item_type_id) do
-      {:ok, item_type} -> get_business(item_type_id)
-      {:error, reason} -> {:error, reason}
-    end
-  end
-
   # Private helper functions for filtering
   @spec apply_business_filter(Ash.Query.t(), String.t() | nil) :: Ash.Query.t()
   defp apply_business_filter(query, nil), do: query
 
   defp apply_business_filter(query, business_id) do
-    Ash.Query.filter(query, [item_type], item_type.business_id == ^business_id)
+    Ash.Query.filter(query, business_id: business_id)
   end
 
   @spec apply_active_filter(Ash.Query.t()) :: Ash.Query.t()
   defp apply_active_filter(query) do
-    Ash.Query.filter(query, [item_type], item_type.is_active == true and is_nil(item_type.archived_at))
+    Ash.Query.filter(query, is_active: true, archived_at: nil)
   end
 
   @spec apply_search_filter(Ash.Query.t(), String.t() | nil) :: Ash.Query.t()
   defp apply_search_filter(query, nil), do: query
 
   defp apply_search_filter(query, search_term) do
-    search_term = "%#{search_term}%"
-
-    Ash.Query.filter(
-      query,
-      [item_type],
-      ilike(item_type.name, ^search_term) or ilike(item_type.description, ^search_term)
-    )
+    pattern = "%#{search_term}%"
+    Ash.Query.filter(query, name: [ilike: pattern], or: [description: [ilike: pattern]])
   end
 
   # Helper functions for business logic and data validation
@@ -348,10 +316,14 @@ defmodule RivaAsh.Resources.ItemType do
       nil ->
         "No color specified"
 
-      color when is_binary(color) and String.match?(color, ~r/^#[0-9A-Fa-f]{6}$/) ->
-        "Color: #{color}"
+      color when is_binary(color) ->
+        if String.match?(color, ~r/^#[0-9A-Fa-f]{6}$/) do
+          "Color: #{color}"
+        else
+          "Invalid color format"
+        end
 
-      _ ->
+      _unmatchedunmatched ->
         "Invalid color format"
     end
   end
@@ -458,7 +430,7 @@ defmodule RivaAsh.Resources.ItemType do
   """
   @spec formatted_info(t()) :: String.t()
   def formatted_info(item_type) do
-    case is_active?(item_type) do
+    case active?(item_type) do
       true ->
         display_name = display_name(item_type)
         description = item_type.description || "No description"
@@ -466,6 +438,7 @@ defmodule RivaAsh.Resources.ItemType do
         color_info = color_info(item_type)
         icon_info = icon_info(item_type)
         "#{display_name}: #{description} | Items: #{item_count} | #{color_info} | #{icon_info}"
+
       false ->
         "Archived item type: #{display_name(item_type)}"
     end
@@ -566,7 +539,7 @@ defmodule RivaAsh.Resources.ItemType do
   @spec get_business_by_item_type_id(String.t()) :: {:ok, RivaAsh.Resources.Business.t()} | {:error, String.t()}
   def get_business_by_item_type_id(item_type_id) do
     case __MODULE__.by_id(item_type_id) do
-      {:ok, item_type} -> get_business(item_type_id)
+      {:ok, _item_type} -> get_business(item_type_id)
       {:error, reason} -> {:error, reason}
     end
   end

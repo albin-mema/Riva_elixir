@@ -1,3 +1,8 @@
+alias RivaAshWeb.Components.Atoms, as: Atoms
+alias RivaAshWeb.Components.UI.Input, as: Input
+alias RivaAshWeb.Components.UI, as: UI
+alias Phoenix.Component, as: Component
+
 defmodule RivaAshWeb.Components.Atoms.TextInput do
   @moduledoc """
   Deprecated wrapper around the canonical design-system input.

@@ -1,3 +1,8 @@
+alias RivaAshWeb.Components.Atoms, as: Atoms
+alias RivaAshWeb.Components.UI.Button, as: Button
+alias RivaAshWeb.Components.UI, as: UI
+alias Phoenix.LiveView.Rendered, as: Rendered
+
 defmodule RivaAshWeb.Components.Atoms.Button do
   @moduledoc """
   Deprecated wrapper around the canonical design-system button.
@@ -15,8 +20,8 @@ defmodule RivaAshWeb.Components.Atoms.Button do
   @type variant :: :primary | :secondary | :outline | :ghost | :link
   @type size :: :sm | :md | :lg
   @type loading :: boolean()
-  @class :: String.t()
-  @disabled :: boolean()
+  # Removed invalid module attribute type specs that caused compile errors
+  # These attributes are declared via `attr/3` below with proper types
 
   @doc """
   Renders a button component.
@@ -156,9 +161,11 @@ defmodule RivaAshWeb.Components.Atoms.Button do
     # and render a fallback button or error state
     IO.puts("Button error: #{reason}")
 
+    assigns = %{reason: reason}
+
     ~H"""
-    <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative">
-      <span class="block sm:inline">Error: <%= reason %></span>
+    <div class="relative bg-red-100 px-4 py-3 border border-red-400 rounded text-red-700">
+      <span class="block sm:inline">Error: <%= @reason %></span>
     </div>
     """
   end

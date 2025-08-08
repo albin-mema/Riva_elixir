@@ -1,8 +1,19 @@
+alias RivaAshWeb.Components.Organisms, as: Organisms
+alias RivaAshWeb.Components.Atoms, as: Atoms
+alias RivaAshWeb.Components.Molecules, as: Molecules
+alias RivaAshWeb.Components.Forms, as: Forms
+alias RivaAshWeb.Live, as: Live
+alias RivaAsh.Resources, as: Resources
+alias Ash.Error, as: Error
+alias AshPhoenix.Form, as: Form
+alias RivaAsh.ErrorHelpers, as: ErrorHelpers
+
 defmodule RivaAshWeb.RecurringReservationInstanceLive do
   @moduledoc """
   LiveView for managing Recurring Reservation Instances.
   """
   use RivaAshWeb, :live_view
+  import Phoenix.HTML
 
   # Import atomic design components
   import RivaAshWeb.Components.Organisms.PageHeader
@@ -69,7 +80,7 @@ defmodule RivaAshWeb.RecurringReservationInstanceLive do
         |> assign(:meta, meta)
         |> then(&{:noreply, &1})
 
-      _ ->
+      _unmatchedunmatched ->
         socket =
           socket
           |> assign(:recurring_reservation_instances, [])
@@ -176,7 +187,7 @@ defmodule RivaAshWeb.RecurringReservationInstanceLive do
                                     :failed -> "bg-red-100 text-red-800"
                                     :skipped -> "bg-gray-100 text-gray-800"
                                     :cancelled -> "bg-gray-100 text-gray-800"
-                                    _ -> "bg-gray-100 text-gray-800"
+                                    _unmatchedunmatched -> "bg-gray-100 text-gray-800"
                                   end
                                 }"}><%= instance.status %></span>
                   </td>
@@ -212,7 +223,7 @@ defmodule RivaAshWeb.RecurringReservationInstanceLive do
                         else
                           "border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700"
                         end
-                     }"} aria-label={"Go to page #{page}" <> if(page == @meta.current_page, " (current page)", "")} aria-current={if(page == @meta.current_page, "page", "false")}><%= page %></.button>
+                    }"} aria-label={"Go to page #{page}" <> (if page == @meta.current_page, do: " (current page)", else: "")} aria-current={if page == @meta.current_page, do: "page", else: "false"}><%= page %></.button>
                     <% end %>
                   </div>
                   <div class="-mt-px flex w-0 flex-1 justify-end">
@@ -392,7 +403,7 @@ defmodule RivaAshWeb.RecurringReservationInstanceLive do
       {:error, form} ->
         error_messages =
           AshPhoenix.Form.errors(form)
-          |> Enum.map_join(", ", fn {field, {message, _}} -> "#{field}: #{message}" end)
+          |> Enum.map_join(", ", fn {field, {message, _unmatched}} -> "#{field}: #{message}" end)
 
         socket =
           socket
@@ -458,7 +469,8 @@ defmodule RivaAshWeb.RecurringReservationInstanceLive do
 
   defp apply_sorting(instances, %Flop{order_by: order_by, order_directions: order_directions}) do
     # Default to :asc if no directions provided
-    directions = order_directions || Enum.map(order_by, fn _ -> :asc end)
+    directions =
+      order_unmatchedunmatcheddirections || Enum.map(order_unmatchedunmatchedby, fn _unmatchedunmatched -> :asc end)
 
     # Zip order_by and directions, pad directions with :asc if needed
     order_specs =
@@ -477,8 +489,8 @@ defmodule RivaAshWeb.RecurringReservationInstanceLive do
 
     case {val1, val2} do
       {same, same} -> compare_instances(inst1, inst2, rest)
-      {nil, _} -> direction == :desc
-      {_, nil} -> direction == :asc
+      {nil, _unmatched} -> direction == :desc
+      {_unmatched, nil} -> direction == :asc
       {v1, v2} when direction == :asc -> v1 <= v2
       {v1, v2} when direction == :desc -> v1 >= v2
     end
@@ -492,7 +504,7 @@ defmodule RivaAshWeb.RecurringReservationInstanceLive do
       :inserted_at -> instance.inserted_at
       :updated_at -> instance.updated_at
       :recurring_reservation_id -> instance.recurring_reservation_id
-      _ -> nil
+      _unmatchedunmatched -> nil
     end
   end
 
@@ -599,7 +611,7 @@ defmodule RivaAshWeb.RecurringReservationInstanceLive do
           opts: []
         }
 
-      _ ->
+      _unmatchedunmatched ->
         %Flop.Meta{
           current_page: 1,
           current_offset: 0,
@@ -624,10 +636,10 @@ defmodule RivaAshWeb.RecurringReservationInstanceLive do
              ]
            ) do
         {:ok, instances} -> instances
-        _ -> []
+        _unmatchedunmatched -> []
       end
     rescue
-      _ -> []
+      _unmatchedunmatched -> []
     end
   end
 
@@ -638,10 +650,10 @@ defmodule RivaAshWeb.RecurringReservationInstanceLive do
              filter: [item: [section: [plot: [business_id: [in: business_ids]]]]]
            ) do
         {:ok, recurring_reservations} -> recurring_reservations
-        _ -> []
+        _unmatchedunmatched -> []
       end
     rescue
-      _ -> []
+      _unmatchedunmatched -> []
     end
   end
 
@@ -652,10 +664,10 @@ defmodule RivaAshWeb.RecurringReservationInstanceLive do
              filter: [item: [section: [plot: [business_id: [in: business_ids]]]]]
            ) do
         {:ok, reservations} -> reservations
-        _ -> []
+        _unmatchedunmatched -> []
       end
     rescue
-      _ -> []
+      _unmatchedunmatched -> []
     end
   end
 
@@ -665,7 +677,7 @@ defmodule RivaAshWeb.RecurringReservationInstanceLive do
   defp format_error_message(error) do
     case RivaAsh.ErrorHelpers.format_error(error) do
       %{message: message} -> message
-      _ -> "An unexpected error occurred"
+      _unmatchedunmatched -> "An unexpected error occurred"
     end
   end
 end

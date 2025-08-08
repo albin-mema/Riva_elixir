@@ -1,3 +1,8 @@
+alias RivaAshWeb.Components.Forms, as: Forms
+alias RivaAshWeb.Components.Molecules, as: Molecules
+alias RivaAshWeb.Components.Atoms, as: Atoms
+alias Phoenix.LiveView.Rendered, as: Rendered
+
 defmodule RivaAshWeb.Components.Forms.ItemTypeForm do
   @moduledoc """
   Item type configuration form component.
@@ -96,7 +101,7 @@ defmodule RivaAshWeb.Components.Forms.ItemTypeForm do
     """
   end
 
-  @spec render_basic_fields(form :: map()) :: Phoenix.LiveView.Rendered.t()
+  @spec render_basic_fields(assigns :: map()) :: Phoenix.LiveView.Rendered.t()
   defp render_basic_fields(assigns) do
     ~H"""
     <.form_field field={@form[:name]} label="Item Type Name" required />
@@ -104,7 +109,7 @@ defmodule RivaAshWeb.Components.Forms.ItemTypeForm do
     """
   end
 
-  @spec render_default_properties(form :: map()) :: Phoenix.LiveView.Rendered.t()
+  @spec render_default_properties(assigns :: map()) :: Phoenix.LiveView.Rendered.t()
   defp render_default_properties(assigns) do
     ~H"""
     <div>
@@ -117,7 +122,7 @@ defmodule RivaAshWeb.Components.Forms.ItemTypeForm do
     """
   end
 
-  @spec render_pricing_fields(form :: map()) :: Phoenix.LiveView.Rendered.t()
+  @spec render_pricing_fields(assigns :: map()) :: Phoenix.LiveView.Rendered.t()
   defp render_pricing_fields(assigns) do
     ~H"""
     <div>
@@ -132,8 +137,7 @@ defmodule RivaAshWeb.Components.Forms.ItemTypeForm do
     """
   end
 
-  @spec render_form_actions(editing :: boolean(), loading :: boolean(), on_cancel :: String.t()) ::
-          Phoenix.LiveView.Rendered.t()
+  @spec render_form_actions(assigns :: map()) :: Phoenix.LiveView.Rendered.t()
   defp render_form_actions(assigns) do
     ~H"""
     <div>
@@ -242,7 +246,7 @@ defmodule RivaAshWeb.Components.Forms.ItemTypeForm do
   """
   @spec price_unit_options() :: list({String.t(), String.t()})
   defp price_unit_options do
-    Application.compile_env(:riva_ash, :price_unit_options, [
+    Application.get_env(:riva_ash, :price_unit_options, [
       {"Per Hour", "hour"},
       {"Per Day", "day"},
       {"Per Week", "week"},

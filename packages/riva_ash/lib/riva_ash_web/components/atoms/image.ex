@@ -1,3 +1,6 @@
+alias RivaAshWeb.Components.Atoms, as: Atoms
+alias Phoenix.LiveView.Rendered, as: Rendered
+
 defmodule RivaAshWeb.Components.Atoms.Image do
   @moduledoc """
   Image component for displaying images with responsive and accessibility features.
@@ -9,7 +12,7 @@ defmodule RivaAshWeb.Components.Atoms.Image do
   @type assigns :: map()
   @type variant :: :default | :rounded | :circle | :bordered
   @type size :: :xs | :sm | :md | :lg | :xl
-  @type fit :: :contain | :cover | :fill | :none | :scale - down
+  @type fit :: :contain | :cover | :fill | :none | :scale_down
   @type loading :: :lazy | :eager
 
   @doc """
@@ -45,7 +48,7 @@ defmodule RivaAshWeb.Components.Atoms.Image do
       assigns = validated_assigns |> assign(:image_class, image_class)
       render_image(assigns)
     else
-      {:error, reason} -> render_error(reason)
+      {:error, reason} -> render_error(%{reason: reason})
     end
   end
 
@@ -166,7 +169,7 @@ defmodule RivaAshWeb.Components.Atoms.Image do
   # Imperative Shell: Rendering functions
   defp render_image(assigns) do
     ~H"""
-    <div class="relative inline-block">
+    <div class="inline-block relative">
       <img
         src={@src}
         alt={@alt}
@@ -194,14 +197,17 @@ defmodule RivaAshWeb.Components.Atoms.Image do
     """
   end
 
-  defp render_error(reason) do
+  defp render_error(assigns) do
     # In a real implementation, you might want to log this error
     # and render a fallback image or error state
+    reason = Map.get(assigns, :reason, "Invalid image parameters")
     IO.puts("Image error: #{reason}")
 
+    assigns = %{reason: reason}
+
     ~H"""
-    <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative">
-      <span class="block sm:inline">Error: <%= reason %></span>
+    <div class="relative bg-red-100 px-4 py-3 border border-red-400 rounded text-red-700">
+      <span class="block sm:inline">Error: <%= @reason %></span>
     </div>
     """
   end

@@ -1,9 +1,14 @@
+alias RivaAshWeb.Components.Molecules, as: Molecules
+alias RivaAshWeb.Components.Atoms, as: Atoms
+alias Phoenix.LiveView.Rendered, as: Rendered
+
 defmodule RivaAshWeb.Components.Molecules.TabNavigation do
   @moduledoc """
   Tab navigation component for switching between views with accessibility and keyboard navigation.
   """
   use Phoenix.Component
   import RivaAshWeb.Components.Atoms.Button
+  import RivaAshWeb.Components.Atoms.Icon
 
   @type assigns :: %{
           required(:tabs) => list(map()),
@@ -87,7 +92,7 @@ defmodule RivaAshWeb.Components.Molecules.TabNavigation do
     end
   end
 
-  defp validate_tabs(_), do: {:error, "Tabs must be a non-empty list"}
+  defp validate_unmatchedtabs(_unmatched), do: {:error, "Tabs must be a non-empty list"}
 
   @spec valid_tab?(map()) :: boolean()
   defp valid_tab?(tab) do
@@ -107,13 +112,13 @@ defmodule RivaAshWeb.Components.Molecules.TabNavigation do
   defp validate_variant("default"), do: :ok
   defp validate_variant("pills"), do: :ok
   defp validate_variant("underline"), do: :ok
-  defp validate_variant(_), do: {:error, "Variant must be one of: default, pills, underline"}
+  defp validate_unmatchedvariant(_unmatched), do: {:error, "Variant must be one of: default, pills, underline"}
 
   @spec validate_size(String.t()) :: :ok | {:error, String.t()}
   defp validate_size("sm"), do: :ok
   defp validate_size("md"), do: :ok
   defp validate_size("lg"), do: :ok
-  defp validate_size(_), do: {:error, "Size must be one of: sm, md, lg"}
+  defp validate_unmatchedsize(_unmatched), do: {:error, "Size must be one of: sm, md, lg"}
 
   @spec render_tab_navigation(assigns :: assigns()) :: Phoenix.LiveView.Rendered.t()
   defp render_tab_navigation(assigns) do
@@ -145,30 +150,37 @@ defmodule RivaAshWeb.Components.Molecules.TabNavigation do
 
   @spec render_tab(map(), String.t(), String.t(), String.t(), String.t()) :: Phoenix.LiveView.Rendered.t()
   defp render_tab(tab, active_tab, on_tab_change, variant, size) do
-    is_active = tab[:id] == active_tab
-    tab_id = "tab-#{tab[:id]}"
-    panel_id = "panel-#{tab[:id]}"
+    assigns = %{
+      tab: tab,
+      active_tab: active_tab,
+      on_tab_change: on_tab_change,
+      variant: variant,
+      size: size,
+      is_active: tab[:id] == active_tab,
+      tab_id: "tab-#{tab[:id]}",
+      panel_id: "panel-#{tab[:id]}"
+    }
 
     ~H"""
     <button
-      id={tab_id}
+      id={@tab_id}
       role="tab"
-      aria-selected={is_active}
-      aria-controls={panel_id}
-      aria-disabled={tab[:disabled]}
-      class={build_tab_class(is_active, variant, size, tab[:disabled])}
-      phx-click={if tab[:disabled] == false, do: on_tab_change}
-      phx-value-tab={tab[:id]}
-      disabled={tab[:disabled]}
-      data-tab-id={tab[:id]}
+      aria-selected={@is_active}
+      aria-controls={@panel_id}
+      aria-disabled={@tab[:disabled]}
+      class={build_tab_class(@is_active, @variant, @size, @tab[:disabled])}
+      phx-click={if @tab[:disabled] == false, do: @on_tab_change}
+      phx-value-tab={@tab[:id]}
+      disabled={@tab[:disabled]}
+      data-tab-id={@tab[:id]}
     >
       <span class="tab-content">
-        <%= if tab[:icon] do %>
-          <.icon name={tab[:icon]} class="tab-icon" />
+        <%= if @tab[:icon] do %>
+          <.icon name={@tab[:icon]} class="tab-icon" />
         <% end %>
-        <span class="tab-label"><%= tab[:label] %></span>
-        <%= if tab[:count] do %>
-          <span class="tab-count"><%= tab[:count] %></span>
+        <span class="tab-label"><%= @tab[:label] %></span>
+        <%= if @tab[:count] do %>
+          <span class="tab-count"><%= @tab[:count] %></span>
         <% end %>
       </span>
     </button>
@@ -189,7 +201,7 @@ defmodule RivaAshWeb.Components.Molecules.TabNavigation do
     "tab-underline flex space-x-6 border-b border-gray-200 #{build_size_base_class(size)}"
   end
 
-  defp build_nav_class(_, size) do
+  defp build_nav_class(_unmatched, size) do
     "tab-default flex space-x-1 #{build_size_base_class(size)}"
   end
 
@@ -202,7 +214,7 @@ defmodule RivaAshWeb.Components.Molecules.TabNavigation do
     "text-lg"
   end
 
-  defp build_size_base_class(_) do
+  defp build_unmatchedsize_unmatchedbase_unmatchedclass(_unmatched) do
     "text-base"
   end
 
@@ -223,15 +235,15 @@ defmodule RivaAshWeb.Components.Molecules.TabNavigation do
     "tab-button tab-underline-inactive #{build_size_text_class(size)}"
   end
 
-  defp build_tab_class(true, _, size, _disabled) do
+  defp build_tab_class(true, _unmatched, size, _disabled) do
     "tab-button tab-active #{build_size_default_class(size)}"
   end
 
-  defp build_tab_class(false, _, size, false) do
+  defp build_tab_class(false, _unmatched, size, false) do
     "tab-button #{build_size_default_class(size)}"
   end
 
-  defp build_tab_class(_, _, size, true) do
+  defp build_tab_class(_unmatched, _unmatched, size, true) do
     "tab-button tab-disabled #{build_size_default_class(size)}"
   end
 
@@ -244,7 +256,7 @@ defmodule RivaAshWeb.Components.Molecules.TabNavigation do
     "px-4 py-2 text-lg"
   end
 
-  defp build_size_pill_class(_) do
+  defp build_unmatchedsize_unmatchedpill_unmatchedclass(_unmatched) do
     "px-3 py-2 text-base"
   end
 
@@ -257,7 +269,7 @@ defmodule RivaAshWeb.Components.Molecules.TabNavigation do
     "py-3 px-2 text-lg font-medium"
   end
 
-  defp build_size_text_class(_) do
+  defp build_unmatchedsize_unmatchedtext_unmatchedclass(_unmatched) do
     "py-2.5 px-2 text-base font-medium"
   end
 
@@ -270,7 +282,7 @@ defmodule RivaAshWeb.Components.Molecules.TabNavigation do
     "px-4 py-2 text-lg"
   end
 
-  defp build_size_default_class(_) do
+  defp build_unmatchedunmatchedsize_unmatchedunmatcheddefault_unmatchedunmatchedclass(_unmatchedunmatched) do
     "px-3 py-2 text-base"
   end
 end

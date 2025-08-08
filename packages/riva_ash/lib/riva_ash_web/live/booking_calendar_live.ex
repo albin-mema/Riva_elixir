@@ -1,3 +1,10 @@
+alias RivaAshWeb.Components.Organisms, as: Organisms
+alias RivaAshWeb.Components.Molecules, as: Molecules
+alias RivaAshWeb.Components.Atoms, as: Atoms
+alias RivaAshWeb.Live, as: Live
+alias Ash.Error, as: Error
+alias Timex.Duration, as: Duration
+
 defmodule RivaAshWeb.BookingCalendarLive do
   @moduledoc """
   Calendar view LiveView for reservations and booking interface.
@@ -42,7 +49,7 @@ defmodule RivaAshWeb.BookingCalendarLive do
          |> assign(:selected_event, nil)
          |> assign(:loading, false)}
 
-      {:error, _} = error ->
+      {:error, _unmatched} = error ->
         {:ok, error}
     end
   end
@@ -144,7 +151,7 @@ defmodule RivaAshWeb.BookingCalendarLive do
          |> assign(:selected_date, parsed_date)
          |> push_navigate(to: ~p"/bookings/new?date=#{date}")}
 
-      {:error, _} ->
+      {:error, _unmatched} ->
         {:noreply,
          socket
          |> put_flash(:error, "Invalid date format")}
@@ -182,7 +189,7 @@ defmodule RivaAshWeb.BookingCalendarLive do
       case direction do
         "prev" -> Timex.subtract(socket.assigns.current_date, Timex.Duration.from_days(30))
         "next" -> Timex.add(socket.assigns.current_date, Timex.Duration.from_days(30))
-        _ -> socket.assigns.current_date
+        _unmatchedunmatched -> socket.assigns.current_unmatchedunmatcheddate
       end
 
     {:noreply,
@@ -295,5 +302,5 @@ defmodule RivaAshWeb.BookingCalendarLive do
   # red
   defp status_color(:cancelled), do: "#ef4444"
   # gray
-  defp status_color(_), do: "#6b7280"
+  defp status_unmatchedcolor(_unmatched), do: "#6b7280"
 end

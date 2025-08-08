@@ -126,6 +126,7 @@ defmodule RivaAsh.Application do
     rescue
       error in ArgumentError ->
         {:error, "Invalid SAT solver configuration: #{inspect(error)}"}
+
       error ->
         {:error, "Failed to configure SAT solver: #{inspect(error)}"}
     end
@@ -152,6 +153,7 @@ defmodule RivaAsh.Application do
     rescue
       error in RuntimeError ->
         {:error, "Runtime error during migration: #{inspect(error)}"}
+
       error ->
         {:error, error}
     end
@@ -164,6 +166,7 @@ defmodule RivaAsh.Application do
     [
       RivaAshWeb.Telemetry,
       {Phoenix.PubSub, name: RivaAsh.PubSub},
+      RivaAshWeb.Presence,
       RivaAshWeb.Endpoint,
       TwMerge.Cache,
       {Finch, name: RivaAsh.Finch},

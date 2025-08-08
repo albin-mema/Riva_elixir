@@ -1,3 +1,7 @@
+alias RivaAshWeb.Components.Molecules, as: Molecules
+alias RivaAshWeb.Components.Atoms, as: Atoms
+alias Phoenix.LiveView.Rendered, as: Rendered
+
 defmodule RivaAshWeb.Components.Molecules.NotificationToast do
   @moduledoc """
   Toast notification component for temporary messages.
@@ -54,8 +58,8 @@ defmodule RivaAshWeb.Components.Molecules.NotificationToast do
           position: position(),
           on_dismiss: String.t() | nil
         }
-  @type notification_type :: "success" | "error" | "warning" | "info"
-  @type position :: "top-left" | "top-right" | "bottom-left" | "bottom-right"
+  @type notification_type :: :success | :error | :warning | :info
+  @type position :: :top_left | :top_right | :bottom_left | :bottom_right
   @type assigns :: %{
           optional(:title) => String.t() | nil,
           required(:message) => String.t(),
@@ -96,9 +100,9 @@ defmodule RivaAshWeb.Components.Molecules.NotificationToast do
     doc: "Message content of the notification"
   )
 
-  attr(:type, :string,
-    default: "info",
-    values: ~w(success error warning info),
+  attr(:type, :atom,
+    default: :info,
+    values: [:success, :error, :warning, :info],
     doc: "Type of the notification"
   )
 
@@ -117,9 +121,9 @@ defmodule RivaAshWeb.Components.Molecules.NotificationToast do
     doc: "Whether to show the toast"
   )
 
-  attr(:position, :string,
-    default: "top-right",
-    values: ~w(top-left top-right bottom-left bottom-right),
+  attr(:position, :atom,
+    default: :top_right,
+    values: [:top_left, :top_right, :bottom_left, :bottom_right],
     doc: "Position of the toast on screen"
   )
 
@@ -147,10 +151,10 @@ defmodule RivaAshWeb.Components.Molecules.NotificationToast do
   defp build_notification_toast_attrs(assigns) do
     # Extract configuration with defaults using functional pattern
     config = %{
-      type: Application.get_env(:riva_ash, :notification_toast_type, "info"),
+      type: Application.get_env(:riva_ash, :notification_toast_type, :info),
       duration: Application.get_env(:riva_ash, :notification_toast_duration, 5000),
       dismissible: Application.get_env(:riva_ash, :notification_toast_dismissible, true),
-      position: Application.get_env(:riva_ash, :notification_toast_position, "top-right")
+      position: Application.get_env(:riva_ash, :notification_toast_position, :top_right)
     }
 
     # Immutably update assigns with new values using pipeline
@@ -181,46 +185,52 @@ defmodule RivaAshWeb.Components.Molecules.NotificationToast do
   @spec validate_title(String.t() | nil) :: :ok | {:error, String.t()}
   defp validate_title(nil), do: :ok
   defp validate_title(title) when is_binary(title) and title != "", do: :ok
-  defp validate_title(_), do: {:error, "title must be a non-empty string or nil"}
+  defp validate_unmatchedtitle(_unmatched), do: {:error, "title must be a non-empty string or nil"}
 
   @spec validate_message(String.t()) :: :ok | {:error, String.t()}
   defp validate_message(message) when is_binary(message) and message != "", do: :ok
-  defp validate_message(_), do: {:error, "message must be a non-empty string"}
+  defp validate_unmatchedmessage(_unmatched), do: {:error, "message must be a non-empty string"}
 
-  @spec validate_type(String.t()) :: :ok | {:error, String.t()}
-  defp validate_type("success"), do: :ok
-  defp validate_type("error"), do: :ok
-  defp validate_type("warning"), do: :ok
-  defp validate_type("info"), do: :ok
-  defp validate_type(_), do: {:error, "type must be one of: success, error, warning, info"}
+  @spec validate_type(notification_type()) :: :ok | {:error, String.t()}
+  defp validate_type(:success), do: :ok
+  defp validate_type(:error), do: :ok
+  defp validate_type(:warning), do: :ok
+  defp validate_type(:info), do: :ok
+  defp validate_unmatchedtype(_unmatched), do: {:error, "type must be one of: success, error, warning, info"}
 
   @spec validate_duration(integer()) :: :ok | {:error, String.t()}
   defp validate_duration(duration) when is_integer(duration) and duration > 0, do: :ok
-  defp validate_duration(_), do: {:error, "duration must be a positive integer"}
+  defp validate_unmatchedduration(_unmatched), do: {:error, "duration must be a positive integer"}
 
   @spec validate_dismissible(boolean()) :: :ok | {:error, String.t()}
   defp validate_dismissible(dismissible) when is_boolean(dismissible), do: :ok
-  defp validate_dismissible(_), do: {:error, "dismissible must be a boolean"}
+  defp validate_unmatcheddismissible(_unmatched), do: {:error, "dismissible must be a boolean"}
 
   @spec validate_show(boolean()) :: :ok | {:error, String.t()}
   defp validate_show(show) when is_boolean(show), do: :ok
-  defp validate_show(_), do: {:error, "show must be a boolean"}
+  defp validate_unmatchedshow(_unmatched), do: {:error, "show must be a boolean"}
 
-  @spec validate_position(String.t()) :: :ok | {:error, String.t()}
-  defp validate_position("top-left"), do: :ok
-  defp validate_position("top-right"), do: :ok
-  defp validate_position("bottom-left"), do: :ok
-  defp validate_position("bottom-right"), do: :ok
-  defp validate_position(_), do: {:error, "position must be one of: top-left, top-right, bottom-left, bottom-right"}
+  @spec validate_position(position()) :: :ok | {:error, String.t()}
+  defp validate_position(:top_left), do: :ok
+  defp validate_position(:top_right), do: :ok
+  defp validate_position(:bottom_left), do: :ok
+  defp validate_position(:bottom_right), do: :ok
+
+  defp validate_unmatchedposition(_unmatched),
+    do:
+      {:error,
+       "position must be one of: top_unmatchedleft, top_unmatchedright, bottom_unmatchedleft, bottom_unmatchedright"}
 
   @spec validate_on_dismiss(String.t() | nil) :: :ok | {:error, String.t()}
   defp validate_on_dismiss(nil), do: :ok
   defp validate_on_dismiss(on_dismiss) when is_binary(on_dismiss) and on_dismiss != "", do: :ok
-  defp validate_on_dismiss(_), do: {:error, "on_dismiss must be a non-empty string or nil"}
+
+  defp validate_unmatchedon_unmatcheddismiss(_unmatched),
+    do: {:error, "on_unmatcheddismiss must be a non-empty string or nil"}
 
   @spec validate_class(String.t()) :: :ok | {:error, String.t()}
   defp validate_class(class) when is_binary(class), do: :ok
-  defp validate_class(_), do: {:error, "class must be a string"}
+  defp validate_unmatchedclass(_unmatched), do: {:error, "class must be a string"}
 
   @spec render_notification_toast(assigns :: assigns()) :: Phoenix.LiveView.Rendered.t()
   defp render_notification_toast(assigns) do
@@ -262,43 +272,50 @@ defmodule RivaAshWeb.Components.Molecules.NotificationToast do
     classes
   end
 
-  @spec render_content(String.t() | nil, String.t(), notification_type(), boolean(), String.t() | nil) ::
-          Phoenix.LiveView.Rendered.t()
-  defp render_content(title, message, type, dismissible, on_dismiss) do
+  @spec render_content(map()) :: Phoenix.LiveView.Rendered.t()
+  attr(:title, :string, default: nil)
+  attr(:message, :string, required: true)
+  attr(:type, :atom, default: :info, values: [:success, :error, :warning, :info])
+  attr(:dismissible, :boolean, default: true)
+  attr(:on_dismiss, :string, default: nil)
+
+  defp render_content(assigns) do
     ~H"""
     <div class="notification-toast-content flex items-start justify-between">
       <div class="notification-toast-body flex items-center gap-3">
-        <.icon name={icon_for_type(type)} />
+        <.icon name={icon_for_type(@type)} />
         <div>
-          <h4 :if={title}><%= title %></h4>
-          <p><%= message %></p>
+          <h4 :if={@title}><%= @title %></h4>
+          <p><%= @message %></p>
         </div>
       </div>
-      <%= if dismissible do %>
-        <.render_dismiss_button on_dismiss={on_dismiss} />
+      <%= if @dismissible do %>
+        <.render_dismiss_button on_dismiss={@on_dismiss} />
       <% end %>
     </div>
     """
   end
 
-  @spec render_dismiss_button(String.t() | nil) :: Phoenix.LiveView.Rendered.t()
-  defp render_dismiss_button(on_dismiss) do
+  @spec render_dismiss_button(map()) :: Phoenix.LiveView.Rendered.t()
+  attr(:on_dismiss, :string, default: nil)
+
+  defp render_dismiss_button(assigns) do
     ~H"""
-    <.button variant="ghost" size="sm" phx-click={on_dismiss}>
+    <.button variant="ghost" size="sm" phx-click={@on_dismiss}>
       <.icon name={:x_mark} />
     </.button>
     """
   end
 
   @spec build_position_classes(position()) :: String.t()
-  defp build_position_classes("top-left"), do: "top-4 left-4"
-  defp build_position_classes("top-right"), do: "top-4 right-4"
-  defp build_position_classes("bottom-left"), do: "bottom-4 left-4"
-  defp build_position_classes("bottom-right"), do: "bottom-4 right-4"
+  defp build_position_classes(:top_left), do: "top-4 left-4"
+  defp build_position_classes(:top_right), do: "top-4 right-4"
+  defp build_position_classes(:bottom_left), do: "bottom-4 left-4"
+  defp build_position_classes(:bottom_right), do: "bottom-4 right-4"
 
   @spec icon_for_type(notification_type()) :: atom()
-  defp icon_for_type("success"), do: :check_circle
-  defp icon_for_type("error"), do: :x_circle
-  defp icon_for_type("warning"), do: :alert_triangle
-  defp icon_for_type("info"), do: :information_circle
+  defp icon_for_type(:success), do: :check_circle
+  defp icon_for_type(:error), do: :x_circle
+  defp icon_for_type(:warning), do: :alert_triangle
+  defp icon_for_type(:info), do: :information_circle
 end

@@ -1,4 +1,10 @@
+alias RivaAshWeb.Components.Navigation, as: Navigation
+alias RivaAshWeb.Components.Atoms, as: Atoms
+alias Phoenix.LiveView.Rendered, as: Rendered
+
 defmodule RivaAshWeb.Components.Navigation.ExpandedSidebar do
+  import RivaAshWeb.Gettext, only: [dgettext: 2]
+
   @moduledoc """
   Expanded sidebar navigation with all resources.
   """
@@ -50,20 +56,20 @@ defmodule RivaAshWeb.Components.Navigation.ExpandedSidebar do
             path="/dashboard"
             current_path={@current_path}
             icon={:home}
-            label="Dashboard"
+            label={dgettext("navigation", "Dashboard")}
             collapsed={@collapsed}
           />
         </div>
 
         <!-- Core Management -->
         <div class="nav-section">
-          <.nav_section_header label="Management" collapsed={@collapsed} />
+          <.nav_section_header label={dgettext("navigation", "Management")} collapsed={@collapsed} />
 
           <.nav_item
             path="/plots"
             current_path={@current_path}
             icon={:map}
-            label="Plots"
+            label={dgettext("navigation", "Plots")}
             collapsed={@collapsed}
           />
 
@@ -71,7 +77,7 @@ defmodule RivaAshWeb.Components.Navigation.ExpandedSidebar do
             path="/sections"
             current_path={@current_path}
             icon={:squares_2x2}
-            label="Sections"
+            label={dgettext("navigation", "Sections")}
             collapsed={@collapsed}
           />
 
@@ -79,7 +85,7 @@ defmodule RivaAshWeb.Components.Navigation.ExpandedSidebar do
             path="/items"
             current_path={@current_path}
             icon={:cube}
-            label="Items"
+            label={dgettext("navigation", "Items")}
             collapsed={@collapsed}
           />
 
@@ -87,7 +93,7 @@ defmodule RivaAshWeb.Components.Navigation.ExpandedSidebar do
             path="/item-types"
             current_path={@current_path}
             icon={:tag}
-            label="Item Types"
+            label={dgettext("navigation", "Item Types")}
             collapsed={@collapsed}
           />
 
@@ -95,20 +101,20 @@ defmodule RivaAshWeb.Components.Navigation.ExpandedSidebar do
             path="/layouts"
             current_path={@current_path}
             icon={:view_columns}
-            label="Layouts"
+            label={dgettext("navigation", "Layouts")}
             collapsed={@collapsed}
           />
         </div>
 
         <!-- Reservations -->
         <div class="nav-section">
-          <.nav_section_header label="Reservations" collapsed={@collapsed} />
+          <.nav_section_header label={dgettext("navigation", "Reservations")} collapsed={@collapsed} />
 
           <.nav_item
             path="/reservations"
             current_path={@current_path}
             icon={:calendar_days}
-            label="Reservations"
+            label={dgettext("navigation", "Reservations")}
             collapsed={@collapsed}
           />
 
@@ -116,7 +122,7 @@ defmodule RivaAshWeb.Components.Navigation.ExpandedSidebar do
             path="/calendar"
             current_path={@current_path}
             icon={:calendar}
-            label="Calendar"
+            label={dgettext("navigation", "Calendar")}
             collapsed={@collapsed}
           />
 
@@ -124,20 +130,20 @@ defmodule RivaAshWeb.Components.Navigation.ExpandedSidebar do
             path="/clients"
             current_path={@current_path}
             icon={:users}
-            label="Clients"
+            label={dgettext("navigation", "Clients")}
             collapsed={@collapsed}
           />
         </div>
 
         <!-- Financial -->
         <div class="nav-section">
-          <.nav_section_header label="Financial" collapsed={@collapsed} />
+          <.nav_section_header label={dgettext("navigation", "Financial")} collapsed={@collapsed} />
 
           <.nav_item
             path="/pricing"
             current_path={@current_path}
             icon={:currency_dollar}
-            label="Pricing"
+            label={dgettext("navigation", "Pricing")}
             collapsed={@collapsed}
           />
 
@@ -145,20 +151,20 @@ defmodule RivaAshWeb.Components.Navigation.ExpandedSidebar do
             path="/payments"
             current_path={@current_path}
             icon={:credit_card}
-            label="Payments"
+            label={dgettext("navigation", "Payments")}
             collapsed={@collapsed}
           />
         </div>
 
         <!-- Administration -->
         <div class="nav-section">
-          <.nav_section_header label="Administration" collapsed={@collapsed} />
+          <.nav_section_header label={dgettext("navigation", "Administration")} collapsed={@collapsed} />
 
           <.nav_item
             path="/employees"
             current_path={@current_path}
             icon={:user_group}
-            label="Employees"
+            label={dgettext("navigation", "Employees")}
             collapsed={@collapsed}
           />
 
@@ -166,7 +172,7 @@ defmodule RivaAshWeb.Components.Navigation.ExpandedSidebar do
             path="/permissions"
             current_path={@current_path}
             icon={:shield_check}
-            label="Permissions"
+            label={dgettext("navigation", "Permissions")}
             collapsed={@collapsed}
           />
 
@@ -174,7 +180,7 @@ defmodule RivaAshWeb.Components.Navigation.ExpandedSidebar do
             path="/businesses"
             current_path={@current_path}
             icon={:building_office}
-            label="Business"
+            label={dgettext("navigation", "Business")}
             collapsed={@collapsed}
           />
         </div>
@@ -185,13 +191,13 @@ defmodule RivaAshWeb.Components.Navigation.ExpandedSidebar do
           path="/profile"
           current_path={@current_path}
           icon={:user_circle}
-          label="Profile"
+          label={dgettext("navigation", "Profile")}
           collapsed={@collapsed}
         />
 
         <button phx-click="sign_out" class="nav-item sign-out">
           <.icon name={:arrow_right_on_rectangle} />
-          <span :if={!@collapsed}>Sign Out</span>
+          <span :if={!@collapsed}><%= dgettext("navigation", "Sign Out") %></span>
         </button>
       </div>
     </nav>

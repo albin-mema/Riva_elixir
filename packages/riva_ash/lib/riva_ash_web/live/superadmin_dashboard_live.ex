@@ -1,3 +1,5 @@
+alias RivaAsh.Accounts, as: Accounts
+
 defmodule RivaAshWeb.SuperadminDashboardLive do
   @moduledoc """
   Superadmin dashboard for system oversight and GDPR compliance.
@@ -25,7 +27,7 @@ defmodule RivaAshWeb.SuperadminDashboardLive do
          |> assign(:page_title, get_page_title())
          |> load_system_stats()}
 
-      _ ->
+      _unmatchedunmatched ->
         {:ok,
          socket
          |> put_flash(:error, "Access denied. Superadmin privileges required.")

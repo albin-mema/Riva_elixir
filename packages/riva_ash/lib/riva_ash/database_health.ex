@@ -1,3 +1,5 @@
+alias RivaAsh.Repo, as: Repo
+
 defmodule RivaAsh.DatabaseHealth do
   @moduledoc """
   Database health checking and connection retry logic.
@@ -100,7 +102,7 @@ defmodule RivaAsh.DatabaseHealth do
 
     with {:ok, installed} <- get_installed_extensions(),
          missing = required_extensions -- installed,
-         {:ok, _} <- validate_extensions(missing, required_extensions) do
+         {:ok, _unmatched} <- validate_extensions(missing, required_extensions) do
       log_extension_success(required_extensions)
     else
       {:error, error} ->
@@ -191,7 +193,7 @@ defmodule RivaAsh.DatabaseHealth do
 
   @spec run_health_checks([{String.t(), (-> :ok | {:error, any()})}]) :: :ok | {:error, [String.t()]}
   defp run_health_checks(checks) do
-    Enum.reduce_while(checks, [], fn {_check_name, check_fn }, errors ->
+    Enum.reduce_while(checks, [], fn {_check_name, check_fn}, errors ->
       case check_fn.() do
         :ok ->
           {:cont, errors}
@@ -206,13 +208,12 @@ defmodule RivaAsh.DatabaseHealth do
     end
   end
 
-
   @spec check_postgres_version() :: :ok | {:error, String.t()}
   defp check_postgres_version do
     min_version = RivaAsh.Repo.min_pg_version()
 
     with {:ok, current_version} <- get_postgres_version(),
-         {:ok, _} <- validate_postgres_version(current_version, min_version) do
+         {:ok, _unmatched} <- validate_postgres_version(current_version, min_version) do
       log_version_success(current_version, min_version)
     else
       {:error, error} -> {:error, "Failed to validate PostgreSQL version: #{inspect(error)}"}
@@ -257,13 +258,13 @@ defmodule RivaAsh.DatabaseHealth do
   defp parse_postgres_version(version_string) do
     # Extract version number from string like "PostgreSQL 15.4 on x86_64-pc-linux-gnu..."
     case Regex.run(~r/PostgreSQL(\d+)\.(\d+)(?:\.(\d+))?/, version_string) do
-      [_, major, minor] ->
+      [_unmatched, major, minor] ->
         Version.parse("#{major}.#{minor}.0")
 
-      [_, major, minor, patch] ->
+      [_unmatched, major, minor, patch] ->
         Version.parse("#{major}.#{minor}.#{patch}")
 
-      _ ->
+      _unmatchedunmatched ->
         {:error, "Could not parse PostgreSQL version from: #{version_string}"}
     end
   end

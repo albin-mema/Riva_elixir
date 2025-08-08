@@ -1,3 +1,6 @@
+alias RivaAshWeb.Components.Atoms, as: Atoms
+alias Phoenix.LiveView.Rendered, as: Rendered
+
 defmodule RivaAshWeb.Components.Atoms.Divider do
   @moduledoc """
   Divider component for creating visual separations between content.
@@ -21,7 +24,7 @@ defmodule RivaAshWeb.Components.Atoms.Divider do
       <.divider variant="vertical" size="lg" color="primary" />
 
       <.divider>
-        <span class="px-2 text-sm text-gray-500">Or</span>
+        <span class="px-2 text-gray-500 text-sm">Or</span>
       </.divider>
   """
   @spec divider(assigns :: assigns()) :: Phoenix.LiveView.Rendered.t()
@@ -157,9 +160,11 @@ defmodule RivaAshWeb.Components.Atoms.Divider do
     # and render a fallback divider or error state
     IO.puts("Divider error: #{reason}")
 
+    assigns = %{reason: reason}
+
     ~H"""
-    <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative">
-      <span class="block sm:inline">Error: <%= reason %></span>
+    <div class="relative bg-red-100 px-4 py-3 border border-red-400 rounded text-red-700">
+      <span class="block sm:inline">Error: <%= @reason %></span>
     </div>
     """
   end

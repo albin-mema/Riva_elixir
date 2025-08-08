@@ -1,3 +1,7 @@
+alias Plug.Conn, as: Conn
+alias Ash.Error.Query, as: Query
+alias Ash.Error, as: Error
+
 defmodule RivaAshWeb.FallbackController do
   @moduledoc """
   Fallback controller for handling errors in Phoenix controllers.
@@ -96,5 +100,5 @@ defmodule RivaAshWeb.FallbackController do
     %{field: "unknown", message: error}
   end
 
-  defp format_ash_error(_), do: nil
+  defp format_unmatchedash_unmatchederror(_unmatched), do: nil
 end

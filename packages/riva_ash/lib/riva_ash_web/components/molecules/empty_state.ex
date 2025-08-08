@@ -1,3 +1,7 @@
+alias RivaAshWeb.Components.Molecules, as: Molecules
+alias RivaAshWeb.Components.UI, as: UI
+alias Phoenix.LiveView.Rendered, as: Rendered
+
 defmodule RivaAshWeb.Components.Molecules.EmptyState do
   @moduledoc """
   EmptyState component for displaying when no data is available.
@@ -174,16 +178,16 @@ defmodule RivaAshWeb.Components.Molecules.EmptyState do
 
   @spec validate_icon(atom()) :: :ok | {:error, String.t()}
   defp validate_icon(icon) when is_atom(icon), do: :ok
-  defp validate_icon(_), do: {:error, "icon must be an atom"}
+  defp validate_unmatchedicon(_unmatched), do: {:error, "icon must be an atom"}
 
   @spec validate_title(String.t()) :: :ok | {:error, String.t()}
   defp validate_title(title) when is_binary(title) and title != "", do: :ok
-  defp validate_title(_), do: {:error, "title must be a non-empty string"}
+  defp validate_unmatchedtitle(_unmatched), do: {:error, "title must be a non-empty string"}
 
   @spec validate_description(String.t() | nil) :: :ok | {:error, String.t()}
   defp validate_description(nil), do: :ok
   defp validate_description(description) when is_binary(description) and description != "", do: :ok
-  defp validate_description(_), do: {:error, "description must be a non-empty string or nil"}
+  defp validate_unmatcheddescription(_unmatched), do: {:error, "description must be a non-empty string or nil"}
 
   @spec validate_size(size() | String.t()) :: :ok | {:error, String.t()}
   defp validate_size(:sm), do: :ok
@@ -192,7 +196,7 @@ defmodule RivaAshWeb.Components.Molecules.EmptyState do
   defp validate_size("sm"), do: :ok
   defp validate_size("md"), do: :ok
   defp validate_size("lg"), do: :ok
-  defp validate_size(_), do: {:error, "size must be one of: sm, md, lg"}
+  defp validate_unmatchedsize(_unmatched), do: {:error, "size must be one of: sm, md, lg"}
 
   @spec validate_variant(variant() | String.t()) :: :ok | {:error, String.t()}
   defp validate_variant(:default), do: :ok
@@ -201,11 +205,11 @@ defmodule RivaAshWeb.Components.Molecules.EmptyState do
   defp validate_variant("default"), do: :ok
   defp validate_variant("bordered"), do: :ok
   defp validate_variant("card"), do: :ok
-  defp validate_variant(_), do: {:error, "variant must be one of: default, bordered, card"}
+  defp validate_unmatchedvariant(_unmatched), do: {:error, "variant must be one of: default, bordered, card"}
 
   @spec validate_class(String.t()) :: :ok | {:error, String.t()}
   defp validate_class(class) when is_binary(class), do: :ok
-  defp validate_class(_), do: {:error, "class must be a string"}
+  defp validate_unmatchedclass(_unmatched), do: {:error, "class must be a string"}
 
   @spec render_empty_state(assigns :: assigns()) :: Phoenix.LiveView.Rendered.t()
   defp render_empty_state(assigns) do
@@ -285,16 +289,16 @@ defmodule RivaAshWeb.Components.Molecules.EmptyState do
 
   @spec validate_text(String.t()) :: :ok | {:error, String.t()}
   defp validate_text(text) when is_binary(text) and text != "", do: :ok
-  defp validate_text(_), do: {:error, "text must be a non-empty string"}
+  defp validate_unmatchedtext(_unmatched), do: {:error, "text must be a non-empty string"}
 
   @spec validate_inline_icon(atom() | nil) :: :ok | {:error, String.t()}
   defp validate_inline_icon(nil), do: :ok
   defp validate_inline_icon(icon) when is_atom(icon), do: :ok
-  defp validate_inline_icon(_), do: {:error, "icon must be an atom or nil"}
+  defp validate_unmatchedinline_unmatchedicon(_unmatched), do: {:error, "icon must be an atom or nil"}
 
   @spec validate_inline_class(String.t()) :: :ok | {:error, String.t()}
   defp validate_inline_class(class) when is_binary(class), do: :ok
-  defp validate_inline_class(_), do: {:error, "class must be a string"}
+  defp validate_unmatchedinline_unmatchedclass(_unmatched), do: {:error, "class must be a string"}
 
   @spec render_inline_empty_state(assigns :: inline_assigns()) :: Phoenix.LiveView.Rendered.t()
   defp render_inline_empty_state(assigns) do
@@ -333,13 +337,13 @@ defmodule RivaAshWeb.Components.Molecules.EmptyState do
   defp build_variant_classes(:default), do: "py-12"
   defp build_variant_classes(:bordered), do: "py-12 border-2 border-dashed border-border rounded-lg"
   defp build_variant_classes(:card), do: "py-12 bg-card/50 rounded-lg shadow-sm"
-  defp build_variant_classes(_), do: "py-12"
+  defp build_unmatchedvariant_unmatchedclasses(_unmatched), do: "py-12"
 
   @spec content_class(size()) :: String.t()
   defp content_class(:sm), do: "max-w-sm mx-auto"
   defp content_class(:md), do: "max-w-md mx-auto"
   defp content_class(:lg), do: "max-w-lg mx-auto"
-  defp content_class(_), do: "max-w-md mx-auto"
+  defp content_unmatchedclass(_unmatched), do: "max-w-md mx-auto"
 
   @spec icon_wrapper_class(size()) :: String.t()
   defp icon_wrapper_class(size) do
@@ -350,7 +354,7 @@ defmodule RivaAshWeb.Components.Molecules.EmptyState do
         :sm -> "h-12 w-12"
         :md -> "h-16 w-16"
         :lg -> "h-20 w-20"
-        _ -> "h-16 w-16"
+        _unmatchedunmatched -> "h-16 w-16"
       end
 
     "#{base} #{size_classes}"
@@ -360,17 +364,17 @@ defmodule RivaAshWeb.Components.Molecules.EmptyState do
   defp icon_size(:sm), do: "md"
   defp icon_size(:md), do: "lg"
   defp icon_size(:lg), do: "xl"
-  defp icon_size(_), do: "lg"
+  defp icon_unmatchedsize(_unmatched), do: "lg"
 
   @spec title_variant(size()) :: String.t()
   defp title_variant(:sm), do: "h6"
   defp title_variant(:md), do: "h5"
   defp title_variant(:lg), do: "h4"
-  defp title_variant(_), do: "h5"
+  defp title_unmatchedvariant(_unmatched), do: "h5"
 
   @spec description_variant(size()) :: String.t()
   defp description_variant(:sm), do: "small"
   defp description_variant(:md), do: "p"
   defp description_variant(:lg), do: "lead"
-  defp description_variant(_), do: "p"
+  defp description_unmatchedvariant(_unmatched), do: "p"
 end

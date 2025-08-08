@@ -1,3 +1,7 @@
+alias RivaAshWeb.Components.Navigation, as: Navigation
+alias RivaAshWeb.Components.Atoms, as: Atoms
+alias Phoenix.LiveView.Rendered, as: Rendered
+
 defmodule RivaAshWeb.Components.Navigation.QuickActions do
   @moduledoc """
   Quick action shortcuts component.

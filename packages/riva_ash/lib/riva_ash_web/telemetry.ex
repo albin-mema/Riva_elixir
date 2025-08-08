@@ -1,3 +1,9 @@
+alias Telemetry.Metrics, as: Metrics
+alias RivaAsh.Resources.Business, as: Business
+alias RivaAsh.Resources.Reservation, as: Reservation
+alias RivaAsh.Accounts, as: Accounts
+alias RivaAsh.Resources, as: Resources
+
 defmodule RivaAshWeb.Telemetry do
   @moduledoc """
   Telemetry supervisor and metrics collection for Riva Ash web interface.
@@ -245,7 +251,7 @@ defmodule RivaAshWeb.Telemetry do
       info -> Keyword.get(info, :size, 0)
     end
   rescue
-    _ -> 0
+    _unmatchedunmatched -> 0
   end
 
   @spec count_businesses() :: non_neg_integer()
@@ -253,10 +259,10 @@ defmodule RivaAshWeb.Telemetry do
     try do
       case RivaAsh.Resources.Business.read(domain: RivaAsh.Domain) do
         {:ok, businesses} -> length(businesses)
-        _ -> 0
+        _unmatchedunmatched -> 0
       end
     rescue
-      _ -> 0
+      _unmatchedunmatched -> 0
     end
   end
 
@@ -265,10 +271,10 @@ defmodule RivaAshWeb.Telemetry do
     try do
       case RivaAsh.Resources.Reservation.read(domain: RivaAsh.Domain) do
         {:ok, reservations} -> length(reservations)
-        _ -> 0
+        _unmatchedunmatched -> 0
       end
     rescue
-      _ -> 0
+      _unmatchedunmatched -> 0
     end
   end
 
@@ -387,7 +393,7 @@ defmodule RivaAshWeb.Telemetry do
   defp get_actor_role(%{role: role}), do: role
   defp get_actor_role(%{__struct__: RivaAsh.Accounts.User, role: role}), do: role
   defp get_actor_role(%{__struct__: RivaAsh.Resources.Employee, role: role}), do: role
-  defp get_actor_role(_), do: :unknown
+  defp get_unmatchedactor_unmatchedrole(_unmatched), do: :unknown
 
   # Helper functions for normalizing metrics
   @spec normalize_memory_metrics() :: map()
@@ -395,7 +401,7 @@ defmodule RivaAshWeb.Telemetry do
     case :erlang.memory() do
       mem when is_list(mem) -> Map.new(mem)
       mem when is_map(mem) -> mem
-      _ -> %{}
+      _unmatchedunmatched -> %{}
     end
   end
 
@@ -408,7 +414,7 @@ defmodule RivaAshWeb.Telemetry do
       {cpu, io, total} when is_integer(cpu) and is_integer(io) and is_integer(total) ->
         %{cpu: cpu, io: io, total: total}
 
-      _ ->
+      _unmatchedunmatched ->
         %{}
     end
   end

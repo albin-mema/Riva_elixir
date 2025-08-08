@@ -1,3 +1,8 @@
+alias RivaAshWeb.Components.Atoms, as: Atoms
+alias Phoenix.LiveView.Rendered, as: Rendered
+alias Phoenix.LiveView.TagEngine, as: TagEngine
+alias Phoenix.HTML, as: HTML
+
 defmodule RivaAshWeb.Components.Atoms.Text do
   @moduledoc """
   Text component for consistent typography across the application.
@@ -233,16 +238,33 @@ defmodule RivaAshWeb.Components.Atoms.Text do
 
   @spec style_classes(assigns :: assigns()) :: String.t()
   defp style_classes(assigns) do
-    if assigns.italic, "italic", ""
+    case assigns.italic do
+      true -> "italic"
+      false -> ""
+    end
   end
 
   # Imperative Shell: Rendering functions
   defp render_text(assigns) do
     tag = assigns.variant |> String.to_existing_atom()
-    content = render_slot(assigns.inner_block)
-    required_indicator = if assigns.required && assigns.variant == "label", render_required_indicator(), ""
 
-    assigns = assigns |> assign(:content, content) |> assign(:required_indicator, required_indicator)
+    # Build a temporary assigns map for HEEx calls used inside this function
+    assigns = assigns |> Map.put_new(:__safe__, true)
+
+    # Use ~H to render inner block to avoid "changed" compile artifact; ensure assigns exists
+    content = Phoenix.LiveView.TagEngine.component("slot", %{inner_block: assigns.inner_block})
+
+    required_indicator =
+      if assigns.required and assigns.variant == "label" do
+        render_required_indicator()
+      else
+        ""
+      end
+
+    assigns =
+      assigns
+      |> assign(:content, content)
+      |> assign(:required_indicator, required_indicator)
 
     render_text_tag(assigns, tag)
   end
@@ -252,73 +274,83 @@ defmodule RivaAshWeb.Components.Atoms.Text do
     rest = assigns.rest
     content = assigns.content
     required_indicator = assigns.required_indicator
+    required = assigns.required
 
     %{
-      :h1 => render_h1(classes, rest, content, required_indicator),
-      :h2 => render_h2(classes, rest, content, required_indicator),
-      :h3 => render_h3(classes, rest, content, required_indicator),
-      :h4 => render_h4(classes, rest, content, required_indicator),
-      :h5 => render_h5(classes, rest, content, required_indicator),
-      :h6 => render_h6(classes, rest, content, required_indicator),
-      :label => render_label(classes, rest, content, assigns.required),
-      :code => render_code(classes, rest, content, required_indicator)
+      :h1 => render_h1(%{classes: classes, rest: rest, content: content, required_indicator: required_indicator}),
+      :h2 => render_h2(%{classes: classes, rest: rest, content: content, required_indicator: required_indicator}),
+      :h3 => render_h3(%{classes: classes, rest: rest, content: content, required_indicator: required_indicator}),
+      :h4 => render_h4(%{classes: classes, rest: rest, content: content, required_indicator: required_indicator}),
+      :h5 => render_h5(%{classes: classes, rest: rest, content: content, required_indicator: required_indicator}),
+      :h6 => render_h6(%{classes: classes, rest: rest, content: content, required_indicator: required_indicator}),
+      :label => render_label(%{classes: classes, rest: rest, content: content, required: required}),
+      :code => render_code(%{classes: classes, rest: rest, content: content, required_indicator: required_indicator})
     }
-    |> Map.get(tag, render_p(classes, rest, content, required_indicator))
+    |> Map.get(tag, render_p(%{classes: classes, rest: rest, content: content, required_indicator: required_indicator}))
   end
 
-  defp render_h1(classes, rest, content, required_indicator), do: ~H"""
-  <h1 class={classes} {rest}>
-    <%= content %><%= required_indicator %>
-  </h1>
-  """
+  defp render_h1(assigns),
+    do: ~H"""
+    <h1 class={@classes} {@rest}>
+      <%= Phoenix.HTML.raw(@content) %><%= Phoenix.HTML.raw(@required_indicator) %>
+    </h1>
+    """
 
-  defp render_h2(classes, rest, content, required_indicator), do: ~H"""
-  <h2 class={classes} {rest}>
-    <%= content %><%= required_indicator %>
-  </h2>
-  """
+  defp render_h2(assigns),
+    do: ~H"""
+    <h2 class={@classes} {@rest}>
+      <%= Phoenix.HTML.raw(@content) %><%= Phoenix.HTML.raw(@required_indicator) %>
+    </h2>
+    """
 
-  defp render_h3(classes, rest, content, required_indicator), do: ~H"""
-  <h3 class={classes} {rest}>
-    <%= content %><%= required_indicator %>
-  </h3>
-  """
+  defp render_h3(assigns),
+    do: ~H"""
+    <h3 class={@classes} {@rest}>
+      <%= Phoenix.HTML.raw(@content) %><%= Phoenix.HTML.raw(@required_indicator) %>
+    </h3>
+    """
 
-  defp render_h4(classes, rest, content, required_indicator), do: ~H"""
-  <h4 class={classes} {rest}>
-    <%= content %><%= required_indicator %>
-  </h4>
-  """
+  defp render_h4(assigns),
+    do: ~H"""
+    <h4 class={@classes} {@rest}>
+      <%= Phoenix.HTML.raw(@content) %><%= Phoenix.HTML.raw(@required_indicator) %>
+    </h4>
+    """
 
-  defp render_h5(classes, rest, content, required_indicator), do: ~H"""
-  <h5 class={classes} {rest}>
-    <%= content %><%= required_indicator %>
-  </h5>
-  """
+  defp render_h5(assigns),
+    do: ~H"""
+    <h5 class={@classes} {@rest}>
+      <%= Phoenix.HTML.raw(@content) %><%= Phoenix.HTML.raw(@required_indicator) %>
+    </h5>
+    """
 
-  defp render_h6(classes, rest, content, required_indicator), do: ~H"""
-  <h6 class={classes} {rest}>
-    <%= content %><%= required_indicator %>
-  </h6>
-  """
+  defp render_h6(assigns),
+    do: ~H"""
+    <h6 class={@classes} {@rest}>
+      <%= Phoenix.HTML.raw(@content) %><%= Phoenix.HTML.raw(@required_indicator) %>
+    </h6>
+    """
 
-  defp render_label(classes, rest, content, required), do: ~H"""
-  <label class={classes} {rest}>
-    <%= content %><%= render_required_indicator(required) %>
-  </label>
-  """
+  defp render_label(assigns),
+    do: ~H"""
+    <label class={@classes} {@rest}>
+      <%= @content %><%= render_required_indicator(@required) %>
+    </label>
+    """
 
-  defp render_code(classes, rest, content, required_indicator), do: ~H"""
-  <code class={classes} {rest}>
-    <%= content %><%= required_indicator %>
-  </code>
-  """
+  defp render_code(assigns),
+    do: ~H"""
+    <code class={@classes} {@rest}>
+      <%= Phoenix.HTML.raw(@content) %><%= Phoenix.HTML.raw(@required_indicator) %>
+    </code>
+    """
 
-  defp render_p(classes, rest, content, required_indicator), do: ~H"""
-  <p class={classes} {rest}>
-    <%= content %><%= required_indicator %>
-  </p>
-  """
+  defp render_p(assigns),
+    do: ~H"""
+    <p class={@classes} {@rest}>
+      <%= Phoenix.HTML.raw(@content) %><%= Phoenix.HTML.raw(@required_indicator) %>
+    </p>
+    """
 
   defp render_heading(assigns) do
     ~H"""
@@ -328,12 +360,15 @@ defmodule RivaAshWeb.Components.Atoms.Text do
     """
   end
 
-  defp render_required_indicator, do: ~H"""
-    <span class="text-destructive ml-1">*</span>
-    """
+  # Remove HEEx from helper to avoid assigns requirement; return a literal string
+  defp render_required_indicator, do: ~s(<span class="ml-1 text-destructive">*</span>)
 
   defp render_required_indicator(required) do
-    if required, render_required_indicator(), ""
+    if required do
+      render_required_indicator()
+    else
+      ""
+    end
   end
 
   defp render_error(reason) do
@@ -341,9 +376,11 @@ defmodule RivaAshWeb.Components.Atoms.Text do
     # and render a fallback text or error state
     IO.puts("Text error: #{reason}")
 
+    assigns = %{reason: reason}
+
     ~H"""
-    <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative">
-      <span class="block sm:inline">Error: <%= reason %></span>
+    <div class="relative bg-red-100 px-4 py-3 border border-red-400 rounded text-red-700">
+      <span class="block sm:inline">Error: <%= @reason %></span>
     </div>
     """
   end

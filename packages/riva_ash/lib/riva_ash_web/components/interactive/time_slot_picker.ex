@@ -1,4 +1,10 @@
+alias RivaAshWeb.Components.Interactive, as: Interactive
+alias Phoenix.LiveView.Rendered, as: Rendered
+alias Phoenix.LiveView, as: LiveView
+
 defmodule RivaAshWeb.Components.Interactive.TimeSlotPicker do
+  import RivaAshWeb.Gettext, only: [dgettext: 2, dngettext: 5]
+
   @moduledoc """
   Interactive time slot picker component.
 
@@ -325,7 +331,7 @@ defmodule RivaAshWeb.Components.Interactive.TimeSlotPicker do
     ~H"""
     <div class={["time-slot-picker", @class]} {@rest}>
       <div :if={@show_duration} class="duration-label">
-        <label>Duration: <%= @duration_minutes %> minutes</label>
+        <label><%= dgettext("ui", "Duration:") %> <%= @duration_minutes %> minutes</label>
       </div>
 
       <div class="slots-container">
@@ -345,18 +351,18 @@ defmodule RivaAshWeb.Components.Interactive.TimeSlotPicker do
               <span :if={slot.price} class="slot-price">$<%= slot.price %></span>
             </div>
             <div :if={slot.available_count} class="slot-availability">
-              <%= slot.available_count %> available
+              <%= dngettext("ui", "%{count} available", "%{count} available", slot.available_count, count: slot.available_count) %>
             </div>
           </button>
         </div>
       </div>
 
       <div :if={not Enum.empty?(@selected_slots)} class="selected-slots">
-        <h4>Selected Time Slots:</h4>
+        <h4><%= dgettext("ui", "Selected Time Slots:") %></h4>
         <div class="selected-slots-list">
           <div :for={slot_id <- @selected_slots} class="selected-slot-item">
             <span><%= get_slot_display(slot_id, @available_slots) %></span>
-            <button phx-click={@on_slot_deselect} phx-value-slot={slot_id} class="remove-button">Remove</button>
+            <button phx-click={@on_slot_deselect} phx-value-slot={slot_id} class="remove-button"><%= dgettext("ui", "Remove") %></button>
           </div>
         </div>
       </div>

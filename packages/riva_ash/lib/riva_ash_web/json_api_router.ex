@@ -1,3 +1,6 @@
+alias Plug.Conn, as: Conn
+alias RivaAshWeb.Plugs, as: Plugs
+
 defmodule RivaAshWeb.JsonApiRouter do
   @moduledoc """
   JSON:API router configuration for the Riva Ash application.

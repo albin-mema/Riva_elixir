@@ -32,6 +32,15 @@ defmodule RivaAsh.Permissions do
       iex> RivaAsh.Permissions.has_permission?(employee, "can_manage_business_settings")
       false
   """
+  @spec has_permission?(String.t(), String.t()) :: boolean()
+  def has_permission?(employee_id, permission_name)
+      when is_binary(employee_id) and is_binary(permission_name) do
+    case Ash.get(Employee, employee_id, domain: Domain) do
+      {:ok, employee} -> has_permission?(employee, permission_name)
+      {:error, _unmatched} -> false
+    end
+  end
+
   @spec has_permission?(Employee.t(), String.t()) :: boolean()
   def has_permission?(employee, permission_name) when is_binary(permission_name) do
     # Validate permission exists
@@ -49,7 +58,7 @@ defmodule RivaAsh.Permissions do
         {:ok, permissions} ->
           Enum.any?(permissions, &permission_name_match?(&1, permission_name))
 
-        {:error, _} ->
+        {:error, _unmatched} ->
           false
       end
     end
@@ -58,15 +67,6 @@ defmodule RivaAsh.Permissions do
   @spec permission_name_match?(Permission.t(), String.t()) :: boolean()
   defp permission_name_match?(permission, permission_name) do
     permission.name == permission_name
-  end
-
-  @spec has_permission?(String.t(), String.t()) :: boolean()
-  def has_permission?(employee_id, permission_name)
-      when is_binary(employee_id) and is_binary(permission_name) do
-    case Ash.get(Employee, employee_id, domain: Domain) do
-      {:ok, employee} -> has_permission?(employee, permission_name)
-      {:error, _} -> false
-    end
   end
 
   @doc """
@@ -115,28 +115,12 @@ defmodule RivaAsh.Permissions do
          {:ok, permission} <- get_permission_by_name(permission_name),
          :ok <- validate_can_grant_permission(granter, permission),
          :ok <- validate_hierarchy(granter, employee),
-         {:ok, _} <- create_permission_assignment(employee_id, permission.id, granter_id, notes) do
+         {:ok, _unmatched} <- create_permission_assignment(employee_id, permission.id, granter_id, notes) do
       {:ok, :permission_granted}
     else
       {:error, reason} -> {:error, reason}
       error -> error
     end
-  end
-
-  @spec validate_granter_authority(Employee.t(), Permission.t()) :: :ok | {:error, atom()}
-  defp validate_granter_authority(granter, permission) do
-    validate_can_grant_permission(granter, permission)
-  end
-
-  @spec validate_employee_hierarchy(Employee.t(), Employee.t()) :: :ok | {:error, atom()}
-  defp validate_employee_hierarchy(granter, employee) do
-    validate_hierarchy(granter, employee)
-  end
-
-  @spec create_permission_record(String.t(), String.t(), String.t(), String.t() | nil) ::
-          {:ok, EmployeePermission.t()} | {:error, any()}
-  defp create_permission_record(employee_id, permission_id, granted_by_id, notes) do
-    create_permission_assignment(employee_id, permission_id, granted_by_id, notes)
   end
 
   @doc """
@@ -162,7 +146,7 @@ defmodule RivaAsh.Permissions do
   @spec destroy_permission_assignment(EmployeePermission.t()) :: :ok | {:error, any()}
   defp destroy_permission_assignment(employee_permission) do
     case Ash.destroy(employee_permission, domain: Domain) do
-      {:ok, _} -> :ok
+      {:ok, _unmatched} -> :ok
       error -> error
     end
   end
@@ -200,17 +184,6 @@ defmodule RivaAsh.Permissions do
       error -> error
     end
   end
-
-  @spec find_permission_by_name(String.t()) :: {:ok, Permission.t()} | {:error, any()}
-  defp find_permission_by_name(permission_name) do
-    get_permission_by_name(permission_name)
-  end
-
-  @spec handle_permission_query_result({:ok, Permission.t() | nil} | {:error, any()}) ::
-          {:ok, Permission.t()} | {:error, any()}
-  defp handle_permission_query_result({:ok, nil}), do: {:error, :permission_not_found}
-  defp handle_permission_query_result({:ok, permission}), do: {:ok, permission}
-  defp handle_permission_query_result(error), do: error
 
   @spec validate_can_grant_permission(Employee.t(), Permission.t()) :: :ok | {:error, atom()}
   defp validate_can_grant_permission(granter, _permission) when granter.role == :admin, do: :ok
@@ -268,18 +241,6 @@ defmodule RivaAsh.Permissions do
       error -> error
     end
   end
-
-  @spec find_permission_assignment(String.t(), String.t()) ::
-          {:ok, EmployeePermission.t()} | {:error, any()}
-  defp find_permission_assignment(employee_id, permission_id) do
-    find_employee_permission(employee_id, permission_id)
-  end
-
-  @spec handle_permission_assignment_query_result({:ok, EmployeePermission.t() | nil} | {:error, any()}) ::
-          {:ok, EmployeePermission.t()} | {:error, any()}
-  defp handle_permission_assignment_query_result({:ok, nil}), do: {:error, :permission_not_found}
-  defp handle_permission_assignment_query_result({:ok, employee_permission}), do: {:ok, employee_permission}
-  defp handle_permission_assignment_query_result(error), do: error
 
   @spec validate_can_revoke_permission(Employee.t(), EmployeePermission.t()) ::
           :ok | {:error, atom()}

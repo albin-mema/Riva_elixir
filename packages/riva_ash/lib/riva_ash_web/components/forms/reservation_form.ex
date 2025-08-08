@@ -1,3 +1,8 @@
+alias RivaAshWeb.Components.Forms, as: Forms
+alias RivaAshWeb.Components.Molecules, as: Molecules
+alias RivaAshWeb.Components.Atoms, as: Atoms
+alias Phoenix.LiveView.Rendered, as: Rendered
+
 defmodule RivaAshWeb.Components.Forms.ReservationForm do
   @moduledoc """
   Reservation form component using atomic design system.
@@ -245,7 +250,7 @@ defmodule RivaAshWeb.Components.Forms.ReservationForm do
   defp validate_client_exists(nil, _), do: :ok
 
   defp validate_client_exists(client_id, clients) when is_list(clients) do
-    case Enum.find(clients, fn {_, id} -> id == client_id end) do
+    case Enum.find(clients, fn {_name, id} -> id == client_id end) do
       {_name, ^client_id} -> :ok
       _ -> {:error, %{client_id: "Client not found"}}
     end
@@ -254,7 +259,7 @@ defmodule RivaAshWeb.Components.Forms.ReservationForm do
   defp validate_item_exists(nil, _), do: :ok
 
   defp validate_item_exists(item_id, items) when is_list(items) do
-    case Enum.find(items, fn {_, id} -> id == item_id end) do
+    case Enum.find(items, fn {_name, id} -> id == item_id end) do
       {_name, ^item_id} -> :ok
       _ -> {:error, %{item_id: "Item not found"}}
     end

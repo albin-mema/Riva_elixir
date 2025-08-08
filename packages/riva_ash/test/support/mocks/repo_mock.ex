@@ -1,3 +1,6 @@
+alias RivaAsh.Repo, as: Repo
+alias Ecto.Adapter, as: Adapter
+
 defmodule RivaAsh.Repo.Mock do
   @moduledoc """
   Mock module for RivaAsh.Repo to be used in tests.
@@ -19,7 +22,7 @@ defmodule RivaAsh.Repo.Mock do
 
   # Required callbacks for Ecto.Adapter
   defmacro __before_compile__(_env), do: :ok
-  def ensure_all_started(_, _), do: {:ok, []}
+  def ensure_unmatchedall_unmatchedstarted(_unmatched, _unmatched), do: {:ok, []}
   def init(_config), do: {:ok, %{}}
 
   # Storage callbacks
@@ -28,8 +31,8 @@ defmodule RivaAsh.Repo.Mock do
   def storage_status(_opts), do: :up
 
   # Structure callbacks
-  def structure_dump(_, _), do: ""
-  def structure_load(_, _), do: :ok
+  def structure_unmatcheddump(_unmatched, _unmatched), do: ""
+  def structure_unmatchedload(_unmatched, _unmatched), do: :ok
 
   # Queryable callbacks
   def execute(_repo, _query_meta, _query, _params, _process, _opts), do: {:ok, [], []}
@@ -38,7 +41,7 @@ defmodule RivaAsh.Repo.Mock do
 
   # Schema callbacks
   def autogenerate(:id), do: nil
-  def autogenerate(_), do: nil
+  def autogenerate(_unmatched), do: nil
 
   def insert_all(_repo, _schema_meta, _header, _rows, _on_conflict, _returning, _opts, _options),
     do: {0, nil}

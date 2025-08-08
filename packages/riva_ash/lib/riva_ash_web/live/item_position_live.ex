@@ -1,3 +1,10 @@
+alias RivaAshWeb.Components.Organisms, as: Organisms
+alias RivaAshWeb.Components.Atoms, as: Atoms
+alias RivaAsh.Resources, as: Resources
+alias RivaAsh.Position, as: Position
+alias RivaAsh.Live, as: Live
+alias Ash.Error, as: Error
+
 defmodule RivaAshWeb.ItemPositionLive do
   @moduledoc """
   LiveView for managing Item Positions.
@@ -25,7 +32,7 @@ defmodule RivaAshWeb.ItemPositionLive do
             {:ok, redirect(socket, to: "/access-denied")}
         end
 
-      {:error, _} ->
+      {:error, _unmatched} ->
         {:ok, redirect(socket, to: "/sign-in")}
     end
   end
@@ -81,7 +88,7 @@ defmodule RivaAshWeb.ItemPositionLive do
             case item_position.status do
               :active -> "bg-green-100 text-green-800"
               :inactive -> "bg-gray-100 text-gray-800"
-              _ -> "bg-gray-100 text-gray-800"
+              _unmatchedunmatched -> "bg-gray-100 text-gray-800"
             end
           ]}>
             <%= String.capitalize(to_string(item_position.status)) %>
@@ -209,16 +216,16 @@ defmodule RivaAshWeb.ItemPositionLive do
       %Ash.Error.NotFound{} ->
         "Item position not found"
 
-      _ ->
+      _unmatchedunmatched ->
         "An unexpected error occurred"
     end
   end
 
   defp format_validation_error(error) do
     case error do
-      {message, _} -> message
+      {message, _unmatched} -> message
       message when is_binary(message) -> message
-      _ -> "Invalid input"
+      _unmatchedunmatched -> "Invalid input"
     end
   end
 end

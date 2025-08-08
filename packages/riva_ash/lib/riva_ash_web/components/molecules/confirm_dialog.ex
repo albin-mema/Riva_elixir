@@ -1,4 +1,10 @@
+alias RivaAshWeb.Components.Molecules, as: Molecules
+alias RivaAshWeb.Components.Atoms, as: Atoms
+alias Phoenix.LiveView.Rendered, as: Rendered
+
 defmodule RivaAshWeb.Components.Molecules.ConfirmDialog do
+  import RivaAshWeb.Gettext, only: [dgettext: 2]
+
   @moduledoc """
   Confirmation dialog component for destructive actions.
 
@@ -54,7 +60,7 @@ defmodule RivaAshWeb.Components.Molecules.ConfirmDialog do
           on_cancel: String.t(),
           show: boolean()
         }
-  @type dialog_variant :: "destructive" | "warning" | "info"
+  @type dialog_variant :: :destructive | :warning | :info
   @type assigns :: %{
           required(:title) => String.t(),
           required(:message) => String.t(),
@@ -105,9 +111,9 @@ defmodule RivaAshWeb.Components.Molecules.ConfirmDialog do
     doc: "Label for the cancel button"
   )
 
-  attr(:variant, :string,
-    default: "destructive",
-    values: ~w(destructive warning info),
+  attr(:variant, :atom,
+    default: :destructive,
+    values: [:destructive, :warning, :info],
     doc: "Variant of the confirm button"
   )
 
@@ -145,9 +151,9 @@ defmodule RivaAshWeb.Components.Molecules.ConfirmDialog do
   defp build_confirm_dialog_attrs(assigns) do
     # Extract configuration with defaults using functional pattern
     config = %{
-      confirm_label: Application.get_env(:riva_ash, :confirm_dialog_confirm_label, "Confirm"),
-      cancel_label: Application.get_env(:riva_ash, :confirm_dialog_cancel_label, "Cancel"),
-      variant: Application.get_env(:riva_ash, :confirm_dialog_variant, "destructive")
+      confirm_label: Application.get_env(:riva_ash, :confirm_dialog_confirm_label, dgettext("ui", "Confirm")),
+      cancel_label: Application.get_env(:riva_ash, :confirm_dialog_cancel_label, dgettext("ui", "Cancel")),
+      variant: Application.get_env(:riva_ash, :confirm_dialog_variant, :destructive)
     }
 
     # Immutably update assigns with new values using pipeline
@@ -175,51 +181,55 @@ defmodule RivaAshWeb.Components.Molecules.ConfirmDialog do
 
   @spec validate_title(String.t()) :: :ok | {:error, String.t()}
   defp validate_title(title) when is_binary(title) and title != "", do: :ok
-  defp validate_title(_), do: {:error, "title must be a non-empty string"}
+  defp validate_unmatchedtitle(_unmatched), do: {:error, "title must be a non-empty string"}
 
   @spec validate_message(String.t()) :: :ok | {:error, String.t()}
   defp validate_message(message) when is_binary(message) and message != "", do: :ok
-  defp validate_message(_), do: {:error, "message must be a non-empty string"}
+  defp validate_unmatchedmessage(_unmatched), do: {:error, "message must be a non-empty string"}
 
   @spec validate_confirm_label(String.t()) :: :ok | {:error, String.t()}
   defp validate_confirm_label(label) when is_binary(label) and label != "", do: :ok
-  defp validate_confirm_label(_), do: {:error, "confirm_label must be a non-empty string"}
+
+  defp validate_unmatchedconfirm_unmatchedlabel(_unmatched),
+    do: {:error, "confirm_unmatchedlabel must be a non-empty string"}
 
   @spec validate_cancel_label(String.t()) :: :ok | {:error, String.t()}
   defp validate_cancel_label(label) when is_binary(label) and label != "", do: :ok
-  defp validate_cancel_label(_), do: {:error, "cancel_label must be a non-empty string"}
 
-  @spec validate_variant(String.t()) :: :ok | {:error, String.t()}
-  defp validate_variant("destructive"), do: :ok
-  defp validate_variant("warning"), do: :ok
-  defp validate_variant("info"), do: :ok
-  defp validate_variant(_), do: {:error, "variant must be one of: destructive, warning, info"}
+  defp validate_unmatchedcancel_unmatchedlabel(_unmatched),
+    do: {:error, "cancel_unmatchedlabel must be a non-empty string"}
+
+  @spec validate_variant(atom()) :: :ok | {:error, String.t()}
+  defp validate_variant(:destructive), do: :ok
+  defp validate_variant(:warning), do: :ok
+  defp validate_variant(:info), do: :ok
+  defp validate_unmatchedvariant(_unmatched), do: {:error, "variant must be one of: destructive, warning, info"}
 
   @spec validate_on_confirm(String.t()) :: :ok | {:error, String.t()}
   defp validate_on_confirm(on_confirm) when is_binary(on_confirm) and on_confirm != "", do: :ok
-  defp validate_on_confirm(_), do: {:error, "on_confirm must be a non-empty string"}
+  defp validate_unmatchedon_unmatchedconfirm(_unmatched), do: {:error, "on_unmatchedconfirm must be a non-empty string"}
 
   @spec validate_on_cancel(String.t()) :: :ok | {:error, String.t()}
   defp validate_on_cancel(on_cancel) when is_binary(on_cancel) and on_cancel != "", do: :ok
-  defp validate_on_cancel(_), do: {:error, "on_cancel must be a non-empty string"}
+  defp validate_unmatchedon_unmatchedcancel(_unmatched), do: {:error, "on_unmatchedcancel must be a non-empty string"}
 
   @spec validate_show(boolean()) :: :ok | {:error, String.t()}
   defp validate_show(show) when is_boolean(show), do: :ok
-  defp validate_show(_), do: {:error, "show must be a boolean"}
+  defp validate_unmatchedshow(_unmatched), do: {:error, "show must be a boolean"}
 
   @spec render_confirm_dialog(assigns :: assigns()) :: Phoenix.LiveView.Rendered.t()
   defp render_confirm_dialog(assigns) do
     ~H"""
     <div :if={@show} class={["confirm-dialog-container", @class]} {@rest}>
-      <.render_dialog_content
-        title={@title}
-        message={@message}
-        confirm_label={@confirm_label}
-        cancel_label={@cancel_label}
-        variant={@variant}
-        on_confirm={@on_confirm}
-        on_cancel={@on_cancel}
-      />
+      <%= render_dialog_content_component(%{
+        title: @title,
+        message: @message,
+        confirm_label: @confirm_label,
+        cancel_label: @cancel_label,
+        variant: @variant,
+        on_confirm: @on_confirm,
+        on_cancel: @on_cancel
+      }) %>
     </div>
     """
   end
@@ -229,22 +239,23 @@ defmodule RivaAshWeb.Components.Molecules.ConfirmDialog do
           String.t(),
           String.t(),
           String.t(),
-          dialog_variant(),
+          atom(),
           String.t(),
           String.t()
         ) :: Phoenix.LiveView.Rendered.t()
   defp render_dialog_content(title, message, confirm_label, cancel_label, variant, on_confirm, on_cancel) do
     # Render dialog content using functional composition
-    assigns = %{
-      title: title,
-      message: message,
-      confirm_label: confirm_label,
-      cancel_label: cancel_label,
-      variant: variant,
-      on_confirm: on_confirm,
-      on_cancel: on_cancel
-    }
-    |> render_dialog_content_component()
+    assigns =
+      %{
+        title: title,
+        message: message,
+        confirm_label: confirm_label,
+        cancel_label: cancel_label,
+        variant: variant,
+        on_confirm: on_confirm,
+        on_cancel: on_cancel
+      }
+      |> render_dialog_content_component()
   end
 
   # Private helper for dialog content rendering

@@ -1,3 +1,9 @@
+alias RivaAshWeb.Components.Atoms, as: Atoms
+alias RivaAshWeb.Live, as: Live
+alias RivaAsh.Resources, as: Resources
+alias RivaAsh.Search, as: Search
+alias Ash.Error, as: Error
+
 defmodule RivaAshWeb.GlobalSearchLive do
   @moduledoc """
   Global search LiveView for unregistered users to find businesses and items.
@@ -193,16 +199,16 @@ defmodule RivaAshWeb.GlobalSearchLive do
       %Ash.Error.NotFound{} ->
         "Search resources not found"
 
-      _ ->
+      _unmatchedunmatched ->
         "An unexpected error occurred"
     end
   end
 
   defp format_validation_error(error) do
     case error do
-      {message, _} -> message
+      {message, _unmatched} -> message
       message when is_binary(message) -> message
-      _ -> "Invalid input"
+      _unmatchedunmatched -> "Invalid input"
     end
   end
 

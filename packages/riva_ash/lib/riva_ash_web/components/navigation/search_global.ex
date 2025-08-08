@@ -1,4 +1,11 @@
+alias RivaAshWeb.Components.Navigation, as: Navigation
+alias RivaAshWeb.Components.Atoms, as: Atoms
+alias Phoenix.LiveView.Rendered, as: Rendered
+
 defmodule RivaAshWeb.Components.Navigation.SearchGlobal do
+  import RivaAshWeb.Gettext, only: [dgettext: 2, dgettext: 3, dngettext: 5]
+  import Phoenix.HTML
+
   @moduledoc """
   Global search component across all resources.
   """
@@ -14,7 +21,7 @@ defmodule RivaAshWeb.Components.Navigation.SearchGlobal do
   attr(:results, :list, default: [])
   attr(:loading, :boolean, default: false)
   attr(:show_results, :boolean, default: false)
-  attr(:placeholder, :string, default: "Search clients, items, reservations...")
+  attr(:placeholder, :string, default: nil)
   attr(:on_search, :string, required: true)
   attr(:on_select, :string, required: true)
   attr(:on_clear, :string, default: nil)
@@ -26,6 +33,7 @@ defmodule RivaAshWeb.Components.Navigation.SearchGlobal do
   def search_global(assigns) do
     # Render global search using functional composition
     assigns
+    |> Map.put_new(:placeholder, dgettext("ui", "Search clients, items, reservations..."))
     |> Map.put_new(:container_class, build_container_class(assigns.class))
     |> Map.put_new(:input_container_class, build_input_container_class())
     |> Map.put_new(:actions_class, build_actions_class(assigns.loading, assigns.query, assigns.on_clear))
@@ -72,7 +80,9 @@ defmodule RivaAshWeb.Components.Navigation.SearchGlobal do
 
       <div :if={@show_results && @results != []} class={@results_class}>
         <div class="results-header">
-          <span>Search Results (<%= length(@results) %>)</span>
+          <% count = length(@results) %>
+          <% translated = dngettext("ui", "Search result", "Search results", count, count: count) %>
+          <span><%= "#{translated} (#{count})" %></span>
         </div>
 
         <div class="results-list">
@@ -102,14 +112,16 @@ defmodule RivaAshWeb.Components.Navigation.SearchGlobal do
         </div>
 
         <div :if={length(@results) > @max_results} class="results-footer">
-          <span>Showing <%= @max_results %> of <%= length(@results) %> results</span>
+          <% total = length(@results) %>
+          <% shown = @max_results %>
+          <span><%= dgettext("ui", "Showing %{shown} of %{total} results", shown: shown, total: total) %></span>
         </div>
       </div>
 
       <div :if={@show_results && @results == [] && @query != "" && !@loading} class={@no_results_class}>
         <.icon name={:magnifying_glass} />
-        <p>No results found for "<%= @query %>"</p>
-        <p>Try searching for clients, items, or reservations</p>
+        <p><%= dgettext("ui", "No results found for \"%{query}\"", query: @query) %></p>
+        <p><%= dgettext("ui", "Try searching for clients, items, or reservations") %></p>
       </div>
     </div>
     """
@@ -152,20 +164,20 @@ defmodule RivaAshWeb.Components.Navigation.SearchGlobal do
       "section" -> :squares_2x2
       "payment" -> :credit_card
       "employee" -> :user_group
-      _ -> :document
+      _unmatchedunmatched -> :document
     end
   end
 
   defp humanize_type(type) do
     case type do
-      "client" -> "Client"
-      "item" -> "Item"
-      "reservation" -> "Reservation"
-      "plot" -> "Plot"
-      "section" -> "Section"
-      "payment" -> "Payment"
-      "employee" -> "Employee"
-      _ -> String.capitalize(type)
+      "client" -> dgettext("ui", "Client")
+      "item" -> dgettext("ui", "Item")
+      "reservation" -> dgettext("ui", "Reservation")
+      "plot" -> dgettext("ui", "Plot")
+      "section" -> dgettext("ui", "Section")
+      "payment" -> dgettext("ui", "Payment")
+      "employee" -> dgettext("ui", "Employee")
+      _unmatchedunmatched -> String.capitalize(type)
     end
   end
 end

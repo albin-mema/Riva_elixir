@@ -1,3 +1,5 @@
+alias Plug.Conn, as: Conn
+
 defmodule RivaAshWeb.SwaggerController do
   @moduledoc """
   Controller for serving Swagger UI API documentation.

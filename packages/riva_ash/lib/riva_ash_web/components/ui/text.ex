@@ -1,3 +1,6 @@
+alias RivaAshWeb.Components.UI, as: UI
+alias Phoenix.LiveView.Rendered, as: Rendered
+
 defmodule RivaAshWeb.Components.UI.Text do
   @moduledoc """
   Implements a text component using the design system.
@@ -76,7 +79,14 @@ defmodule RivaAshWeb.Components.UI.Text do
   # Helper function to build required classes
   @spec build_required_class(boolean()) :: String.t()
   defp build_required_class(required) do
-    if required, "text-destructive ml-1", "hidden"
+    class =
+      if required do
+        "text-destructive ml-1"
+      else
+        "hidden"
+      end
+
+    class
   end
 
   # Helper function to build wrapper classes
@@ -91,7 +101,13 @@ defmodule RivaAshWeb.Components.UI.Text do
     color = color_classes(assigns.color)
     align = align_classes(assigns.align)
     weight = weight_classes(assigns.weight)
-    italic = if assigns.italic, "italic", ""
+
+    italic =
+      if assigns.italic do
+        "italic"
+      else
+        ""
+      end
 
     Enum.join([base, color, align, weight, italic, assigns.class], " ")
   end

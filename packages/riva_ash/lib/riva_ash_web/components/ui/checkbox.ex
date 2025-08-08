@@ -1,3 +1,7 @@
+alias RivaAshWeb.Components.UI, as: UI
+alias Phoenix.HTML, as: HTML
+alias Phoenix.LiveView.Rendered, as: Rendered
+
 defmodule RivaAshWeb.Components.UI.Checkbox do
   @moduledoc """
   Implements a checkbox component using the design system.
@@ -62,19 +66,40 @@ defmodule RivaAshWeb.Components.UI.Checkbox do
   # Helper function to build container classes
   @spec build_container_class(String.t() | nil) :: String.t()
   defp build_container_class(label) do
-    if label, "flex items-start gap-2", "flex justify-center"
+    class =
+      if label do
+        "flex items-start gap-2"
+      else
+        "flex justify-center"
+      end
+
+    class
   end
 
   # Helper function to build description classes
   @spec build_description_class(String.t() | nil) :: String.t()
   defp build_description_class(description) do
-    if description, "mt-1 text-muted-foreground text-sm", "hidden"
+    class =
+      if description do
+        "mt-1 text-muted-foreground text-sm"
+      else
+        "hidden"
+      end
+
+    class
   end
 
   # Helper function to build label wrapper classes
   @spec build_label_wrapper_class(String.t() | nil) :: String.t()
   defp build_label_wrapper_class(description) do
-    if description, "flex flex-col", "flex items-center"
+    class =
+      if description do
+        "flex flex-col"
+      else
+        "flex items-center"
+      end
+
+    class
   end
 
   defp checkbox_class(assigns) do
@@ -98,7 +123,7 @@ defmodule RivaAshWeb.Components.UI.Checkbox do
     case size do
       "sm" -> "h-3 w-3"
       "lg" -> "h-5 w-5"
-      _ -> "h-4 w-4"
+      _unmatchedunmatched -> "h-4 w-4"
     end
   end
 
@@ -106,7 +131,7 @@ defmodule RivaAshWeb.Components.UI.Checkbox do
     case size do
       "sm" -> "text-xs"
       "lg" -> "text-base"
-      _ -> "text-sm"
+      _unmatchedunmatched -> "text-sm"
     end
   end
 
@@ -115,7 +140,7 @@ defmodule RivaAshWeb.Components.UI.Checkbox do
       "default" -> "text-primary"
       "error" -> "border-destructive text-destructive focus:ring-destructive"
       "success" -> "border-[var(--chart-5)] text-[var(--chart-5)] focus:ring-[var(--chart-5)]"
-      _ -> "text-primary"
+      _unmatchedunmatched -> "text-primary"
     end
   end
 end

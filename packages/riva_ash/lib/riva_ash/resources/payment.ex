@@ -1,3 +1,9 @@
+alias RivaAsh.Resources, as: Resources
+alias Ash.Policy, as: Policy
+alias RivaAsh.Changes, as: Changes
+alias RivaAsh.Validations, as: Validations
+alias Ash.Changeset, as: Changeset
+
 defmodule RivaAsh.Resources.Payment do
   @moduledoc """
   Represents payment information for reservations.
@@ -249,7 +255,7 @@ defmodule RivaAsh.Resources.Payment do
       require_atomic?(false)
 
       # Only allow processing pending payments
-      validate(fn changeset, _ ->
+      validate(fn changeset, _context ->
         if Ash.Changeset.get_data(changeset, :status) == :pending do
           :ok
         else
@@ -270,7 +276,7 @@ defmodule RivaAsh.Resources.Payment do
       require_atomic?(false)
 
       # Only allow cancelling pending payments
-      validate(fn changeset, _ ->
+      validate(fn changeset, _context ->
         if Ash.Changeset.get_data(changeset, :status) == :pending do
           :ok
         else
@@ -294,10 +300,13 @@ defmodule RivaAsh.Resources.Payment do
       argument(:business_id, :uuid, allow_nil?: false)
 
       filter(expr(business_id == ^arg(:business_id)))
-      filter(expr(
-        contains(transaction_reference, ^arg(:search_term)) or
-        contains(notes, ^arg(:search_term))
-      ))
+
+      filter(
+        expr(
+          contains(transaction_reference, ^arg(:search_term)) or
+            contains(notes, ^arg(:search_term))
+        )
+      )
 
       prepare(build(load: [:business, :reservation]))
     end
@@ -520,8 +529,8 @@ defmodule RivaAsh.Resources.Payment do
     ## Returns
     - `true` if the payment is active, `false` otherwise
     """
-    @spec active?(t()) :: boolean()
-    def active?(payment) do
+    @spec is_active?(t()) :: boolean()
+    def is_active?(payment) do
       case payment do
         %{archived_at: nil} -> true
         _ -> false
@@ -542,6 +551,7 @@ defmodule RivaAsh.Resources.Payment do
       case payment do
         %{status: :paid, amount_paid: amount_paid} when not is_nil(amount_paid) ->
           Decimal.compare(amount_paid, payment.amount_due) != :lt
+
         _ ->
           false
       end
@@ -573,6 +583,7 @@ defmodule RivaAsh.Resources.Payment do
       case payment do
         %{status: :pending, due_date: due_date} when not is_nil(due_date) ->
           Date.compare(due_date, Date.utc_today()) == :lt
+
         _ ->
           false
       end
@@ -809,7 +820,9 @@ defmodule RivaAsh.Resources.Payment do
           remaining_balance = formatted_remaining_balance(payment)
           due_date = formatted_due_date(payment)
           payment_method = payment_method_description(payment)
+
           "#{business_name} - #{reservation_info}: #{status_desc}, Due: #{amount_due}, Paid: #{amount_paid}, Balance: #{remaining_balance}, Due: #{due_date}, Method: #{payment_method}"
+
         false ->
           "Archived payment: #{reservation_info(payment)}"
       end

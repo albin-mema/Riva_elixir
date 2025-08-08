@@ -1,3 +1,9 @@
+alias Absinthe.Plugin, as: Plugin
+alias Absinthe.Plug, as: Plug
+alias Absinthe.Middleware, as: Middleware
+alias Absinthe.Type, as: Type
+alias RivaAshWeb.GraphqlMiddleware, as: GraphqlMiddleware
+
 defmodule RivaAshWeb.Schema do
   @moduledoc """
   GraphQL schema definition for the Riva Ash application.

@@ -1,3 +1,8 @@
+alias RivaAshWeb.Components.Molecules, as: Molecules
+alias Phoenix.LiveView, as: LiveView
+alias RivaAshWeb.Components.UI, as: UI
+alias Phoenix.LiveView.Rendered, as: Rendered
+
 defmodule RivaAshWeb.Components.Molecules.ActionMenu do
   @moduledoc """
   Dropdown action menu component.
@@ -165,7 +170,7 @@ defmodule RivaAshWeb.Components.Molecules.ActionMenu do
     end
   end
 
-  defp validate_actions(_), do: {:error, "actions must be a list"}
+  defp validate_unmatchedactions(_unmatched), do: {:error, "actions must be a list"}
 
   @spec valid_action?(map()) :: boolean()
   defp valid_action?(action) do
@@ -185,7 +190,9 @@ defmodule RivaAshWeb.Components.Molecules.ActionMenu do
   defp validate_position("bottom-right"), do: :ok
   defp validate_position("top-left"), do: :ok
   defp validate_position("top-right"), do: :ok
-  defp validate_position(_), do: {:error, "position must be one of: bottom-left, bottom-right, top-left, top-right"}
+
+  defp validate_unmatchedposition(_unmatched),
+    do: {:error, "position must be one of: bottom-left, bottom-right, top-left, top-right"}
 
   @spec validate_size(menu_size() | String.t()) :: :ok | {:error, String.t()}
   defp validate_size(:sm), do: :ok
@@ -194,15 +201,17 @@ defmodule RivaAshWeb.Components.Molecules.ActionMenu do
   defp validate_size("sm"), do: :ok
   defp validate_size("md"), do: :ok
   defp validate_size("lg"), do: :ok
-  defp validate_size(_), do: {:error, "size must be one of: sm, md, lg"}
+  defp validate_unmatchedsize(_unmatched), do: {:error, "size must be one of: sm, md, lg"}
 
   @spec validate_trigger_label(String.t()) :: :ok | {:error, String.t()}
   defp validate_trigger_label(label) when is_binary(label) and label != "", do: :ok
-  defp validate_trigger_label(_), do: {:error, "trigger_label must be a non-empty string"}
+
+  defp validate_unmatchedtrigger_unmatchedlabel(_unmatched),
+    do: {:error, "trigger_unmatchedlabel must be a non-empty string"}
 
   @spec validate_trigger_icon(atom()) :: :ok | {:error, String.t()}
   defp validate_trigger_icon(icon) when is_atom(icon), do: :ok
-  defp validate_trigger_icon(_), do: {:error, "trigger_icon must be an atom"}
+  defp validate_unmatchedtrigger_unmatchedicon(_unmatched), do: {:error, "trigger_unmatchedicon must be an atom"}
 
   @spec render_action_menu(assigns :: assigns()) :: Phoenix.LiveView.Rendered.t()
   defp render_action_menu(assigns) do
@@ -310,5 +319,5 @@ defmodule RivaAshWeb.Components.Molecules.ActionMenu do
   defp map_legacy_size("sm"), do: "sm"
   defp map_legacy_size("md"), do: "default"
   defp map_legacy_size("lg"), do: "lg"
-  defp map_legacy_size(_), do: "default"
+  defp map_unmatchedlegacy_unmatchedsize(_unmatched), do: "default"
 end

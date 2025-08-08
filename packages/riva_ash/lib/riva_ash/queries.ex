@@ -69,7 +69,7 @@ defmodule RivaAsh.Queries do
       Enum.filter(items, fn item ->
         case check_item_availability(item.id, start_datetime, end_datetime) do
           {:ok, :available} -> true
-          _ -> false
+          _unmatchedunmatched -> false
         end
       end)
 
@@ -261,7 +261,7 @@ defmodule RivaAsh.Queries do
     conflicted_items =
       Enum.filter(items, fn item ->
         case RivaAsh.Validations.check_reservation_overlap(item.id, start_datetime, end_datetime) do
-          {:error, _} -> true
+          {:error, _unmatched} -> true
           {:ok, :no_overlap} -> false
         end
       end)
@@ -346,7 +346,7 @@ defmodule RivaAsh.Queries do
          |> Ash.Query.filter(expr(status in [:confirmed, :completed]))
          |> Ash.read(domain: RivaAsh.Domain) do
       {:ok, reservations} -> length(reservations)
-      {:error, _} -> 0
+      {:error, _unmatched} -> 0
     end
   end
 
@@ -473,7 +473,7 @@ defmodule RivaAsh.Queries do
       :month ->
         {Timex.beginning_of_month(today), Timex.end_of_month(today)}
 
-      _ ->
+      _unmatchedunmatched ->
         # Default to current month
         start_date = Timex.beginning_of_month(today)
         end_date = Timex.end_of_month(today)

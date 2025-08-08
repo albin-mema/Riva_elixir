@@ -1,3 +1,9 @@
+alias RivaAshWeb.Components.Organisms, as: Organisms
+alias RivaAshWeb.Components.Atoms, as: Atoms
+alias RivaAshWeb.Components.Molecules, as: Molecules
+alias Phoenix.LiveView.Rendered, as: Rendered
+alias RivaAshWeb.Components.UI.Button, as: Button
+
 defmodule RivaAshWeb.Components.Organisms.BusinessCard do
   @moduledoc """
   BusinessCard organism component for displaying business information.

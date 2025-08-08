@@ -1,4 +1,11 @@
+alias RivaAshWeb.Components.Interactive, as: Interactive
+alias RivaAshWeb.Components.Atoms, as: Atoms
+alias Phoenix.LiveView.Rendered, as: Rendered
+alias Phoenix.LiveView, as: LiveView
+
 defmodule RivaAshWeb.Components.Interactive.DailySchedule do
+  import RivaAshWeb.Gettext, only: [dgettext: 2]
+
   @moduledoc """
   Daily schedule component with hourly time slots.
 
@@ -219,18 +226,18 @@ defmodule RivaAshWeb.Components.Interactive.DailySchedule do
     <div class={["daily-schedule", @class]} {@rest}>
       <div class="schedule-header">
         <.button phx-click={@on_navigate} phx-value-direction="prev" class="nav-button">
-          ‹ Previous Day
+          <%= dgettext("navigation", "‹ Previous Day") %>
         </.button>
         <h2 class="schedule-date"><%= format_date(@current_date) %></h2>
         <.button phx-click={@on_navigate} phx-value-direction="next" class="nav-button">
-          Next Day ›
+          <%= dgettext("navigation", "Next Day ›") %>
         </.button>
       </div>
 
       <div :if={@show_all_day && has_all_day_events(@events)} class="all-day-events">
         <!-- All day events section -->
         <div class="all-day-header">
-          <h3>All Day</h3>
+          <h3><%= dgettext("dates_numbers", "All Day") %></h3>
         </div>
         <div class="all-day-items">
           <button

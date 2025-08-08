@@ -1,3 +1,6 @@
+alias RivaAshWeb.Components.Atoms, as: Atoms
+alias Phoenix.LiveView.Rendered, as: Rendered
+
 defmodule RivaAshWeb.Components.Atoms.Alert do
   @moduledoc """
   Alert component for displaying important messages to users.
@@ -36,7 +39,7 @@ defmodule RivaAshWeb.Components.Atoms.Alert do
       assigns = validated_assigns |> assign(:alert_class, alert_class)
       render_alert(assigns)
     else
-      {:error, reason} -> render_error(reason)
+      {:error, reason} -> render_error(%{reason: reason})
     end
   end
 
@@ -129,10 +132,12 @@ defmodule RivaAshWeb.Components.Atoms.Alert do
         <%= render_slot(@inner_block) %>
       </div>
       <%= if @closable do %>
-        <button class="ml-auto -mx-1.5 -my-1.5 rounded-lg focus:ring-2 p-1.5 inline-flex h-8 w-8 <%= close_button_color(@variant) %>" type="button">
+        <button
+          type="button"
+          class={"ml-auto -mx-1.5 -my-1.5 rounded-lg focus:ring-2 p-1.5 inline-flex h-8 w-8 #{close_button_color(@variant)}"}>
           <span class="sr-only">Close</span>
           <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-            <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+            <path fill-rule="evenodd" d={"M4.293 4.293a1 1 0 01 1.414 0L10 8.586l4.293-4.293a1 1 0 01 1.414 1.414L11.414 10l4.293 4.293a1 1 0 01 -1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01 -1.414-1.414L8.586 10 4.293 5.707a1 1 0 01 0-1.414z"} clip-rule="evenodd" />
           </svg>
         </button>
       <% end %>
@@ -151,14 +156,17 @@ defmodule RivaAshWeb.Components.Atoms.Alert do
     end
   end
 
-  defp render_error(reason) do
+  defp render_error(assigns) do
     # In a real implementation, you might want to log this error
     # and render a fallback alert or error state
+    reason = Map.get(assigns, :reason, "Invalid alert parameters")
     IO.puts("Alert error: #{reason}")
 
+    assigns = %{reason: reason}
+
     ~H"""
-    <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative">
-      <span class="block sm:inline">Error: <%= reason %></span>
+    <div class="relative bg-red-100 px-4 py-3 border border-red-400 rounded text-red-700">
+      <span class="block sm:inline">Error: <%= @reason %></span>
     </div>
     """
   end

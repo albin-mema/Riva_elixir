@@ -32,7 +32,6 @@ defmodule RivaAsh.DateTimeHelpers do
     naive_datetime |> NaiveDateTime.to_date() |> weekend?()
   end
 
-
   @doc """
   Determines if a given date falls on a weekday (Monday through Friday).
 
@@ -234,7 +233,6 @@ defmodule RivaAsh.DateTimeHelpers do
 
     has_weekday and has_weekend
   end
-
 
   @doc """
   Splits a datetime range into weekday and weekend portions.

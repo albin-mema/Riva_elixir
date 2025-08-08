@@ -1,3 +1,8 @@
+alias RivaAshWeb.Components.Organisms, as: Organisms
+alias RivaAshWeb.Components.Molecules, as: Molecules
+alias RivaAshWeb.Components.Atoms, as: Atoms
+alias Phoenix.LiveView.Rendered, as: Rendered
+
 defmodule RivaAshWeb.Components.Organisms.PricingForm do
   @moduledoc """
   Pricing configuration form component.
@@ -93,7 +98,7 @@ defmodule RivaAshWeb.Components.Organisms.PricingForm do
       case variant do
         "compact" -> "space-y-3"
         "card" -> "bg-card rounded-lg p-6 shadow-sm space-y-4"
-        _ -> "space-y-4"
+        _unmatchedunmatched -> "space-y-4"
       end
 
     Enum.join([base, class], " ")

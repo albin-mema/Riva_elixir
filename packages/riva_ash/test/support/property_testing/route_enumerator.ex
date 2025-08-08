@@ -1,3 +1,6 @@
+alias RivaAsh.PropertyTesting, as: PropertyTesting
+alias RivaAshWeb.Router, as: Router
+
 defmodule RivaAsh.PropertyTesting.RouteEnumerator do
   @moduledoc """
   Automatically discovers and categorizes all application routes for property-based testing.
@@ -158,7 +161,7 @@ defmodule RivaAsh.PropertyTesting.RouteEnumerator do
   defp has_auth_pipeline?(route, pipeline) do
     case Map.get(route, :pipe_through) do
       pipelines when is_list(pipelines) -> pipeline in pipelines
-      _ -> false
+      _unmatchedunmatched -> false
     end
   end
 
@@ -209,7 +212,7 @@ defmodule RivaAsh.PropertyTesting.RouteEnumerator do
         |> String.trim_trailing("s")
         |> String.to_existing_atom()
 
-      _ ->
+      _unmatchedunmatched ->
         :unknown
     end
   end
@@ -233,7 +236,7 @@ defmodule RivaAsh.PropertyTesting.RouteEnumerator do
     case param do
       "slug" -> "test-slug-#{:rand.uniform(1000)}"
       "name" -> "test-name-#{:rand.uniform(1000)}"
-      _ -> "test-#{param}-#{:rand.uniform(1000)}"
+      _unmatchedunmatched -> "test-#{param}-#{:rand.uniform(1000)}"
     end
   end
 

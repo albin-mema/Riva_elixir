@@ -13,9 +13,6 @@ defmodule RivaAsh.Availability do
 
   use Timex
 
-  # Only using require to avoid unused import warning
-  require Ash.Query
-
   alias RivaAsh.Resources.ItemSchedule
   alias RivaAsh.Resources.AvailabilityException
   alias RivaAsh.Resources.Reservation
@@ -110,13 +107,13 @@ defmodule RivaAsh.Availability do
   defp get_item(item_id) when is_binary(item_id) do
     case RivaAsh.Resources.Item.by_id(item_id) do
       {:ok, item} -> {:ok, item}
-      {:error, _} -> {:error, :item_not_found}
+      {:error, _item_not_found} -> {:error, :item_not_found}
     end
   end
 
   @spec validate_item_active(map()) :: :ok | {:error, atom()}
   defp validate_item_active(%{is_active: true}), do: :ok
-  defp validate_item_active(_), do: {:error, :item_inactive}
+  defp validate_item_active(_inactive_item), do: {:error, :item_inactive}
 
   @spec validate_duration(map(), DateTime.t(), DateTime.t()) :: :ok | {:error, atom()}
   defp validate_duration(item, start_datetime, end_datetime) do
@@ -138,7 +135,7 @@ defmodule RivaAsh.Availability do
   end
 
   @spec check_schedule_availability(map(), DateTime.t(), DateTime.t()) :: :ok | {:error, atom()}
-  defp check_schedule_availability(%{is_always_available: true}, _, _), do: :ok
+  defp check_schedule_availability(%{is_always_available: true}, _start_datetime, _end_datetime), do: :ok
 
   defp check_schedule_availability(item, start_datetime, end_datetime) do
     start_date = Timex.to_date(start_datetime)
@@ -181,7 +178,7 @@ defmodule RivaAsh.Availability do
           end)
         end
 
-      {:error, _} ->
+      {:error, _schedule_not_found} ->
         false
     end
   end
@@ -228,7 +225,7 @@ defmodule RivaAsh.Availability do
         end
 
       # No exceptions = no blocking
-      {:error, _} ->
+      {:error, _exceptions_not_found} ->
         :ok
     end
   end
@@ -278,7 +275,7 @@ defmodule RivaAsh.Availability do
         end
 
       # No reservations = full capacity available
-      {:error, _} ->
+      {:error, _reservations_not_found} ->
         {:ok, capacity}
     end
   end
@@ -341,7 +338,7 @@ defmodule RivaAsh.Availability do
 
         {:ok, slots}
 
-      {:error, _} ->
+      {:error, _schedules_not_found} ->
         {:ok, []}
     end
   end
@@ -400,7 +397,7 @@ defmodule RivaAsh.Availability do
           end)
         end)
 
-      {:error, _} ->
+      {:error, _exceptions_not_found} ->
         slots
     end
   end
@@ -425,7 +422,7 @@ defmodule RivaAsh.Availability do
         day_reservations = get_day_reservations(reservations, date)
         filter_slots_by_capacity(slots, day_reservations, date, capacity)
 
-      {:error, _} ->
+      {:error, _reservations_not_found} ->
         slots
     end
   end

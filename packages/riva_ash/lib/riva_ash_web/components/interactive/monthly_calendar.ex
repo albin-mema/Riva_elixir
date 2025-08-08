@@ -1,4 +1,11 @@
+alias RivaAshWeb.Components.Interactive, as: Interactive
+alias RivaAshWeb.Components.Atoms, as: Atoms
+alias Phoenix.LiveView.Rendered, as: Rendered
+alias Phoenix.LiveView, as: LiveView
+
 defmodule RivaAshWeb.Components.Interactive.MonthlyCalendar do
+  import RivaAshWeb.Gettext, only: [dgettext: 2]
+
   @moduledoc """
   Monthly calendar component with reservation display.
 
@@ -259,11 +266,11 @@ defmodule RivaAshWeb.Components.Interactive.MonthlyCalendar do
     <div class={["monthly-calendar", @class]} {@rest}>
       <div class="calendar-header">
         <.button phx-click={@on_navigate} phx-value-direction="prev" class="nav-button">
-          ‹
+          <%= dgettext("navigation", "‹") %>
         </.button>
         <h2 class="calendar-month"><%= format_month(@current_date) %></h2>
         <.button phx-click={@on_navigate} phx-value-direction="next" class="nav-button">
-          ›
+          <%= dgettext("navigation", "›") %>
         </.button>
       </div>
 

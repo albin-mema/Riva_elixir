@@ -1,3 +1,6 @@
+alias RivaAsh.Resources, as: Resources
+alias Ash.Policy, as: Policy
+
 defmodule RivaAsh.Resources.Permission do
   @moduledoc """
   Represents a permission that can be assigned to employees.

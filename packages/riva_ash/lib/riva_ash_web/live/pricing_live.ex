@@ -1,3 +1,10 @@
+alias RivaAshWeb.Components.Organisms, as: Organisms
+alias RivaAshWeb.Components.Atoms, as: Atoms
+alias RivaAshWeb.Live, as: Live
+alias RivaAsh.Resources, as: Resources
+alias RivaAsh.Pricing, as: Pricing
+alias Ash.Error, as: Error
+
 defmodule RivaAshWeb.PricingLive do
   @moduledoc """
   LiveView for managing Pricing plans.
@@ -48,7 +55,7 @@ defmodule RivaAshWeb.PricingLive do
             case pricing.status do
               :active -> "bg-green-100 text-green-800"
               :inactive -> "bg-gray-100 text-gray-800"
-              _ -> "bg-gray-100 text-gray-800"
+              _unmatchedunmatched -> "bg-gray-100 text-gray-800"
             end
           ]}>
             <%= String.capitalize(to_string(pricing.status)) %>
@@ -130,16 +137,16 @@ defmodule RivaAshWeb.PricingLive do
       %Ash.Error.NotFound{} ->
         "Pricing not found"
 
-      _ ->
+      _unmatchedunmatched ->
         "An unexpected error occurred"
     end
   end
 
   defp format_validation_error(error) do
     case error do
-      {message, _} -> message
+      {message, _unmatched} -> message
       message when is_binary(message) -> message
-      _ -> "Invalid input"
+      _unmatchedunmatched -> "Invalid input"
     end
   end
 end

@@ -1,3 +1,10 @@
+alias RivaAshWeb.Components.Atoms, as: Atoms
+alias RivaAshWeb.Components.UI.Input, as: Input
+alias RivaAshWeb.Components.UI, as: UI
+alias Phoenix.HTML.FormField, as: FormField
+alias Phoenix.LiveView.Rendered, as: Rendered
+alias Phoenix.HTML, as: HTML
+
 defmodule RivaAshWeb.Components.Atoms.Input do
   @moduledoc """
   Deprecated wrapper around the canonical design-system input.
@@ -189,9 +196,11 @@ defmodule RivaAshWeb.Components.Atoms.Input do
     # and render a fallback input or error state
     IO.puts("Input error: #{reason}")
 
+    assigns = %{reason: reason}
+
     ~H"""
-    <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative">
-      <span class="block sm:inline">Error: <%= reason %></span>
+    <div class="relative bg-red-100 px-4 py-3 border border-red-400 rounded text-red-700">
+      <span class="block sm:inline">Error: <%= @reason %></span>
     </div>
     """
   end

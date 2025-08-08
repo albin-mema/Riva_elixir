@@ -27,7 +27,7 @@ defmodule RivaAsh.Authorization do
       {:ok, normalized_permission} ->
         check_user_or_employee_permission(actor, normalized_permission)
 
-      _ ->
+      _permission_not_admin ->
         false
     end
   end
@@ -53,7 +53,7 @@ defmodule RivaAsh.Authorization do
       {:ok, validated_business_id} ->
         check_business_access_permissions(actor, validated_business_id)
 
-      _ ->
+      _not_admin_user ->
         false
     end
   end
@@ -77,7 +77,7 @@ defmodule RivaAsh.Authorization do
       %{id: user_id} when is_binary(user_id) ->
         check_business_ownership(user_id, business_id)
 
-      _ ->
+      _non_admin_actor ->
         false
     end
   end
@@ -86,7 +86,7 @@ defmodule RivaAsh.Authorization do
   defp check_business_ownership(user_id, business_id) when is_binary(user_id) and is_binary(business_id) do
     case Ash.get(RivaAsh.Resources.Business, business_id, domain: RivaAsh.Domain) do
       {:ok, business} -> business.owner_id == user_id
-      {:error, _} -> false
+      {:error, _business_not_found} -> false
     end
   end
 
@@ -160,22 +160,22 @@ defmodule RivaAsh.Authorization do
 
   @spec admin_user?(map()) :: boolean()
   defp admin_user?(%{role: "admin"}), do: true
-  defp admin_user?(_), do: false
+  defp admin_user?(_not_admin), do: false
 
   @spec regular_user?(map()) :: boolean()
   defp regular_user?(%{role: "user"}), do: true
-  defp regular_user?(_), do: false
+  defp regular_user?(_not_user), do: false
 
   @spec current_business_matches?(map(), String.t()) :: boolean()
   defp current_business_matches?(%{current_business_id: business_id}, business_id), do: true
-  defp current_business_matches?(_, _), do: false
+  defp current_business_matches?(_actor, _business_id), do: false
 
   @spec has_business_in_list?(map(), String.t()) :: boolean()
   defp has_business_in_list?(%{businesses: businesses}, business_id) when is_list(businesses) do
     Enum.any?(businesses, &(&1.id == business_id))
   end
 
-  defp has_business_in_list?(_, _), do: false
+  defp has_business_in_list?(_actor, _business_id), do: false
 
   @spec check_user_permission(map(), atom()) :: boolean()
   defp check_user_permission(actor, permission_name) do
@@ -183,7 +183,7 @@ defmodule RivaAsh.Authorization do
       %{id: user_id} when is_binary(user_id) ->
         check_user_business_permissions(user_id, permission_name)
 
-      _ ->
+      _non_user_actor ->
         false
     end
   end
@@ -241,7 +241,7 @@ defmodule RivaAsh.Authorization do
       %{id: actor_id} when is_binary(actor_id) ->
         check_employee_permission(actor_id, permission_name)
 
-      _ ->
+      _actor_without_id ->
         false
     end
   end
@@ -258,7 +258,7 @@ defmodule RivaAsh.Authorization do
     |> case do
       {:ok, []} -> false
       {:ok, _businesses} -> true
-      {:error, _} -> false
+      {:error, _read_error} -> false
     end
   end
 

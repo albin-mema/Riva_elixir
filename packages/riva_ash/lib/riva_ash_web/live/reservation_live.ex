@@ -1,3 +1,12 @@
+alias RivaAshWeb.Components.Organisms, as: Organisms
+alias RivaAshWeb.Components.Atoms, as: Atoms
+alias RivaAshWeb.Components.Molecules, as: Molecules
+alias RivaAshWeb.Components.Forms, as: Forms
+alias RivaAshWeb.Live, as: Live
+alias RivaAsh.Resources, as: Resources
+alias RivaAsh.Reservation, as: Reservation
+alias AshPhoenix.Form, as: Form
+
 defmodule RivaAshWeb.ReservationLive do
   @moduledoc """
   LiveView for managing Reservations.
@@ -180,7 +189,7 @@ defmodule RivaAshWeb.ReservationLive do
                                     :confirmed -> "bg-green-100 text-green-800"
                                     :cancelled -> "bg-red-100 text-red-800"
                                     :completed -> "bg-gray-100 text-gray-800"
-                                    _ -> "bg-gray-100 text-gray-800"
+                                    _unmatchedunmatched -> "bg-gray-100 text-gray-800"
                                   end
                                 }"}><%= reservation.status %></span>
                   </td>
@@ -390,7 +399,7 @@ defmodule RivaAshWeb.ReservationLive do
 
         error_messages =
           AshPhoenix.Form.errors(form)
-          |> Enum.map_join(", ", fn {field, {message, _}} -> "#{field}: #{message}" end)
+          |> Enum.map_join(", ", fn {field, {message, _unmatched}} -> "#{field}: #{message}" end)
 
         socket =
           socket

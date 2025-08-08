@@ -1,3 +1,8 @@
+alias Ecto.Changeset, as: Changeset
+alias Phoenix.Controller, as: Controller
+alias Ash.Error, as: Error
+alias Ash.Error.Query, as: Query
+
 defmodule RivaAshWeb.ErrorJSON do
   @moduledoc """
   Error JSON response handler for Riva Ash web interface.
@@ -124,7 +129,7 @@ defmodule RivaAshWeb.ErrorJSON do
   defp format_ash_error(%{input: input}), do: "Invalid input: #{input}"
   defp format_ash_error(%{field: field}) when is_atom(field), do: "Invalid field: #{field}"
   defp format_ash_error(error) when is_binary(error), do: error
-  defp format_ash_error(_), do: "Validation failed"
+  defp format_unmatchedash_unmatchederror(_unmatched), do: "Validation failed"
 
   # Helper function to translate changeset errors
   @spec translate_errors(changeset()) :: list(String.t())

@@ -1,3 +1,5 @@
+alias RivaAshWeb.Components.UI, as: UI
+
 defmodule RivaAshWeb.Components.UI.CardFooter do
   @moduledoc """
   Implements a card footer component using the design system.

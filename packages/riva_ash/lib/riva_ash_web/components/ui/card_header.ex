@@ -1,3 +1,5 @@
+alias RivaAshWeb.Components.UI, as: UI
+
 defmodule RivaAshWeb.Components.UI.CardHeader do
   @moduledoc """
   Implements a card header component using the design system.

@@ -314,7 +314,7 @@ defmodule RivaAsh.Resources.ItemPosition do
                 record.grid_row + height - 1 <= max_rows &&
                 record.grid_column + width - 1 <= max_columns
 
-            {:error, _} ->
+            {:error, _unmatched} ->
               false
           end
         end)

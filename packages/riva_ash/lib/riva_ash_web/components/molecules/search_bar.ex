@@ -1,4 +1,10 @@
+alias RivaAshWeb.Components.Molecules, as: Molecules
+alias RivaAshWeb.Components.UI, as: UI
+alias Phoenix.LiveView.Rendered, as: Rendered
+
 defmodule RivaAshWeb.Components.Molecules.SearchBar do
+  import RivaAshWeb.Gettext, only: [dgettext: 2]
+
   @moduledoc """
   Search bar component with filters and suggestions.
 
@@ -91,7 +97,7 @@ defmodule RivaAshWeb.Components.Molecules.SearchBar do
   )
 
   attr(:placeholder, :string,
-    default: "Search...",
+    default: nil,
     doc: "Placeholder text for the search input"
   )
 
@@ -144,7 +150,7 @@ defmodule RivaAshWeb.Components.Molecules.SearchBar do
   defp build_search_attrs(assigns) do
     # Extract configuration with defaults using functional pattern
     config = %{
-      placeholder: Application.get_env(:riva_ash, :search_placeholder, "Search..."),
+      placeholder: Application.get_env(:riva_ash, :search_placeholder, dgettext("ui", "Search...")),
       debounce: Application.get_env(:riva_ash, :search_debounce, "300")
     }
 
@@ -167,7 +173,7 @@ defmodule RivaAshWeb.Components.Molecules.SearchBar do
 
   @spec validate_on_search(String.t()) :: :ok | {:error, String.t()}
   defp validate_on_search(event) when is_binary(event) and event != "", do: :ok
-  defp validate_on_search(_), do: {:error, "on_search must be a non-empty string"}
+  defp validate_unmatchedon_unmatchedsearch(_unmatched), do: {:error, "on_unmatchedsearch must be a non-empty string"}
 
   @spec validate_filters(list(map())) :: :ok | {:error, String.t()}
   defp validate_filters(filters) when is_list(filters) do
@@ -177,7 +183,7 @@ defmodule RivaAshWeb.Components.Molecules.SearchBar do
     end
   end
 
-  defp validate_filters(_), do: :ok
+  defp validate_unmatchedfilters(_unmatched), do: :ok
 
   @spec validate_suggestions(list(map())) :: :ok | {:error, String.t()}
   defp validate_suggestions(suggestions) when is_list(suggestions) do
@@ -187,7 +193,7 @@ defmodule RivaAshWeb.Components.Molecules.SearchBar do
     end
   end
 
-  defp validate_suggestions(_), do: :ok
+  defp validate_unmatchedsuggestions(_unmatched), do: :ok
 
   @spec valid_filter_option?(map()) :: boolean()
   defp valid_filter_option?(filter) do
@@ -252,7 +258,7 @@ defmodule RivaAshWeb.Components.Molecules.SearchBar do
       <%= if should_show_filters?(@show_filters, @filters) do %>
         <UIButton.button variant="outline" size="sm" phx-click="toggle-filters">
           <UIIcon.icon name={:filter} size="sm" class="mr-2" />
-          Filters
+          <%= dgettext("ui", "Filters") %>
         </UIButton.button>
       <% end %>
     </div>
@@ -272,11 +278,11 @@ defmodule RivaAshWeb.Components.Molecules.SearchBar do
   end
 
   @spec should_show_clear_button?(String.t(), String.t() | nil) :: boolean()
-  defp should_show_clear_button?("", _), do: false
-  defp should_show_clear_button?(_, nil), do: false
-  defp should_show_clear_button?(value, _) when value != "", do: true
+  defp should_show_clear_button?("", _unmatched), do: false
+  defp should_show_clear_button?(_unmatched, nil), do: false
+  defp should_unmatchedshow_unmatchedclear_unmatchedbutton?(value, _unmatched) when value != "", do: true
 
   @spec should_show_filters?(boolean(), list(map())) :: boolean()
-  defp should_show_filters?(false, _), do: false
+  defp should_unmatchedshow_unmatchedfilters?(false, _unmatched), do: false
   defp should_show_filters?(true, filters), do: length(filters) > 0
 end

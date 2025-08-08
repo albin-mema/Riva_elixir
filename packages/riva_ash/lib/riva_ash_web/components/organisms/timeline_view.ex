@@ -1,3 +1,7 @@
+alias RivaAshWeb.Components.Organisms, as: Organisms
+alias RivaAshWeb.Components.Molecules, as: Molecules
+alias Phoenix.LiveView.Rendered, as: Rendered
+
 defmodule RivaAshWeb.Components.Organisms.TimelineView do
   @moduledoc """
   Timeline view component for displaying chronological events.
@@ -63,7 +67,7 @@ defmodule RivaAshWeb.Components.Organisms.TimelineView do
       case orientation do
         "horizontal" -> "flex flex-row gap-4 overflow-x-auto"
         "vertical" -> "flex flex-col gap-4"
-        _ -> "flex flex-col gap-4"
+        _unmatchedunmatched -> "flex flex-col gap-4"
       end
 
     Enum.join([base, class], " ")

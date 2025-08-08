@@ -1,3 +1,5 @@
+alias Plug.Conn, as: Conn
+
 defmodule RivaAshWeb.UIDemoController do
   @moduledoc """
   Controller for UI demonstration and component testing.
@@ -186,7 +188,7 @@ defmodule RivaAshWeb.UIDemoController do
 
     {:ok, component_data}
   rescue
-    _ -> {:error, :not_found}
+    _unmatchedunmatched -> {:error, :not_unmatchedunmatchedfound}
   end
 
   defp get_component_catalog do

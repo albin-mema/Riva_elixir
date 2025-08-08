@@ -1,3 +1,5 @@
+alias RivaAshWeb.Components.UI, as: UI
+
 defmodule RivaAshWeb.Components.UI.CardContent do
   @moduledoc """
   Implements a card content component using the design system.

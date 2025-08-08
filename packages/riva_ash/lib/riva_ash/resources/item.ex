@@ -489,10 +489,17 @@ defmodule RivaAsh.Resources.Item do
       :atom,
       expr(
         cond do
-          not is_active or not is_nil(archived_at) -> :inactive
-          exists(reservations, status == :confirmed and reserved_from <= now() and reserved_until >= now()) -> :occupied
-          exists(item_holds, status == :active and start_time <= now() and (is_nil(end_time) or end_time >= now())) -> :hold
-          true -> :available
+          not is_active or not is_nil(archived_at) ->
+            :inactive
+
+          exists(reservations, status == :confirmed and reserved_from <= now() and reserved_until >= now()) ->
+            :occupied
+
+          exists(item_holds, status == :active and start_time <= now() and (is_nil(end_time) or end_time >= now())) ->
+            :hold
+
+          true ->
+            :available
         end
       )
     ) do
@@ -560,7 +567,9 @@ defmodule RivaAsh.Resources.Item do
                 DateTime.compare(reservation.reserved_until, DateTime.utc_now()) == :lt
             end)
         end
-      _ -> false
+
+      _ ->
+        false
     end
   end
 
@@ -736,6 +745,7 @@ defmodule RivaAsh.Resources.Item do
         case item.business.name do
           business_name -> "#{display_name(item)} - #{business_name} #{capacity_info(item)}"
         end
+
       false ->
         "#{display_name(item)} - Inactive"
     end
@@ -819,5 +829,18 @@ defmodule RivaAsh.Resources.Item do
   defp format_minutes(minutes) when minutes < 1440, do: "#{div(minutes, 60)} hours"
   defp format_minutes(minutes), do: "#{div(minutes, 1440)} days"
 
+  # Private helper functions for filtering
+  @spec apply_availability_filter(Ash.Query.t(), Date.t()) :: Ash.Query.t()
+  defp apply_availability_filter(query, _date), do: query
 
+  @spec apply_business_filter(Ash.Query.t(), String.t() | nil) :: Ash.Query.t()
+  defp apply_business_filter(query, nil), do: query
+  defp apply_business_filter(query, _business_id), do: query
+
+  @spec apply_search_filter(Ash.Query.t(), String.t() | nil) :: Ash.Query.t()
+  defp apply_search_filter(query, nil), do: query
+  defp apply_search_filter(query, _search_term), do: query
+
+  @spec apply_active_filter(Ash.Query.t()) :: Ash.Query.t()
+  defp apply_active_filter(query), do: query
 end

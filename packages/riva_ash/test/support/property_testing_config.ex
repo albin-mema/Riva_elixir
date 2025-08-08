@@ -14,7 +14,7 @@ defmodule RivaAsh.PropertyTestingConfig do
       :test -> development_config()
       :ci -> ci_config()
       :stress -> stress_config()
-      _ -> development_config()
+      _unmatchedunmatched -> development_unmatchedunmatchedconfig()
     end
   end
 

@@ -52,7 +52,6 @@ defmodule RivaAsh.GDPR.DataSubjectRights do
     end
   end
 
-
   defp handle_export_success(data, user_id) do
     formatted_data = data
     log_data_subject_request(user_id, "data_export", "completed")
@@ -78,7 +77,7 @@ defmodule RivaAsh.GDPR.DataSubjectRights do
 
     with {:ok, user} <- get_user(user_id),
          :ok <- validate_deletion_request(user),
-         {:ok, _} <- soft_delete_user_data(user),
+         {:ok, _unmatched} <- soft_delete_user_data(user),
          :ok <- schedule_hard_deletion(user_id) do
       handle_deletion_success(user_id)
     else
@@ -86,7 +85,6 @@ defmodule RivaAsh.GDPR.DataSubjectRights do
         handle_deletion_failure(user_id, reason)
     end
   end
-
 
   defp handle_deletion_success(user_id) do
     log_data_subject_request(user_id, "data_deletion", "initiated")
@@ -111,7 +109,7 @@ defmodule RivaAsh.GDPR.DataSubjectRights do
     Logger.info("GDPR: Restricting data processing for user #{user_id}")
 
     with {:ok, user} <- get_user(user_id),
-         {:ok, _} <- mark_data_as_restricted(user, restriction_reason) do
+         {:ok, _unmatched} <- mark_data_as_restricted(user, restriction_reason) do
       handle_restriction_success(user_id)
     else
       {:error, reason} ->
@@ -147,7 +145,7 @@ defmodule RivaAsh.GDPR.DataSubjectRights do
 
     with {:ok, user} <- get_user(user_id),
          :ok <- validate_objection_grounds(processing_purposes),
-         {:ok, _} <- record_processing_objection(user, processing_purposes) do
+         {:ok, _unmatched} <- record_processing_objection(user, processing_purposes) do
       handle_objection_success(user_id)
     else
       {:error, reason} ->
@@ -198,7 +196,7 @@ defmodule RivaAsh.GDPR.DataSubjectRights do
   defp get_user(user_id) do
     case Ash.get(User, user_id, domain: RivaAsh.Accounts) do
       {:ok, user} -> {:ok, user}
-      {:error, _} -> {:error, "User not found"}
+      {:error, _unmatched} -> {:error, "User not found"}
     end
   end
 
@@ -238,7 +236,7 @@ defmodule RivaAsh.GDPR.DataSubjectRights do
       }
     end)
   rescue
-    _ -> []
+    _unmatchedunmatched -> []
   end
 
   defp extract_employee_data(_user_id) do
@@ -268,7 +266,7 @@ defmodule RivaAsh.GDPR.DataSubjectRights do
       }
     end)
   rescue
-    _ -> []
+    _unmatchedunmatched -> []
   end
 
   defp extract_audit_data(_user_id) do
@@ -370,9 +368,6 @@ defmodule RivaAsh.GDPR.DataSubjectRights do
           consent_records: [map()],
           audit_trail: [map()]
         }
-
-
-
 
   @spec handle_rectification_success(String.t(), User.t()) :: {:ok, User.t()}
   defp handle_rectification_success(user_id, updated_user) do

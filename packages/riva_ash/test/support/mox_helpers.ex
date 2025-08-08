@@ -1,3 +1,5 @@
+alias RivaAsh.Test, as: Test
+
 defmodule RivaAsh.Test.MoxHelpers do
   @moduledoc """
   Mox setup helpers.

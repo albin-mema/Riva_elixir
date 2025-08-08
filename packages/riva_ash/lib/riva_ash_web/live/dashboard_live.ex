@@ -1,3 +1,9 @@
+alias RivaAshWeb.Components.Organisms, as: Organisms
+alias RivaAshWeb.Components.Molecules, as: Molecules
+alias RivaAshWeb.Components.Atoms, as: Atoms
+alias RivaAshWeb.Live, as: Live
+alias Ash.Error, as: Error
+
 defmodule RivaAshWeb.DashboardLive do
   @moduledoc """
   Dashboard Hub - Unified dashboard with metrics, quick actions, and overview widgets.
@@ -18,10 +24,12 @@ defmodule RivaAshWeb.DashboardLive do
 
   alias RivaAsh.Dashboard
   alias RivaAsh.ErrorHelpers
+  alias RivaAshWeb.Presence
 
   import RivaAshWeb.Components.Organisms.PageHeader
   import RivaAshWeb.Components.Molecules.Card
   import RivaAshWeb.Components.Atoms.Button
+  import RivaAshWeb.Components.Atoms.Badge
   import RivaAshWeb.Live.AuthHelpers
 
   @impl true
@@ -36,7 +44,7 @@ defmodule RivaAshWeb.DashboardLive do
       {:ok, socket} ->
         {:ok, assign(socket, loading: true)}
 
-      {:error, _} = error ->
+      {:error, _unmatched} = error ->
         {:ok, error}
     end
   end
@@ -86,26 +94,26 @@ defmodule RivaAshWeb.DashboardLive do
       <!-- Loading State -->
       <%= if @loading do %>
         <div class="flex justify-center items-center py-12">
-          <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+          <div class="border-b-2 border-blue-600 rounded-full w-8 h-8 animate-spin"></div>
         </div>
       <% else %>
         <!-- Key Metrics Row -->
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div class="gap-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4">
           <.card>
             <:body>
             <div class="p-6">
               <div class="flex items-center">
                 <div class="flex-shrink-0">
-                  <div class="w-8 h-8 bg-blue-500 rounded-md flex items-center justify-center">
+                  <div class="flex justify-center items-center bg-blue-500 rounded-md w-8 h-8">
                     <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                     </svg>
                   </div>
                 </div>
-                <div class="ml-5 w-0 flex-1">
+                <div class="flex-1 ml-5 w-0">
                   <dl>
-                    <dt class="text-sm font-medium text-gray-500 truncate">Today's Reservations</dt>
-                    <dd class="text-lg font-medium text-gray-900"><%= length(@today_reservations) %></dd>
+                    <dt class="font-medium text-gray-500 text-sm truncate">Today's Reservations</dt>
+                    <dd class="font-medium text-gray-900 text-lg"><%= length(@today_reservations) %></dd>
                   </dl>
                 </div>
               </div>
@@ -118,16 +126,16 @@ defmodule RivaAshWeb.DashboardLive do
             <div class="p-6">
               <div class="flex items-center">
                 <div class="flex-shrink-0">
-                  <div class="w-8 h-8 bg-green-500 rounded-md flex items-center justify-center">
+                  <div class="flex justify-center items-center bg-green-500 rounded-md w-8 h-8">
                     <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                   </div>
                 </div>
-                <div class="ml-5 w-0 flex-1">
+                <div class="flex-1 ml-5 w-0">
                   <dl>
-                    <dt class="text-sm font-medium text-gray-500 truncate">Revenue This Week</dt>
-                    <dd class="text-lg font-medium text-gray-900">
+                    <dt class="font-medium text-gray-500 text-sm truncate">Revenue This Week</dt>
+                    <dd class="font-medium text-gray-900 text-lg">
                       <%= format_currency(@stats.weekly_revenue) %>
                     </dd>
                   </dl>
@@ -142,16 +150,16 @@ defmodule RivaAshWeb.DashboardLive do
             <div class="p-6">
               <div class="flex items-center">
                 <div class="flex-shrink-0">
-                  <div class="w-8 h-8 bg-yellow-500 rounded-md flex items-center justify-center">
+                  <div class="flex justify-center items-center bg-yellow-500 rounded-md w-8 h-8">
                     <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 0119.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                     </svg>
                   </div>
                 </div>
-                <div class="ml-5 w-0 flex-1">
+                <div class="flex-1 ml-5 w-0">
                   <dl>
-                    <dt class="text-sm font-medium text-gray-500 truncate">Active Clients</dt>
-                    <dd class="text-lg font-medium text-gray-900"><%= @stats.active_clients %></dd>
+                    <dt class="font-medium text-gray-500 text-sm truncate">Active Clients</dt>
+                    <dd class="font-medium text-gray-900 text-lg"><%= @stats.active_clients %></dd>
                   </dl>
                 </div>
               </div>
@@ -164,16 +172,16 @@ defmodule RivaAshWeb.DashboardLive do
             <div class="p-6">
               <div class="flex items-center">
                 <div class="flex-shrink-0">
-                  <div class="w-8 h-8 bg-purple-500 rounded-md flex items-center justify-center">
+                  <div class="flex justify-center items-center bg-purple-500 rounded-md w-8 h-8">
                     <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
                     </svg>
                   </div>
                 </div>
-                <div class="ml-5 w-0 flex-1">
+                <div class="flex-1 ml-5 w-0">
                   <dl>
-                    <dt class="text-sm font-medium text-gray-500 truncate">Available Items</dt>
-                    <dd class="text-lg font-medium text-gray-900"><%= @stats.available_items %></dd>
+                    <dt class="font-medium text-gray-500 text-sm truncate">Available Items</dt>
+                    <dd class="font-medium text-gray-900 text-lg"><%= @stats.available_items %></dd>
                   </dl>
                 </div>
               </div>
@@ -183,17 +191,17 @@ defmodule RivaAshWeb.DashboardLive do
         </div>
 
         <!-- Main Content Grid -->
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div class="gap-6 grid grid-cols-1 lg:grid-cols-3">
           <!-- Today's Schedule -->
           <div class="lg:col-span-2">
             <.card>
               <:body>
-              <div class="px-4 py-5 sm:p-6">
-                <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4">Today's Schedule</h3>
+              <div class="sm:p-6 px-4 py-5">
+                <h3 class="mb-4 font-medium text-gray-900 text-lg leading-6">Today's Schedule</h3>
                 <div class="space-y-3">
                   <%= if length(@today_reservations) == 0 do %>
-                    <div class="text-center py-8 text-gray-500">
-                      <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <div class="py-8 text-gray-500 text-center">
+                      <svg class="mx-auto w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                       </svg>
                       <p class="mt-2">No reservations scheduled for today</p>
@@ -203,16 +211,16 @@ defmodule RivaAshWeb.DashboardLive do
                     </div>
                   <% else %>
                     <%= for reservation <- @today_reservations do %>
-                      <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                      <div class="flex justify-between items-center bg-gray-50 p-3 rounded-lg">
                         <div class="flex items-center space-x-3">
                           <div class="flex-shrink-0">
-                            <div class="w-2 h-2 bg-blue-500 rounded-full"></div>
+                            <div class="bg-blue-500 rounded-full w-2 h-2"></div>
                           </div>
                           <div>
-                            <p class="text-sm font-medium text-gray-900">
+                            <p class="font-medium text-gray-900 text-sm">
                               <%= reservation.client.first_name %> <%= reservation.client.last_name %>
                             </p>
-                            <p class="text-sm text-gray-500">
+                            <p class="text-gray-500 text-sm">
                               <%= reservation.item.name %> •
                               <%= Calendar.strftime(reservation.reserved_from, "%I:%M %p") %> -
                               <%= Calendar.strftime(reservation.reserved_until, "%I:%M %p") %>
@@ -241,29 +249,29 @@ defmodule RivaAshWeb.DashboardLive do
             <!-- Quick Actions -->
             <.card>
               <:body>
-              <div class="px-4 py-5 sm:p-6">
-                <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4">Quick Actions</h3>
+              <div class="sm:p-6 px-4 py-5">
+                <h3 class="mb-4 font-medium text-gray-900 text-lg leading-6">Quick Actions</h3>
                 <div class="space-y-3">
-                  <.button phx-click="quick_booking" variant="primary" class="w-full justify-start">
-                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <.button phx-click="quick_booking" variant="primary" class="justify-start w-full">
+                    <svg class="mr-2 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                     </svg>
                     New Reservation
                   </.button>
-                  <.button phx-click="new_client" variant="secondary" class="w-full justify-start">
-                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <.button phx-click="new_client" variant="secondary" class="justify-start w-full">
+                    <svg class="mr-2 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                     </svg>
                     Add Client
                   </.button>
-                  <.button phx-click="view_calendar" variant="secondary" class="w-full justify-start">
-                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <.button phx-click="view_calendar" variant="secondary" class="justify-start w-full">
+                    <svg class="mr-2 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                     </svg>
                     View Calendar
                   </.button>
-                  <.button phx-click="manage_inventory" variant="secondary" class="w-full justify-start">
-                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <.button phx-click="manage_inventory" variant="secondary" class="justify-start w-full">
+                    <svg class="mr-2 w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
                     </svg>
                     Manage Inventory
@@ -276,22 +284,22 @@ defmodule RivaAshWeb.DashboardLive do
             <!-- Recent Activity -->
             <.card>
               <:body>
-              <div class="px-4 py-5 sm:p-6">
-                <h3 class="text-lg leading-6 font-medium text-gray-900 mb-4">Recent Activity</h3>
+              <div class="sm:p-6 px-4 py-5">
+                <h3 class="mb-4 font-medium text-gray-900 text-lg leading-6">Recent Activity</h3>
                 <div class="space-y-3">
                   <%= if length(@recent_reservations) == 0 do %>
-                    <p class="text-sm text-gray-500 text-center py-4">No recent activity</p>
+                    <p class="py-4 text-gray-500 text-sm text-center">No recent activity</p>
                   <% else %>
                     <%= for reservation <- Enum.take(@recent_reservations, 5) do %>
                       <div class="flex items-center space-x-3">
                         <div class="flex-shrink-0">
-                          <div class="w-2 h-2 bg-gray-400 rounded-full"></div>
+                          <div class="bg-gray-400 rounded-full w-2 h-2"></div>
                         </div>
-                        <div class="min-w-0 flex-1">
-                          <p class="text-sm text-gray-900 truncate">
+                        <div class="flex-1 min-w-0">
+                          <p class="text-gray-900 text-sm truncate">
                             New reservation for <%= reservation.client.first_name %> <%= reservation.client.last_name %>
                           </p>
-                          <p class="text-sm text-gray-500">
+                          <p class="text-gray-500 text-sm">
                             <%= Calendar.strftime(reservation.inserted_at, "%b %d, %I:%M %p") %>
                           </p>
                         </div>
@@ -347,7 +355,7 @@ defmodule RivaAshWeb.DashboardLive do
     "$#{Decimal.to_string(decimal, :normal)}"
   end
 
-  defp format_currency(_), do: "$0.00"
+  defp format_unmatchedcurrency(_unmatched), do: "$0.00"
 
   @doc """
   Determines the badge variant based on reservation status.
@@ -355,5 +363,5 @@ defmodule RivaAshWeb.DashboardLive do
   defp status_variant(:confirmed), do: "default"
   defp status_variant(:pending), do: "secondary"
   defp status_variant(:cancelled), do: "destructive"
-  defp status_variant(_), do: "secondary"
+  defp status_unmatchedvariant(_unmatched), do: "secondary"
 end

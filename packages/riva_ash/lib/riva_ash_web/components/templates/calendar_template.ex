@@ -1,3 +1,8 @@
+alias RivaAshWeb.Components.Templates, as: Templates
+alias RivaAshWeb.Components.Organisms, as: Organisms
+alias RivaAshWeb.Components.Molecules, as: Molecules
+alias Phoenix.LiveView.Rendered, as: Rendered
+
 defmodule RivaAshWeb.Components.Templates.CalendarTemplate do
   @moduledoc """
   Calendar page template with view controls and filters.
@@ -110,7 +115,7 @@ defmodule RivaAshWeb.Components.Templates.CalendarTemplate do
       case variant do
         "compact" -> "space-y-4"
         "card" -> "bg-card rounded-lg p-6 shadow-sm space-y-6"
-        _ -> "space-y-6"
+        _unmatchedunmatched -> "space-y-6"
       end
 
     Enum.join([base, class], " ")
@@ -143,7 +148,14 @@ defmodule RivaAshWeb.Components.Templates.CalendarTemplate do
   # Helper function to build controls classes
   @spec build_controls_class(list()) :: String.t()
   defp build_controls_class(filters) do
-    if filters != [], "calendar-controls space-y-4", "calendar-controls"
+    class =
+      if filters != [] do
+        "calendar-controls space-y-4"
+      else
+        "calendar-controls"
+      end
+
+    class
   end
 
   # Helper function to build tab navigation classes
@@ -167,7 +179,14 @@ defmodule RivaAshWeb.Components.Templates.CalendarTemplate do
   # Helper function to build main classes
   @spec build_main_class(list()) :: String.t()
   defp build_main_class(events) do
-    if events != [], "calendar-main lg:col-span-3", "calendar-main lg:col-span-4"
+    class =
+      if events != [] do
+        "calendar-main lg:col-span-3"
+      else
+        "calendar-main lg:col-span-4"
+      end
+
+    class
   end
 
   # Helper function to build sidebar classes

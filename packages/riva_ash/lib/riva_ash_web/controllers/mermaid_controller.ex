@@ -1,3 +1,6 @@
+alias Plug.Conn, as: Conn
+alias Mix.Task, as: Task
+
 defmodule RivaAshWeb.MermaidController do
   @moduledoc """
   Controller for generating and displaying Ash entity relationship diagrams.
@@ -364,12 +367,12 @@ defmodule RivaAshWeb.MermaidController do
   end
 
   defp generate_mermaid_diagram do
-    with {:ok, _} <- generate_diagram_files(),
+    with {:ok, _unmatched} <- generate_diagram_files(),
          {:ok, content} <- read_generated_diagram() do
       {:ok, content}
     else
       {:error, reason} -> {:error, reason}
-      _ -> {:error, "Could not generate or read the diagram file"}
+      _unmatchedunmatched -> {:error, "Could not generate or read the diagram file"}
     end
   end
 
@@ -377,7 +380,7 @@ defmodule RivaAshWeb.MermaidController do
     case Mix.Task.run("ash.generate_resource_diagrams", ["--domain", "RivaAsh.Domain"]) do
       :ok -> {:ok, :generated}
       {:error, reason} -> {:error, reason}
-      _ -> {:error, "Diagram generation task failed"}
+      _unmatchedunmatched -> {:error, "Diagram generation task failed"}
     end
   rescue
     error -> {:error, "Exception during diagram generation: #{inspect(error)}"}

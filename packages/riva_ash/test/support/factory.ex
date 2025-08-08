@@ -1,3 +1,10 @@
+alias RivaAsh.Factory, as: Factory
+alias RivaAsh.Resources.Business, as: Business
+alias RivaAsh.Resources, as: Resources
+alias Ash.UUID, as: UUID
+alias RivaAsh.Accounts, as: Accounts
+alias Ash.Changeset, as: Changeset
+
 defmodule RivaAsh.Factory do
   @moduledoc """
   Factory and generators for core resources.

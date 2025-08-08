@@ -1,3 +1,6 @@
+alias RivaAshWeb.Components.UI, as: UI
+alias Phoenix.LiveView.Rendered, as: Rendered
+
 defmodule RivaAshWeb.Components.UI.Spinner do
   @moduledoc """
   Implements a spinner component using the design system.
@@ -59,7 +62,7 @@ defmodule RivaAshWeb.Components.UI.Spinner do
       "sm" -> "w-4 h-4"
       "lg" -> "w-6 h-6"
       "xl" -> "w-8 h-8"
-      _ -> "w-5 h-5"
+      _unmatchedunmatched -> "w-5 h-5"
     end
   end
 
@@ -72,7 +75,7 @@ defmodule RivaAshWeb.Components.UI.Spinner do
         "sm" -> "text-sm"
         "lg" -> "text-base"
         "xl" -> "text-lg"
-        _ -> "text-sm"
+        _unmatchedunmatched -> "text-sm"
       end
     else
       "hidden"
@@ -82,7 +85,14 @@ defmodule RivaAshWeb.Components.UI.Spinner do
   # Helper function to build wrapper classes
   @spec build_wrapper_class(boolean()) :: String.t()
   defp build_wrapper_class(show_label) do
-    if show_label, "flex items-center justify-center", "flex justify-center"
+    class =
+      if show_label do
+        "flex items-center justify-center"
+      else
+        "flex justify-center"
+      end
+
+    class
   end
 
   defp container_class(assigns) do
@@ -103,7 +113,7 @@ defmodule RivaAshWeb.Components.UI.Spinner do
       "default" -> "text-foreground"
       "primary" -> "text-primary"
       "secondary" -> "text-secondary-foreground"
-      _ -> "text-foreground"
+      _unmatchedunmatched -> "text-foreground"
     end
   end
 
@@ -114,7 +124,7 @@ defmodule RivaAshWeb.Components.UI.Spinner do
       "lg" -> "h-6 w-6"
       "xl" -> "h-8 w-8"
       # default
-      _ -> "h-5 w-5"
+      _unmatchedunmatched -> "h-5 w-5"
     end
   end
 
@@ -125,7 +135,7 @@ defmodule RivaAshWeb.Components.UI.Spinner do
       "lg" -> "text-base"
       "xl" -> "text-lg"
       # default
-      _ -> "text-sm"
+      _unmatchedunmatched -> "text-sm"
     end
   end
 end

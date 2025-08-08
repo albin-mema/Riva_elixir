@@ -27,7 +27,7 @@ defmodule RivaAsh.Changes do
       {:ok, item} ->
         Ash.Changeset.force_change_attribute(changeset, :business_id, item.business_id)
 
-      {:error, _} ->
+      {:error, _unmatched} ->
         # Item not found - let validation handle this error
         changeset
     end
@@ -53,7 +53,7 @@ defmodule RivaAsh.Changes do
       {:ok, client} ->
         Ash.Changeset.force_change_attribute(changeset, :business_id, client.business_id)
 
-      {:error, _} ->
+      {:error, _unmatched} ->
         # Client not found - let validation handle this error
         changeset
     end
@@ -79,7 +79,7 @@ defmodule RivaAsh.Changes do
       {:ok, employee} ->
         Ash.Changeset.force_change_attribute(changeset, :business_id, employee.business_id)
 
-      {:error, _} ->
+      {:error, _unmatched} ->
         # Employee not found - let validation handle this error
         changeset
     end
@@ -105,7 +105,7 @@ defmodule RivaAsh.Changes do
       {:ok, reservation} ->
         Ash.Changeset.force_change_attribute(changeset, :business_id, reservation.business_id)
 
-      {:error, _} ->
+      {:error, _unmatched} ->
         # Reservation not found - let validation handle this error
         changeset
     end

@@ -38,8 +38,6 @@ defmodule RivaAsh.Policies.PermissionCheck do
   @type permission :: atom() | binary()
   @type check_result :: boolean()
 
-  @config_key :riva_ash
-
   @impl true
   @spec describe(opts()) :: String.t()
   def describe(opts) do

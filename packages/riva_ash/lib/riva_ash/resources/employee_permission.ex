@@ -285,8 +285,11 @@ defmodule RivaAsh.Resources.EmployeePermission do
       granter_name = granter_display_name(employee_permission)
 
       case employee_permission.notes do
-        notes when is_binary(notes) -> "#{employee_name} was granted '#{permission_name}' by #{granter_name}. Notes: #{notes}"
-        nil -> "#{employee_name} was granted '#{permission_name}' by #{granter_name}"
+        notes when is_binary(notes) ->
+          "#{employee_name} was granted '#{permission_name}' by #{granter_name}. Notes: #{notes}"
+
+        nil ->
+          "#{employee_name} was granted '#{permission_name}' by #{granter_name}"
       end
     end
 
@@ -382,8 +385,12 @@ defmodule RivaAsh.Resources.EmployeePermission do
             {:ok, true} -> {:ok, true}
             {:error, reason} -> {:error, reason}
           end
-        {:error, reason} -> {:error, reason}
-        false -> {:error, "Invalid permission assignment"}
+
+        {:error, reason} ->
+          {:error, reason}
+
+        false ->
+          {:error, "Invalid permission assignment"}
       end
     end
 

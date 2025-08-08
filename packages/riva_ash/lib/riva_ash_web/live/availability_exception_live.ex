@@ -1,3 +1,10 @@
+alias RivaAshWeb.Components.UI, as: UI
+alias RivaAshWeb.Components.Organisms, as: Organisms
+alias RivaAshWeb.Components.Atoms, as: Atoms
+alias RivaAshWeb.Live, as: Live
+alias RivaAsh.Resources, as: Resources
+alias Ash.Error, as: Error
+
 defmodule RivaAshWeb.AvailabilityExceptionLive do
   @moduledoc """
   LiveView for managing Availability Exceptions.
@@ -11,6 +18,7 @@ defmodule RivaAshWeb.AvailabilityExceptionLive do
   """
 
   use RivaAshWeb, :live_view
+  import RivaAshWeb.Components.UI.Badge
 
   import RivaAshWeb.Components.Organisms.PageHeader
   import RivaAshWeb.Components.Organisms.DataTable
@@ -33,7 +41,7 @@ defmodule RivaAshWeb.AvailabilityExceptionLive do
       {:ok, socket} ->
         {:ok, assign(socket, loading: false)}
 
-      {:error, _} = error ->
+      {:error, _unmatched} = error ->
         {:ok, error}
     end
   end
@@ -152,5 +160,5 @@ defmodule RivaAshWeb.AvailabilityExceptionLive do
   defp status_variant(:active), do: "destructive"
   defp status_variant(:pending), do: "secondary"
   defp status_variant(:expired), do: "outline"
-  defp status_variant(_), do: "secondary"
+  defp status_unmatchedvariant(_unmatched), do: "secondary"
 end

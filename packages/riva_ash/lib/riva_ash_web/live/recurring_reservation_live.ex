@@ -1,3 +1,10 @@
+alias RivaAshWeb.Components.Organisms, as: Organisms
+alias RivaAshWeb.Components.Atoms, as: Atoms
+alias RivaAshWeb.Live, as: Live
+alias RivaAsh.Resources, as: Resources
+alias RivaAsh.Reservation, as: Reservation
+alias Ash.Error, as: Error
+
 defmodule RivaAshWeb.RecurringReservationLive do
   @moduledoc """
   LiveView for managing Recurring Reservations.
@@ -61,7 +68,7 @@ defmodule RivaAshWeb.RecurringReservationLive do
               :active -> "bg-green-100 text-green-800"
               :inactive -> "bg-gray-100 text-gray-800"
               :completed -> "bg-blue-100 text-blue-800"
-              _ -> "bg-gray-100 text-gray-800"
+              _unmatchedunmatched -> "bg-gray-100 text-gray-800"
             end
           ]}>
             <%= String.capitalize(to_string(rr.status)) %>
@@ -126,7 +133,7 @@ defmodule RivaAshWeb.RecurringReservationLive do
   defp format_date(date) do
     case Calendar.strftime(date, "%Y-%m-%d") do
       {:ok, formatted} -> formatted
-      {:error, _} -> "Invalid date"
+      {:error, _unmatched} -> "Invalid date"
     end
   end
 
@@ -141,16 +148,16 @@ defmodule RivaAshWeb.RecurringReservationLive do
       %Ash.Error.NotFound{} ->
         "Recurring reservation not found"
 
-      _ ->
+      _unmatchedunmatched ->
         "An unexpected error occurred"
     end
   end
 
   defp format_validation_error(error) do
     case error do
-      {message, _} -> message
+      {message, _unmatched} -> message
       message when is_binary(message) -> message
-      _ -> "Invalid input"
+      _unmatchedunmatched -> "Invalid input"
     end
   end
 end

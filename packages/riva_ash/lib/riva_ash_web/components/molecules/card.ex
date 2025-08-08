@@ -1,3 +1,7 @@
+alias RivaAshWeb.Components.Molecules, as: Molecules
+alias RivaAshWeb.Components.UI, as: UI
+alias Phoenix.LiveView.Rendered, as: Rendered
+
 defmodule RivaAshWeb.Components.Molecules.Card do
   @moduledoc """
   Card component for grouping related content.
@@ -146,7 +150,7 @@ defmodule RivaAshWeb.Components.Molecules.Card do
   defp validate_variant("elevated"), do: :ok
   defp validate_variant("bordered"), do: :ok
   defp validate_variant("ghost"), do: :ok
-  defp validate_variant(_), do: {:error, "Variant must be one of: elevated, bordered, ghost"}
+  defp validate_unmatchedvariant(_unmatched), do: {:error, "Variant must be one of: elevated, bordered, ghost"}
 
   @spec validate_padding(padding_variant() | String.t()) :: :ok | {:error, String.t()}
   defp validate_padding(:none), do: :ok
@@ -157,7 +161,7 @@ defmodule RivaAshWeb.Components.Molecules.Card do
   defp validate_padding("compact"), do: :ok
   defp validate_padding("normal"), do: :ok
   defp validate_padding("spacious"), do: :ok
-  defp validate_padding(_), do: {:error, "Padding must be one of: none, compact, normal, spacious"}
+  defp validate_unmatchedpadding(_unmatched), do: {:error, "Padding must be one of: none, compact, normal, spacious"}
 
   @spec render_card(assigns :: assigns()) :: Phoenix.LiveView.Rendered.t()
   defp render_card(assigns) do

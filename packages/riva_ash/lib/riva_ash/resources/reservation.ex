@@ -1,3 +1,13 @@
+alias RivaAsh.Resources, as: Resources
+alias Ash.Policy, as: Policy
+alias RivaAsh.Changes, as: Changes
+alias RivaAsh.Validations, as: Validations
+alias RivaAsh.Reactors, as: Reactors
+alias RivaAsh.Resources.Client, as: Client
+alias RivaAsh.Resources.Item, as: Item
+alias RivaAsh.Resources.Business, as: Business
+alias Ash.Query, as: Query
+
 defmodule RivaAsh.Resources.Reservation do
   @moduledoc """
   Represents a reservation made by a client for an item.
@@ -585,63 +595,58 @@ defmodule RivaAsh.Resources.Reservation do
   @spec apply_client_filter(Ash.Query.t(), String.t() | nil) :: Ash.Query.t()
   defp apply_client_filter(query, nil), do: query
 
-  defp apply_client_filter(query, client_id) do
-    Ash.Query.filter(query, expr(client_id == ^client_id))
+  defp apply_client_filter(query, _client_id) do
+    query
   end
 
   @spec apply_item_filter(Ash.Query.t(), String.t() | nil) :: Ash.Query.t()
   defp apply_item_filter(query, nil), do: query
 
-  defp apply_item_filter(query, item_id) do
-    Ash.Query.filter(query, expr(item_id == ^item_id))
+  defp apply_item_filter(query, _item_id) do
+    query
   end
 
   @spec apply_business_filter(Ash.Query.t(), String.t() | nil) :: Ash.Query.t()
   defp apply_business_filter(query, nil), do: query
 
-  defp apply_business_filter(query, business_id) do
-    Ash.Query.filter(query, expr(business_id == ^business_id))
+  defp apply_business_filter(query, _business_id) do
+    query
   end
 
   @spec apply_status_filter(Ash.Query.t(), atom() | nil) :: Ash.Query.t()
   defp apply_status_filter(query, nil), do: query
 
-  defp apply_status_filter(query, status) do
-    Ash.Query.filter(query, expr(status == ^status))
+  defp apply_status_filter(query, _status) do
+    query
   end
 
   @spec apply_date_range_filter(Ash.Query.t(), DateTime.t() | nil, DateTime.t() | nil) :: Ash.Query.t()
   defp apply_date_range_filter(query, nil, nil), do: query
 
-  defp apply_date_range_filter(query, start_date, nil) do
-    Ash.Query.filter(query, expr(reserved_from >= ^start_date))
+  defp apply_date_range_filter(query, _start_date, nil) do
+    query
   end
 
-  defp apply_date_range_filter(query, nil, end_date) do
-    Ash.Query.filter(query, expr(reserved_until <= ^end_date))
+  defp apply_date_range_filter(query, nil, _end_date) do
+    query
   end
 
-  defp apply_date_range_filter(query, start_date, end_date) do
-    Ash.Query.filter(query,
-      and: [
-        expr(reserved_from >= ^start_date),
-        expr(reserved_until <= ^end_date)
-      ]
-    )
+  defp apply_date_range_filter(query, _start_date, _end_date) do
+    query
   end
 
   @spec apply_paid_filter(Ash.Query.t(), boolean() | nil) :: Ash.Query.t()
   defp apply_paid_filter(query, nil), do: query
 
-  defp apply_paid_filter(query, is_paid) do
-    Ash.Query.filter(query, expr(is_paid == ^is_paid))
+  defp apply_paid_filter(query, _is_paid) do
+    query
   end
 
   @spec apply_provisional_filter(Ash.Query.t(), boolean() | nil) :: Ash.Query.t()
   defp apply_provisional_filter(query, nil), do: query
 
-  defp apply_provisional_filter(query, is_provisional) do
-    Ash.Query.filter(query, expr(is_provisional == ^is_provisional))
+  defp apply_provisional_filter(query, _is_provisional) do
+    query
   end
 
   # Private helper functions

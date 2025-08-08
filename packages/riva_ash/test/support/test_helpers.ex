@@ -1,3 +1,12 @@
+alias RivaAsh.Resources, as: Resources
+alias RivaAsh.Accounts, as: Accounts
+alias Ecto.Adapters.SQL.Sandbox, as: Sandbox
+alias RivaAsh.Accounts.User, as: User
+alias Ash.Changeset, as: Changeset
+alias Phoenix.Token, as: Token
+alias Plug.Test, as: Test
+alias Ash.Query, as: Query
+
 defmodule RivaAsh.TestHelpers do
   @moduledoc """
   Helper functions for testing.

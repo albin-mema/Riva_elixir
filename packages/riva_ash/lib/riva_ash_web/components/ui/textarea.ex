@@ -1,3 +1,8 @@
+alias RivaAshWeb.Components.UI, as: UI
+alias Phoenix.HTML, as: HTML
+alias Phoenix.LiveView.Rendered, as: Rendered
+alias Phoenix.HTML.FormField, as: FormField
+
 defmodule RivaAshWeb.Components.UI.Textarea do
   @moduledoc """
   Implements a textarea component using the design system.
@@ -67,19 +72,40 @@ defmodule RivaAshWeb.Components.UI.Textarea do
   # Helper function to build wrapper classes
   @spec build_wrapper_class(Phoenix.HTML.FormField.t() | nil) :: String.t()
   defp build_wrapper_class(field) do
-    if field, "relative w-full", "w-full"
+    class =
+      if field do
+        "relative w-full"
+      else
+        "w-full"
+      end
+
+    class
   end
 
   # Helper function to build error classes
   @spec build_error_class(Phoenix.HTML.FormField.t() | nil) :: String.t()
   defp build_error_class(field) do
-    if has_error?(field), "text-sm text-destructive mt-1", "hidden"
+    class =
+      if has_error?(field) do
+        "text-sm text-destructive mt-1"
+      else
+        "hidden"
+      end
+
+    class
   end
 
   # Helper function to build required classes
   @spec build_required_class(boolean()) :: String.t()
   defp build_required_class(required) do
-    if required, "required", ""
+    class =
+      if required do
+        "required"
+      else
+        ""
+      end
+
+    class
   end
 
   # Helper function to build rows classes
@@ -91,7 +117,7 @@ defmodule RivaAshWeb.Components.UI.Textarea do
       3 -> "h-48"
       4 -> "h-64"
       5 -> "h-80"
-      _ -> "h-48"
+      _unmatchedunmatched -> "h-48"
     end
   end
 
@@ -122,7 +148,7 @@ defmodule RivaAshWeb.Components.UI.Textarea do
       "default" -> ""
       "error" -> "border-destructive focus-visible:ring-destructive"
       "success" -> "border-[var(--chart-5)] focus-visible:ring-[var(--chart-5)]"
-      _ -> ""
+      _unmatchedunmatched -> ""
     end
   end
 
@@ -130,7 +156,7 @@ defmodule RivaAshWeb.Components.UI.Textarea do
     case size do
       "sm" -> "text-xs"
       "lg" -> "text-base"
-      _ -> "text-sm"
+      _unmatchedunmatched -> "text-sm"
     end
   end
 end

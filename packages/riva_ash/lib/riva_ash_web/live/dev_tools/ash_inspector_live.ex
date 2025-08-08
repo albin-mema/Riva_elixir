@@ -1,3 +1,6 @@
+alias RivaAshWeb.DevTools, as: DevTools
+alias RivaAsh.DevTools, as: DevTools
+
 defmodule RivaAshWeb.DevTools.AshInspectorLive do
   @moduledoc """
   Development tool for inspecting Ash queries, policies, and authorization decisions in real-time.
@@ -76,7 +79,7 @@ defmodule RivaAshWeb.DevTools.AshInspectorLive do
           [:ash, :action, :stop] ->
             update_action_stop(socket, measurements, metadata)
 
-          _ ->
+          _unmatchedunmatched ->
             socket
         end
 
@@ -245,7 +248,7 @@ defmodule RivaAshWeb.DevTools.AshInspectorLive do
                   case policy.result do
                     :authorized -> "bg-green-100 text-green-800"
                     :forbidden -> "bg-red-100 text-red-800"
-                    _ -> "bg-yellow-100 text-yellow-800"
+                    _unmatchedunmatched -> "bg-yellow-100 text-yellow-800"
                   end
                 ]}>
                   <%= policy.result %>
@@ -272,7 +275,7 @@ defmodule RivaAshWeb.DevTools.AshInspectorLive do
                         case result do
                           :authorized -> "bg-green-500"
                           :forbidden -> "bg-red-500"
-                          _ -> "bg-yellow-500"
+                          _unmatchedunmatched -> "bg-yellow-500"
                         end
                       ]}></span>
                       <span class="text-gray-700"><%= policy_name %></span>

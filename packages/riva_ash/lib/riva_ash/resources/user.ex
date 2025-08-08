@@ -1,3 +1,7 @@
+alias RivaAsh.Accounts, as: Accounts
+alias Ash.Policy, as: Policy
+alias RivaAsh.Resources, as: Resources
+
 defmodule RivaAsh.Accounts.User do
   @moduledoc """
   User account resource for authentication and authorization.

@@ -1,3 +1,9 @@
+alias RivaAshWeb.Components.Forms, as: Forms
+alias RivaAshWeb.Components.Atoms, as: Atoms
+alias RivaAshWeb.Components.Molecules, as: Molecules
+alias Phoenix.LiveView.Rendered, as: Rendered
+alias RivaAshWeb.Components.UI.Select, as: Select
+
 defmodule RivaAshWeb.Components.Forms.RecurringReservationInstanceForm do
   @moduledoc """
   Recurring reservation instance form component.
@@ -142,7 +148,7 @@ defmodule RivaAshWeb.Components.Forms.RecurringReservationInstanceForm do
     """
   end
 
-  @spec render_basic_fields(form :: map()) :: Phoenix.LiveView.Rendered.t()
+  @spec render_basic_fields(assigns :: map()) :: Phoenix.LiveView.Rendered.t()
   defp render_basic_fields(assigns) do
     ~H"""
     <div class="gap-4 grid grid-cols-1 md:grid-cols-2">
@@ -164,7 +170,7 @@ defmodule RivaAshWeb.Components.Forms.RecurringReservationInstanceForm do
     """
   end
 
-  @spec render_status_and_reservation_fields(form :: map(), recurring_reservations :: list()) ::
+  @spec render_status_and_reservation_fields(assigns :: map()) ::
           Phoenix.LiveView.Rendered.t()
   defp render_status_and_reservation_fields(assigns) do
     ~H"""
@@ -202,7 +208,7 @@ defmodule RivaAshWeb.Components.Forms.RecurringReservationInstanceForm do
     """
   end
 
-  @spec render_notes_and_skip_fields(form :: map()) :: Phoenix.LiveView.Rendered.t()
+  @spec render_notes_and_skip_fields(assigns :: map()) :: Phoenix.LiveView.Rendered.t()
   defp render_notes_and_skip_fields(assigns) do
     ~H"""
     <.form_field
@@ -223,7 +229,7 @@ defmodule RivaAshWeb.Components.Forms.RecurringReservationInstanceForm do
     """
   end
 
-  @spec render_editing_fields(form :: map(), reservations :: list()) :: Phoenix.LiveView.Rendered.t()
+  @spec render_editing_fields(assigns :: map()) :: Phoenix.LiveView.Rendered.t()
   defp render_editing_fields(assigns) do
     ~H"""
     <div class="gap-4 grid grid-cols-1 md:grid-cols-2">
@@ -269,8 +275,7 @@ defmodule RivaAshWeb.Components.Forms.RecurringReservationInstanceForm do
     """
   end
 
-  @spec render_form_actions(editing :: boolean(), loading :: boolean(), on_cancel :: String.t()) ::
-          Phoenix.LiveView.Rendered.t()
+  @spec render_form_actions(assigns :: map()) :: Phoenix.LiveView.Rendered.t()
   defp render_form_actions(assigns) do
     ~H"""
     <div class="flex justify-end space-x-3 pt-4 border-t">
@@ -419,7 +424,7 @@ defmodule RivaAshWeb.Components.Forms.RecurringReservationInstanceForm do
 
   @spec status_options() :: list({String.t(), String.t()})
   defp status_options do
-    Application.compile_env(:riva_ash, :recurring_instance_status_options, [
+    Application.get_env(:riva_ash, :recurring_instance_status_options, [
       {"Pending", "pending"},
       {"Confirmed", "confirmed"},
       {"Failed", "failed"},

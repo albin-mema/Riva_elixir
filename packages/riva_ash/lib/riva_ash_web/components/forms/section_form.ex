@@ -1,3 +1,9 @@
+alias RivaAshWeb.Components.Forms, as: Forms
+alias RivaAshWeb.Components.Molecules, as: Molecules
+alias RivaAshWeb.Components.Atoms, as: Atoms
+alias Phoenix.LiveView.Rendered, as: Rendered
+alias RivaAshWeb.Components.UI.Select, as: Select
+
 defmodule RivaAshWeb.Components.Forms.SectionForm do
   @moduledoc """
   Section creation and editing form component using atomic design system.
@@ -97,7 +103,7 @@ defmodule RivaAshWeb.Components.Forms.SectionForm do
     """
   end
 
-  @spec render_basic_fields(form :: map(), plots :: list()) :: Phoenix.LiveView.Rendered.t()
+  @spec render_basic_fields(assigns :: map()) :: Phoenix.LiveView.Rendered.t()
   defp render_basic_fields(assigns) do
     ~H"""
     <.form_field
@@ -126,8 +132,7 @@ defmodule RivaAshWeb.Components.Forms.SectionForm do
     """
   end
 
-  @spec render_form_actions(editing :: boolean(), loading :: boolean(), on_cancel :: String.t()) ::
-          Phoenix.LiveView.Rendered.t()
+  @spec render_form_actions(assigns :: map()) :: Phoenix.LiveView.Rendered.t()
   defp render_form_actions(assigns) do
     ~H"""
     <div class="flex justify-end space-x-3 pt-4 border-t">

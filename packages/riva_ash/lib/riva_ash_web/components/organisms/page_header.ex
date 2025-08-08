@@ -1,3 +1,7 @@
+alias RivaAshWeb.Components.Organisms, as: Organisms
+alias RivaAshWeb.Components.UI, as: UI
+alias Phoenix.LiveView.Rendered, as: Rendered
+
 defmodule RivaAshWeb.Components.Organisms.PageHeader do
   @moduledoc """
   PageHeader component for consistent page layouts.
@@ -127,7 +131,7 @@ defmodule RivaAshWeb.Components.Organisms.PageHeader do
       case variant do
         "compact" -> "mb-6"
         "card" -> "mb-8"
-        _ -> "mb-8"
+        _unmatchedunmatched -> "mb-8"
       end
 
     Enum.join([base, class], " ")
@@ -146,7 +150,7 @@ defmodule RivaAshWeb.Components.Organisms.PageHeader do
       "card" ->
         "bg-card rounded-lg p-6 shadow-sm flex flex-col md:flex-row md:items-center md:justify-between"
 
-      _ ->
+      _unmatchedunmatched ->
         "flex flex-col md:flex-row md:items-center md:justify-between"
     end
   end
@@ -262,7 +266,7 @@ defmodule RivaAshWeb.Components.Organisms.PageHeader do
       case assigns.variant do
         "compact" -> "mb-6"
         "card" -> "mb-8"
-        _ -> "mb-8"
+        _unmatchedunmatched -> "mb-8"
       end
 
     Enum.join([base, assigns.class], " ")
@@ -273,7 +277,7 @@ defmodule RivaAshWeb.Components.Organisms.PageHeader do
       "card" ->
         "bg-card rounded-lg p-6 shadow-sm flex flex-col md:flex-row md:items-center md:justify-between"
 
-      _ ->
+      _unmatchedunmatched ->
         "flex flex-col md:flex-row md:items-center md:justify-between"
     end
   end

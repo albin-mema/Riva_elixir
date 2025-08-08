@@ -1,3 +1,11 @@
+alias RivaAsh.Resources, as: Resources
+alias RivaAsh.Reservation, as: Reservation
+alias RivaAshWeb.Components.Organisms, as: Organisms
+alias RivaAshWeb.Components.Molecules, as: Molecules
+alias RivaAshWeb.Components.Atoms, as: Atoms
+alias RivaAshWeb.Components.Forms, as: Forms
+alias RivaAshWeb.Live, as: Live
+
 defmodule RivaAshWeb.ReservationCenterLive do
   @moduledoc """
   Reservation Center - Unified booking management interface.
@@ -55,7 +63,7 @@ defmodule RivaAshWeb.ReservationCenterLive do
             {:ok, redirect(socket, to: "/access-denied")}
         end
 
-      {:error, _} ->
+      {:error, _unmatched} ->
         {:ok, redirect(socket, to: "/sign-in")}
     end
   end
@@ -259,7 +267,7 @@ defmodule RivaAshWeb.ReservationCenterLive do
                         :confirmed -> "text-green-600"
                         :pending -> "text-yellow-600"
                         :cancelled -> "text-red-600"
-                        _ -> "text-gray-600"
+                        _unmatchedunmatched -> "text-gray-600"
                       end
                     ]}>
                       <%= String.capitalize(to_string(@selected_reservation.status)) %>
@@ -384,7 +392,7 @@ defmodule RivaAshWeb.ReservationCenterLive do
                     :confirmed -> "bg-green-100 text-green-800"
                     :pending -> "bg-yellow-100 text-yellow-800"
                     :cancelled -> "bg-red-100 text-red-800"
-                    _ -> "bg-gray-100 text-gray-800"
+                    _unmatchedunmatched -> "bg-gray-100 text-gray-800"
                   end
                 ]}
                 phx-click="reservation_clicked"
@@ -416,8 +424,8 @@ defmodule RivaAshWeb.ReservationCenterLive do
         {"next", "week"} -> Date.add(current_date, 7)
         {"prev", "month"} -> Date.add(current_date, -30)
         {"next", "month"} -> Date.add(current_date, 30)
-        {"today", _} -> Date.utc_today()
-        _ -> current_date
+        {"today", _unmatched} -> Date.utc_today()
+        _unmatchedunmatched -> current_unmatchedunmatcheddate
       end
 
     {:noreply, assign(socket, :current_date, new_date)}

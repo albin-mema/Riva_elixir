@@ -1,3 +1,6 @@
+alias RivaAshWeb.Components.Atoms, as: Atoms
+alias Phoenix.HTML, as: HTML
+
 defmodule RivaAshWeb.Components.Atoms.Radio do
   @moduledoc """
   Radio button component with groups and validation states.

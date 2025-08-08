@@ -237,21 +237,13 @@ defmodule RivaAsh.Resources.Layout do
     end
   end
 
-  # Helper function for admin dropdowns
-  @spec choices_for_select :: [{String.t(), String.t()}]
-  def choices_for_select do
-    __MODULE__
-    |> Ash.read!()
-    |> Enum.map(&{&1.id, &1.name})
-  end
-
   # Private helper functions for filtering
   @spec apply_plot_filter(Ash.Query.t(), String.t() | nil) :: Ash.Query.t()
   defp apply_plot_filter(query, nil), do: query
 
   defp apply_plot_filter(query, plot_id) when is_binary(plot_id) do
     query
-    |> Ash.Query.filter(plot_id: ^plot_id)
+    |> Ash.Query.filter(plot_id: plot_id)
   end
 
   @spec apply_business_filter(Ash.Query.t(), String.t() | nil) :: Ash.Query.t()
@@ -259,14 +251,13 @@ defmodule RivaAsh.Resources.Layout do
 
   defp apply_business_filter(query, business_id) when is_binary(business_id) do
     query
-    |> Ash.Query.join(:left, [layout: l], p in assoc(l, :plot), as: :plot)
-    |> Ash.Query.filter(plot: [business_id: ^business_id])
+    |> Ash.Query.join(:inner, :plot)
+    |> Ash.Query.filter(plot: [business_id: business_id])
   end
 
   @spec apply_active_filter(Ash.Query.t()) :: Ash.Query.t()
   defp apply_active_filter(query) do
-    query
-    |> Ash.Query.filter(is_active: true, is_nil: :archived_at)
+    Ash.Query.filter(query, is_active: true, archived_at: nil)
   end
 
   @spec apply_layout_type_filter(Ash.Query.t(), atom() | nil) :: Ash.Query.t()
@@ -274,7 +265,7 @@ defmodule RivaAsh.Resources.Layout do
 
   defp apply_layout_type_filter(query, layout_type) when is_atom(layout_type) do
     query
-    |> Ash.Query.filter(layout_type: ^layout_type)
+    |> Ash.Query.filter(layout_type: layout_type)
   end
 
   identities do
@@ -552,7 +543,7 @@ defmodule RivaAsh.Resources.Layout do
   """
   @spec formatted_info(t()) :: String.t()
   def formatted_info(layout) do
-    case is_active?(layout) do
+    case active?(layout) do
       true ->
         name = layout.name
         plot_name = plot_name(layout)
@@ -561,6 +552,7 @@ defmodule RivaAsh.Resources.Layout do
         grid_info = grid_info(layout)
         background = background_info(layout)
         "#{name} in #{plot_name}: #{layout_type}, #{dimensions}, #{grid_info}, #{background}"
+
       false ->
         "Archived layout: #{layout.name}"
     end

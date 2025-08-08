@@ -1,3 +1,6 @@
+alias RivaAshWeb.Components.Atoms, as: Atoms
+alias Phoenix.LiveView.Rendered, as: Rendered
+
 defmodule RivaAshWeb.Components.Atoms.Progress do
   @moduledoc """
   Progress component for displaying loading states and completion percentages.
@@ -146,9 +149,9 @@ defmodule RivaAshWeb.Components.Atoms.Progress do
   defp render_linear_progress(assigns) do
     ~H"""
     <div class={@progress_class} {@rest}>
-      <div class="w-full bg-gray-200 rounded-full">
+      <div class="bg-gray-200 rounded-full w-full">
         <div
-          class="h-full rounded-full transition-all duration-300 ease-in-out"
+          class="rounded-full h-full transition-all duration-300 ease-in-out"
           style={"width: #{@value}%"}
           role="progressbar"
           aria-valuenow={@value}
@@ -187,8 +190,8 @@ defmodule RivaAshWeb.Components.Atoms.Progress do
             class="transition-all duration-300 ease-in-out"
           />
         </svg>
-        <div class="absolute inset-0 flex items-center justify-center">
-          <span class="text-sm font-medium text-gray-700"><%= @value %>%</span>
+        <div class="absolute inset-0 flex justify-center items-center">
+          <span class="font-medium text-gray-700 text-sm"><%= @value %>%</span>
         </div>
       </div>
       <%= if @label do %>
@@ -227,9 +230,11 @@ defmodule RivaAshWeb.Components.Atoms.Progress do
     # and render a fallback progress or error state
     IO.puts("Progress error: #{reason}")
 
+    assigns = %{reason: reason}
+
     ~H"""
-    <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative">
-      <span class="block sm:inline">Error: <%= reason %></span>
+    <div class="relative bg-red-100 px-4 py-3 border border-red-400 rounded text-red-700">
+      <span class="block sm:inline">Error: <%= @reason %></span>
     </div>
     """
   end

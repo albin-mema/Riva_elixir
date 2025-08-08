@@ -1,3 +1,8 @@
+alias RivaAshWeb.Components.Templates, as: Templates
+alias RivaAshWeb.Components.Organisms, as: Organisms
+alias RivaAshWeb.Components.Navigation, as: Navigation
+alias Phoenix.LiveView.Rendered, as: Rendered
+
 defmodule RivaAshWeb.Components.Templates.DashboardTemplate do
   @moduledoc """
   Dashboard page template with grid layout.
@@ -71,7 +76,7 @@ defmodule RivaAshWeb.Components.Templates.DashboardTemplate do
       case variant do
         "compact" -> "space-y-4"
         "card" -> "bg-card rounded-lg p-6 shadow-sm space-y-6"
-        _ -> "space-y-6"
+        _unmatchedunmatched -> "space-y-6"
       end
 
     Enum.join([base, class], " ")
@@ -80,31 +85,66 @@ defmodule RivaAshWeb.Components.Templates.DashboardTemplate do
   # Helper function to build header classes
   @spec build_header_class(list()) :: String.t()
   defp build_header_class(quick_actions) do
-    if quick_actions != [], "mb-6", "mb-4"
+    class =
+      if quick_actions != [] do
+        "mb-6"
+      else
+        "mb-4"
+      end
+
+    class
   end
 
   # Helper function to build title classes
   @spec build_title_class(String.t()) :: String.t()
   defp build_title_class(title) do
-    if title, "text-2xl font-bold", "hidden"
+    class =
+      if title do
+        "text-2xl font-bold"
+      else
+        "hidden"
+      end
+
+    class
   end
 
   # Helper function to build description classes
   @spec build_description_class(String.t() | nil) :: String.t()
   defp build_description_class(description) do
-    if description, "text-muted-foreground", "hidden"
+    class =
+      if description do
+        "text-muted-foreground"
+      else
+        "hidden"
+      end
+
+    class
   end
 
   # Helper function to build actions classes
   @spec build_actions_class(list()) :: String.t()
   defp build_actions_class(quick_actions) do
-    if quick_actions != [], "flex gap-2", "hidden"
+    class =
+      if quick_actions != [] do
+        "flex gap-2"
+      else
+        "hidden"
+      end
+
+    class
   end
 
   # Helper function to build stats section classes
   @spec build_stats_section_class(list()) :: String.t()
   defp build_stats_section_class(stats_section) do
-    if stats_section != [], "dashboard-stats mb-6", "hidden"
+    class =
+      if stats_section != [] do
+        "dashboard-stats mb-6"
+      else
+        "hidden"
+      end
+
+    class
   end
 
   # Helper function to build grid classes
@@ -116,12 +156,26 @@ defmodule RivaAshWeb.Components.Templates.DashboardTemplate do
   # Helper function to build main classes
   @spec build_main_class(list()) :: String.t()
   defp build_main_class(main_content) do
-    if main_content != [], "dashboard-main lg:col-span-3", "hidden"
+    class =
+      if main_content != [] do
+        "dashboard-main lg:col-span-3"
+      else
+        "hidden"
+      end
+
+    class
   end
 
   # Helper function to build sidebar classes
   @spec build_sidebar_class(list()) :: String.t()
   defp build_sidebar_class(sidebar_content) do
-    if sidebar_content != [], "dashboard-sidebar lg:col-span-1", "hidden"
+    class =
+      if sidebar_content != [] do
+        "dashboard-sidebar lg:col-span-1"
+      else
+        "hidden"
+      end
+
+    class
   end
 end

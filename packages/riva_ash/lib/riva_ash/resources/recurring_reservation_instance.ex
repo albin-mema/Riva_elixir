@@ -1,3 +1,6 @@
+alias RivaAsh.Resources, as: Resources
+alias RivaAsh.RecurringReservations, as: RecurringReservations
+
 defmodule RivaAsh.Resources.RecurringReservationInstance do
   @moduledoc """
   Represents an individual reservation instance generated from a recurring reservation pattern.
@@ -233,26 +236,18 @@ defmodule RivaAsh.Resources.RecurringReservationInstance do
     identity(:unique_recurring_date, [:recurring_reservation_id, :scheduled_date])
   end
 
-  # Private helper functions for Single Level of Abstraction
-  defp check_past_due do
-    expr(scheduled_date < ^Date.utc_today() and status == "pending")
-  end
-
-  defp calculate_days_until_scheduled do
-    expr(date_diff(scheduled_date, ^Date.utc_today(), "day"))
-  end
-
+  # Calculations
   calculations do
     calculate :is_past_due,
               :boolean,
-              check_past_due() do
+              expr(scheduled_date < ^Date.utc_today() and status == "pending") do
       public?(true)
       description("Whether this instance is past its scheduled date and still pending")
     end
 
     calculate :days_until_scheduled,
               :integer,
-              calculate_days_until_scheduled() do
+              expr(date_diff(scheduled_date, ^Date.utc_today(), "day")) do
       public?(true)
       description("Number of days until this instance is scheduled (negative if past)")
     end

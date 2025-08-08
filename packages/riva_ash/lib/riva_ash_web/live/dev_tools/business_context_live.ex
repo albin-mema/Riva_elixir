@@ -1,3 +1,7 @@
+alias RivaAshWeb.DevTools, as: DevTools
+alias RivaAshWeb.Live, as: Live
+alias RivaAsh.DevTools, as: DevTools
+
 defmodule RivaAshWeb.DevTools.BusinessContextLive do
   @moduledoc """
   Development tool for inspecting business context, permissions, and user state.
@@ -34,7 +38,7 @@ defmodule RivaAshWeb.DevTools.BusinessContextLive do
 
           {:ok, socket}
 
-        {:error, _} ->
+        {:error, _unmatched} ->
           socket =
             socket
             |> assign(:page_title, get_page_title())
@@ -172,7 +176,7 @@ defmodule RivaAshWeb.DevTools.BusinessContextLive do
                     "superadmin" -> "bg-purple-100 text-purple-800"
                     "admin" -> "bg-red-100 text-red-800"
                     "manager" -> "bg-blue-100 text-blue-800"
-                    _ -> "bg-gray-100 text-gray-800"
+                    _unmatchedunmatched -> "bg-gray-100 text-gray-800"
                   end
                 ]}>
                   <%= @current_user.role %>
@@ -303,7 +307,7 @@ defmodule RivaAshWeb.DevTools.BusinessContextLive do
                       :admin -> "bg-red-100 text-red-800"
                       :manager -> "bg-blue-100 text-blue-800"
                       :staff -> "bg-green-100 text-green-800"
-                      _ -> "bg-gray-100 text-gray-800"
+                      _unmatchedunmatched -> "bg-gray-100 text-gray-800"
                     end
                   ]}>
                     <%= employee.role %>
@@ -392,6 +396,7 @@ defmodule RivaAshWeb.DevTools.BusinessContextLive do
     end
 
     # Helper functions
-    defp get_page_title, do: Application.get_env(:riva_ash, __MODULE__, []) |> get_in([:page_title]) || "Business Context Inspector"
+    defp get_page_title,
+      do: Application.get_env(:riva_ash, __MODULE__, []) |> get_in([:page_title]) || "Business Context Inspector"
   end
 end

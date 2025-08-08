@@ -1,4 +1,11 @@
+alias RivaAshWeb.Components.Atoms, as: Atoms
+alias Phoenix.HTML.FormField, as: FormField
+alias Phoenix.LiveView.Rendered, as: Rendered
+alias Phoenix.HTML, as: HTML
+
 defmodule RivaAshWeb.Components.Atoms.FileUpload do
+  import RivaAshWeb.Gettext, only: [dgettext: 2]
+
   @moduledoc """
   File upload component with validation, progress tracking, and accessibility.
   """
@@ -150,9 +157,9 @@ defmodule RivaAshWeb.Components.Atoms.FileUpload do
           <div class="text-center">
             <p class="text-sm text-gray-600">
               <span class="font-medium text-blue-600 hover:text-blue-500">
-                Click to upload
+                <%= dgettext("ui", "Click to upload") %>
               </span>
-              <span> or drag and drop</span>
+              <span><%= dgettext("ui", " or drag and drop") %></span>
             </p>
             <p class="text-xs text-gray-500 mt-1">
               <%= build_file_size_text(@max_file_size) %>
@@ -197,7 +204,7 @@ defmodule RivaAshWeb.Components.Atoms.FileUpload do
         _ -> "border-gray-300 bg-gray-50 hover:border-gray-400"
       end
 
-    disabled_classes = if disabled, "opacity-50 cursor-not-allowed border-gray-200", ""
+    disabled_classes = if(disabled, "opacity-50 cursor-not-allowed border-gray-200", "")
 
     "#{base_classes} #{size_classes} #{variant_classes} #{disabled_classes}"
   end
@@ -206,16 +213,16 @@ defmodule RivaAshWeb.Components.Atoms.FileUpload do
   defp build_file_size_text(max_size) do
     cond do
       max_size >= 100_000_000 ->
-        "#{div(max_size, 100_000_000)}GB max"
+        "#{div(max_size, 100_000_000)}" <> dgettext("dates_numbers", "GB max")
 
       max_size >= 1_000_000 ->
-        "#{div(max_size, 1_000_000)}MB max"
+        "#{div(max_size, 1_000_000)}" <> dgettext("dates_numbers", "MB max")
 
       max_size >= 1_000 ->
-        "#{div(max_size, 1_000)}KB max"
+        "#{div(max_size, 1_000)}" <> dgettext("dates_numbers", "KB max")
 
       true ->
-        "#{max_size}B max"
+        "#{max_size}" <> dgettext("dates_numbers", "B max")
     end
   end
 

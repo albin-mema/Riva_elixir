@@ -1,3 +1,6 @@
+alias RivaAshWeb.DevTools, as: DevTools
+alias RivaAsh.DevTools, as: DevTools
+
 defmodule RivaAshWeb.DevTools.PerformanceDashboardLive do
   @moduledoc """
   Performance monitoring dashboard for development.
@@ -81,7 +84,7 @@ defmodule RivaAshWeb.DevTools.PerformanceDashboardLive do
           [:ecto, :repo, :query] ->
             handle_ecto_query(socket, measurements, metadata)
 
-          _ ->
+          _unmatchedunmatched ->
             socket
         end
 
@@ -264,7 +267,7 @@ defmodule RivaAshWeb.DevTools.PerformanceDashboardLive do
                   <div class="bg-gray-50 rounded-lg p-4">
                     <%= if @query_counts != %{} do %>
                       <div class="space-y-2">
-                        <%= for {resource, count} <- Enum.sort_by(@query_counts, fn {_, count} -> count end, :desc) do %>
+                        <%= for {resource, count} <- Enum.sort_by(@query_counts, fn {_unmatched, count} -> count end, :desc) do %>
                           <div class="flex justify-between items-center">
                             <span class="text-sm text-gray-700"><%= resource %></span>
                             <span class="text-sm font-medium text-gray-900"><%= count %></span>
@@ -362,7 +365,8 @@ defmodule RivaAshWeb.DevTools.PerformanceDashboardLive do
     end
 
     # Helper functions
-    defp get_page_title, do: Application.get_env(:riva_ash, __MODULE__, []) |> get_in([:page_title]) || "Performance Dashboard"
+    defp get_page_title,
+      do: Application.get_env(:riva_ash, __MODULE__, []) |> get_in([:page_title]) || "Performance Dashboard"
 
     # Telemetry event handlers
     defp handle_telemetry_event(_event, _measurements, _metadata, _config), do: :ok

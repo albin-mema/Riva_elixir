@@ -1,3 +1,5 @@
+alias RivaAsh.Test, as: Test
+
 defmodule RivaAsh.Test.TimeHelpers do
   @moduledoc """
   Test time control helpers for deterministic tests.
@@ -72,7 +74,7 @@ defmodule RivaAsh.Test.TimeHelpers do
               offset_sec: offset + seconds
             })
 
-          _ ->
+          _unmatchedunmatched ->
             # Start from now and set frozen + offset
             now = DateTime.utc_now()
             Application.put_env(:riva_ash, :test_clock, %{mode: :frozen, base: now, offset_sec: seconds})
@@ -129,7 +131,7 @@ defmodule RivaAsh.Test.TimeHelpers do
       %{mode: :frozen, base: base, offset_sec: offset} ->
         DateTime.add(base, offset, :second)
 
-      _ ->
+      _unmatchedunmatched ->
         DateTime.utc_now()
     end
   end

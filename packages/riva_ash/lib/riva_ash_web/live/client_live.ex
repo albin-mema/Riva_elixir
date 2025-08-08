@@ -1,3 +1,10 @@
+alias RivaAshWeb.Components.UI, as: UI
+alias RivaAshWeb.Components.Organisms, as: Organisms
+alias RivaAshWeb.Components.Atoms, as: Atoms
+alias RivaAshWeb.Live, as: Live
+alias RivaAsh.Resources, as: Resources
+alias Ash.Error, as: Error
+
 defmodule RivaAshWeb.ClientLive do
   @moduledoc """
   LiveView for managing Clients.
@@ -11,6 +18,7 @@ defmodule RivaAshWeb.ClientLive do
   """
 
   use RivaAshWeb, :live_view
+  import RivaAshWeb.Components.UI.Badge
 
   # Explicitly set the authenticated layout
   @layout {RivaAshWeb.Layouts, :authenticated}
@@ -36,7 +44,7 @@ defmodule RivaAshWeb.ClientLive do
       {:ok, socket} ->
         {:ok, assign(socket, loading: false)}
 
-      {:error, _} = error ->
+      {:error, _unmatched} = error ->
         {:ok, error}
     end
   end
@@ -155,5 +163,5 @@ defmodule RivaAshWeb.ClientLive do
   defp status_variant(:active), do: "default"
   defp status_variant(:inactive), do: "secondary"
   defp status_variant(:banned), do: "destructive"
-  defp status_variant(_), do: "secondary"
+  defp status_unmatchedvariant(_unmatched), do: "secondary"
 end

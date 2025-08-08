@@ -1,3 +1,10 @@
+alias RivaAsh.Resources, as: Resources
+alias RivaAsh.Live, as: Live
+alias RivaAshWeb.Components.Organisms, as: Organisms
+alias RivaAshWeb.Components.Molecules, as: Molecules
+alias RivaAshWeb.Components.Atoms, as: Atoms
+alias Ash.Error, as: Error
+
 defmodule RivaAshWeb.PeopleManagementLive do
   @moduledoc """
   People Management - Unified contact management interface.
@@ -25,7 +32,7 @@ defmodule RivaAshWeb.PeopleManagementLive do
             {:ok, redirect(socket, to: "/access-denied")}
         end
 
-      {:error, _} ->
+      {:error, _unmatched} ->
         {:ok, redirect(socket, to: "/sign-in")}
     end
   end
@@ -222,7 +229,7 @@ defmodule RivaAshWeb.PeopleManagementLive do
                       case @selected_person.status do
                         :active -> "bg-green-100 text-green-800"
                         :inactive -> "bg-gray-100 text-gray-800"
-                        _ -> "bg-gray-100 text-gray-800"
+                        _unmatchedunmatched -> "bg-gray-100 text-gray-800"
                       end
                     ]}>
                       <%= String.capitalize(to_string(@selected_person.status)) %>
@@ -294,7 +301,7 @@ defmodule RivaAshWeb.PeopleManagementLive do
                     case client.status do
                       :active -> "bg-green-100 text-green-800"
                       :inactive -> "bg-gray-100 text-gray-800"
-                      _ -> "bg-gray-100 text-gray-800"
+                      _unmatchedunmatched -> "bg-gray-100 text-gray-800"
                     end
                   ]}>
                     <%= String.capitalize(to_string(client.status)) %>
@@ -367,7 +374,7 @@ defmodule RivaAshWeb.PeopleManagementLive do
                     case employee.status do
                       :active -> "bg-green-100 text-green-800"
                       :inactive -> "bg-gray-100 text-gray-800"
-                      _ -> "bg-gray-100 text-gray-800"
+                      _unmatchedunmatched -> "bg-gray-100 text-gray-800"
                     end
                   ]}>
                     <%= String.capitalize(to_string(employee.status)) %>
@@ -420,7 +427,7 @@ defmodule RivaAshWeb.PeopleManagementLive do
       case type do
         "client" -> Enum.find(socket.assigns.clients, &(&1.id == id))
         "employee" -> Enum.find(socket.assigns.employees, &(&1.id == id))
-        _ -> nil
+        _unmatchedunmatched -> nil
       end
 
     {:noreply, assign(socket, :selected_person, person)}
@@ -439,7 +446,7 @@ defmodule RivaAshWeb.PeopleManagementLive do
       case type do
         "client" -> "/clients/#{id}/edit"
         "employee" -> "/employees/#{id}/edit"
-        _ -> "/people/#{id}/edit"
+        _unmatchedunmatched -> "/people/#{id}/edit"
       end
 
     {:noreply, push_patch(socket, to: path)}
@@ -450,27 +457,30 @@ defmodule RivaAshWeb.PeopleManagementLive do
       case type do
         "client" -> "/clients/#{id}/history"
         "employee" -> "/employees/#{id}/history"
-        _ -> "/people/#{id}/history"
+        _unmatchedunmatched -> "/people/#{id}/history"
       end
 
     {:noreply, push_patch(socket, to: path)}
   end
 
   def handle_event("delete_person", %{"id" => id, "type" => type}, socket) do
-    result = case type do
-      "client" ->
-        case Client.by_id(id, actor: socket.assigns.current_user) do
-          {:ok, client} -> Client.destroy(client, actor: socket.assigns.current_user)
-          error -> error
-        end
-      "employee" ->
-        case Employee.by_id(id, actor: socket.assigns.current_user) do
-          {:ok, employee} -> Employee.destroy(employee, actor: socket.assigns.current_user)
-          error -> error
-        end
-      _ ->
-        {:error, :invalid_person_type}
-    end
+    result =
+      case type do
+        "client" ->
+          case Client.by_id(id, actor: socket.assigns.current_user) do
+            {:ok, client} -> Client.destroy(client, actor: socket.assigns.current_user)
+            error -> error
+          end
+
+        "employee" ->
+          case Employee.by_id(id, actor: socket.assigns.current_user) do
+            {:ok, employee} -> Employee.destroy(employee, actor: socket.assigns.current_user)
+            error -> error
+          end
+
+        _unmatchedunmatched ->
+          {:error, :invalid_person_type}
+      end
 
     case result do
       {:ok, _person} ->
@@ -541,7 +551,6 @@ defmodule RivaAshWeb.PeopleManagementLive do
 
     with {:ok, clients} <- Client.for_user_businesses(business_ids, actor: user),
          {:ok, employees} <- Employee.for_user_businesses(business_ids, actor: user) do
-
       # Generate CSV content
       csv_content = generate_csv_export(clients, employees, socket.assigns.businesses)
 
@@ -572,7 +581,6 @@ defmodule RivaAshWeb.PeopleManagementLive do
          business_ids <- Enum.map(businesses, & &1.id),
          {:ok, clients} <- Client.for_user_businesses(business_ids, actor: user),
          {:ok, employees} <- Employee.for_user_businesses(business_ids, actor: user) do
-
       # System users count placeholder (was in PeopleService)
       system_users_count = 5
 
@@ -604,8 +612,8 @@ defmodule RivaAshWeb.PeopleManagementLive do
          business_ids <- Enum.map(businesses, & &1.id),
          {:ok, clients} <- Client.for_user_businesses(business_ids, actor: user),
          {:ok, employees} <- Employee.for_user_businesses(business_ids, actor: user) do
-
-      system_users_count = 5  # Placeholder
+      # Placeholder
+      system_users_count = 5
 
       socket
       |> assign(:businesses, businesses)
@@ -631,7 +639,7 @@ defmodule RivaAshWeb.PeopleManagementLive do
   defp format_date(date) do
     case Calendar.strftime(date, "%Y-%m-%d") do
       {:ok, formatted} -> formatted
-      {:error, _} -> "Invalid date"
+      {:error, _unmatched} -> "Invalid date"
     end
   end
 
@@ -640,17 +648,19 @@ defmodule RivaAshWeb.PeopleManagementLive do
 
     header = "Type,Name,Email,Phone,Business,Status\n"
 
-    client_rows = Enum.map(clients, fn client ->
-      business_name = Map.get(business_map, client.business_id, "Unknown")
-      "Client,#{client.name},#{client.email || ""},#{client.phone || ""},#{business_name},Active\n"
-    end)
+    client_rows =
+      Enum.map(clients, fn client ->
+        business_name = Map.get(business_map, client.business_id, "Unknown")
+        "Client,#{client.name},#{client.email || ""},#{client.phone || ""},#{business_name},Active\n"
+      end)
 
-    employee_rows = Enum.map(employees, fn employee ->
-      business_name = Map.get(business_map, employee.business_id, "Unknown")
-      name = "#{employee.first_name} #{employee.last_name}"
-      status = if employee.is_active, do: "Active", else: "Inactive"
-      "Employee,#{name},#{employee.email || ""},#{employee.phone || ""},#{business_name},#{status}\n"
-    end)
+    employee_rows =
+      Enum.map(employees, fn employee ->
+        business_name = Map.get(business_map, employee.business_id, "Unknown")
+        name = "#{employee.first_name} #{employee.last_name}"
+        status = if employee.is_active, do: "Active", else: "Inactive"
+        "Employee,#{name},#{employee.email || ""},#{employee.phone || ""},#{business_name},#{status}\n"
+      end)
 
     header <> Enum.join(client_rows) <> Enum.join(employee_rows)
   end
@@ -666,16 +676,16 @@ defmodule RivaAshWeb.PeopleManagementLive do
       %Ash.Error.NotFound{} ->
         "Person not found"
 
-      _ ->
+      _unmatchedunmatched ->
         "An unexpected error occurred"
     end
   end
 
   defp format_validation_error(error) do
     case error do
-      {message, _} -> message
+      {message, _unmatched} -> message
       message when is_binary(message) -> message
-      _ -> "Invalid input"
+      _unmatchedunmatched -> "Invalid input"
     end
   end
 end

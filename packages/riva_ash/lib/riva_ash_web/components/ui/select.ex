@@ -1,3 +1,8 @@
+alias RivaAshWeb.Components.UI, as: UI
+alias Phoenix.HTML, as: HTML
+alias Phoenix.LiveView.Rendered, as: Rendered
+alias Phoenix.HTML.FormField, as: FormField
+
 defmodule RivaAshWeb.Components.UI.Select do
   @moduledoc """
   Implements a select component using the design system.
@@ -57,25 +62,53 @@ defmodule RivaAshWeb.Components.UI.Select do
   # Helper function to build wrapper classes
   @spec build_wrapper_class(Phoenix.HTML.FormField.t() | nil) :: String.t()
   defp build_wrapper_class(field) do
-    if field, "relative w-full", "w-full"
+    class =
+      if field do
+        "relative w-full"
+      else
+        "w-full"
+      end
+
+    class
   end
 
   # Helper function to build error classes
   @spec build_error_class(Phoenix.HTML.FormField.t() | nil) :: String.t()
   defp build_error_class(field) do
-    if has_error?(field), "text-sm text-destructive mt-1", "hidden"
+    class =
+      if has_error?(field) do
+        "text-sm text-destructive mt-1"
+      else
+        "hidden"
+      end
+
+    class
   end
 
   # Helper function to build required classes
   @spec build_required_class(boolean()) :: String.t()
   defp build_required_class(required) do
-    if required, "required", ""
+    class =
+      if required do
+        "required"
+      else
+        ""
+      end
+
+    class
   end
 
   # Helper function to build options classes
   @spec build_options_class(boolean()) :: String.t()
   defp build_options_class(multiple) do
-    if multiple, "py-1", ""
+    class =
+      if multiple do
+        "py-1"
+      else
+        ""
+      end
+
+    class
   end
 
   # Helper function to check if field has errors
@@ -104,7 +137,7 @@ defmodule RivaAshWeb.Components.UI.Select do
     case size do
       "sm" -> "h-9 px-2 text-xs"
       "lg" -> "h-11 px-4 text-base"
-      _ -> "h-10 px-3 text-sm"
+      _unmatchedunmatched -> "h-10 px-3 text-sm"
     end
   end
 
@@ -113,7 +146,7 @@ defmodule RivaAshWeb.Components.UI.Select do
       "default" -> ""
       "error" -> "border-destructive focus:ring-destructive"
       "success" -> "border-[var(--chart-5)] focus:ring-[var(--chart-5)]"
-      _ -> ""
+      _unmatchedunmatched -> ""
     end
   end
 end

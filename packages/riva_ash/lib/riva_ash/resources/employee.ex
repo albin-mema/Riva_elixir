@@ -144,12 +144,12 @@ defmodule RivaAsh.Resources.Employee do
 
     read :by_business do
       argument(:business_id, :uuid, allow_nil?: false)
-      filter(expr(business_id == arg(:business_id)))
+      filter(expr(business_id == ^arg(:business_id)))
     end
 
     read :by_role do
       argument(:role, :string, allow_nil?: false)
-      filter(expr(role == arg(:role)))
+      filter(expr(role == ^arg(:role)))
     end
 
     read :active do
@@ -192,12 +192,15 @@ defmodule RivaAsh.Resources.Employee do
       argument(:business_ids, {:array, :uuid}, allow_nil?: false)
 
       filter(expr(business_id in ^arg(:business_ids)))
-      filter(expr(
-        contains(first_name, ^arg(:search_term)) or
-        contains(last_name, ^arg(:search_term)) or
-        contains(email, ^arg(:search_term)) or
-        contains(phone, ^arg(:search_term))
-      ))
+
+      filter(
+        expr(
+          contains(first_name, ^arg(:search_term)) or
+            contains(last_name, ^arg(:search_term)) or
+            contains(email, ^arg(:search_term)) or
+            contains(phone, ^arg(:search_term))
+        )
+      )
 
       prepare(build(load: [:business], calculate: [:name]))
     end
@@ -433,8 +436,12 @@ defmodule RivaAsh.Resources.Employee do
           {:ok, business} -> {:ok, business}
           {:error, reason} -> {:error, reason}
         end
-      {:error, reason} -> {:error, reason}
-      error -> {:error, "Failed to load business: #{inspect(error)}"}
+
+      {:error, reason} ->
+        {:error, reason}
+
+      error ->
+        {:error, "Failed to load business: #{inspect(error)}"}
     end
   end
 
@@ -525,5 +532,4 @@ defmodule RivaAsh.Resources.Employee do
   def days_since_hired(%{hire_date: hire_date}) do
     Date.diff(Date.utc_today(), hire_date)
   end
-
 end

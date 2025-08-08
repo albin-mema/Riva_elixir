@@ -1,3 +1,6 @@
+alias Plug.Conn, as: Conn
+require Logger
+
 defmodule RivaAshWeb.AshAdminConfig do
   @moduledoc """
   Configuration for AshAdmin to handle authentication and actor setup.

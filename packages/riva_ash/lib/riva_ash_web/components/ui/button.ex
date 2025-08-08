@@ -1,3 +1,6 @@
+alias RivaAshWeb.Components.UI, as: UI
+alias Phoenix.LiveView.Rendered, as: Rendered
+
 defmodule RivaAshWeb.Components.UI.Button do
   @moduledoc """
   Implements a button component using the design system.
@@ -65,13 +68,21 @@ defmodule RivaAshWeb.Components.UI.Button do
   # Helper function to build spinner classes
   @spec build_spinner_class(boolean()) :: String.t()
   defp build_spinner_class(loading) do
-    if loading, "mr-2 h-4 w-4 animate-spin", "hidden"
+    if loading do
+      "mr-2 h-4 w-4 animate-spin"
+    else
+      "hidden"
+    end
   end
 
   # Helper function to build content classes
   @spec build_content_class(boolean()) :: String.t()
   defp build_content_class(loading) do
-    if loading, "inline-block", ""
+    if loading do
+      "inline-block"
+    else
+      ""
+    end
   end
 
   # Helper function to build disabled state
@@ -86,9 +97,15 @@ defmodule RivaAshWeb.Components.UI.Button do
 
     variant = variant_classes(assigns.variant)
     size = size_classes(assigns.size)
-    loading = if assigns.loading, "opacity-50 pointer-events-none", ""
 
-    Enum.join([base, variant, size, loading, assigns.class], " ")
+    loading_class =
+      if assigns.loading do
+        "opacity-50 pointer-events-none"
+      else
+        ""
+      end
+
+    Enum.join([base, variant, size, loading_class, assigns.class], " ")
   end
 
   defp variant_classes(variant) do
@@ -99,7 +116,7 @@ defmodule RivaAshWeb.Components.UI.Button do
       "secondary" -> "bg-secondary text-secondary-foreground hover:bg-secondary/80"
       "ghost" -> "hover:bg-accent hover:text-accent-foreground"
       "link" -> "underline-offset-4 hover:underline text-primary"
-      _ -> "bg-primary text-primary-foreground hover:bg-primary/90"
+      _unmatchedunmatched -> "bg-primary text-primary-foreground hover:bg-primary/90"
     end
   end
 
@@ -108,7 +125,7 @@ defmodule RivaAshWeb.Components.UI.Button do
       "default" -> "h-10 py-2 px-4"
       "sm" -> "h-9 px-3 rounded-md"
       "lg" -> "h-11 px-8 rounded-md"
-      _ -> "h-10 py-2 px-4"
+      _unmatchedunmatched -> "h-10 py-2 px-4"
     end
   end
 end

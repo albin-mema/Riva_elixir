@@ -1,3 +1,6 @@
+alias RivaAshWeb.Components, as: Components
+alias RivaAshWeb.CoreComponents, as: CoreComponents
+
 defmodule RivaAshWeb.UIDemoHTML do
   @moduledoc """
   HTML module for UI demonstration templates.

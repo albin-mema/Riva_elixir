@@ -1,3 +1,8 @@
+alias RivaAshWeb.Components.Forms, as: Forms
+alias RivaAshWeb.Components.Molecules, as: Molecules
+alias RivaAshWeb.Components.Atoms, as: Atoms
+alias Phoenix.LiveView.Rendered, as: Rendered
+
 defmodule RivaAshWeb.Components.Forms.PaymentForm do
   @moduledoc """
   Payment processing form component.
@@ -109,7 +114,7 @@ defmodule RivaAshWeb.Components.Forms.PaymentForm do
     """
   end
 
-  @spec render_reservation_summary(reservation :: map()) :: Phoenix.LiveView.Rendered.t()
+  @spec render_reservation_summary(assigns :: map()) :: Phoenix.LiveView.Rendered.t()
   defp render_reservation_summary(assigns) do
     ~H"""
     <div>
@@ -125,7 +130,7 @@ defmodule RivaAshWeb.Components.Forms.PaymentForm do
     """
   end
 
-  @spec render_payment_method_selection(form :: map(), payment_methods :: list()) :: Phoenix.LiveView.Rendered.t()
+  @spec render_payment_method_selection(assigns :: map()) :: Phoenix.LiveView.Rendered.t()
   defp render_payment_method_selection(assigns) do
     ~H"""
     <.select_field
@@ -137,7 +142,7 @@ defmodule RivaAshWeb.Components.Forms.PaymentForm do
     """
   end
 
-  @spec render_payment_method_fields(form :: map()) :: Phoenix.LiveView.Rendered.t()
+  @spec render_payment_method_fields(assigns :: map()) :: Phoenix.LiveView.Rendered.t()
   defp render_payment_method_fields(assigns) do
     ~H"""
     <div :if={show_credit_card_fields?(@form[:payment_method].value)}>
@@ -152,7 +157,7 @@ defmodule RivaAshWeb.Components.Forms.PaymentForm do
     """
   end
 
-  @spec render_credit_card_fields(form :: map()) :: Phoenix.LiveView.Rendered.t()
+  @spec render_credit_card_fields(assigns :: map()) :: Phoenix.LiveView.Rendered.t()
   defp render_credit_card_fields(assigns) do
     ~H"""
     <h4>Credit Card Information</h4>
@@ -167,7 +172,7 @@ defmodule RivaAshWeb.Components.Forms.PaymentForm do
     """
   end
 
-  @spec render_bank_transfer_fields(form :: map()) :: Phoenix.LiveView.Rendered.t()
+  @spec render_bank_transfer_fields(assigns :: map()) :: Phoenix.LiveView.Rendered.t()
   defp render_bank_transfer_fields(assigns) do
     ~H"""
     <h4>Bank Transfer Information</h4>
@@ -176,7 +181,7 @@ defmodule RivaAshWeb.Components.Forms.PaymentForm do
     """
   end
 
-  @spec render_cash_fields(form :: map()) :: Phoenix.LiveView.Rendered.t()
+  @spec render_cash_fields(assigns :: map()) :: Phoenix.LiveView.Rendered.t()
   defp render_cash_fields(assigns) do
     ~H"""
     <h4>Cash Payment</h4>
@@ -185,14 +190,14 @@ defmodule RivaAshWeb.Components.Forms.PaymentForm do
     """
   end
 
-  @spec render_notes_field(form :: map()) :: Phoenix.LiveView.Rendered.t()
+  @spec render_notes_field(assigns :: map()) :: Phoenix.LiveView.Rendered.t()
   defp render_notes_field(assigns) do
     ~H"""
     <.form_field field={@form[:notes]} label="Payment Notes" type="textarea" />
     """
   end
 
-  @spec render_form_actions(loading :: boolean(), on_cancel :: String.t()) :: Phoenix.LiveView.Rendered.t()
+  @spec render_form_actions(assigns :: map()) :: Phoenix.LiveView.Rendered.t()
   defp render_form_actions(assigns) do
     ~H"""
     <div>
@@ -314,7 +319,7 @@ defmodule RivaAshWeb.Components.Forms.PaymentForm do
 
   @spec expiry_month_options() :: list({String.t(), String.t()})
   defp expiry_month_options do
-    Application.compile_env(:riva_ash, :expiry_month_options, [
+    Application.get_env(:riva_ash, :expiry_month_options, [
       {"01", "01"},
       {"02", "02"},
       {"03", "03"},

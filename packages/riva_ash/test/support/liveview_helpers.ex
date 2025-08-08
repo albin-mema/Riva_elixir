@@ -1,3 +1,10 @@
+alias RivaAsh.Test, as: Test
+alias Phoenix.LiveView, as: LiveView
+alias Phoenix.LiveViewTest, as: LiveViewTest
+alias Phoenix.LiveViewTest.View, as: View
+alias MyAppWeb.Components.Badge, as: Badge
+alias Phoenix.LiveView.Rendered, as: Rendered
+
 defmodule RivaAsh.Test.LiveViewHelpers do
   @moduledoc """
   Phoenix LiveView test helpers with data-testid ergonomics.
@@ -64,7 +71,7 @@ defmodule RivaAsh.Test.LiveViewHelpers do
             #{truncate_html(html)}
         """)
 
-      _ ->
+      _unmatchedunmatched ->
         :ok
     end
   end

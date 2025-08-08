@@ -36,15 +36,17 @@ if config_env() == :prod do
   maybe_ipv6 =
     case System.get_env("ECTO_IPV6") do
       v when is_binary(v) ->
-        v
-        |> String.downcase()
-        |> (&(&1 in ["true", "1", "yes", "on"])).()
-        |> case do
+        enable_ipv6? =
+          v
+          |> String.downcase()
+          |> (&(&1 in ["true", "1", "yes", "on"])).()
+
+        case enable_ipv6? do
           true -> [:inet6]
           false -> []
         end
 
-      _ ->
+      _ecto_ipv6_empty ->
         []
     end
 
