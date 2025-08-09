@@ -1,12 +1,3 @@
-alias RivaAsh.Resources, as: Resources
-alias Ash.Policy, as: Policy
-alias RivaAsh.Changes, as: Changes
-alias RivaAsh.Validations, as: Validations
-alias RivaAsh.Reactors, as: Reactors
-alias RivaAsh.Resources.Client, as: Client
-alias RivaAsh.Resources.Item, as: Item
-alias RivaAsh.Resources.Business, as: Business
-alias Ash.Query, as: Query
 
 defmodule RivaAsh.Resources.Reservation do
   @moduledoc """
@@ -586,7 +577,7 @@ defmodule RivaAsh.Resources.Reservation do
   @spec get_business_by_reservation_id(String.t()) :: {:ok, RivaAsh.Resources.Business.t()} | {:error, String.t()}
   def get_business_by_reservation_id(reservation_id) do
     case __MODULE__.by_id(reservation_id) do
-      {:ok, reservation} -> get_business(reservation_id)
+      {:ok, _reservation} -> get_business(reservation_id)
       {:error, reason} -> {:error, reason}
     end
   end

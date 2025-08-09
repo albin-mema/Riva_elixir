@@ -1,8 +1,3 @@
-alias RivaAsh.Resources, as: Resources
-alias Ash.Policy, as: Policy
-alias RivaAsh.Validations, as: Validations
-alias Ash.Changeset, as: Changeset
-alias RivaAsh.Resources.Business, as: Business
 
 defmodule RivaAsh.Resources.Client do
   @moduledoc """
@@ -565,7 +560,7 @@ defmodule RivaAsh.Resources.Client do
   @spec get_business_by_client_id(String.t()) :: {:ok, RivaAsh.Resources.Business.t()} | {:error, String.t()}
   def get_business_by_client_id(client_id) do
     case __MODULE__.by_id(client_id) do
-      {:ok, client} -> get_business(client_id)
+      {:ok, _client} -> get_business(client_id)
       {:error, reason} -> {:error, reason}
     end
   end

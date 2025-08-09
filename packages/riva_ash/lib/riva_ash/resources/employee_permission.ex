@@ -396,13 +396,13 @@ defmodule RivaAsh.Resources.EmployeePermission do
 
     # Private helper functions
 
-    defp validate_employee_business_match(employee_id, granted_by_id) do
+    defp validate_employee_business_match(_employee_id, _granted_by_id) do
       # This would typically check if both employees belong to the same business
       # For now, we'll assume this validation is handled elsewhere
       {:ok, true}
     end
 
-    defp validate_permission_exists(permission_id) do
+    defp validate_permission_exists(_permission_id) do
       # This would typically check if the permission exists
       # For now, we'll assume this validation is handled elsewhere
       {:ok, true}

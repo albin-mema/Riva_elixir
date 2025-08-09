@@ -1,5 +1,3 @@
-alias RivaAsh.Resources.Pricing, as: Pricing
-alias Ash.Resource, as: Resource
 
 defmodule RivaAsh.Resources.Pricing.ApplyPricingValidations do
   @moduledoc false

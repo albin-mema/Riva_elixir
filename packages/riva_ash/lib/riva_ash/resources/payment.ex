@@ -1,8 +1,3 @@
-alias RivaAsh.Resources, as: Resources
-alias Ash.Policy, as: Policy
-alias RivaAsh.Changes, as: Changes
-alias RivaAsh.Validations, as: Validations
-alias Ash.Changeset, as: Changeset
 
 defmodule RivaAsh.Resources.Payment do
   @moduledoc """

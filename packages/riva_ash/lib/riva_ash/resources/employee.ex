@@ -457,7 +457,7 @@ defmodule RivaAsh.Resources.Employee do
   @spec get_business_by_employee_id(String.t()) :: {:ok, RivaAsh.Resources.Business.t()} | {:error, String.t()}
   def get_business_by_employee_id(employee_id) do
     case __MODULE__.by_id(employee_id) do
-      {:ok, employee} -> get_business(employee_id)
+      {:ok, _employee} -> get_business(employee_id)
       {:error, reason} -> {:error, reason}
     end
   end

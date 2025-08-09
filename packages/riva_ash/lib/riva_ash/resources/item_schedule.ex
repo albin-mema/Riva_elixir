@@ -1,5 +1,3 @@
-alias RivaAsh.Resources, as: Resources
-alias RivaAsh.Validations, as: Validations
 
 defmodule RivaAsh.Resources.ItemSchedule do
   @moduledoc """

@@ -1,7 +1,3 @@
-alias RivaAsh.Resources, as: Resources
-alias Ash.Policy, as: Policy
-alias RivaAsh.Resources.Pricing, as: Pricing
-alias RivaAsh.Validations, as: Validations
 
 defmodule RivaAsh.Resources.Pricing do
   @moduledoc """
