@@ -63,6 +63,15 @@ defmodule RivaAsh.Application do
     base_children()
     |> maybe_add_database_child()
     |> add_business_process_supervisors()
+    |> add_gdpr_retention_job()
+  end
+
+  defp add_gdpr_retention_job(children) do
+    if Mix.env() != :test do
+      children ++ [RivaAsh.Jobs.GDPRRetentionJob]
+    else
+      children
+    end
   end
 
   @spec start_supervisor([term()]) :: {:ok, pid()} | {:error, term()}

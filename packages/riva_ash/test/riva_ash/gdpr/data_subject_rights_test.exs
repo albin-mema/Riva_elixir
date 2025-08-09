@@ -5,7 +5,6 @@ defmodule RivaAsh.GDPR.DataSubjectRightsTest do
   alias RivaAsh.Factory
 
   describe "export" do
-    @spec test_returns_complete_dataset :: :ok
     test "returns complete dataset" do
       # TODO: create a user with related records via Factory
       # TODO: call export function and assert structure contains expected sections
@@ -14,7 +13,6 @@ defmodule RivaAsh.GDPR.DataSubjectRightsTest do
   end
 
   describe "delete/anonymize" do
-    @spec test_preserves_referential_integrity :: :ok
     test "preserves referential integrity" do
       # TODO: perform deletion/anonymization and ensure foreign keys remain valid
       assert true

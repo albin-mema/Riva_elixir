@@ -41,7 +41,7 @@
 - [ ] **Retention Policy Automation**
   - [x] RetentionPolicy module created (`lib/riva_ash/gdpr/retention_policy.ex`)
   - [x] Background job created (`lib/riva_ash/jobs/gdpr_retention_job.ex`)
-  - [ ] Job scheduling configuration
+  - [x] Job scheduling configuration
   - [ ] Database migration for retention metadata
   - [ ] Testing and validation
   - **Deadline**: 2025-09-15

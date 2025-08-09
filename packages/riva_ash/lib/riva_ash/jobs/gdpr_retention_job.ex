@@ -56,6 +56,12 @@ defmodule RivaAsh.Jobs.GDPRRetentionJob do
 
     start_time = System.monotonic_time(:millisecond)
 
+    :telemetry.execute(
+      [:riva_ash, :gdpr_retention, :start],
+      %{system_time: System.system_time()},
+      %{}
+    )
+
     state
     |> execute_retention_cleanup(start_time)
     |> handle_cleanup_result(start_time, state.schedule, state)
@@ -195,7 +201,7 @@ defmodule RivaAsh.Jobs.GDPRRetentionJob do
   end
 
   @spec log_successful_cleanup({integer(), map(), map()}, integer()) :: :ok
-  defp log_successful_cleanup({execution_time, results, _report}, _start_time) do
+  defp log_successful_cleanup({execution_time, _results, _report}, _start_time) do
     Logger.info("GDPR: Retention cleanup completed successfully in #{execution_time}ms")
   end
 
