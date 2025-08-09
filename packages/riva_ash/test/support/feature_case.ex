@@ -28,7 +28,10 @@ defmodule RivaAshWeb.FeatureCase do
       import RivaAshWeb.FeatureCase
       import RivaAsh.TestHelpers
 
-      # Temporarily using standard Phoenix LiveView testing
+      # Browser testing DSL (PhoenixTest). If Playwright is configured, this can drive a real browser.
+      import PhoenixTest
+
+      # Also keep standard Phoenix testing helpers
       import Phoenix.ConnTest
       import Phoenix.LiveViewTest
     end

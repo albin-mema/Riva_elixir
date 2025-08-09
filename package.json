@@ -21,7 +21,7 @@
     "dev:local": "cd packages/riva_ash && mix phx.server",
     "test": "pnpm run test:backend",
     "test:backend": "dotenv -- pnpm run test:backend:raw",
-    "test:backend:raw": "cd packages/riva_ash && mix test",
+    "test:backend:raw": "cd packages/riva_ash && MIX_ENV=test mix ecto.reset --quiet && MIX_ENV=test mix test --trace",
     "test:watch": "dotenv -- pnpm run test:watch:raw",
     "test:watch:raw": "cd packages/riva_ash && mix test.watch",
     "test:property": "dotenv -- pnpm run test:property:raw",
@@ -81,7 +81,11 @@
     "docker:stop": "./docker-dev.sh stop",
     "docker:reset": "./docker-dev.sh reset",
     "docker:logs": "./docker-dev.sh logs",
-    "docker:status": "./docker-dev.sh status"
+    "docker:status": "./docker-dev.sh status",
+
+    "test:browser:headless": "cd packages/riva_ash && MIX_ENV=test PLAYWRIGHT_HEADLESS=true mix test --include browser --trace",
+    "test:browser:headed": "cd packages/riva_ash && MIX_ENV=test PLAYWRIGHT_HEADLESS=false mix test --include browser --trace",
+    "test:browser:demo": "./scripts/test-browser-demo.sh"
   },
   "devDependencies": {
     "concurrently": "^8.2.2",

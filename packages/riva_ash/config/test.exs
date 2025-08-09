@@ -56,15 +56,34 @@ config :phoenix, :plug_init_mode, :runtime
 # Configure PhoenixTest with Playwright
 # Functional programming patterns: Use consistent test configuration structure
 config :phoenix_test, :endpoint, RivaAshWeb.Endpoint
+# Base URL for Playwright driver to resolve relative paths
+config :phoenix_test, :base_url, System.get_env("BASE_URL", "http://localhost:4002")
 
 # Configuration patterns: Use application configuration instead of hardcoded values
 # Type safety: Use proper boolean evaluation for test configuration
 config :phoenix_test,
   otp_app: :riva_ash,
   playwright: [
-    browser: :chromium,
+    # Point to the repo-root Playwright CLI (we keep JS deps at repo root)
+    # Use a path relative to app cwd (packages/riva_ash) so both Port.open and show-trace work
+    cli: "../../node_modules/playwright/cli.js",
+    browser:
+      case System.get_env("PLAYWRIGHT_BROWSER", "chromium") do
+        "chromium" -> :chromium
+        "firefox" -> :firefox
+        "webkit" -> :webkit
+        other ->
+          IO.warn("Unknown PLAYWRIGHT_BROWSER=#{inspect(other)}; defaulting to :chromium")
+          :chromium
+      end,
     headless: System.get_env("PLAYWRIGHT_HEADLESS", "true") != "false",
-    trace: System.get_env("PLAYWRIGHT_TRACE", "false") == "true",
+    slow_mo: String.to_integer(System.get_env("PLAYWRIGHT_SLOW_MO_MS", "0")),
+    trace:
+      case System.get_env("PLAYWRIGHT_TRACE", "false") do
+        "open" -> :open
+        "true" -> true
+        _ -> false
+      end,
     trace_dir: Application.compile_env(:riva_ash, :playwright_trace_dir, "tmp")
   ],
   timeout_ms: Application.compile_env(:riva_ash, :phoenix_test_timeout, 30_000)
@@ -80,5 +99,5 @@ config :riva_ash, :property_testing,
   log_successful_flows: System.get_env("LOG_SUCCESSFUL_FLOWS", "true") == "true",
   screenshot_failures: System.get_env("SCREENSHOT_FAILURES", "true") == "true"
 
-# Oban removed from project: delete testing config
-# (left intentionally blank)
+# Disable business process supervisors during tests to speed up and avoid missing modules
+config :riva_ash, :enable_business_processes, false
