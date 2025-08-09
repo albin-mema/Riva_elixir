@@ -1,5 +1,3 @@
-alias RivaAshWeb.Error, as: Error
-alias RivaAsh.ErrorService, as: ErrorService
 
 defmodule RivaAshWeb.Error.AccessDeniedLive do
   @moduledoc """
@@ -7,12 +5,11 @@ defmodule RivaAshWeb.Error.AccessDeniedLive do
   """
   use RivaAshWeb, :live_view
 
-  @layout {RivaAshWeb.Layouts, :app}
 
   @impl true
   def mount(_params, session, socket) do
     # Check if user is authenticated to show appropriate message
-    case RivaAsh.ErrorService.get_current_user_from_session(session) do
+    case RivaAshWeb.Auth.get_current_user_from_session(session) do
       {:ok, user} ->
         socket =
           socket
@@ -83,15 +80,15 @@ defmodule RivaAshWeb.Error.AccessDeniedLive do
               </li>
             </ul>
 
-            <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+            <div class="bg-blue-50 mb-6 p-4 border border-blue-200 rounded-lg">
               <div class="flex">
-                <svg class="flex-shrink-0 w-5 h-5 text-blue-400 mt-0.5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <svg class="flex-shrink-0 mt-0.5 w-5 h-5 text-blue-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
                 <div class="ml-3">
-                  <h3 class="text-sm font-medium text-blue-800">What you can do:</h3>
-                  <div class="mt-2 text-sm text-blue-700">
-                    <ul class="list-disc list-inside space-y-1">
+                  <h3 class="font-medium text-blue-800 text-sm">What you can do:</h3>
+                  <div class="mt-2 text-blue-700 text-sm">
+                    <ul class="space-y-1 list-disc list-inside">
                       <li>Create your own business to access business resources</li>
                       <li>Contact a business owner to be added as an employee</li>
                       <li>Contact an administrator if you believe this is an error</li>

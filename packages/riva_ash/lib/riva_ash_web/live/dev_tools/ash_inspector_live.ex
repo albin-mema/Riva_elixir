@@ -1,5 +1,3 @@
-alias RivaAshWeb.DevTools, as: DevTools
-alias RivaAsh.DevTools, as: DevTools
 
 defmodule RivaAshWeb.DevTools.AshInspectorLive do
   @moduledoc """
@@ -20,7 +18,6 @@ defmodule RivaAshWeb.DevTools.AshInspectorLive do
       {:ok, redirect(socket, to: "/")}
     end
   else
-    alias RivaAsh.DevTools.AshInspectorService
 
     @impl true
     def mount(_params, _session, socket) do
@@ -37,7 +34,7 @@ defmodule RivaAshWeb.DevTools.AshInspectorLive do
       if connected?(socket) do
         # Subscribe to Ash telemetry events
         :telemetry.attach_many(
-          "ash_inspector_#{self()}",
+          "ash_inspector_#{inspect(self())}",
           [
             [:ash, :query, :start],
             [:ash, :query, :stop],
@@ -56,7 +53,7 @@ defmodule RivaAshWeb.DevTools.AshInspectorLive do
     @impl true
     def terminate(_reason, socket) do
       if connected?(socket) do
-        :telemetry.detach("ash_inspector_#{self()}")
+        :telemetry.detach("ash_inspector_#{inspect(self())}")
       end
     end
 
@@ -100,17 +97,17 @@ defmodule RivaAshWeb.DevTools.AshInspectorLive do
     end
 
     def handle_event("clear_logs", _params, socket) do
-      AshInspectorService.clear_logs(socket)
+      AshInspector.clear_logs(socket)
     end
 
     @impl true
     def render(assigns) do
       ~H"""
-      <div class="min-h-screen bg-gray-50 p-6">
-        <div class="max-w-7xl mx-auto">
+      <div class="bg-gray-50 p-6 min-h-screen">
+        <div class="mx-auto max-w-7xl">
           <div class="bg-white shadow rounded-lg">
-            <div class="border-b border-gray-200">
-              <nav class="-mb-px flex space-x-8 px-6">
+            <div class="border-gray-200 border-b">
+              <nav class="flex space-x-8 -mb-px px-6">
                 <button
                   phx-click="change_tab"
                   phx-value-tab="queries"
@@ -149,7 +146,7 @@ defmodule RivaAshWeb.DevTools.AshInspectorLive do
             <div class="p-6">
               <div class="flex justify-between items-center mb-4">
                 <div class="flex space-x-4">
-                  <select phx-change="filter_resource" class="rounded border-gray-300">
+                  <select phx-change="filter_resource" class="border-gray-300 rounded">
                     <option value="all">All Resources</option>
                     <option value="Business">Business</option>
                     <option value="Item">Item</option>
@@ -157,7 +154,7 @@ defmodule RivaAshWeb.DevTools.AshInspectorLive do
                     <option value="Client">Client</option>
                   </select>
 
-                  <select phx-change="filter_action" class="rounded border-gray-300">
+                  <select phx-change="filter_action" class="border-gray-300 rounded">
                     <option value="all">All Actions</option>
                     <option value="read">Read</option>
                     <option value="create">Create</option>
@@ -168,7 +165,7 @@ defmodule RivaAshWeb.DevTools.AshInspectorLive do
 
                 <button
                   phx-click="clear_logs"
-                  class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700"
+                  class="bg-red-600 hover:bg-red-700 px-4 py-2 rounded text-white"
                 >
                   Clear Logs
                 </button>
@@ -193,14 +190,14 @@ defmodule RivaAshWeb.DevTools.AshInspectorLive do
       ~H"""
       <div class="space-y-4">
         <%= for query <- @queries do %>
-          <div class="border rounded-lg p-4 bg-gray-50">
+          <div class="bg-gray-50 p-4 border rounded-lg">
             <div class="flex justify-between items-start mb-2">
               <div>
                 <span class="font-semibold text-lg"><%= query.resource %></span>
-                <span class="text-sm text-gray-600 ml-2"><%= query.action %></span>
+                <span class="ml-2 text-gray-600 text-sm"><%= query.action %></span>
               </div>
               <div class="text-right">
-                <div class="text-sm text-gray-500"><%= query.timestamp %></div>
+                <div class="text-gray-500 text-sm"><%= query.timestamp %></div>
                 <div class={[
                   "text-sm font-medium",
                   if(query.duration && query.duration > 100, do: "text-red-600", else: "text-green-600")
@@ -212,22 +209,22 @@ defmodule RivaAshWeb.DevTools.AshInspectorLive do
 
             <%= if query.filter do %>
               <div class="mt-2">
-                <span class="text-sm font-medium text-gray-700">Filter:</span>
-                <pre class="text-xs bg-white p-2 rounded mt-1 overflow-x-auto"><%= inspect(query.filter, pretty: true) %></pre>
+                <span class="font-medium text-gray-700 text-sm">Filter:</span>
+                <pre class="bg-white mt-1 p-2 rounded overflow-x-auto text-xs"><%= inspect(query.filter, pretty: true) %></pre>
               </div>
             <% end %>
 
             <%= if query.error do %>
-              <div class="mt-2 p-2 bg-red-100 border border-red-300 rounded">
-                <span class="text-sm font-medium text-red-700">Error:</span>
-                <pre class="text-xs text-red-600 mt-1"><%= query.error %></pre>
+              <div class="bg-red-100 mt-2 p-2 border border-red-300 rounded">
+                <span class="font-medium text-red-700 text-sm">Error:</span>
+                <pre class="mt-1 text-red-600 text-xs"><%= query.error %></pre>
               </div>
             <% end %>
           </div>
         <% end %>
 
         <%= if @queries == [] do %>
-          <div class="text-center text-gray-500 py-8">
+          <div class="py-8 text-gray-500 text-center">
             No queries recorded yet. Interact with your application to see Ash queries here.
           </div>
         <% end %>
@@ -239,7 +236,7 @@ defmodule RivaAshWeb.DevTools.AshInspectorLive do
       ~H"""
       <div class="space-y-4">
         <%= for policy <- @policies do %>
-          <div class="border rounded-lg p-4 bg-gray-50">
+          <div class="bg-gray-50 p-4 border rounded-lg">
             <div class="flex justify-between items-start mb-2">
               <div>
                 <span class="font-semibold text-lg"><%= policy.resource %></span>
@@ -254,20 +251,20 @@ defmodule RivaAshWeb.DevTools.AshInspectorLive do
                   <%= policy.result %>
                 </span>
               </div>
-              <div class="text-sm text-gray-500"><%= policy.timestamp %></div>
+              <div class="text-gray-500 text-sm"><%= policy.timestamp %></div>
             </div>
 
             <%= if policy.actor do %>
               <div class="mt-2">
-                <span class="text-sm font-medium text-gray-700">Actor:</span>
-                <span class="text-sm text-gray-600 ml-1"><%= inspect(policy.actor) %></span>
+                <span class="font-medium text-gray-700 text-sm">Actor:</span>
+                <span class="ml-1 text-gray-600 text-sm"><%= inspect(policy.actor) %></span>
               </div>
             <% end %>
 
             <%= if policy.policies do %>
               <div class="mt-2">
-                <span class="text-sm font-medium text-gray-700">Policy Breakdown:</span>
-                <div class="mt-1 space-y-1">
+                <span class="font-medium text-gray-700 text-sm">Policy Breakdown:</span>
+                <div class="space-y-1 mt-1">
                   <%= for {policy_name, result} <- policy.policies do %>
                     <div class="flex items-center text-sm">
                       <span class={[
@@ -289,7 +286,7 @@ defmodule RivaAshWeb.DevTools.AshInspectorLive do
         <% end %>
 
         <%= if @policies == [] do %>
-          <div class="text-center text-gray-500 py-8">
+          <div class="py-8 text-gray-500 text-center">
             No policy evaluations recorded yet.
           </div>
         <% end %>
@@ -301,15 +298,15 @@ defmodule RivaAshWeb.DevTools.AshInspectorLive do
       ~H"""
       <div class="space-y-4">
         <%= for action <- @actions do %>
-          <div class="border rounded-lg p-4 bg-gray-50">
+          <div class="bg-gray-50 p-4 border rounded-lg">
             <div class="flex justify-between items-start mb-2">
               <div>
                 <span class="font-semibold text-lg"><%= action.resource %></span>
-                <span class="text-sm text-gray-600 ml-2"><%= action.action %></span>
-                <span class="text-sm text-gray-500 ml-2">(<%= action.type %>)</span>
+                <span class="ml-2 text-gray-600 text-sm"><%= action.action %></span>
+                <span class="ml-2 text-gray-500 text-sm">(<%= action.type %>)</span>
               </div>
               <div class="text-right">
-                <div class="text-sm text-gray-500"><%= action.timestamp %></div>
+                <div class="text-gray-500 text-sm"><%= action.timestamp %></div>
                 <div class={[
                   "text-sm font-medium",
                   if(action.duration && action.duration > 500, do: "text-red-600", else: "text-green-600")
@@ -321,22 +318,22 @@ defmodule RivaAshWeb.DevTools.AshInspectorLive do
 
             <%= if action.input do %>
               <div class="mt-2">
-                <span class="text-sm font-medium text-gray-700">Input:</span>
-                <pre class="text-xs bg-white p-2 rounded mt-1 overflow-x-auto"><%= inspect(action.input, pretty: true, limit: :infinity) %></pre>
+                <span class="font-medium text-gray-700 text-sm">Input:</span>
+                <pre class="bg-white mt-1 p-2 rounded overflow-x-auto text-xs"><%= inspect(action.input, pretty: true, limit: :infinity) %></pre>
               </div>
             <% end %>
 
             <%= if action.error do %>
-              <div class="mt-2 p-2 bg-red-100 border border-red-300 rounded">
-                <span class="text-sm font-medium text-red-700">Error:</span>
-                <pre class="text-xs text-red-600 mt-1"><%= action.error %></pre>
+              <div class="bg-red-100 mt-2 p-2 border border-red-300 rounded">
+                <span class="font-medium text-red-700 text-sm">Error:</span>
+                <pre class="mt-1 text-red-600 text-xs"><%= action.error %></pre>
               </div>
             <% end %>
           </div>
         <% end %>
 
         <%= if @actions == [] do %>
-          <div class="text-center text-gray-500 py-8">
+          <div class="py-8 text-gray-500 text-center">
             No actions recorded yet.
           </div>
         <% end %>
