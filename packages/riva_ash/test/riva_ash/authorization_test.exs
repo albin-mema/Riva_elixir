@@ -3,7 +3,6 @@ defmodule RivaAsh.AuthorizationTest do
   alias RivaAsh.Authorization
 
   describe "authorize_action/3" do
-    @spec test_authorizes_valid_action_for_user :: :ok
     test "authorizes valid action for user" do
       user_id = "user-123"
       resource = %{id: "resource-456", owner_id: "user-123"}
@@ -23,7 +22,6 @@ defmodule RivaAsh.AuthorizationTest do
   end
 
   describe "check_role/2" do
-    @spec test_returns_true_for_matching_role :: :ok
     test "returns true for matching role" do
       user_id = "user-123"
       role = :admin
@@ -41,7 +39,6 @@ defmodule RivaAsh.AuthorizationTest do
   end
 
   describe "get_user_roles/1" do
-    @spec test_returns_list_of_user_roles :: :ok
     test "returns list of user roles" do
       user_id = "user-123"
 
@@ -58,7 +55,6 @@ defmodule RivaAsh.AuthorizationTest do
   end
 
   describe "assign_role/2" do
-    @spec test_assigns_role_to_user :: :ok
     test "assigns role to user" do
       user_id = "user-123"
       role = :business_owner
@@ -79,7 +75,6 @@ defmodule RivaAsh.AuthorizationTest do
   end
 
   describe "remove_role/2" do
-    @spec test_removes_role_from_user :: :ok
     test "removes role from user" do
       user_id = "user-123"
       role = :business_owner
@@ -97,7 +92,6 @@ defmodule RivaAsh.AuthorizationTest do
   end
 
   describe "check_resource_ownership/2" do
-    @spec test_returns_true_when_user_owns_resource :: :ok
     test "returns true when user owns resource" do
       user_id = "user-123"
       resource = %{owner_id: "user-123"}
