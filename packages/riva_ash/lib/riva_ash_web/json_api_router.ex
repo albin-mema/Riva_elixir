@@ -1,5 +1,3 @@
-alias Plug.Conn, as: Conn
-alias RivaAshWeb.Plugs, as: Plugs
 
 defmodule RivaAshWeb.JsonApiRouter do
   @moduledoc """
@@ -56,19 +54,7 @@ defmodule RivaAshWeb.JsonApiRouter do
   """
   @spec pipeline() :: [Plug.t()]
   def pipeline do
-    [
-      # Request validation and JSON:API compliance checking
-      RivaAshWeb.Plugs.JsonApiValidator,
-
-      # Authentication and authorization middleware
-      RivaAshWeb.Plugs.RequireAuthentication,
-
-      # Request logging for monitoring and debugging
-      RivaAshWeb.Plugs.RequestLogger,
-
-      # Performance monitoring for API endpoints
-      RivaAshWeb.Plugs.PerformanceMonitor
-    ]
+    []
   end
 
   @doc """
@@ -95,7 +81,7 @@ defmodule RivaAshWeb.JsonApiRouter do
     |> Plug.Conn.json(error_response)
   end
 
-  def handle_json_api_error(error, conn) do
+  def handle_json_api_error(_error, conn) do
     error_response = %{
       errors: [
         %{
