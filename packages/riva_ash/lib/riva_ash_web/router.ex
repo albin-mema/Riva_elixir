@@ -1,9 +1,3 @@
-alias Phoenix.LiveView, as: LiveView
-alias RivaAshWeb.Live.Hooks, as: Hooks
-alias RivaAshWeb.Plugs, as: Plugs
-
-alias RivaAshWeb.Dev, as: Dev
-alias RivaAshWeb.DevTools, as: DevTools
 
 defmodule RivaAshWeb.Router do
   @moduledoc """
@@ -27,7 +21,6 @@ defmodule RivaAshWeb.Router do
   import Plug.Conn
   import Phoenix.Controller
   import Phoenix.LiveView.Router
-  alias RivaAshWeb.Live.Hooks.LocaleHook
   import AshAdmin.Router
 
   alias RivaAshWeb.{AuthHelpers, Controllers}
@@ -45,6 +38,13 @@ defmodule RivaAshWeb.Router do
   # Pipeline configuration for different request types
   pipeline :api do
     plug(:accepts, ["json"])
+    plug(RivaAshWeb.Plugs.RateLimiter)
+  end
+
+  pipeline :authenticated_api do
+    plug(:accepts, ["json"])
+    plug(RivaAshWeb.Plugs.RateLimiter)
+    plug(AuthHelpers, :require_authenticated_user)
   end
 
   pipeline :browser do
@@ -156,6 +156,7 @@ defmodule RivaAshWeb.Router do
       live("/test-data-generator", RivaAshWeb.DevTools.TestDataGeneratorLive, :index)
       live("/performance-dashboard", RivaAshWeb.DevTools.PerformanceDashboardLive, :index)
     end
+
   end
 
   # ERD diagram (available at both /erd and /admin/erd)
