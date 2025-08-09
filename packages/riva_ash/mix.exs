@@ -13,7 +13,7 @@ defmodule RivaAsh.MixProject do
       test_coverage: [tool: ExCoveralls],
       dialyzer: [
         plt_file: {:no_warn, "priv/plts/dialyzer.plt"},
-        flags: [:error_handling, :race_conditions, :underspecs, :unknown],
+        flags: [:error_handling, :underspecs, :unknown],
         ignore_warnings: ".dialyzer_ignore.exs",
         plt_add_apps: [:mix, :eex, :iex, :ex_unit],
         plt_core_path: "priv/plts",
@@ -49,7 +49,7 @@ defmodule RivaAsh.MixProject do
       # Type safety: Configure Dialyzer for comprehensive type checking
       dialyzer: [
         plt_file: {:no_warn, "priv/plts/dialyzer.plt"},
-        flags: [:error_handling, :race_conditions, :underspecs, :unknown],
+        flags: [:error_handling, :underspecs, :unknown],
         ignore_warnings: ".dialyzer_ignore.exs",
         plt_add_apps: [:mix, :eex, :iex, :ex_unit],
         plt_core_path: "priv/plts",
@@ -60,6 +60,8 @@ defmodule RivaAsh.MixProject do
 
   @spec application :: keyword()
   def application do
+    start_phases = if Mix.env() == :prod, do: [migrate: [], setup_extensions: [], load_extensions: []], else: []
+
     [
       extra_applications: [
         :logger,
@@ -77,11 +79,7 @@ defmodule RivaAsh.MixProject do
         :telemetry_poller
       ],
       mod: {RivaAsh.Application, []},
-      start_phases: [
-        migrate: [],
-        setup_extensions: [],
-        load_extensions: []
-      ],
+      start_phases: start_phases,
       env: [
         # Application-specific configuration
         ash_ecto_repo: RivaAsh.Repo,
@@ -165,6 +163,7 @@ defmodule RivaAsh.MixProject do
       {:excoveralls, "~> 0.18", only: :test},
       {:faker, "~> 0.18", only: [:test, :dev]},
       {:phoenix_test_playwright, "~> 0.7.0", only: :test, runtime: false},
+      {:floki, ">= 0.36.0", only: :test},
 
       # === Code Quality & Analysis ===
       {:credo, "~> 1.7", only: [:dev, :test], runtime: false},

@@ -8,6 +8,11 @@
 # - Employees, clients, items, and reservations
 # - Proper relationships and realistic quantities
 
+if Mix.env() == :test do
+  IO.puts("Skipping seed data in test environment to keep tests fast and deterministic.")
+  System.halt(0)
+end
+
 alias RivaAsh.Resources.{Business, Section, Item, Employee, Client, Reservation, ItemType, Plot, Layout}
 alias RivaAsh.Accounts.User
 alias RivaAsh.Domain
