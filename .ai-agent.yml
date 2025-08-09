@@ -1,0 +1,33 @@
+version: 1
+policy:
+  allowed_changes:
+    - formatting_and_style_no_semantics
+    - remove_unused_aliases_imports_variables
+    - organize_aliases
+    - pipeline_cleanup_single_level_abstraction
+    - pattern_matching_function_heads_refactor
+    - docs_specs_typing_comments
+    - replace_in_memory_filter_with_ash_db_filter
+    - credo_autofixes_semantics_preserving
+  prohibited_without_task:
+    - public_api_changes
+    - module_renames_moves
+    - function_signature_changes
+    - ash_actions_policies_auth_changes
+    - db_schema_or_data_migrations
+    - liveview_behavior_changes
+    - performance_changes_without_benchmarks
+  verification:
+    compile: "mix compile"
+    credo: "mix credo --strict"
+    test: "mix test"
+    ash_query_changes_require_db_filter_tests: true
+  batching:
+    max_files_per_pr: 20
+    require_domain_scoping: true
+    require_diff_preview_for_large_batches: true
+  references:
+    airules: ".airules"
+    styleguide: "styleguide.md"
+    playbook: "docs/ai-agent-playbook.md"
+
