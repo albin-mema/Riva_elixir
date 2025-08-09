@@ -5,7 +5,7 @@ defmodule RivaAshWeb.Api.V1.JsonApiContractTest do
 
   describe "error contract for invalid include/sort" do
     @describetag :jsonapi
-    @spec test_invalid_include_returns_json_api_error :: :ok
+
     test "invalid include returns JSON:API error", %{conn: conn} do
       # Choose a common resource path; AshJsonApi exposes resources by type under /api
       # This suite focuses on contract shape rather than exact endpoint.
@@ -20,7 +20,7 @@ defmodule RivaAshWeb.Api.V1.JsonApiContractTest do
       assert_error_shape(body)
     end
 
-    @spec test_invalid_sort_returns_json_api_error :: :ok
+
     test "invalid sort returns JSON:API error", %{conn: conn} do
       conn = get(conn, "/api/unknown_type?sort=nonexistent_field")
 
