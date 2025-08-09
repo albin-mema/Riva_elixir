@@ -92,7 +92,7 @@ defmodule RivaAshWeb.PaymentLiveTest do
       |> render_submit()
 
       assert_has(view, "payment-error")
-      refute view |> rendered() |> String.contains?(~s([data-testid="payment-status-paid"]))
+      refute view |> render() |> String.contains?(~s([data-testid="payment-status-paid"]))
     end
   end
 end

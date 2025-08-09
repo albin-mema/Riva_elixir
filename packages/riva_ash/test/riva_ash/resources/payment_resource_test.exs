@@ -24,7 +24,6 @@ defmodule RivaAsh.Resources.PaymentResourceTest do
     |> Ash.create!()
   end
 
-  @spec test_create_valid_payment_updates_reservation_balance :: :ok
   test "create valid payment updates reservation balance" do
     reservation = create_reservation!()
 
