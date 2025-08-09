@@ -26,7 +26,7 @@ defmodule RivaAshWeb.ChatLive do
         mode = Map.get(params, "mode", "page")
 
         if connected?(socket) do
-          # Subscribe to general chat updates
+          # Subscribe to general chat updates (kept minimal for dev)
           Phoenix.PubSub.subscribe(RivaAsh.PubSub, "chat:general")
         end
 
@@ -69,8 +69,8 @@ defmodule RivaAshWeb.ChatLive do
 
       case Ash.create(ChatMessage, :create, message_params, actor: socket.assigns.current_user, domain: RivaAsh.Domain) do
         {:ok, message} ->
-          # Load the message with sender info
-          message_with_sender = Ash.load!(message, [:sender], domain: RivaAsh.Domain)
+          # Load message with sender info (user/client), simplified for dev
+          message_with_sender = Ash.load!(message, [:sender_user, :sender_client], domain: RivaAsh.Domain)
 
           # Broadcast to all users in this room
           Phoenix.PubSub.broadcast(RivaAsh.PubSub, "chat:room:#{socket.assigns.current_room.id}", {
@@ -124,13 +124,21 @@ defmodule RivaAshWeb.ChatLive do
   end
 
   def handle_event("create_room", %{"name" => name}, socket) when name != "" do
-    # For now, create rooms without business association (general rooms)
-    room_params = %{
-      name: String.trim(name),
-      room_type: "general",
-      # Placeholder for general rooms
-      business_id: "00000000-0000-0000-0000-000000000000"
-    }
+    # For now (dev), create internal rooms for the user's first business
+    room_params =
+      case get_user_default_business(socket.assigns.current_user) do
+        {:ok, business_id} -> %{
+          name: String.trim(name),
+          room_type: "internal",
+          business_id: business_id
+        }
+        {:error, _} -> %{
+          name: String.trim(name),
+          room_type: "internal",
+          # Fallback: let the create fail with a clear error
+          business_id: nil
+        }
+      end
 
     case Ash.create(ChatRoom, :create, room_params, actor: socket.assigns.current_user, domain: RivaAsh.Domain) do
       {:ok, room} ->
@@ -247,7 +255,7 @@ defmodule RivaAshWeb.ChatLive do
   end
 
   defp load_rooms(_user) do
-    # For now, load all active rooms (in a real app, filter by user access)
+    # For now (dev), load all active rooms
     case Ash.read(ChatRoom, :active_rooms, %{}, domain: RivaAsh.Domain) do
       {:ok, rooms} -> {:ok, rooms}
       {:error, error} -> {:error, error}
@@ -263,6 +271,15 @@ defmodule RivaAshWeb.ChatLive do
     end
   end
 
+
+  # Dev helper: get a default business for a user
+  defp get_user_default_business(_user) do
+    # TODO: replace with real query for user's businesses; for now, use first active room's business
+    case Ash.read(RivaAsh.Resources.ChatRoom, :active_rooms, %{}, domain: RivaAsh.Domain) do
+      {:ok, [first | _rest]} -> {:ok, first.business_id}
+      _ -> {:error, :no_business}
+    end
+  end
   defp load_room_messages(nil, _user), do: {:ok, []}
 
   defp load_room_messages(room, user) do

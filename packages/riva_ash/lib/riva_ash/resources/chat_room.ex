@@ -28,7 +28,7 @@ defmodule RivaAsh.Resources.ChatRoom do
     attribute(:name, :string, allow_nil?: false, public?: true)
     attribute(:description, :string, public?: true)
     # general, support, team, reservation
-    attribute(:room_type, :string, default: "general", public?: true)
+    attribute(:room_type, :string, default: "internal", public?: true)
     attribute(:is_active, :boolean, default: true, public?: true)
 
     create_timestamp(:inserted_at)
@@ -38,7 +38,7 @@ defmodule RivaAsh.Resources.ChatRoom do
   relationships do
     belongs_to(:business, RivaAsh.Resources.Business, allow_nil?: false, public?: true)
     belongs_to(:created_by, RivaAsh.Accounts.User, allow_nil?: false, public?: true)
-    has_many(:messages, RivaAsh.Resources.ChatMessage, destination_attribute: :room_id, source_attribute: :id)
+    has_many(:messages, RivaAsh.Resources.ChatMessage, destination_attribute: :room_id)
   end
 
   actions do
@@ -50,6 +50,7 @@ defmodule RivaAsh.Resources.ChatRoom do
 
       change(relate_actor(:created_by))
       change(set_attribute(:business_id, arg(:business_id)))
+      # Note: after_action to add creator as participant is handled in Live or can be added later
     end
 
     update :update do
@@ -78,7 +79,7 @@ defmodule RivaAsh.Resources.ChatRoom do
   validations do
     validate(present([:name]))
     validate(string_length(:name, min: 1, max: 100))
-    validate(one_of(:room_type, ["general", "support", "team", "reservation"]))
+    validate(one_of(:room_type, ["internal", "client_support"]))
   end
 
   identities do

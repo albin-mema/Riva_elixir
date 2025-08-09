@@ -22,14 +22,15 @@ defmodule RivaAsh.Resources.ChatMessage do
     uuid_primary_key(:id)
 
     attribute(:content, :string, allow_nil?: false, public?: true)
-    attribute(:room_id, :uuid, allow_nil?: false, public?: true)
 
     create_timestamp(:inserted_at)
     update_timestamp(:updated_at)
   end
 
   relationships do
-    belongs_to(:sender, RivaAsh.Accounts.User, allow_nil?: false, public?: true)
+    belongs_to(:room, RivaAsh.Resources.ChatRoom, allow_nil?: false, public?: true)
+    belongs_to(:sender_user, RivaAsh.Accounts.User, allow_nil?: true, public?: true)
+    belongs_to(:sender_client, RivaAsh.Resources.Client, allow_nil?: true, public?: true)
   end
 
   actions do
@@ -37,32 +38,26 @@ defmodule RivaAsh.Resources.ChatMessage do
 
     create :create do
       accept([:content, :room_id])
-      change(relate_actor(:sender))
+      # Relate actor to correct sender relationship based on actor type
+      change(fn changeset, context ->
+        case context[:actor] do
+          %RivaAsh.Accounts.User{id: _} ->
+            Ash.Changeset.manage_relationship(changeset, :sender_user, context[:actor], type: :append_and_remove)
+          %RivaAsh.Resources.Client{id: _} ->
+            Ash.Changeset.manage_relationship(changeset, :sender_client, context[:actor], type: :append_and_remove)
+          _ ->
+            Ash.Changeset.add_error(changeset, "Invalid actor for sending message")
+        end
+      end)
     end
 
     read :for_room do
       argument(:room_id, :uuid, allow_nil?: false)
       filter(expr(room_id == ^arg(:room_id)))
-      prepare(build(sort: [inserted_at: :asc], load: [:sender]))
+      prepare(build(sort: [inserted_at: :asc], load: [:sender_user, :sender_client]))
     end
 
-    read :recent_rooms do
-      prepare(
-        build(
-          sort: [inserted_at: :desc],
-          load: [:sender]
-        )
-      )
 
-      filter(
-        expr(
-          fragment(
-            "? IN (SELECT DISTINCT room_id FROM chat_messages ORDER BY inserted_at DESC LIMIT 20)",
-            ^arg(:room_id)
-          )
-        )
-      )
-    end
   end
 
   policies do
@@ -73,7 +68,7 @@ defmodule RivaAsh.Resources.ChatMessage do
   end
 
   validations do
-    validate(present([:content, :room_id]))
+    validate(present([:content]))
     validate(string_length(:content, min: 1, max: 1000))
   end
 
@@ -94,7 +89,6 @@ defmodule RivaAsh.Resources.ChatMessage do
       read_one(:chat_message, :read)
       list(:chat_messages, :read)
       list(:room_messages, :for_room)
-      list(:recent_rooms, :recent_rooms)
     end
 
     mutations do

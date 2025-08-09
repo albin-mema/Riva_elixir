@@ -18,13 +18,13 @@ defmodule RivaAshWeb.Components.Molecules.ChatMessagesList do
 
   ## Examples
 
-      <.chat_messages_list 
+      <.chat_messages_list
         messages={@messages}
         current_user_id={@current_user.id}
         loading={@loading}
       />
 
-      <.chat_messages_list 
+      <.chat_messages_list
         messages={[]}
         current_user_id={@current_user.id}
         loading={false}
@@ -49,11 +49,11 @@ defmodule RivaAshWeb.Components.Molecules.ChatMessagesList do
 
   def chat_messages_list(assigns) do
     ~H"""
-    <div 
+    <div
       class={[
         "flex flex-col overflow-hidden",
         @class
-      ]} 
+      ]}
       style={"max-height: #{@max_height}"}
       {@rest}
     >
@@ -78,7 +78,7 @@ defmodule RivaAshWeb.Components.Molecules.ChatMessagesList do
             />
           </div>
         <% else %>
-          <div 
+          <div
             class="flex-1 overflow-y-auto p-4 space-y-1"
             id="messages-container"
             phx-hook={if @auto_scroll, do: "ChatAutoScroll", else: nil}
@@ -89,13 +89,13 @@ defmodule RivaAshWeb.Components.Molecules.ChatMessagesList do
                 sender_name={get_sender_name(message, @current_user_id)}
                 sender_avatar={get_sender_avatar(message)}
                 timestamp={message.inserted_at}
-                is_own_message={message.sender_id == @current_user_id}
+                is_own_message={message.sender_user_id == @current_user_id}
                 message_type={get_message_type(message)}
                 id={"message-#{message.id}"}
                 class={message_spacing_class(message, @messages, index)}
               />
             <% end %>
-            
+
             <!-- Scroll anchor for auto-scroll -->
             <%= if @auto_scroll do %>
               <div id="messages-end" phx-hook="ScrollAnchor"></div>
@@ -111,17 +111,20 @@ defmodule RivaAshWeb.Components.Molecules.ChatMessagesList do
 
   defp get_sender_name(message, current_user_id) do
     cond do
-      message.sender_id == current_user_id -> "You"
-      message.sender && message.sender.name -> message.sender.name
-      message.sender && message.sender.email -> message.sender.email
-      true -> "Unknown User"
+      message.sender_user_id == current_user_id -> "You"
+      Map.has_key?(message, :sender_user) && message.sender_user && message.sender_user.name -> message.sender_user.name
+      Map.has_key?(message, :sender_user) && message.sender_user && message.sender_user.email -> message.sender_user.email
+      Map.has_key?(message, :sender_client) && message.sender_client && message.sender_client.name -> message.sender_client.name
+      Map.has_key?(message, :sender_client) && message.sender_client && message.sender_client.email -> message.sender_client.email
+      true -> "Unknown"
     end
   end
 
   defp get_sender_avatar(message) do
-    case message.sender do
-      %{avatar_url: url} when is_binary(url) -> url
-      _unmatchedunmatched -> nil
+    cond do
+      Map.has_key?(message, :sender_user) && message.sender_user && Map.get(message.sender_user, :avatar_url) -> message.sender_user.avatar_url
+      Map.has_key?(message, :sender_client) && message.sender_client && Map.get(message.sender_client, :avatar_url) -> message.sender_client.avatar_url
+      true -> nil
     end
   end
 
@@ -134,7 +137,7 @@ defmodule RivaAshWeb.Components.Molecules.ChatMessagesList do
 
     cond do
       # First message or different sender
-      is_nil(previous_message) or previous_message.sender_id != current_message.sender_id ->
+      is_nil(previous_message) or previous_message.sender_user_id != current_message.sender_user_id ->
         "mt-4"
 
       # Same sender, check time gap
