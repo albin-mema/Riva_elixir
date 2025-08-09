@@ -2,6 +2,33 @@
 
 This document outlines the coding standards and principles for the Reservation
 System project.
+## Usage and Enforcement
+
+- This Style Guide and the root .airules are required inputs for every development task and code review.
+- Begin each task by identifying the relevant sections you will follow (e.g., pipelines, pattern-matching in function heads, Ash query filtering, testing strategy).
+- Code that violates this Style Guide or .airules must not be merged.
+
+### Definition of Done for any change
+
+1. Compile cleanly (no new warnings introduced)
+   - From packages/riva_ash: `mix compile`
+   - Aim for zero warnings locally; CI may enforce `--warnings-as-errors`.
+2. Run Credo in strict mode and fix findings
+   - `mix credo --strict` (or `mix credo.check` alias)
+3. Update and run tests (use property-based tests where it makes sense)
+   - `mix test`
+4. Prefer proper Ash query filtering at the database level; avoid in-memory filtering.
+5. Favor data-flow pipelines (|>) and pattern matching in function heads. Keep functions at a single level of abstraction.
+
+### Quick commands
+
+```bash
+cd packages/riva_ash
+mix compile --warnings-as-errors
+mix credo --strict
+mix test --stale
+```
+
 
 ## Code Style Fundamentals
 

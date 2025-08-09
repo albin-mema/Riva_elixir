@@ -2,6 +2,71 @@
 
 **Version**: 1.0 **Last Updated**: 2024-08-01
 
+## Usage and Enforcement
+
+- This .airules and the root Style Guide (./styleguide.md) are mandatory inputs for every development task: planning, coding, code review, and AI-assisted changes.
+- At task kickoff, identify the relevant sections you will follow (e.g., “Pipelines and function heads,” “Ash query filtering,” “Testing”).
+- Do not accept or merge code that violates this .airules or the Style Guide.
+
+### Definition of Done for any change
+
+1. Compile cleanly (no new warnings introduced):
+   - From packages/riva_ash: `mix compile`
+   - Aim for zero warnings locally; CI may enforce `--warnings-as-errors`.
+2. Run Credo in strict mode and fix findings:
+   - `mix credo --strict` (or `mix credo.check` alias)
+3. Update and run tests (property-based where it makes sense):
+   - `mix test`
+4. Prefer proper Ash query filtering at the database level; avoid in-memory filtering.
+5. Keep code at a single level of abstraction and use data-flow pipelines with pattern-matching function heads.
+
+### Quick commands
+
+```bash
+cd packages/riva_ash
+mix compile --warnings-as-errors
+mix credo --strict
+mix test --stale
+```
+
+### Notes
+
+- For browser tests, prefer Playwright initiated via mix test (no extra shell scripts), and design tests to actually display and verify content during development.
+- Always use package managers (mix, npm/pnpm) rather than editing package files directly.
+
+## AI Agent Change Policy
+
+- Scope: These rules apply to any automated or AI-assisted changes across the codebase.
+
+- Allowed changes (safe by default)
+  - Style and readability improvements that do not change behavior
+  - Remove unused aliases/imports/variables; organize aliases; apply formatting
+  - Pipeline and pattern‑matching refactors that are semantics‑preserving
+  - Extract small functions to achieve single‑level of abstraction (no API changes)
+  - Replace in‑memory filtering with proper Ash DB-level filtering (must keep behavior)
+  - Add/clarify docs and typespecs; fix typos; comment improvements
+
+- Prohibited without a dedicated task + tests
+  - Public API changes, module renames/moves, or altering function signatures
+  - Ash resource action/policy changes; authentication/authorization logic
+  - Database schema/migrations or data‑affecting changes
+  - LiveView assigns/events/handle_* behavior changes or navigation flows
+  - Performance-affecting changes (caching, concurrency) without benchmarks/tests
+
+- Verification required per change
+  - From packages/riva_ash:
+    - mix compile (no new warnings)
+    - mix credo --strict (no new issues introduced)
+    - mix test for impacted areas; include property-based tests where it makes sense
+  - For Ash query changes: include tests asserting DB‑level filtering (no in‑memory filtering)
+
+- Batching and safety
+  - Keep PRs small and scoped (e.g., ≤20 files and one domain area)
+  - Provide clear diffs and rationale referencing this .airules and styleguide.md
+  - Prefer a dry‑run (diff preview) for review before applying large batches
+
+See docs/ai-agent-playbook.md and ./.ai-agent.yml for machine‑readable rules and examples.
+
 ## Project Overview
 
 This is a comprehensive reservation management system built with Elixir/Phoenix
