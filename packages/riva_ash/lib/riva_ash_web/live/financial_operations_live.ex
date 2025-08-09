@@ -1,8 +1,3 @@
-alias RivaAshWeb.Components.Organisms, as: Organisms
-alias RivaAshWeb.Components.Molecules, as: Molecules
-alias RivaAshWeb.Components.Atoms, as: Atoms
-alias RivaAshWeb.Live, as: Live
-alias Ash.Error, as: Error
 
 defmodule RivaAshWeb.FinancialOperationsLive do
   @moduledoc """
@@ -20,10 +15,8 @@ defmodule RivaAshWeb.FinancialOperationsLive do
   use RivaAshWeb, :live_view
 
   # Explicitly set the authenticated layout
-  @layout {RivaAshWeb.Layouts, :authenticated}
 
   alias RivaAsh.Financial
-  alias RivaAsh.ErrorHelpers
 
   import RivaAshWeb.Components.Organisms.PageHeader
   import RivaAshWeb.Components.Molecules.Card
@@ -43,8 +36,8 @@ defmodule RivaAshWeb.FinancialOperationsLive do
       {:ok, socket} ->
         {:ok, assign(socket, loading: true)}
 
-      {:error, _unmatched} = error ->
-        {:ok, error}
+      {:error, reason} ->
+        {:error, reason}
     end
   end
 
@@ -96,27 +89,27 @@ defmodule RivaAshWeb.FinancialOperationsLive do
       <!-- Loading State -->
       <%= if @loading do %>
         <div class="flex justify-center items-center py-12">
-          <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+          <div class="border-b-2 border-blue-600 rounded-full w-8 h-8 animate-spin"></div>
         </div>
       <% else %>
         <!-- Financial Dashboard -->
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div class="gap-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4">
           <!-- Revenue Card -->
           <.card>
             <:body>
             <div class="p-6">
               <div class="flex items-center">
                 <div class="flex-shrink-0">
-                  <div class="w-8 h-8 bg-green-500 rounded-md flex items-center justify-center">
+                  <div class="flex justify-center items-center bg-green-500 rounded-md w-8 h-8">
                     <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                   </div>
                 </div>
-                <div class="ml-5 w-0 flex-1">
+                <div class="flex-1 ml-5 w-0">
                   <dl>
-                    <dt class="text-sm font-medium text-gray-500 truncate">Total Revenue</dt>
-                    <dd class="text-lg font-medium text-gray-900">
+                    <dt class="font-medium text-gray-500 text-sm truncate">Total Revenue</dt>
+                    <dd class="font-medium text-gray-900 text-lg">
                       <%= format_currency(@stats.total_revenue) %>
                     </dd>
                   </dl>
@@ -132,16 +125,16 @@ defmodule RivaAshWeb.FinancialOperationsLive do
             <div class="p-6">
               <div class="flex items-center">
                 <div class="flex-shrink-0">
-                  <div class="w-8 h-8 bg-blue-500 rounded-md flex items-center justify-center">
+                  <div class="flex justify-center items-center bg-blue-500 rounded-md w-8 h-8">
                     <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                     </svg>
                   </div>
                 </div>
-                <div class="ml-5 w-0 flex-1">
+                <div class="flex-1 ml-5 w-0">
                   <dl>
-                    <dt class="text-sm font-medium text-gray-500 truncate">This Month</dt>
-                    <dd class="text-lg font-medium text-gray-900">
+                    <dt class="font-medium text-gray-500 text-sm truncate">This Month</dt>
+                    <dd class="font-medium text-gray-900 text-lg">
                       <%= format_currency(@stats.monthly_revenue) %>
                     </dd>
                   </dl>
@@ -157,16 +150,16 @@ defmodule RivaAshWeb.FinancialOperationsLive do
             <div class="p-6">
               <div class="flex items-center">
                 <div class="flex-shrink-0">
-                  <div class="w-8 h-8 bg-yellow-500 rounded-md flex items-center justify-center">
+                  <div class="flex justify-center items-center bg-yellow-500 rounded-md w-8 h-8">
                     <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                   </div>
                 </div>
-                <div class="ml-5 w-0 flex-1">
+                <div class="flex-1 ml-5 w-0">
                   <dl>
-                    <dt class="text-sm font-medium text-gray-500 truncate">Pending</dt>
-                    <dd class="text-lg font-medium text-gray-900">
+                    <dt class="font-medium text-gray-500 text-sm truncate">Pending</dt>
+                    <dd class="font-medium text-gray-900 text-lg">
                       <%= format_currency(@stats.pending_payments) %>
                     </dd>
                   </dl>
@@ -182,16 +175,16 @@ defmodule RivaAshWeb.FinancialOperationsLive do
             <div class="p-6">
               <div class="flex items-center">
                 <div class="flex-shrink-0">
-                  <div class="w-8 h-8 bg-purple-500 rounded-md flex items-center justify-center">
+                  <div class="flex justify-center items-center bg-purple-500 rounded-md w-8 h-8">
                     <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
                     </svg>
                   </div>
                 </div>
-                <div class="ml-5 w-0 flex-1">
+                <div class="flex-1 ml-5 w-0">
                   <dl>
-                    <dt class="text-sm font-medium text-gray-500 truncate">Pricing Rules</dt>
-                    <dd class="text-lg font-medium text-gray-900"><%= length(@pricings) %></dd>
+                    <dt class="font-medium text-gray-500 text-sm truncate">Pricing Rules</dt>
+                    <dd class="font-medium text-gray-900 text-lg"><%= length(@pricings) %></dd>
                   </dl>
                 </div>
               </div>
@@ -203,7 +196,7 @@ defmodule RivaAshWeb.FinancialOperationsLive do
         <!-- View Tabs -->
         <div class="bg-white shadow rounded-lg">
           <div class="px-6 py-4">
-            <div class="flex space-x-1 bg-gray-100 rounded-lg p-1">
+            <div class="flex space-x-1 bg-gray-100 p-1 rounded-lg">
               <button
                 phx-click="change_view"
                 phx-value-mode="dashboard"
@@ -267,19 +260,19 @@ defmodule RivaAshWeb.FinancialOperationsLive do
   # View rendering functions
   defp render_dashboard_view(assigns) do
     ~H"""
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <div class="gap-6 grid grid-cols-1 lg:grid-cols-2">
       <!-- Revenue Chart -->
       <.card>
         <:body>
         <div class="p-6">
-          <h3 class="text-lg font-medium text-gray-900 mb-4">Revenue Trend</h3>
-          <div class="bg-gray-50 p-6 rounded-lg h-64 flex items-center justify-center">
+          <h3 class="mb-4 font-medium text-gray-900 text-lg">Revenue Trend</h3>
+          <div class="flex justify-center items-center bg-gray-50 p-6 rounded-lg h-64">
             <div class="text-center">
-              <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg class="mx-auto w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
               </svg>
               <p class="mt-2 text-gray-500">Revenue Chart</p>
-              <p class="text-sm text-gray-400">Interactive chart will be implemented here</p>
+              <p class="text-gray-400 text-sm">Interactive chart will be implemented here</p>
             </div>
           </div>
         </div>
@@ -290,23 +283,23 @@ defmodule RivaAshWeb.FinancialOperationsLive do
       <.card>
         <:body>
         <div class="p-6">
-          <h3 class="text-lg font-medium text-gray-900 mb-4">Recent Transactions</h3>
+          <h3 class="mb-4 font-medium text-gray-900 text-lg">Recent Transactions</h3>
           <div class="space-y-3">
             <%= if length(@payments) == 0 do %>
-              <p class="text-center text-gray-500 py-8">No transactions yet</p>
+              <p class="py-8 text-gray-500 text-center">No transactions yet</p>
             <% else %>
               <%= for payment <- Enum.take(@payments, 5) do %>
-                <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                <div class="flex justify-between items-center bg-gray-50 p-3 rounded-lg">
                   <div>
-                    <p class="text-sm font-medium text-gray-900">
+                    <p class="font-medium text-gray-900 text-sm">
                       <%= payment.client.first_name %> <%= payment.client.last_name %>
                     </p>
-                    <p class="text-sm text-gray-500">
+                    <p class="text-gray-500 text-sm">
                       <%= Calendar.strftime(payment.inserted_at, "%b %d, %Y") %>
                     </p>
                   </div>
                   <div class="text-right">
-                    <p class="text-sm font-medium text-green-600">
+                    <p class="font-medium text-green-600 text-sm">
                       <%= format_currency(payment.amount) %>
                     </p>
                     <.badge variant={status_variant(payment.status)}>
@@ -330,27 +323,27 @@ defmodule RivaAshWeb.FinancialOperationsLive do
       <:body>
       <div class="p-6">
         <div class="flex justify-between items-center mb-4">
-          <h3 class="text-lg font-medium text-gray-900">Payment Management</h3>
+          <h3 class="font-medium text-gray-900 text-lg">Payment Management</h3>
           <.button phx-click="record_payment" variant="primary">
             + Record Payment
           </.button>
         </div>
 
         <div class="overflow-x-auto">
-          <table class="min-w-full divide-y divide-gray-200">
+          <table class="divide-y divide-gray-200 min-w-full">
             <thead class="bg-gray-50">
               <tr>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Client</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                <th class="px-6 py-3 font-medium text-gray-500 text-xs text-left uppercase tracking-wider">Client</th>
+                <th class="px-6 py-3 font-medium text-gray-500 text-xs text-left uppercase tracking-wider">Amount</th>
+                <th class="px-6 py-3 font-medium text-gray-500 text-xs text-left uppercase tracking-wider">Date</th>
+                <th class="px-6 py-3 font-medium text-gray-500 text-xs text-left uppercase tracking-wider">Status</th>
+                <th class="px-6 py-3 font-medium text-gray-500 text-xs text-left uppercase tracking-wider">Actions</th>
               </tr>
             </thead>
             <tbody class="bg-white divide-y divide-gray-200">
               <%= if length(@payments) == 0 do %>
                 <tr>
-                  <td colspan="5" class="px-6 py-4 text-center text-gray-500">
+                  <td colspan="5" class="px-6 py-4 text-gray-500 text-center">
                     No payments found
                   </td>
                 </tr>
@@ -358,17 +351,17 @@ defmodule RivaAshWeb.FinancialOperationsLive do
                 <%= for payment <- @payments do %>
                   <tr>
                     <td class="px-6 py-4 whitespace-nowrap">
-                      <div class="text-sm font-medium text-gray-900">
+                      <div class="font-medium text-gray-900 text-sm">
                         <%= payment.client.first_name %> <%= payment.client.last_name %>
                       </div>
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap">
-                      <div class="text-sm text-gray-900">
+                      <div class="text-gray-900 text-sm">
                         <%= format_currency(payment.amount) %>
                       </div>
                     </td>
                     <td class="px-6 py-4 whitespace-nowrap">
-                      <div class="text-sm text-gray-500">
+                      <div class="text-gray-500 text-sm">
                         <%= Calendar.strftime(payment.inserted_at, "%b %d, %Y") %>
                       </div>
                     </td>
@@ -377,7 +370,7 @@ defmodule RivaAshWeb.FinancialOperationsLive do
                         <%= String.capitalize(to_string(payment.status)) %>
                       </.badge>
                     </td>
-                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                    <td class="px-6 py-4 font-medium text-sm whitespace-nowrap">
                       <.button phx-click="view_payment" phx-value-id={payment.id} variant="outline" size="sm">
                         View
                       </.button>
@@ -400,15 +393,15 @@ defmodule RivaAshWeb.FinancialOperationsLive do
       <:body>
       <div class="p-6">
         <div class="flex justify-between items-center mb-4">
-          <h3 class="text-lg font-medium text-gray-900">Pricing Rules</h3>
+          <h3 class="font-medium text-gray-900 text-lg">Pricing Rules</h3>
           <.button phx-click="create_pricing" variant="primary">
             + Create Pricing Rule
           </.button>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div class="gap-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
           <%= if length(@pricings) == 0 do %>
-            <div class="col-span-full text-center text-gray-500 py-8">
+            <div class="col-span-full py-8 text-gray-500 text-center">
               No pricing rules found
             </div>
           <% else %>
@@ -416,10 +409,10 @@ defmodule RivaAshWeb.FinancialOperationsLive do
               <.card>
                 <:body>
                 <div class="p-4">
-                  <h4 class="font-medium text-gray-900 mb-2"><%= pricing.name %></h4>
-                  <p class="text-sm text-gray-600 mb-3"><%= pricing.description %></p>
+                  <h4 class="mb-2 font-medium text-gray-900"><%= pricing.name %></h4>
+                  <p class="mb-3 text-gray-600 text-sm"><%= pricing.description %></p>
                   <div class="flex justify-between items-center">
-                    <span class="text-lg font-semibold text-green-600">
+                    <span class="font-semibold text-green-600 text-lg">
                       <%= format_currency(pricing.amount) %>
                     </span>
                     <.badge variant={status_variant(pricing.status)}>
@@ -443,13 +436,13 @@ defmodule RivaAshWeb.FinancialOperationsLive do
     <.card>
       <:body>
       <div class="p-6">
-        <h3 class="text-lg font-medium text-gray-900 mb-4">Financial Reports</h3>
+        <h3 class="mb-4 font-medium text-gray-900 text-lg">Financial Reports</h3>
 
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div class="gap-6 grid grid-cols-1 md:grid-cols-2">
           <!-- Revenue Report -->
           <div class="bg-gray-50 p-6 rounded-lg">
-            <h4 class="font-medium text-gray-900 mb-2">Revenue Report</h4>
-            <p class="text-sm text-gray-600 mb-4">Detailed revenue analysis and trends</p>
+            <h4 class="mb-2 font-medium text-gray-900">Revenue Report</h4>
+            <p class="mb-4 text-gray-600 text-sm">Detailed revenue analysis and trends</p>
             <.button phx-click="generate_report" phx-value-type="revenue" variant="outline">
               Generate Report
             </.button>
@@ -457,8 +450,8 @@ defmodule RivaAshWeb.FinancialOperationsLive do
 
           <!-- Tax Report -->
           <div class="bg-gray-50 p-6 rounded-lg">
-            <h4 class="font-medium text-gray-900 mb-2">Tax Report</h4>
-            <p class="text-sm text-gray-600 mb-4">Tax calculations and summaries</p>
+            <h4 class="mb-2 font-medium text-gray-900">Tax Report</h4>
+            <p class="mb-4 text-gray-600 text-sm">Tax calculations and summaries</p>
             <.button phx-click="generate_report" phx-value-type="tax" variant="outline">
               Generate Report
             </.button>
@@ -466,8 +459,8 @@ defmodule RivaAshWeb.FinancialOperationsLive do
         </div>
 
         <!-- Export Options -->
-        <div class="mt-6 pt-6 border-t border-gray-200">
-          <h4 class="font-medium text-gray-900 mb-4">Export Options</h4>
+        <div class="mt-6 pt-6 border-gray-200 border-t">
+          <h4 class="mb-4 font-medium text-gray-900">Export Options</h4>
           <div class="flex flex-wrap gap-3">
             <.button phx-click="export_report" phx-value-format="pdf" variant="secondary">
               Export as PDF
@@ -550,7 +543,6 @@ defmodule RivaAshWeb.FinancialOperationsLive do
     "$#{Decimal.to_string(decimal, :normal)}"
   end
 
-  defp format_unmatchedcurrency(_unmatched), do: "$0.00"
 
   @doc """
   Determines the badge variant based on status.
@@ -559,5 +551,4 @@ defmodule RivaAshWeb.FinancialOperationsLive do
   defp status_variant(:pending), do: "secondary"
   defp status_variant(:completed), do: "default"
   defp status_variant(:cancelled), do: "destructive"
-  defp status_unmatchedvariant(_unmatched), do: "secondary"
 end

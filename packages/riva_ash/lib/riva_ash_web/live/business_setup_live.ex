@@ -1,10 +1,3 @@
-alias RivaAsh.Resources, as: Resources
-alias RivaAshWeb.Components.Organisms, as: Organisms
-alias RivaAshWeb.Components.Molecules, as: Molecules
-alias RivaAshWeb.Components.Atoms, as: Atoms
-alias RivaAshWeb.Components.Interactive, as: Interactive
-alias RivaAshWeb.Live, as: Live
-alias Phoenix.Component, as: Component
 
 defmodule RivaAshWeb.BusinessSetupLive do
   @moduledoc """
@@ -24,7 +17,6 @@ defmodule RivaAshWeb.BusinessSetupLive do
   # Explicitly set the authenticated layout
   @layout {RivaAshWeb.Layouts, :authenticated}
 
-  alias RivaAsh.Resources.{Business, Plot, Section, Layout, Item, ItemType}
   alias RivaAsh.BusinessSetup
   alias RivaAsh.ErrorHelpers
 
@@ -103,7 +95,7 @@ defmodule RivaAshWeb.BusinessSetupLive do
   @impl true
   def render(assigns) do
     ~H"""
-    <div class="max-w-4xl mx-auto space-y-6">
+    <div class="space-y-6 mx-auto max-w-4xl">
       <!-- Page Header -->
       <.page_header title="🏗️ Business Setup Wizard" description="Let's get your business set up step by step">
         <:action>
@@ -131,7 +123,7 @@ defmodule RivaAshWeb.BusinessSetupLive do
                   <% end %>
 
                   <!-- Step circle and content -->
-                  <div class="relative flex items-center justify-center">
+                  <div class="relative flex justify-center items-center">
                     <div class={[
                       "h-8 w-8 rounded-full flex items-center justify-center text-sm font-medium",
                       cond do
@@ -151,7 +143,7 @@ defmodule RivaAshWeb.BusinessSetupLive do
                   </div>
 
                   <!-- Step title (hidden on mobile) -->
-                  <div class="hidden sm:block absolute top-10 left-1/2 transform -translate-x-1/2 w-32 text-center">
+                  <div class="hidden sm:block top-10 left-1/2 absolute w-32 text-center -translate-x-1/2 transform">
                     <p class={[
                       "text-xs font-medium",
                       if(step.id == @current_step, do: "text-blue-600", else: "text-gray-500")
@@ -186,7 +178,7 @@ defmodule RivaAshWeb.BusinessSetupLive do
         </div>
 
         <!-- Navigation Buttons -->
-        <div class="px-6 py-4 bg-gray-50 flex justify-between rounded-b-lg">
+        <div class="flex justify-between bg-gray-50 px-6 py-4 rounded-b-lg">
           <div>
             <%= if @current_step != "business" do %>
               <.button phx-click="previous_step" variant="secondary">
@@ -216,24 +208,24 @@ defmodule RivaAshWeb.BusinessSetupLive do
     ~H"""
     <div class="space-y-6">
       <div>
-        <h2 class="text-2xl font-bold text-gray-900">Business Information</h2>
+        <h2 class="font-bold text-gray-900 text-2xl">Business Information</h2>
         <p class="mt-2 text-gray-600">Let's start with the basics about your business.</p>
       </div>
 
       <%= if @errors[:business] do %>
-        <div class="bg-red-50 border border-red-200 rounded-lg p-4">
+        <div class="bg-red-50 p-4 border border-red-200 rounded-lg">
           <p class="text-red-800"><%= @errors[:business] %></p>
         </div>
       <% end %>
 
       <.form id="business-form" for={@changeset} phx-submit="save_business_step" class="space-y-6">
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div class="gap-6 grid grid-cols-1 md:grid-cols-2">
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">Business Name</label>
+            <label class="block mb-2 font-medium text-gray-700 text-sm">Business Name</label>
             <input
               type="text"
               name="business[name]"
-              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              class="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 w-full"
               placeholder="Enter your business name"
               value={@setup_data[:business_name] || ""}
               phx-blur="update_field"
@@ -242,10 +234,10 @@ defmodule RivaAshWeb.BusinessSetupLive do
           </div>
 
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">Business Type</label>
+            <label class="block mb-2 font-medium text-gray-700 text-sm">Business Type</label>
             <select
               name="business[business_type]"
-              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              class="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 w-full"
               phx-change="update_field"
               phx-value-field="business_type"
             >
@@ -260,11 +252,11 @@ defmodule RivaAshWeb.BusinessSetupLive do
           </div>
 
           <div class="md:col-span-2">
-            <label class="block text-sm font-medium text-gray-700 mb-2">Description</label>
+            <label class="block mb-2 font-medium text-gray-700 text-sm">Description</label>
             <textarea
               name="business[description]"
               rows="3"
-              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              class="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 w-full"
               placeholder="Describe your business..."
               phx-blur="update_field"
               phx-value-field="business_description"
@@ -272,11 +264,11 @@ defmodule RivaAshWeb.BusinessSetupLive do
           </div>
 
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">Address</label>
+            <label class="block mb-2 font-medium text-gray-700 text-sm">Address</label>
             <input
               type="text"
               name="business[address]"
-              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              class="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 w-full"
               placeholder="Business address"
               value={@setup_data[:address] || ""}
               phx-blur="update_field"
@@ -285,11 +277,11 @@ defmodule RivaAshWeb.BusinessSetupLive do
           </div>
 
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">Phone</label>
+            <label class="block mb-2 font-medium text-gray-700 text-sm">Phone</label>
             <input
               type="tel"
               name="business[phone]"
-              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              class="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 w-full"
               placeholder="Business phone"
               value={@setup_data[:phone] || ""}
               phx-blur="update_field"
@@ -312,13 +304,13 @@ defmodule RivaAshWeb.BusinessSetupLive do
     ~H"""
     <div class="space-y-6">
       <div>
-        <h2 class="text-2xl font-bold text-gray-900">Physical Layout</h2>
+        <h2 class="font-bold text-gray-900 text-2xl">Physical Layout</h2>
         <p class="mt-2 text-gray-600">Design your space by creating plots and sections.</p>
       </div>
 
       <div class="bg-gray-50 p-6 rounded-lg">
-        <h3 class="text-lg font-medium text-gray-900 mb-4">Layout Designer</h3>
-        <p class="text-gray-600 mb-4">Use the visual designer below to create your space layout.</p>
+        <h3 class="mb-4 font-medium text-gray-900 text-lg">Layout Designer</h3>
+        <p class="mb-4 text-gray-600">Use the visual designer below to create your space layout.</p>
 
         <.plot_layout_designer
           plots={@setup_data[:plots] || []}
@@ -340,13 +332,13 @@ defmodule RivaAshWeb.BusinessSetupLive do
     ~H"""
     <div class="space-y-6">
       <div>
-        <h2 class="text-2xl font-bold text-gray-900">Item Configuration</h2>
+        <h2 class="font-bold text-gray-900 text-2xl">Item Configuration</h2>
         <p class="mt-2 text-gray-600">Set up the items that customers can book.</p>
       </div>
 
       <div class="space-y-4">
         <div class="flex justify-between items-center">
-          <h3 class="text-lg font-medium text-gray-900">Your Items</h3>
+          <h3 class="font-medium text-gray-900 text-lg">Your Items</h3>
           <.button phx-click="add_item" variant="primary" size="sm">
             + Add Item
           </.button>
@@ -358,8 +350,8 @@ defmodule RivaAshWeb.BusinessSetupLive do
               <.card>
                 <:title><%= item.name %></:title>
                 <p class="text-gray-600"><%= item.description || "No description" %></p>
-                <div class="mt-4 flex justify-between items-center">
-                  <span class="text-sm text-gray-500">
+                <div class="flex justify-between items-center mt-4">
+                  <span class="text-gray-500 text-sm">
                     <%= item.item_type.name %> • <%= item.duration %> min
                   </span>
                   <div class="space-x-2">
@@ -375,13 +367,13 @@ defmodule RivaAshWeb.BusinessSetupLive do
             <% end %>
           </div>
         <% else %>
-          <div class="bg-gray-50 rounded-lg p-6">
-            <div class="text-center text-gray-500">
-              <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div class="bg-gray-50 p-6 rounded-lg">
+            <div class="text-gray-500 text-center">
+              <svg class="mx-auto w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
               </svg>
               <p class="mt-2">No items configured yet</p>
-              <p class="text-sm text-gray-400">Add your first bookable item to get started</p>
+              <p class="text-gray-400 text-sm">Add your first bookable item to get started</p>
             </div>
           </div>
         <% end %>
@@ -404,46 +396,46 @@ defmodule RivaAshWeb.BusinessSetupLive do
     ~H"""
     <div class="space-y-6">
       <div>
-        <h2 class="text-2xl font-bold text-gray-900">Operating Hours</h2>
+        <h2 class="font-bold text-gray-900 text-2xl">Operating Hours</h2>
         <p class="mt-2 text-gray-600">Configure when your business is open for bookings.</p>
       </div>
 
       <.form id="schedule-form" for={@changeset} phx-submit="save_schedule_step" class="space-y-6">
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div class="gap-6 grid grid-cols-1 md:grid-cols-2">
           <%= for day <- ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"] do %>
             <% day_key = String.downcase(day) %>
             <% day_map = Map.get(@setup_data[:schedule] || %{}, day_key, %{}) %>
-            <div class="border border-gray-200 rounded-lg p-4">
-              <h4 class="font-medium text-gray-900 mb-3"><%= day %></h4>
+            <div class="p-4 border border-gray-200 rounded-lg">
+              <h4 class="mb-3 font-medium text-gray-900"><%= day %></h4>
               <div class="space-y-3">
                 <div class="flex items-center space-x-2">
                   <input
                     type="checkbox"
                     name={"schedule[#{day_key}][enabled]"}
                     id={"schedule_#{day_key}_enabled"}
-                    class="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                    class="border-gray-300 rounded focus:ring-blue-500 text-blue-600"
                     checked={Map.get(day_map, "enabled", false)}
                   />
-                  <label for={"schedule_#{day_key}_enabled"} class="text-sm text-gray-700">
+                  <label for={"schedule_#{day_key}_enabled"} class="text-gray-700 text-sm">
                     Open
                   </label>
                 </div>
-                <div class="grid grid-cols-2 gap-2">
+                <div class="gap-2 grid grid-cols-2">
                   <div>
-                    <label class="block text-xs text-gray-500 mb-1">Open Time</label>
+                    <label class="block mb-1 text-gray-500 text-xs">Open Time</label>
                     <input
                       type="time"
                       name={"schedule[#{day_key}][open_time]"}
-                      class="w-full px-2 py-1 border border-gray-300 rounded text-sm"
+                      class="px-2 py-1 border border-gray-300 rounded w-full text-sm"
                       value={Map.get(day_map, "open_time", "")}
                     />
                   </div>
                   <div>
-                    <label class="block text-xs text-gray-500 mb-1">Close Time</label>
+                    <label class="block mb-1 text-gray-500 text-xs">Close Time</label>
                     <input
                       type="time"
                       name={"schedule[#{day_key}][close_time]"}
-                      class="w-full px-2 py-1 border border-gray-300 rounded text-sm"
+                      class="px-2 py-1 border border-gray-300 rounded w-full text-sm"
                       value={Map.get(day_map, "close_time", "")}
                     />
                   </div>
@@ -467,17 +459,17 @@ defmodule RivaAshWeb.BusinessSetupLive do
     ~H"""
     <div class="space-y-6">
       <div>
-        <h2 class="text-2xl font-bold text-gray-900">Pricing Setup</h2>
+        <h2 class="font-bold text-gray-900 text-2xl">Pricing Setup</h2>
         <p class="mt-2 text-gray-600">Set up your pricing rules and rates.</p>
       </div>
 
       <.form id="pricing-form" for={@changeset} phx-submit="save_pricing_step" class="space-y-6">
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div class="gap-6 grid grid-cols-1 md:grid-cols-2">
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">Currency</label>
+            <label class="block mb-2 font-medium text-gray-700 text-sm">Currency</label>
             <select
               name="pricing[currency]"
-              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              class="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 w-full"
             >
               <option value="USD">USD - US Dollar</option>
               <option value="EUR">EUR - Euro</option>
@@ -487,30 +479,30 @@ defmodule RivaAshWeb.BusinessSetupLive do
           </div>
 
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-2">Tax Rate (%)</label>
+            <label class="block mb-2 font-medium text-gray-700 text-sm">Tax Rate (%)</label>
             <input
               type="number"
               name="pricing[tax_rate]"
               step="0.01"
               min="0"
               max="100"
-              class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              class="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 w-full"
               value={@setup_data[:pricing]["tax_rate"] || 0}
             />
           </div>
 
           <div class="md:col-span-2">
-            <label class="block text-sm font-medium text-gray-700 mb-2">Pricing Rules</label>
+            <label class="block mb-2 font-medium text-gray-700 text-sm">Pricing Rules</label>
             <div class="space-y-3">
               <div class="flex items-center space-x-2">
                 <input
                   type="checkbox"
                   name="pricing[enable_dynamic_pricing]"
                   id="dynamic_pricing"
-                  class="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                  class="border-gray-300 rounded focus:ring-blue-500 text-blue-600"
                   checked={@setup_data[:pricing]["enable_dynamic_pricing"] || false}
                 />
-                <label for="dynamic_pricing" class="text-sm text-gray-700">
+                <label for="dynamic_pricing" class="text-gray-700 text-sm">
                   Enable dynamic pricing based on demand
                 </label>
               </div>
@@ -519,10 +511,10 @@ defmodule RivaAshWeb.BusinessSetupLive do
                   type="checkbox"
                   name="pricing[enable_discounts]"
                   id="discounts"
-                  class="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                  class="border-gray-300 rounded focus:ring-blue-500 text-blue-600"
                   checked={@setup_data[:pricing]["enable_discounts"] || false}
                 />
-                <label for="discounts" class="text-sm text-gray-700">
+                <label for="discounts" class="text-gray-700 text-sm">
                   Enable discount codes
                 </label>
               </div>
@@ -544,28 +536,28 @@ defmodule RivaAshWeb.BusinessSetupLive do
     ~H"""
     <div class="space-y-6">
       <div>
-        <h2 class="text-2xl font-bold text-gray-900">Review & Launch</h2>
+        <h2 class="font-bold text-gray-900 text-2xl">Review & Launch</h2>
         <p class="mt-2 text-gray-600">Review your settings and launch your business.</p>
       </div>
 
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div class="gap-6 grid grid-cols-1 md:grid-cols-2">
         <.card>
           <:header>
-            <h3 class="text-lg font-medium">Business Information</h3>
+            <h3 class="font-medium text-lg">Business Information</h3>
           </:header>
           <:body>
             <dl class="space-y-2">
               <div>
-                <dt class="text-sm font-medium text-gray-500">Name</dt>
-                <dd class="text-sm text-gray-900"><%= @setup_data[:business_name] %></dd>
+                <dt class="font-medium text-gray-500 text-sm">Name</dt>
+                <dd class="text-gray-900 text-sm"><%= @setup_data[:business_name] %></dd>
               </div>
               <div>
-                <dt class="text-sm font-medium text-gray-500">Type</dt>
-                <dd class="text-sm text-gray-900"><%= @setup_data[:business_type] %></dd>
+                <dt class="font-medium text-gray-500 text-sm">Type</dt>
+                <dd class="text-gray-900 text-sm"><%= @setup_data[:business_type] %></dd>
               </div>
               <div>
-                <dt class="text-sm font-medium text-gray-500">Description</dt>
-                <dd class="text-sm text-gray-900"><%= @setup_data[:business_description] %></dd>
+                <dt class="font-medium text-gray-500 text-sm">Description</dt>
+                <dd class="text-gray-900 text-sm"><%= @setup_data[:business_description] %></dd>
               </div>
             </dl>
           </:body>
@@ -573,34 +565,34 @@ defmodule RivaAshWeb.BusinessSetupLive do
 
         <.card>
           <:header>
-            <h3 class="text-lg font-medium">Configuration Summary</h3>
+            <h3 class="font-medium text-lg">Configuration Summary</h3>
           </:header>
           <:body>
             <dl class="space-y-2">
               <div>
-                <dt class="text-sm font-medium text-gray-500">Items Configured</dt>
-                <dd class="text-sm text-gray-900"><%= length(@setup_data[:items] || []) %> items</dd>
+                <dt class="font-medium text-gray-500 text-sm">Items Configured</dt>
+                <dd class="text-gray-900 text-sm"><%= length(@setup_data[:items] || []) %> items</dd>
               </div>
               <div>
-                <dt class="text-sm font-medium text-gray-500">Plots Created</dt>
-                <dd class="text-sm text-gray-900"><%= length(@setup_data[:plots] || []) %> plots</dd>
+                <dt class="font-medium text-gray-500 text-sm">Plots Created</dt>
+                <dd class="text-gray-900 text-sm"><%= length(@setup_data[:plots] || []) %> plots</dd>
               </div>
               <div>
-                <dt class="text-sm font-medium text-gray-500">Operating Hours</dt>
-                <dd class="text-sm text-gray-900"><%= Enum.count(@setup_data[:schedule] || [], fn {_unmatched, day} -> day["enabled"] end) %> days</dd>
+                <dt class="font-medium text-gray-500 text-sm">Operating Hours</dt>
+                <dd class="text-gray-900 text-sm"><%= Enum.count(@setup_data[:schedule] || [], fn {_unmatched, day} -> day["enabled"] end) %> days</dd>
               </div>
             </dl>
           </:body>
         </.card>
       </div>
 
-      <div class="bg-green-50 border border-green-200 rounded-lg p-6">
+      <div class="bg-green-50 p-6 border border-green-200 rounded-lg">
         <div class="flex items-center">
-          <svg class="w-6 h-6 text-green-600 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg class="mr-3 w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
           <div>
-            <h3 class="text-lg font-medium text-green-900">Ready to Launch!</h3>
+            <h3 class="font-medium text-green-900 text-lg">Ready to Launch!</h3>
             <p class="text-green-700">Your business setup is complete and ready to go live.</p>
           </div>
         </div>

@@ -1,9 +1,3 @@
-alias RivaAshWeb.Components.Organisms, as: Organisms
-alias RivaAshWeb.Components.Atoms, as: Atoms
-alias RivaAshWeb.Live, as: Live
-alias RivaAsh.Resources, as: Resources
-alias RivaAsh.Reservation, as: Reservation
-alias Ash.Error, as: Error
 
 defmodule RivaAshWeb.RecurringReservationLive do
   @moduledoc """

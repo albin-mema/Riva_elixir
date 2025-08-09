@@ -1,11 +1,3 @@
-alias RivaAshWeb.Components.Atoms, as: Atoms
-alias RivaAshWeb.Components.Molecules, as: Molecules
-alias RivaAshWeb.Components.Organisms, as: Organisms
-alias RivaAshWeb.Live, as: Live
-alias RivaAsh.Resources, as: Resources
-alias AshPhoenix.Form, as: Form
-alias Flop.Phoenix, as: Phoenix
-alias Ash.Error, as: Error
 
 defmodule RivaAshWeb.EmployeeLive do
   @moduledoc """
@@ -22,7 +14,6 @@ defmodule RivaAshWeb.EmployeeLive do
   use RivaAshWeb, :live_view
 
   alias RivaAsh.Employees
-  alias RivaAsh.ErrorHelpers
 
   require Ash.Query
 
@@ -36,7 +27,6 @@ defmodule RivaAshWeb.EmployeeLive do
   import RivaAshWeb.Live.AuthHelpers
 
   alias RivaAsh.Resources.Employee
-  alias RivaAsh.Resources.Business
 
   @impl true
   def mount(_params, session, socket) do
@@ -61,8 +51,8 @@ defmodule RivaAshWeb.EmployeeLive do
          |> assign(:show_confirm_delete_modal, false)
          |> assign(:employee_to_delete, nil)}
 
-      {:error, _unmatched} = error ->
-        {:ok, error}
+      {:error, reason} ->
+        {:error, reason}
     end
   end
 
@@ -295,7 +285,7 @@ defmodule RivaAshWeb.EmployeeLive do
     result = AshPhoenix.Form.submit(socket.assigns.form, params: params, actor: user)
 
     case result do
-      {:ok, employee} ->
+      {:ok, _employee} ->
         action_text = if socket.assigns.editing_employee, do: "updated", else: "created"
 
         socket =
@@ -423,5 +413,4 @@ defmodule RivaAshWeb.EmployeeLive do
   defp role_variant(:admin), do: "destructive"
   defp role_variant(:manager), do: "default"
   defp role_variant(:staff), do: "secondary"
-  defp role_unmatchedvariant(_unmatched), do: "secondary"
 end

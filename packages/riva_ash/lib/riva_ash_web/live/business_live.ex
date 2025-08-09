@@ -1,9 +1,3 @@
-alias RivaAshWeb.Components.UI, as: UI
-alias RivaAshWeb.Components.Organisms, as: Organisms
-alias RivaAshWeb.Components.Atoms, as: Atoms
-alias RivaAshWeb.Live, as: Live
-alias RivaAsh.Resources, as: Resources
-alias Ash.Error, as: Error
 
 defmodule RivaAshWeb.BusinessLive do
   @moduledoc """
@@ -30,7 +24,6 @@ defmodule RivaAshWeb.BusinessLive do
 
   alias RivaAsh.Resources.Business
   alias RivaAsh.Businesses
-  alias RivaAsh.ErrorHelpers
 
   @impl true
   def mount(_params, session, socket) do
@@ -78,7 +71,7 @@ defmodule RivaAshWeb.BusinessLive do
 
       <%= if @loading do %>
         <div class="flex justify-center items-center py-12">
-          <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+          <div class="border-b-2 border-blue-600 rounded-full w-8 h-8 animate-spin"></div>
         </div>
       <% else %>
         <.data_table
@@ -163,5 +156,4 @@ defmodule RivaAshWeb.BusinessLive do
   defp status_variant(:active), do: "default"
   defp status_variant(:inactive), do: "secondary"
   defp status_variant(:suspended), do: "destructive"
-  defp status_unmatchedvariant(_unmatched), do: "secondary"
 end
