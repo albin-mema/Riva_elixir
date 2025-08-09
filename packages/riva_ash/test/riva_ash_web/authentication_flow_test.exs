@@ -28,7 +28,9 @@ defmodule RivaAshWeb.AuthenticationFlowTest do
       assert redirected_to(conn) == "/sign-in"
 
       # Verify user was created in database
-      query = User |> Ash.Query.for_read(:read) |> Ash.Query.filter(email == "test@example.com")
+      require Ash.Query
+      import Ash.Expr
+      query = User |> Ash.Query.for_read(:read) |> Ash.Query.filter(expr(email == "test@example.com"))
 
       case Ash.read(query, domain: RivaAsh.Accounts) do
         {:ok, [user]} ->
@@ -336,8 +338,10 @@ defmodule RivaAshWeb.AuthenticationFlowTest do
       |> assert_has("h2", text: "Sign in to your account")
 
       # Verify user was created in database
+      require Ash.Query
+      import Ash.Expr
       query =
-        User |> Ash.Query.for_read(:read) |> Ash.Query.filter(email == "newuser@example.com")
+        User |> Ash.Query.for_read(:read) |> Ash.Query.filter(expr(email == "newuser@example.com"))
 
       case Ash.read(query, domain: RivaAsh.Accounts) do
         {:ok, [user]} ->

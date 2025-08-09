@@ -23,7 +23,6 @@ defmodule RivaAshWeb.LiveViewRoutesTest do
       %{user: user, business: business, token: token}
     end
 
-    @spec test_dashboard_route :: :ok
     test "dashboard route", %{token: token} do
       conn = build_conn() |> log_in_user(token)
 

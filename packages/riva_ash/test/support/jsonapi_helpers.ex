@@ -103,16 +103,16 @@ defmodule RivaAsh.Test.JsonApiHelpers do
 
   # --------------- Internal ----------------
 
-  defp put_jsonapi_headers(conn, headers) do
+  def put_jsonapi_headers(conn, headers) do
     conn
     |> put_req_header("accept", @jsonapi)
     |> put_req_header("content-type", @jsonapi)
     |> put_additional_headers(headers)
   end
 
-  defp put_additional_headers(conn, []), do: conn
+  def put_additional_headers(conn, []), do: conn
 
-  defp put_additional_headers(conn, headers) when is_list(headers) do
+  def put_additional_headers(conn, headers) when is_list(headers) do
     Enum.reduce(headers, conn, fn {k, v}, acc -> put_req_header(acc, k, v) end)
   end
 end
