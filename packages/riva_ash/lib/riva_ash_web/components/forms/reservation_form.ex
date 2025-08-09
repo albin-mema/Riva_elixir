@@ -183,8 +183,7 @@ defmodule RivaAshWeb.Components.Forms.ReservationForm do
     """
   end
 
-  @spec render_form_actions(editing :: boolean(), loading :: boolean(), on_cancel :: String.t()) ::
-          Phoenix.LiveView.Rendered.t()
+  @spec render_form_actions(assigns :: assigns()) :: Phoenix.LiveView.Rendered.t()
   defp render_form_actions(assigns) do
     ~H"""
     <div class="flex justify-end space-x-3 pt-4 border-t">
@@ -209,9 +208,7 @@ defmodule RivaAshWeb.Components.Forms.ReservationForm do
   @spec validate_reservation_data(map()) :: {:ok, reservation_form_data()} | {:error, map()}
   def validate_reservation_data(params) when is_map(params) do
     with :ok <- validate_required_fields(params),
-         :ok <- validate_datetime_range(params),
-         :ok <- validate_client_exists(params[:client_id], @clients),
-         :ok <- validate_item_exists(params[:item_id], @items) do
+         :ok <- validate_datetime_range(params) do
       {:ok, transform_reservation_data(params)}
     else
       {:error, reason} -> {:error, reason}

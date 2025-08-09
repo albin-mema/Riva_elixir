@@ -209,6 +209,7 @@ defmodule RivaAshWeb.Components.Atoms.ColorPicker do
         />
         <input
           type="text"
+          id={"color-text-#{:crypto.strong_rand_bytes(8) |> Base.encode16()}"}
           value={@value || @default_color}
           placeholder={@placeholder}
           disabled={@disabled}
@@ -244,7 +245,7 @@ defmodule RivaAshWeb.Components.Atoms.ColorPicker do
         _ -> "border-gray-300 focus:border-blue-500 focus:ring-blue-500"
       end
 
-    error_classes = if(field && field.errors != [], "border-red-500", "")
+    error_classes = if field && field.errors != [], do: "border-red-500", else: ""
 
     "#{base_classes} #{size_classes} #{variant_classes} #{error_classes}"
   end
@@ -267,7 +268,7 @@ defmodule RivaAshWeb.Components.Atoms.ColorPicker do
         _ -> "border-gray-300 focus:border-blue-500 focus:ring-blue-500"
       end
 
-    error_classes = if(field && field.errors != [], "border-red-500", "")
+    error_classes = if field && field.errors != [], do: "border-red-500", else: ""
 
     "#{base_classes} #{size_classes} #{variant_classes} #{error_classes}"
   end

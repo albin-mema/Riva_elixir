@@ -132,7 +132,7 @@ defmodule RivaAshWeb.Components.Atoms.DatePicker do
         _other_variant -> "border-gray-300 focus:border-blue-500 focus:ring-blue-500"
       end
 
-    error_classes = if(field && field.errors != [], "border-red-500", "")
+    error_classes = if field && field.errors != [], do: "border-red-500", else: ""
 
     "#{base_classes} #{size_classes} #{variant_classes} #{error_classes}"
   end

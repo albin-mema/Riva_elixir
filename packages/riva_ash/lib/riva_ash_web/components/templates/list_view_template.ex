@@ -120,25 +120,25 @@ defmodule RivaAshWeb.Components.Templates.ListViewTemplate do
   # Helper function to build header classes
   @spec build_header_class(list()) :: String.t()
   defp build_header_class(actions) do
-    if(actions != [], "mb-6", "mb-4")
+    if actions != [], do: "mb-6", else: "mb-4"
   end
 
   # Helper function to build title classes
   @spec build_title_class(String.t()) :: String.t()
   defp build_title_class(title) do
-    if(title, "text-2xl font-bold", "hidden")
+    if title, do: "text-2xl font-bold", else: "hidden"
   end
 
   # Helper function to build description classes
   @spec build_description_class(String.t() | nil) :: String.t()
   defp build_description_class(description) do
-    if(description, "text-muted-foreground", "hidden")
+    if description, do: "text-muted-foreground", else: "hidden"
   end
 
   # Helper function to build actions classes
   @spec build_actions_class(list()) :: String.t()
   defp build_actions_class(actions) do
-    if(actions != [], "flex gap-2", "hidden")
+    if actions != [], do: "flex gap-2", else: "hidden"
   end
 
   # Helper function to build filters classes
@@ -150,18 +150,18 @@ defmodule RivaAshWeb.Components.Templates.ListViewTemplate do
   # Helper function to build empty state classes
   @spec build_empty_state_class(list(), map()) :: String.t()
   defp build_empty_state_class(items, empty_state) do
-    if(items == [] and empty_state != %{}, "list-empty", "hidden")
+    if items == [] and empty_state != %{}, do: "list-empty", else: "hidden"
   end
 
   # Helper function to build content classes
   @spec build_content_class(list()) :: String.t()
   defp build_content_class(items) do
-    if(items != [], "list-content", "hidden")
+    if items != [], do: "list-content", else: "hidden"
   end
 
   # Helper function to build data table classes
   @spec build_data_table_class(list()) :: String.t()
   defp build_data_table_class(items) do
-    if(items != [], "w-full", "hidden")
+    if items != [], do: "w-full", else: "hidden"
   end
 end

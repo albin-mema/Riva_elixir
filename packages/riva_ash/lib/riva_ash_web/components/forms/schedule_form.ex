@@ -115,7 +115,7 @@ defmodule RivaAshWeb.Components.Forms.ScheduleForm do
     """
   end
 
-  @spec render_header(item :: map()) :: Phoenix.LiveView.Rendered.t()
+  @spec render_header(assigns :: assigns()) :: Phoenix.LiveView.Rendered.t()
   defp render_header(assigns) do
     ~H"""
     <div>
@@ -124,7 +124,7 @@ defmodule RivaAshWeb.Components.Forms.ScheduleForm do
     """
   end
 
-  @spec render_general_settings(form :: map()) :: Phoenix.LiveView.Rendered.t()
+  @spec render_general_settings(assigns :: assigns()) :: Phoenix.LiveView.Rendered.t()
   defp render_general_settings(assigns) do
     ~H"""
     <div>
@@ -134,7 +134,7 @@ defmodule RivaAshWeb.Components.Forms.ScheduleForm do
     """
   end
 
-  @spec render_schedule_specific_fields(form :: map(), availability :: map()) :: Phoenix.LiveView.Rendered.t()
+  @spec render_schedule_specific_fields(assigns :: assigns()) :: Phoenix.LiveView.Rendered.t()
   defp render_schedule_specific_fields(assigns) do
     ~H"""
     <div :if={show_custom_schedule?(@form[:schedule_type].value)}>
@@ -157,7 +157,7 @@ defmodule RivaAshWeb.Components.Forms.ScheduleForm do
     """
   end
 
-  @spec render_booking_rules(form :: map()) :: Phoenix.LiveView.Rendered.t()
+  @spec render_booking_rules(assigns :: assigns()) :: Phoenix.LiveView.Rendered.t()
   defp render_booking_rules(assigns) do
     ~H"""
     <div>
@@ -169,7 +169,7 @@ defmodule RivaAshWeb.Components.Forms.ScheduleForm do
     """
   end
 
-  @spec render_time_slots(form :: map()) :: Phoenix.LiveView.Rendered.t()
+  @spec render_time_slots(assigns :: assigns()) :: Phoenix.LiveView.Rendered.t()
   defp render_time_slots(assigns) do
     ~H"""
     <div>
@@ -181,7 +181,7 @@ defmodule RivaAshWeb.Components.Forms.ScheduleForm do
     """
   end
 
-  @spec render_exceptions(form :: map()) :: Phoenix.LiveView.Rendered.t()
+  @spec render_exceptions(assigns :: assigns()) :: Phoenix.LiveView.Rendered.t()
   defp render_exceptions(assigns) do
     ~H"""
     <div>
@@ -191,7 +191,7 @@ defmodule RivaAshWeb.Components.Forms.ScheduleForm do
     """
   end
 
-  @spec render_form_actions(loading :: boolean(), on_cancel :: String.t()) :: Phoenix.LiveView.Rendered.t()
+  @spec render_form_actions(assigns :: assigns()) :: Phoenix.LiveView.Rendered.t()
   defp render_form_actions(assigns) do
     ~H"""
     <div>
@@ -392,40 +392,43 @@ defmodule RivaAshWeb.Components.Forms.ScheduleForm do
 
   # UI Helper functions
 
+  @schedule_type_options Application.compile_env(:riva_ash, :schedule_type_options, [
+    {"Always Available", "always"},
+    {"Custom Schedule", "custom"},
+    {"Seasonal", "seasonal"}
+  ])
+
+  @slot_duration_options Application.compile_env(:riva_ash, :slot_duration_options, [
+    {"15 minutes", "15"},
+    {"30 minutes", "30"},
+    {"1 hour", "60"},
+    {"2 hours", "120"},
+    {"4 hours", "240"}
+  ])
+
+  @holiday_schedule_options Application.compile_env(:riva_ash, :holiday_schedule_options, [
+    {"Follow regular schedule", "regular"},
+    {"Closed on holidays", "closed"},
+    {"Custom holiday hours", "custom"}
+  ])
+
+  @schedule_start_hour Application.compile_env(:riva_ash, :schedule_start_hour, 8)
+  @schedule_end_hour Application.compile_env(:riva_ash, :schedule_end_hour, 18)
+
   @spec schedule_type_options() :: list({String.t(), String.t()})
-  defp schedule_type_options do
-    Application.compile_env(:riva_ash, :schedule_type_options, [
-      {"Always Available", "always"},
-      {"Custom Schedule", "custom"},
-      {"Seasonal", "seasonal"}
-    ])
-  end
+  defp schedule_type_options, do: @schedule_type_options
 
   @spec slot_duration_options() :: list({String.t(), String.t()})
-  defp slot_duration_options do
-    Application.compile_env(:riva_ash, :slot_duration_options, [
-      {"15 minutes", "15"},
-      {"30 minutes", "30"},
-      {"1 hour", "60"},
-      {"2 hours", "120"},
-      {"4 hours", "240"}
-    ])
-  end
+  defp slot_duration_options, do: @slot_duration_options
 
   @spec holiday_schedule_options() :: list({String.t(), String.t()})
-  defp holiday_schedule_options do
-    Application.compile_env(:riva_ash, :holiday_schedule_options, [
-      {"Follow regular schedule", "regular"},
-      {"Closed on holidays", "closed"},
-      {"Custom holiday hours", "custom"}
-    ])
-  end
+  defp holiday_schedule_options, do: @holiday_schedule_options
 
   @spec get_start_hour() :: integer()
-  defp get_start_hour, do: Application.compile_env(:riva_ash, :schedule_start_hour, 8)
+  defp get_start_hour, do: @schedule_start_hour
 
   @spec get_end_hour() :: integer()
-  defp get_end_hour, do: Application.compile_env(:riva_ash, :schedule_end_hour, 18)
+  defp get_end_hour, do: @schedule_end_hour
 
   @spec show_custom_schedule?(String.t() | nil) :: boolean()
   defp show_custom_schedule?("custom"), do: true

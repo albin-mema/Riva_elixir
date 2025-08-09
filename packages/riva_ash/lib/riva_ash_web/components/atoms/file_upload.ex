@@ -163,7 +163,7 @@ defmodule RivaAshWeb.Components.Atoms.FileUpload do
             </p>
             <p class="text-xs text-gray-500 mt-1">
               <%= build_file_size_text(@max_file_size) %>
-              <%= if @multiple, " • Up to #{@max_files} files", "" %>
+              <%= if @multiple, do: " • Up to #{@max_files} files", else: "" %>
             </p>
           </div>
         </div>
@@ -204,7 +204,7 @@ defmodule RivaAshWeb.Components.Atoms.FileUpload do
         _ -> "border-gray-300 bg-gray-50 hover:border-gray-400"
       end
 
-    disabled_classes = if(disabled, "opacity-50 cursor-not-allowed border-gray-200", "")
+    disabled_classes = if disabled, do: "opacity-50 cursor-not-allowed border-gray-200", else: ""
 
     "#{base_classes} #{size_classes} #{variant_classes} #{disabled_classes}"
   end
@@ -228,13 +228,14 @@ defmodule RivaAshWeb.Components.Atoms.FileUpload do
 
   @spec render_file_preview(String.t() | list(), list(String.t())) :: Phoenix.LiveView.Rendered.t()
   defp render_file_preview(value, _accept) when is_binary(value) do
+    assigns = %{value: value}
     ~H"""
     <div class="file-preview-item">
       <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
         <div class="flex items-center space-x-3">
           <.icon name={:document} class="h-5 w-5 text-gray-400" />
           <span class="text-sm font-medium text-gray-900 truncate">
-            <%= String.slice(value, 0..30) <> if String.length(value) > 30, "...", "" %>
+            <%= String.slice(@value, 0..30) <> (if String.length(@value) > 30, do: "...", else: "") %>
           </span>
         </div>
         <button type="button" class="text-red-600 hover:text-red-800">
@@ -246,10 +247,11 @@ defmodule RivaAshWeb.Components.Atoms.FileUpload do
   end
 
   defp render_file_preview(values, accept) when is_list(values) do
+    assigns = %{values: values, accept: accept}
     ~H"""
     <div class="space-y-2">
-      <%= for value <- values do %>
-        <%= render_file_preview(value, accept) %>
+      <%= for value <- @values do %>
+        <%= render_file_preview(value, @accept) %>
       <% end %>
     </div>
     """

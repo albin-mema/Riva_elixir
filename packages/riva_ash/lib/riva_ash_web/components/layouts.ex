@@ -103,7 +103,7 @@ defmodule RivaAshWeb.Layouts do
     |> case do
       nil -> @default_app_name
       title when is_binary(title) -> title
-      _unmatchedunmatched -> @default_unmatchedunmatchedapp_unmatchedunmatchedname
+      _ -> @default_app_name
     end
   end
 
@@ -177,8 +177,10 @@ defmodule RivaAshWeb.Layouts do
   - CSRF token string or empty string on error
   """
   @spec safe_get_csrf_token() :: String.t()
-  defp safe_get_csrf_token, do: case(Controller.get_csrf_token()) do
-    token when is_binary(token) -> token
-    _unmatchedunmatched -> ""
+  defp safe_get_csrf_token do
+    case Controller.get_csrf_token() do
+      token when is_binary(token) -> token
+      _ -> ""
+    end
   end
 end

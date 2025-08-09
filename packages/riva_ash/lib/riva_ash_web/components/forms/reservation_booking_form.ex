@@ -160,7 +160,7 @@ defmodule RivaAshWeb.Components.Forms.ReservationBookingForm do
     """
   end
 
-  @spec render_progress_bar(step :: integer(), total_steps :: integer()) :: Phoenix.LiveView.Rendered.t()
+  @spec render_progress_bar(assigns :: assigns()) :: Phoenix.LiveView.Rendered.t()
   defp render_progress_bar(assigns) do
     ~H"""
     <div>
@@ -172,15 +172,7 @@ defmodule RivaAshWeb.Components.Forms.ReservationBookingForm do
     """
   end
 
-  @spec render_current_step(
-          step :: integer(),
-          form :: map(),
-          clients :: list(),
-          items :: list(),
-          available_slots :: list(),
-          selected_slots :: list(),
-          pricing_info :: map()
-        ) :: Phoenix.LiveView.Rendered.t()
+  @spec render_current_step(assigns :: assigns()) :: Phoenix.LiveView.Rendered.t()
   defp render_current_step(assigns) do
     ~H"""
     <div :if={@step == 1}>
@@ -198,7 +190,7 @@ defmodule RivaAshWeb.Components.Forms.ReservationBookingForm do
     """
   end
 
-  @spec render_client_selection(form :: map(), clients :: list()) :: Phoenix.LiveView.Rendered.t()
+  @spec render_client_selection(assigns :: assigns()) :: Phoenix.LiveView.Rendered.t()
   defp render_client_selection(assigns) do
     ~H"""
     <h3>Select Client</h3>
@@ -207,7 +199,7 @@ defmodule RivaAshWeb.Components.Forms.ReservationBookingForm do
     """
   end
 
-  @spec render_item_selection(form :: map(), items :: list()) :: Phoenix.LiveView.Rendered.t()
+  @spec render_item_selection(assigns :: assigns()) :: Phoenix.LiveView.Rendered.t()
   defp render_item_selection(assigns) do
     ~H"""
     <h3>Select Item</h3>
@@ -218,8 +210,7 @@ defmodule RivaAshWeb.Components.Forms.ReservationBookingForm do
     """
   end
 
-  @spec render_datetime_selection(form :: map(), available_slots :: list(), selected_slots :: list()) ::
-          Phoenix.LiveView.Rendered.t()
+  @spec render_datetime_selection(assigns :: assigns()) :: Phoenix.LiveView.Rendered.t()
   defp render_datetime_selection(assigns) do
     ~H"""
     <h3>Select Date & Time</h3>
@@ -235,13 +226,7 @@ defmodule RivaAshWeb.Components.Forms.ReservationBookingForm do
     """
   end
 
-  @spec render_confirmation(
-          form :: map(),
-          clients :: list(),
-          items :: list(),
-          selected_slots :: list(),
-          pricing_info :: map()
-        ) :: Phoenix.LiveView.Rendered.t()
+  @spec render_confirmation(assigns :: assigns()) :: Phoenix.LiveView.Rendered.t()
   defp render_confirmation(assigns) do
     ~H"""
     <h3>Confirm Reservation</h3>
@@ -256,7 +241,7 @@ defmodule RivaAshWeb.Components.Forms.ReservationBookingForm do
     """
   end
 
-  @spec render_item_details(item :: map() | nil) :: Phoenix.LiveView.Rendered.t()
+  @spec render_item_details(assigns :: assigns()) :: Phoenix.LiveView.Rendered.t()
   defp render_item_details(assigns) do
     ~H"""
     <div>
@@ -268,8 +253,7 @@ defmodule RivaAshWeb.Components.Forms.ReservationBookingForm do
     """
   end
 
-  @spec render_reservation_summary(form :: map(), clients :: list(), items :: list(), selected_slots :: list()) ::
-          Phoenix.LiveView.Rendered.t()
+  @spec render_reservation_summary(assigns :: assigns()) :: Phoenix.LiveView.Rendered.t()
   defp render_reservation_summary(assigns) do
     ~H"""
     <div>
@@ -282,7 +266,7 @@ defmodule RivaAshWeb.Components.Forms.ReservationBookingForm do
     """
   end
 
-  @spec render_pricing_summary(pricing_info :: map()) :: Phoenix.LiveView.Rendered.t()
+  @spec render_pricing_summary(assigns :: assigns()) :: Phoenix.LiveView.Rendered.t()
   defp render_pricing_summary(assigns) do
     ~H"""
     <div :if={@pricing_info != %{}}>
@@ -294,22 +278,14 @@ defmodule RivaAshWeb.Components.Forms.ReservationBookingForm do
     """
   end
 
-  @spec render_payment_selection(form :: map()) :: Phoenix.LiveView.Rendered.t()
+  @spec render_payment_selection(assigns :: assigns()) :: Phoenix.LiveView.Rendered.t()
   defp render_payment_selection(assigns) do
     ~H"""
     <.select_field field={@form[:payment_method]} label="Payment Method" options={payment_method_options()} required />
     """
   end
 
-  @spec render_step_navigation(
-          step :: integer(),
-          total_steps :: integer(),
-          loading :: boolean(),
-          on_prev_step :: String.t(),
-          on_next_step :: String.t(),
-          on_submit :: String.t(),
-          on_cancel :: String.t()
-        ) :: Phoenix.LiveView.Rendered.t()
+  @spec render_step_navigation(assigns :: assigns()) :: Phoenix.LiveView.Rendered.t()
   defp render_step_navigation(assigns) do
     ~H"""
     <div>
@@ -410,21 +386,11 @@ defmodule RivaAshWeb.Components.Forms.ReservationBookingForm do
 
   defp validate_client_exists(nil), do: {:error, %{client_id: "client is required"}}
 
-  defp validate_client_exists(client_id) when is_list(@clients) do
-    case Enum.find(@clients, fn {_name, id} -> id == client_id end) do
-      {_name, ^client_id} -> :ok
-      _ -> {:error, %{client_id: "client not found"}}
-    end
-  end
+  defp validate_client_exists(_client_id), do: :ok
 
   defp validate_item_exists(nil), do: {:error, %{item_id: "item is required"}}
 
-  defp validate_item_exists(item_id) when is_list(@items) do
-    case Enum.find(@items, fn {_name, id} -> id == item_id end) do
-      {_name, ^item_id} -> :ok
-      _ -> {:error, %{item_id: "item not found"}}
-    end
-  end
+  defp validate_item_exists(_item_id), do: :ok
 
   defp validate_date(nil), do: {:error, %{reservation_date: "date is required"}}
   defp validate_date(%Date{} = _date), do: :ok
@@ -542,11 +508,11 @@ defmodule RivaAshWeb.Components.Forms.ReservationBookingForm do
   defp format_date(%Date{} = date), do: Date.to_string(date)
   defp format_date(_), do: ""
 
-  defp payment_method_options do
-    Application.compile_env(:riva_ash, :payment_method_options, [
-      {"Cash", "cash"},
-      {"Credit Card", "credit_card"},
-      {"Bank Transfer", "bank_transfer"}
-    ])
-  end
+  @payment_method_options Application.compile_env(:riva_ash, :payment_method_options, [
+    {"Cash", "cash"},
+    {"Credit Card", "credit_card"},
+    {"Bank Transfer", "bank_transfer"}
+  ])
+
+  defp payment_method_options, do: @payment_method_options
 end
