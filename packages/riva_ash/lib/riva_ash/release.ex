@@ -5,13 +5,13 @@ defmodule RivaAsh.Release do
   This module provides functionality for running database migrations,
   rollbacks, and other release-related tasks in production environments
   where Mix may not be available as a dependency.
-
-  It follows the functional core, imperative shell pattern with
-  comprehensive error handling and logging.
   """
+
+  require Logger
 
   @app :riva_ash
   @migrations_dir "priv/repo/migrations"
+
 
   @doc """
   Runs all pending database migrations.

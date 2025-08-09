@@ -48,13 +48,6 @@ defmodule RivaAsh.Reactors.ReservationReactor do
 
   @type result :: Reservation.t()
 
-  @spec validate_client(client_id()) :: {:ok, Client.t()} | {:error, String.t()}
-  @spec validate_employee(employee_id()) :: {:ok, Employee.t()} | {:error, String.t()}
-  @spec validate_item(item_id()) :: {:ok, Item.t()} | {:error, String.t()}
-  @spec validate_datetime_range(datetime(), datetime()) :: {:ok, map()} | {:error, String.t()}
-  @spec check_availability(item_id(), datetime(), datetime()) :: {:ok, atom()} | {:error, String.t()}
-  @spec calculate_pricing(Item.t(), datetime(), datetime()) :: {:ok, pricing_result()} | {:error, String.t()}
-  @spec create_reservation(reservation_attrs()) :: {:ok, Reservation.t()} | {:error, String.t()}
 
   # Define the reactor inputs
   input(:client_id)

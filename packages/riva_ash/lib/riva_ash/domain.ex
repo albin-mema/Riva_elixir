@@ -59,6 +59,18 @@ defmodule RivaAsh.Domain do
     resource(RivaAsh.Resources.RecurringReservation)
     resource(RivaAsh.Resources.RecurringReservationInstance)
 
+
+    # Communication resources
+    resource(RivaAsh.Resources.ChatRoom)
+    resource(RivaAsh.Resources.ChatMessage)
+    resource(RivaAsh.Resources.ChatParticipant)
+
+    # PaperTrail version resources for communication
+    resource(RivaAsh.Resources.ChatRoom.Version)
+    resource(RivaAsh.Resources.ChatMessage.Version)
+    resource(RivaAsh.Resources.ChatParticipant.Version)
+
+
     # GDPR compliance resources
     resource(RivaAsh.GDPR.ConsentRecord)
   end

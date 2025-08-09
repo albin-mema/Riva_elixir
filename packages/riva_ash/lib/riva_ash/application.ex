@@ -187,7 +187,13 @@ defmodule RivaAsh.Application do
 
   @spec add_business_process_supervisors([term()]) :: [term()]
   defp add_business_process_supervisors(children) do
-    children ++ [RivaAsh.BusinessProcessSupervisor]
+    enable? = Application.get_env(:riva_ash, :enable_business_processes, Mix.env() == :prod)
+
+    if enable? and Code.ensure_loaded?(RivaAsh.BusinessProcessSupervisor) do
+      children ++ [RivaAsh.BusinessProcessSupervisor]
+    else
+      children
+    end
   end
 
   @spec skip_database?() :: boolean()
