@@ -180,18 +180,10 @@ defmodule RivaAshWeb.ItemLive do
   defp format_price(_price), do: "N/A"
 
   defp format_error(reason) do
-    case reason do
-      %Ash.Error.Invalid{errors: errors} ->
-        Enum.map_join(errors, ", ", &format_validation_error/1)
-
-      %Ash.Error.Forbidden{} ->
-        "You don't have permission to perform this action"
-
-      %Ash.Error.NotFound{} ->
-        "Item not found"
-
-      _unmatchedunmatched ->
-        "An unexpected error occurred"
+    case RivaAsh.ErrorHelpers.format_error(reason) do
+      %{message: message} -> message
+      message when is_binary(message) -> message
+      _ -> "An unexpected error occurred"
     end
   end
 

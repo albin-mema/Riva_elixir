@@ -1,7 +1,7 @@
 alias Phoenix.LiveView, as: LiveView
 alias RivaAshWeb.Live.Hooks, as: Hooks
 alias RivaAshWeb.Plugs, as: Plugs
-alias Absinthe.Plug, as: Plug
+
 alias RivaAshWeb.Dev, as: Dev
 alias RivaAshWeb.DevTools, as: DevTools
 
@@ -32,13 +32,8 @@ defmodule RivaAshWeb.Router do
 
   alias RivaAshWeb.{AuthHelpers, Controllers}
 
-  # PhoenixStorybook.Router import
-  @compile {:no_warn_undefined, PhoenixStorybook.Router}
-
-  # Only import and define storybook functions in dev environment
-  if Mix.env() == :dev do
-    import PhoenixStorybook.Router
-  end
+  # PhoenixStorybook.Router import removed to avoid compile-time dependency during tests.
+  # Storybook routes remain commented out below.
 
   @type pipeline_name :: :api | :browser | :authenticated_layout | :browser_no_layout | :require_authenticated_user
   @type route_scope :: String.t()
@@ -89,39 +84,39 @@ defmodule RivaAshWeb.Router do
     forward("/", RivaAshWeb.JsonApiRouter)
   end
 
-  # GraphQL API routes
-  scope "/" do
-    pipe_through([:api])
-    forward("/graphql", Absinthe.Plug, schema: RivaAshWeb.Schema)
-  end
+  # GraphQL API routes disabled (demo)
+  # scope "/" do
+  #   pipe_through([:api])
+  #   forward("/graphql", Absinthe.Plug, schema: RivaAshWeb.Schema)
+  # end
 
-  # GraphiQL interface (only in dev)
-  if Mix.env() == :dev do
-    scope "/" do
-      pipe_through([:api])
+  # GraphiQL interface disabled (demo)
+  # if Mix.env() == :dev do
+  #   scope "/" do
+  #     pipe_through([:api])
+  #
+  #     forward("/graphiql", Absinthe.Plug.GraphiQL,
+  #       schema: RivaAshWeb.Schema,
+  #       interface: :simple
+  #     )
+  #   end
 
-      forward("/graphiql", Absinthe.Plug.GraphiQL,
-        schema: RivaAshWeb.Schema,
-        interface: :simple
-      )
-    end
+    # Storybook routes disabled (demo)
+    # if Mix.env() == :dev do
+    #   scope "/" do
+    #     storybook_assets()
+    #   end
+    #
+    #   scope "/", RivaAshWeb do
+    #     pipe_through(:browser)
+    #     live_storybook("/storybook", backend_module: RivaAshWeb.Storybook)
+    #   end
+    # end
 
-    # Storybook routes
-    if Mix.env() == :dev do
-      scope "/" do
-        storybook_assets()
-      end
-
-      scope "/", RivaAshWeb do
-        pipe_through(:browser)
-        live_storybook("/storybook", backend_module: RivaAshWeb.Storybook)
-      end
-    end
-
-    if Mix.env() == :dev and Code.ensure_loaded?(RivaAshWeb.Dev.Router) do
-      forward("/dev", RivaAshWeb.Dev.Router)
-    end
-  end
+    # if Mix.env() == :dev and Code.ensure_loaded?(RivaAshWeb.Dev.Router) do
+    #   forward("/dev", RivaAshWeb.Dev.Router)
+    # end
+  # end
 
   # Client-facing booking API (public)
   scope "/api/booking", RivaAshWeb do
@@ -173,9 +168,7 @@ defmodule RivaAshWeb.Router do
   # Public routes (no authentication required)
   scope "/", RivaAshWeb do
     pipe_through([:browser])
-    # LiveView locale on_mount hook ensures locale is set for LV processes.
-    # Add on_mount here so all LiveViews in this scope inherit it.
-    on_mount LocaleHook
+    # LiveView locale hook handled via plug in :browser pipeline
 
     get("/", Controllers.AuthController, :redirect_to_dashboard)
 

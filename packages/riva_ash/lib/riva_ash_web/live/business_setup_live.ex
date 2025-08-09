@@ -550,10 +550,10 @@ defmodule RivaAshWeb.BusinessSetupLive do
 
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
         <.card>
-          <.card_header>
+          <:header>
             <h3 class="text-lg font-medium">Business Information</h3>
-          </.card_header>
-          <.card_body>
+          </:header>
+          <:body>
             <dl class="space-y-2">
               <div>
                 <dt class="text-sm font-medium text-gray-500">Name</dt>
@@ -568,14 +568,14 @@ defmodule RivaAshWeb.BusinessSetupLive do
                 <dd class="text-sm text-gray-900"><%= @setup_data[:business_description] %></dd>
               </div>
             </dl>
-          </.card_body>
+          </:body>
         </.card>
 
         <.card>
-          <.card_header>
+          <:header>
             <h3 class="text-lg font-medium">Configuration Summary</h3>
-          </.card_header>
-          <.card_body>
+          </:header>
+          <:body>
             <dl class="space-y-2">
               <div>
                 <dt class="text-sm font-medium text-gray-500">Items Configured</dt>
@@ -590,7 +590,7 @@ defmodule RivaAshWeb.BusinessSetupLive do
                 <dd class="text-sm text-gray-900"><%= Enum.count(@setup_data[:schedule] || [], fn {_unmatched, day} -> day["enabled"] end) %> days</dd>
               </div>
             </dl>
-          </.card_body>
+          </:body>
         </.card>
       </div>
 
@@ -645,8 +645,9 @@ defmodule RivaAshWeb.BusinessSetupLive do
          |> put_flash(:info, "Business information saved successfully")
          |> push_patch(to: ~p"/business-setup?step=layout")}
 
-      {:error, %Ash.InvalidChangeset{errors: errors}} ->
-        error_message = ErrorHelpers.format_errors(errors)
+      {:error, %Ash.Error.Invalid{errors: errors}} ->
+        error_message = ErrorHelpers.format_error(%Ash.Error.Invalid{errors: errors})
+        error_message = if is_map(error_message), do: error_message.message, else: to_string(error_message)
 
         {:noreply,
          socket
@@ -760,8 +761,9 @@ defmodule RivaAshWeb.BusinessSetupLive do
          |> put_flash(:info, "🎉 Business setup completed successfully!")
          |> push_navigate(to: ~p"/businesses/#{business.id}")}
 
-      {:error, %Ash.InvalidChangeset{errors: errors}} ->
-        error_message = ErrorHelpers.format_errors(errors)
+      {:error, %Ash.Error.Invalid{errors: errors}} ->
+        error_message = ErrorHelpers.format_error(%Ash.Error.Invalid{errors: errors})
+        error_message = if is_map(error_message), do: error_message.message, else: to_string(error_message)
 
         {:noreply,
          socket

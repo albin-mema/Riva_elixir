@@ -274,7 +274,7 @@ defmodule RivaAshWeb.PlotLive do
            {:ok, user} <- Ash.get(RivaAsh.Accounts.User, user_id, domain: RivaAsh.Accounts) do
         RivaAsh.ErrorHelpers.success(user)
       else
-        _unmatchedunmatched -> RivaAsh.ErrorHelpers.failure(:not_unmatchedunmatchedauthenticated)
+        _ -> RivaAsh.ErrorHelpers.failure(:not_authenticated)
       end
     else
       RivaAsh.ErrorHelpers.failure(:not_authenticated)
@@ -339,7 +339,7 @@ defmodule RivaAshWeb.PlotLive do
   defp apply_sorting(plots, %Flop{order_by: order_by, order_directions: order_directions}) do
     # Default to :asc if no directions provided
     directions =
-      order_unmatchedunmatcheddirections || Enum.map(order_unmatchedunmatchedby, fn _unmatchedunmatched -> :asc end)
+      order_directions || Enum.map(order_by, fn _ -> :asc end)
 
     # Zip order_by and directions, pad directions with :asc if needed
     order_specs =

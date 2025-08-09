@@ -463,7 +463,7 @@ defmodule RivaAshWeb.TokenLive do
   defp apply_sorting(tokens, %Flop{order_by: order_by, order_directions: order_directions}) do
     # Default to :asc if no directions provided
     directions =
-      order_unmatchedunmatcheddirections || Enum.map(order_unmatchedunmatchedby, fn _unmatchedunmatched -> :asc end)
+      order_directions || Enum.map(order_by, fn _ -> :asc end)
 
     # Zip order_by and directions, pad directions with :asc if needed
     order_specs =

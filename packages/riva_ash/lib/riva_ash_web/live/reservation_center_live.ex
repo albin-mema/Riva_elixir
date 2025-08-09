@@ -267,7 +267,7 @@ defmodule RivaAshWeb.ReservationCenterLive do
                         :confirmed -> "text-green-600"
                         :pending -> "text-yellow-600"
                         :cancelled -> "text-red-600"
-                        _unmatchedunmatched -> "text-gray-600"
+                        _ -> "text-gray-600"
                       end
                     ]}>
                       <%= String.capitalize(to_string(@selected_reservation.status)) %>
@@ -375,7 +375,7 @@ defmodule RivaAshWeb.ReservationCenterLive do
           <div class={[
             "min-h-[100px] p-2 border border-gray-200 cursor-pointer hover:bg-gray-50",
             if(Date.compare(date, Date.utc_today()) == :eq, do: "bg-blue-50 border-blue-200", else: "bg-white"),
-            if(Date.months_in_year(date) == 12 and Date.months_in_year(@current_date) == 12 and Date.compare(date, @current_date) != :eq, do: "text-gray-400 bg-gray-50")
+            if(date.month != @current_date.month, do: "text-gray-400 bg-gray-50")
           ]}
           phx-click="date_clicked"
           phx-value-date={date}>
@@ -392,7 +392,7 @@ defmodule RivaAshWeb.ReservationCenterLive do
                     :confirmed -> "bg-green-100 text-green-800"
                     :pending -> "bg-yellow-100 text-yellow-800"
                     :cancelled -> "bg-red-100 text-red-800"
-                    _unmatchedunmatched -> "bg-gray-100 text-gray-800"
+                    _ -> "bg-gray-100 text-gray-800"
                   end
                 ]}
                 phx-click="reservation_clicked"
@@ -424,8 +424,8 @@ defmodule RivaAshWeb.ReservationCenterLive do
         {"next", "week"} -> Date.add(current_date, 7)
         {"prev", "month"} -> Date.add(current_date, -30)
         {"next", "month"} -> Date.add(current_date, 30)
-        {"today", _unmatched} -> Date.utc_today()
-        _unmatchedunmatched -> current_unmatchedunmatcheddate
+        {"today", _} -> Date.utc_today()
+        _ -> current_date
       end
 
     {:noreply, assign(socket, :current_date, new_date)}
@@ -466,6 +466,55 @@ defmodule RivaAshWeb.ReservationCenterLive do
   end
 
   # Private helper functions
+
+  # Helpers used in templates
+  defp format_current_period(%Date{} = date, "day"), do: Calendar.strftime(date, "%A, %B %d, %Y")
+  defp format_current_period(%Date{} = date, "week") do
+    # Show week range (Mon-Sun) around the date
+    # Assuming week starts on Monday
+    day_of_week = Date.day_of_week(date)
+    monday = Date.add(date, -(day_of_week - 1))
+    sunday = Date.add(monday, 6)
+    Calendar.strftime(monday, "%b %d") <> " - " <> Calendar.strftime(sunday, "%b %d, %Y")
+  end
+  defp format_current_period(%Date{} = date, "month"), do: Calendar.strftime(date, "%B %Y")
+  defp format_current_period(%Date{} = date, _), do: Calendar.strftime(date, "%B %Y")
+
+  defp format_hour(hour) when is_integer(hour) and hour in 0..23 do
+    time = ~T[00:00:00] |> Time.add(hour * 3600, :second)
+    Calendar.strftime(time, "%I %p")
+  end
+
+  defp get_calendar_dates(%Date{} = current_date) do
+    first_of_month = %Date{current_date | day: 1}
+    first_day_of_week = Date.day_of_week(first_of_month)
+    start_offset = first_day_of_week - 1 # 0 for Monday, ...
+    grid_start = Date.add(first_of_month, -start_offset)
+
+    # 6 weeks view -> 42 days
+    for offset <- 0..41 do
+      Date.add(grid_start, offset)
+    end
+  end
+
+  defp get_reservations_for_date(reservations, %Date{} = date) do
+    Enum.filter(reservations, fn r -> Date.compare(r.reserved_from, date) == :eq end)
+  end
+
+  defp count_today_reservations(reservations) do
+    today = Date.utc_today()
+    Enum.count(reservations, fn r -> Date.compare(r.reserved_from, today) == :eq end)
+  end
+
+  defp count_confirmed_today(reservations) do
+    today = Date.utc_today()
+    Enum.count(reservations, fn r -> r.status == :confirmed and Date.compare(r.reserved_from, today) == :eq end)
+  end
+
+  defp count_pending_today(reservations) do
+    today = Date.utc_today()
+    Enum.count(reservations, fn r -> r.status == :pending and Date.compare(r.reserved_from, today) == :eq end)
+  end
 
   defp get_page_title, do: Application.get_env(:riva_ash, :reservation_center_page_title, "Reservation Center")
 end

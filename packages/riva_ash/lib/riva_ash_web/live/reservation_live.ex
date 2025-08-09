@@ -224,7 +224,7 @@ defmodule RivaAshWeb.ReservationLive do
                         else
                           "border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700"
                         end
-                     }"} aria-label={"Go to page #{page}" <> if(page == @meta.current_page, " (current page)", "")} aria-current={if(page == @meta.current_page, "page", "false")}><%= page %></.button>
+                     }"} aria-label={"Go to page #{page}" <> (if page == @meta.current_page, do: " (current page)", else: "")} aria-current={if page == @meta.current_page, do: "page", else: "false"}><%= page %></.button>
                     <% end %>
                   </div>
                   <div class="-mt-px flex w-0 flex-1 justify-end">
