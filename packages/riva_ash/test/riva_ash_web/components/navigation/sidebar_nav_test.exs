@@ -14,7 +14,6 @@ defmodule RivaAshWeb.Components.Navigation.SidebarNavTest do
 
   describe "ExpandedSidebar - navigation highlight and a11y" do
     @describetag :component
-    @spec test_highlights_active_route_with_data_current :: :ok
     test "highlights active route with data-current" do
       # Build minimal user assign with nested business name expected by component
       user = %{id: "u", role: :admin, business: %{name: "Biz"}}

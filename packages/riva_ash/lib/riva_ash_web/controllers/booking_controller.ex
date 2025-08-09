@@ -285,7 +285,7 @@ defmodule RivaAshWeb.BookingController do
   end
 
   defp parse_duration(duration) when is_integer(duration) and duration > 0, do: duration
-  defp parse_unmatchedduration(_unmatched), do: 60
+  defp parse_duration(_unmatched), do: 60
 
   defp parse_business_hours(params) do
     start_hour = parse_hour(params["start_hour"], 9)
@@ -335,7 +335,7 @@ defmodule RivaAshWeb.BookingController do
     end
   end
 
-  defp extract_unmatchedclient_unmatchedinfo(_unmatched), do: ErrorHelpers.failure("Client information is required")
+  defp extract_client_info(_unmatched), do: ErrorHelpers.failure("Client information is required")
 
   defp extract_booking_info(%{"booking" => booking_params}) do
     with {:ok, reserved_from} <- parse_datetime(booking_params["reserved_from"]),
@@ -351,7 +351,7 @@ defmodule RivaAshWeb.BookingController do
     end
   end
 
-  defp extract_unmatchedbooking_unmatchedinfo(_unmatched), do: ErrorHelpers.failure("Booking information is required")
+  defp extract_booking_info(_unmatched), do: ErrorHelpers.failure("Booking information is required")
 
   defp parse_datetime(nil), do: ErrorHelpers.failure("DateTime is required")
 

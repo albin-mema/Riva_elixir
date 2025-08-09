@@ -108,12 +108,13 @@ defmodule RivaAshWeb.AuthenticationFlowTest do
           "password" => "password123"
         })
 
-      # Should redirect to businesses page after successful login
+      # Follow redirect to get updated session
       assert redirected_to(conn) == "/businesses"
+      conn = get(conn, redirected_to(conn))
       assert get_flash(conn, :info) =~ "Successfully signed in"
-    end
+      end
 
-    @spec test_login_fails_with_invalid_email_via_controller :: :ok
+      @spec test_login_fails_with_invalid_email_via_controller :: :ok
     test "login fails with invalid email via controller", %{conn: conn} do
       conn =
         post(conn, "/sign-in", %{
@@ -172,8 +173,10 @@ defmodule RivaAshWeb.AuthenticationFlowTest do
       # Test logout functionality
       conn = post(conn, "/sign-out")
 
-      # Should redirect to sign-in page
+      # Follow redirect to get updated session
       assert redirected_to(conn) == "/sign-in"
+      conn = get(conn, redirected_to(conn))
+
       assert get_flash(conn, :info) =~ "Successfully signed out"
 
       # Verify session is cleared

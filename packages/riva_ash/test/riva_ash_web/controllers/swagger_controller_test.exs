@@ -6,7 +6,6 @@ defmodule RivaAshWeb.SwaggerControllerTest do
   import Phoenix.ConnTest
   import Plug.Conn
 
-  @spec test_get_swagger_json_includes_info_paths_components :: :ok
   test "GET /swagger.json includes info, paths, components", %{conn: conn} do
     conn = get(conn, ~p"/swagger.json")
     assert conn.status == 200
