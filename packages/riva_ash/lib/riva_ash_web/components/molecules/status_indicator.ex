@@ -1,6 +1,3 @@
-alias RivaAshWeb.Components.Molecules, as: Molecules
-alias RivaAshWeb.Components.UI, as: UI
-alias Phoenix.LiveView.Rendered, as: Rendered
 
 defmodule RivaAshWeb.Components.Molecules.StatusIndicator do
   @moduledoc """
@@ -128,26 +125,21 @@ defmodule RivaAshWeb.Components.Molecules.StatusIndicator do
 
   @spec validate_status(String.t()) :: :ok | {:error, String.t()}
   defp validate_status(status) when is_binary(status) and status != "", do: :ok
-  defp validate_unmatchedstatus(_unmatched), do: {:error, "status must be a non-empty string"}
 
   @spec validate_label(String.t() | nil) :: :ok | {:error, String.t()}
   defp validate_label(nil), do: :ok
   defp validate_label(label) when is_binary(label), do: :ok
-  defp validate_unmatchedlabel(_unmatched), do: {:error, "label must be a string or nil"}
 
   @spec validate_show_icon(boolean()) :: :ok | {:error, String.t()}
   defp validate_show_icon(show_icon) when is_boolean(show_icon), do: :ok
-  defp validate_unmatchedshow_unmatchedicon(_unmatched), do: {:error, "show_unmatchedicon must be a boolean"}
 
   @spec validate_show_pulse(boolean()) :: :ok | {:error, String.t()}
   defp validate_show_pulse(show_pulse) when is_boolean(show_pulse), do: :ok
-  defp validate_unmatchedshow_unmatchedpulse(_unmatched), do: {:error, "show_unmatchedpulse must be a boolean"}
 
   @spec validate_size(String.t()) :: :ok | {:error, String.t()}
   defp validate_size("sm"), do: :ok
   defp validate_size("md"), do: :ok
   defp validate_size("lg"), do: :ok
-  defp validate_unmatchedsize(_unmatched), do: {:error, "size must be one of: sm, md, lg"}
 
   @spec validate_variant(String.t()) :: :ok | {:error, String.t()}
   defp validate_variant("auto"), do: :ok
@@ -158,12 +150,9 @@ defmodule RivaAshWeb.Components.Molecules.StatusIndicator do
   defp validate_variant("secondary"), do: :ok
   defp validate_variant("default"), do: :ok
 
-  defp validate_unmatchedvariant(_unmatched),
-    do: {:error, "variant must be one of: auto, success, warning, error, info, secondary, default"}
 
   @spec validate_class(String.t()) :: :ok | {:error, String.t()}
   defp validate_class(class) when is_binary(class), do: :ok
-  defp validate_unmatchedclass(_unmatched), do: {:error, "class must be a string"}
 
   @spec render_status_indicator(assigns :: assigns()) :: Phoenix.LiveView.Rendered.t()
   defp render_status_indicator(assigns) do
@@ -200,7 +189,7 @@ defmodule RivaAshWeb.Components.Molecules.StatusIndicator do
 
   # Helper function to build badge classes
   @spec build_badge_class(String.t()) :: String.t()
-  defp build_badge_class(size) do
+  defp build_badge_class(_size) do
     ""
   end
 
@@ -210,8 +199,8 @@ defmodule RivaAshWeb.Components.Molecules.StatusIndicator do
 
     ~H"""
     <div class={["status-indicator-pulse relative flex h-2 w-2", pulse_color(@variant)]}>
-      <span class="animate-ping absolute inline-flex h-full w-full rounded-full opacity-75"></span>
-      <span class="status-indicator-pulse-dot relative inline-flex rounded-full h-2 w-2"></span>
+      <span class="inline-flex absolute opacity-75 rounded-full w-full h-full animate-ping"></span>
+      <span class="inline-flex relative rounded-full w-2 h-2 status-indicator-pulse-dot"></span>
     </div>
     """
   end
@@ -245,5 +234,4 @@ defmodule RivaAshWeb.Components.Molecules.StatusIndicator do
   defp pulse_color("warning"), do: "text-yellow-400"
   defp pulse_color("destructive"), do: "text-red-400"
   defp pulse_color("secondary"), do: "text-blue-400"
-  defp pulse_unmatchedcolor(_unmatched), do: "text-gray-400"
 end

@@ -1,7 +1,3 @@
-alias RivaAshWeb.Components.Atoms, as: Atoms
-alias RivaAshWeb.Components.UI.Input, as: Input
-alias RivaAshWeb.Components.UI, as: UI
-alias Phoenix.Component, as: Component
 
 defmodule RivaAshWeb.Components.Atoms.TextInput do
   @moduledoc """
@@ -38,7 +34,7 @@ defmodule RivaAshWeb.Components.Atoms.TextInput do
   end
 
   defp build_rest_attributes(assigns) when is_map(assigns) do
-    rest_attrs =
+    _rest_attrs =
       []
       |> add_attribute("name", assigns[:name])
       |> add_attribute("id", assigns[:id] || assigns[:name])
