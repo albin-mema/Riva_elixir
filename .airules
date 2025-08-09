@@ -34,6 +34,24 @@ mix test --stale
 - For browser tests, prefer Playwright initiated via mix test (no extra shell scripts), and design tests to actually display and verify content during development.
 - Always use package managers (mix, npm/pnpm) rather than editing package files directly.
 
+
+## Documentation Hub
+
+Start here to navigate all project documentation. The Style Guide is as important as this file; both must be consulted for any work.
+
+- Documentation Index: ./docs/README.md
+- Style Guide (mandatory with this file): ./styleguide.md
+- Contributing Guide: ./docs/CONTRIBUTING.md
+- Setup Guide: ./docs/SETUP_GUIDE.md
+- Development Workflow: ./docs/DEVELOPMENT_WORKFLOW.md
+- Architecture Guidelines: ./docs/architecture-guidelines.md
+- Testing Guidelines: ./docs/testing-guidelines.md
+- UI Guidelines: ./docs/ui-guidelines.md
+- Patterns (package-level): ./packages/riva_ash/patterns.md
+- Testing Guide (package-level): ./packages/riva_ash/docs/testing_guide.md
+- AI Agent Playbook: ./docs/ai-agent-playbook.md
+- Machine-readable AI policy: ./.ai-agent.yml
+
 ## AI Agent Change Policy
 
 - Scope: These rules apply to any automated or AI-assisted changes across the codebase.
@@ -404,15 +422,15 @@ Ash.Resource.Info.actions(Resource)
 -   Check
     [Reservation System Assessment](./docs/RESERVATION_SYSTEM_ASSESSMENT.md)
 -   Examine [User Actions](./docs/USER_ACTIONS.md) specifications
--   See [Component Migration Guide](./docs/component-migration-guide.md) for
-    migration patterns
+-   See [Atomic Components Migration Plan](./docs/atomic_components_migration_plan.md) for
+    migration patterns and guidance
 
 **For Integration Work:**
 
 -   See [Timex Integration](./docs/TIMEX_INTEGRATION.md) for time handling
 -   Check [Development Tools](./docs/devtools.md) for available tooling
--   Review [Storybook Structure](./docs/storybook-structure.md) for UI
-    documentation
+-   Review [Component Library Documentation Plan](./docs/component_library_documentation_plan.md) for UI
+    documentation structure
 -   Consult [Production Deployment](./docs/production-deployment.md) for
     deployment guidelines
 
@@ -449,14 +467,14 @@ your needs:
     implementation patterns with examples
 -   [Testing Guide](./packages/riva_ash/docs/testing_guide.md) - In-depth
     testing strategies and tools
--   [Component Migration Guide](./docs/component-migration-guide.md) - Migration
+-   [Atomic Components Migration Plan](./docs/atomic_components_migration_plan.md) - Migration
     patterns and strategies
 
 ### Tools and Deployment
 
 -   [Development Tools](./docs/devtools.md) - Available development and
     debugging tools
--   [Storybook Structure](./docs/storybook-structure.md) - UI component
+-   [Component Library Documentation Plan](./docs/component_library_documentation_plan.md) - UI component
     documentation structure
 -   [Production Deployment](./docs/production-deployment.md) - Deployment
     guidelines and best practices
@@ -468,7 +486,7 @@ your needs:
 -   [User Actions](./docs/USER_ACTIONS.md) - User interaction specifications
 -   [Timex Integration](./docs/TIMEX_INTEGRATION.md) - Time handling and
     integration patterns
--   [TODO UI](./docs/todo-ui.md) - UI development tasks and priorities
+-   [Component Library Plan](./docs/component_library_plan.md) - UI development tasks and priorities
 
 ## Example Implementations
 

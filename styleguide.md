@@ -4,7 +4,7 @@ This document outlines the coding standards and principles for the Reservation
 System project.
 ## Usage and Enforcement
 
-- This Style Guide and the root .airules are required inputs for every development task and code review.
+- This Style Guide and the root .airules are required inputs for every development task and code review. .airules serves as the central documentation hub.
 - Begin each task by identifying the relevant sections you will follow (e.g., pipelines, pattern-matching in function heads, Ash query filtering, testing strategy).
 - Code that violates this Style Guide or .airules must not be merged.
 
