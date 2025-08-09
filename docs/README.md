@@ -7,8 +7,7 @@ This directory contains comprehensive documentation for the Reservation System.
 ### Getting Started
 
 -   **[../README.md](../README.md)** - Project overview and quick start guide
--   **[../.airules](../.airules)** - Main AI agent guidelines and project
-    overview
+-   **[../.airules](../.airules)** - Main AI agent guidelines and central doc hub
 -   **[../styleguide.md](../styleguide.md)** - Code style guide for development
     and review
 -   **[SETUP_GUIDE.md](SETUP_GUIDE.md)** - Complete environment setup with
