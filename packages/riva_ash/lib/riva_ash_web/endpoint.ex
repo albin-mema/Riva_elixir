@@ -2,7 +2,6 @@ alias Phoenix.LiveView, as: LiveView
 alias Phoenix.LiveReloader, as: LiveReloader
 alias Phoenix.Ecto, as: Ecto
 
-
 defmodule RivaAshWeb.Endpoint do
   use Phoenix.Endpoint, otp_app: :riva_ash
 

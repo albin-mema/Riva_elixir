@@ -69,9 +69,15 @@ config :phoenix_test,
     cli: "../../node_modules/playwright/cli.js",
     browser:
       case System.get_env("PLAYWRIGHT_BROWSER", "chromium") do
-        "chromium" -> :chromium
-        "firefox" -> :firefox
-        "webkit" -> :webkit
+        "chromium" ->
+          :chromium
+
+        "firefox" ->
+          :firefox
+
+        "webkit" ->
+          :webkit
+
         other ->
           IO.warn("Unknown PLAYWRIGHT_BROWSER=#{inspect(other)}; defaulting to :chromium")
           :chromium

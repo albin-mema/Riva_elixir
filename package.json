@@ -19,7 +19,7 @@
     "dev:backend:raw": "cd packages/riva_ash && mix phx.server",
     "dev:docker": "pnpm run docker:start && pnpm run dev:backend",
     "dev:local": "cd packages/riva_ash && mix phx.server",
-    "test": "pnpm run test:backend",
+    "test": "pnpm run test:backend && pnpm run test:browser:headless",
     "test:backend": "dotenv -- pnpm run test:backend:raw",
     "test:backend:raw": "cd packages/riva_ash && MIX_ENV=test mix ecto.reset --quiet && MIX_ENV=test mix test --trace",
     "test:watch": "dotenv -- pnpm run test:watch:raw",
