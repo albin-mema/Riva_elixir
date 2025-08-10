@@ -6,23 +6,42 @@ To ensure consistency and avoid duplication, the canonical primitives are define
 
 - RivaAshWeb.Components.UI.* — Design-system primitives (e.g., UI.Button, UI.Card)
 
+**MANDATORY**: All new UI code MUST use the RivaAshWeb.Components.UI.* namespace. Direct usage of Atoms.* or other legacy component namespaces is prohibited for new code.
+
 Compatibility wrappers exist in other layers to preserve backwards compatibility while the codebase migrates to the canonical components:
 
 - Atoms
   - RivaAshWeb.Components.Atoms.Button delegates to RivaAshWeb.Components.UI.Button
-  - Continue using UI.Button directly for new code; Atoms.Button will be removed after migration
+  - Atoms.* components are DEPRECATED and will be removed in the next major version release
+  - New code MUST NOT use Atoms.* components
 
 - Molecules
-  - RivaAshWeb.Components.Molecules.Card uses UI.Card as the container while preserving the molecule’s header/body/footer API for composition
+  - RivaAshWeb.Components.Molecules.Card uses UI.Card as the container while preserving the molecule's header/body/footer API for composition
   - Prefer UI.Card for low-level layout; use Molecules.Card for page composition where header/body/footer slots are desired
+
+## Migration Path: Atoms.* → UI.*
+
+### Phase 1: New Code (Immediate)
+- All new UI code MUST use RivaAshWeb.Components.UI.* components
+- No new code should reference Atoms.* components
+- Credo rules will flag new Atoms.* usage as errors
+
+### Phase 2: Component Migration (Q3 2025)
+- Atoms.* components will be updated to delegate to UI.* components
+- Atoms.* modules will be marked as deprecated with warnings
+- Documentation will be updated to reflect migration path
+
+### Phase 3: Removal (Q1 2026)
+- Atoms.* components will be removed from the codebase
+- All remaining references must be updated to UI.* components
 
 ## Migration Guidance
 
 ### For New Code
-Always use canonical UI components directly:
+MUST use canonical UI components directly:
 
 ```elixir
-# ✅ Preferred - Use UI components directly
+# ✅ REQUIRED - Use UI components directly
 alias RivaAshWeb.Components.UI.Button, as: UIButton
 alias RivaAshWeb.Components.UI.Input, as: UIInput
 
@@ -37,10 +56,23 @@ end
 ```
 
 ### For Existing Code
-Keep existing atom component calls as-is during migration:
+Existing atom component calls should be migrated to UI.* components:
 
 ```elixir
-# ✅ Acceptable during migration - Compatibility wrapper handles delegation
+# ✅ MIGRATED - Using UI components
+alias RivaAshWeb.Components.UI.Button, as: UIButton
+
+def existing_component(assigns) do
+  ~H"""
+  <UIButton.button variant="primary" size="md">
+    Save Changes
+  </UIButton.button>
+  """
+end
+```
+
+```elixir
+# ⚠️ DEPRECATED - Compatibility wrapper (will be removed)
 import RivaAshWeb.Components.Atoms.Button
 
 def existing_component(assigns) do
@@ -54,7 +86,7 @@ end
 
 ### Component Import Patterns
 
-**Preferred for new code:**
+**REQUIRED for new code:**
 ```elixir
 # Import UI components with aliases to avoid conflicts
 alias RivaAshWeb.Components.UI.Button, as: UIButton
@@ -62,9 +94,9 @@ alias RivaAshWeb.Components.UI.Input, as: UIInput
 alias RivaAshWeb.Components.UI.Card, as: UICard
 ```
 
-**Legacy pattern (being phased out):**
+**Deprecated pattern:**
 ```elixir
-# Old pattern - still works but deprecated
+# Old pattern - prohibited for new code
 import RivaAshWeb.Components.Atoms.Button
 import RivaAshWeb.Components.Atoms.Input
 ```
@@ -136,6 +168,25 @@ end
 **Form Handling**: Use AshPhoenix.Form for all form operations with proper validation.
 
 ## UI Development
+
+## Wrapper Strategy and Property-Based Testing (PBT)
+
+- Stable app API: All UI components must be thin wrappers over third‑party libs (currently SaladUI), exposing only the minimal, app‑level API
+- Opinionated defaults: Enforce accessibility and design tokens in the wrapper (aria-* states, focus-visible, disabled semantics)
+- Passthrough: Provide a :rest (global) passthrough for advanced attributes; avoid mirroring vendor APIs 1:1
+- Validation: Use `attr` validations and fail fast in dev/test on impossible combos
+- Tokens mapping: Keep class/token mapping centralized in helpers inside the wrapper (e.g., classes_for/.. when needed)
+
+### Testing requirements (per component)
+- Unit tests: Basic rendering, variants, sizes, disabled/loading states, global attributes
+- Property tests: Use StreamData to generate valid prop maps; assert crash‑free rendering and invariants (e.g., aria-busy when loading, disabled when loading)
+- Visual/a11y: Small Playwright smoke that renders the wrapper and checks a couple of a11y attributes; screenshot optional
+
+### Migration (SaladUI)
+- Wrap atoms first (Button, Input, Icon/Spinner, Modal, Tooltip)
+- UI.* components delegate to SaladUI primitives and use `TwMerge` to merge default + user classes
+- Detect and progressively replace direct vendor usage; prefer `RivaAshWeb.Components.UI.*` in app code
+
 
 **LiveView First**: Prefer LiveView over React components unless specific interactivity is needed.
 

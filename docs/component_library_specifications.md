@@ -259,6 +259,23 @@ A tooltip component for displaying help text.
 
 [View detailed specification](component_specifications/tooltip_spec.md)
 
+## Organisms
+
+### InboxList
+A composite component for displaying inbox items with various states and actions.
+
+**Key Features:**
+- Multiple variants: default, notification, task
+- Multiple sizes: default, compact
+- Responsive behavior (collapses to mobile view)
+- Full accessibility support (ARIA attributes)
+- Pagination integration
+- Empty state support
+- Mobile touch targets (≥44x44)
+
+[View detailed specification](component_specifications/inbox_list_spec.md)
+
+
 ## Components to Update
 
 ### TextInput
@@ -302,3 +319,22 @@ All components use the design system CSS variables:
 - Consistent API patterns across components
 - Flexible styling through class merging
 - Phoenix LiveView event support
+## Kbd
+
+The `Kbd` component is used to display keyboard keys with consistent styling.
+
+### Variants
+- **default**: Standard size keyboard key
+- **small**: Compact size for modifier keys
+
+### Props
+| Prop      | Type    | Default   | Description                     |
+|-----------|---------|-----------|---------------------------------|
+| variant   | atom    | :default  | Size variant of the key         |
+| text      | string  | nil       | Text to display in the key      |
+
+### Examples
+```elixir
+<.kbd>Enter</.kbd>
+<.kbd variant={:small}>Ctrl</.kbd>
+```
