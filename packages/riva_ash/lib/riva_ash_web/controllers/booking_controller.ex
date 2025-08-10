@@ -134,14 +134,11 @@ defmodule RivaAshWeb.BookingController do
   """
   @spec items(conn(), params()) :: conn()
   def items(conn, _params) do
-    case Item.read(domain: RivaAsh.Domain) do
-      {:ok, items} ->
+    case RivaAsh.Domain.list_items!() do
+      items ->
         conn
         |> put_status(:ok)
         |> json(%{data: Enum.map(items, &format_item/1)})
-
-      {:error, reason} ->
-        {:error, reason}
     end
   end
 
@@ -259,7 +256,8 @@ defmodule RivaAshWeb.BookingController do
   end
 
   defp find_client_by_email(email) do
-    Client.by_email(email, domain: RivaAsh.Domain, load: [:reservations])
+    RivaAsh.Domain.get_client_by_email!(email)
+    |> Ash.load!(:reservations)
   end
 
   # Parameter parsing functions

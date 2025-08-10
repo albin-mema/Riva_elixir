@@ -1,5 +1,3 @@
-alias Plug.Conn, as: Conn
-
 defmodule RivaAshWeb.SwaggerController do
   @moduledoc """
   Controller for serving Swagger UI API documentation.
@@ -18,7 +16,6 @@ defmodule RivaAshWeb.SwaggerController do
   """
 
   use RivaAshWeb, :controller
-  alias RivaAsh.ErrorHelpers
 
   @type conn :: Plug.Conn.t()
   @type params :: map()

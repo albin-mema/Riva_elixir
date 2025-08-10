@@ -163,9 +163,9 @@ defmodule RivaAshWeb.AuthController do
   end
 
   defp get_user_by_id(user_id) do
-    case Ash.get(RivaAsh.Accounts.User, user_id, action: :seed_read, domain: RivaAsh.Accounts) do
-      {:ok, user} -> {:ok, user}
-      {:error, _reason} -> {:error, "User not found"}
+    case RivaAsh.Accounts.get_user_by_id!(user_id, action: :seed_read) do
+      user -> {:ok, user}
+      _ -> {:error, "User not found"}
     end
   end
 
@@ -238,7 +238,7 @@ defmodule RivaAshWeb.AuthController do
         end)
         |> Enum.join(", ")
 
-      _unmatchedunmatched ->
+      _ ->
         "Registration failed"
     end
   end
@@ -250,5 +250,5 @@ defmodule RivaAshWeb.AuthController do
   defp format_ash_error(%{input: input}), do: "Invalid input: #{input}"
   defp format_ash_error(%{field: field}) when is_atom(field), do: "Invalid field: #{field}"
   defp format_ash_error(error) when is_binary(error), do: error
-  defp format_unmatchedash_unmatchederror(_unmatched), do: "Registration failed"
+  defp format_unmatchedash_unmatchederror(_), do: "Registration failed"
 end

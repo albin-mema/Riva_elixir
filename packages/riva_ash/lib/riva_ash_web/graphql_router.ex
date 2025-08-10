@@ -1,8 +1,8 @@
-alias Absinthe.Plugin, as: Plugin
-alias Absinthe.Plug, as: Plug
-alias Absinthe.Middleware, as: Middleware
-alias Absinthe.Type, as: Type
-alias RivaAshWeb.GraphqlMiddleware, as: GraphqlMiddleware
+# alias Absinthe.Plugin, as: Plugin
+# alias Absinthe.Plug, as: Plug
+# alias Absinthe.Middleware, as: Middleware
+# alias Absinthe.Type, as: Type
+# alias RivaAshWeb.GraphqlMiddleware, as: GraphqlMiddleware
 
 defmodule RivaAshWeb.Schema do
   @moduledoc """
@@ -19,38 +19,16 @@ defmodule RivaAshWeb.Schema do
   @type context :: map()
   @type info :: map()
 
-  @doc """
-  Root query type definition.
-
-  Defines all available GraphQL query operations for retrieving
-  data from the application. Queries are automatically generated
-  from Ash resources through the AshGraphql integration.
-  """
   query do
     # Query fields are automatically generated from Ash resources
     # when using AshGraphql integration
   end
 
-  @doc """
-  Root mutation type definition.
-
-  Defines all available GraphQL mutation operations for creating,
-  updating, and deleting data in the application. Mutations are
-  automatically generated from Ash resources through the AshGraphql
-  integration with proper authorization and validation.
-  """
   mutation do
     # Mutation fields are automatically generated from Ash resources
     # when using AshGraphql integration
   end
 
-  @doc """
-  Error handling for GraphQL execution.
-
-  Provides custom error formatting for GraphQL responses to ensure
-  consistent error reporting across the API.
-  """
-  @spec handle_absinthe_error({atom(), any()}, context(), info()) :: map()
   def handle_absinthe_error({:error, reason}, _context, _info) do
     %{
       message: "GraphQL execution error",
@@ -67,13 +45,6 @@ defmodule RivaAshWeb.Schema do
     }
   end
 
-  @doc """
-  Plugin configuration for Absinthe schema.
-
-  Configures additional plugins and middleware for enhanced
-  GraphQL functionality, including introspection and validation.
-  """
-  @spec plugins() :: [Absinthe.Plugin.t()]
   def plugins do
     [
       Absinthe.Plug.Introspection,
@@ -81,14 +52,6 @@ defmodule RivaAshWeb.Schema do
     ]
   end
 
-  @doc """
-  Middleware pipeline for GraphQL execution.
-
-  Defines middleware that runs around each GraphQL execution
-  to provide common functionality like authentication,
-  authorization, and logging.
-  """
-  @spec middleware(Absinthe.Type.t()) :: [Absinthe.Middleware.t()]
   def middleware(_schema) do
     [
       Absinthe.Middleware.Dataloader,

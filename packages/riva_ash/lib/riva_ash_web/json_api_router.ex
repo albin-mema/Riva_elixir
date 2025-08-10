@@ -1,4 +1,3 @@
-
 defmodule RivaAshWeb.JsonApiRouter do
   @moduledoc """
   JSON:API router configuration for the Riva Ash application.

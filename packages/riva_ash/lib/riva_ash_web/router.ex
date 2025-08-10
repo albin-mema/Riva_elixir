@@ -1,4 +1,3 @@
-
 defmodule RivaAshWeb.Router do
   @moduledoc """
   Phoenix router configuration for Riva Ash web interface.
@@ -23,10 +22,16 @@ defmodule RivaAshWeb.Router do
   import Phoenix.LiveView.Router
   import AshAdmin.Router
 
-  alias RivaAshWeb.{AuthHelpers, Controllers}
+  alias RivaAshWeb.AuthHelpers
 
-  # PhoenixStorybook.Router import removed to avoid compile-time dependency during tests.
-  # Storybook routes remain commented out below.
+  # Storybook stub routes (dev & test)
+  if Mix.env() in [:dev, :test] do
+    scope "/", RivaAshWeb do
+      pipe_through(:browser_no_layout)
+      live "/storybook/ui/button", StorybookStub.ButtonLive, :index
+      get "/storybook", Controllers.AuthController, :redirect_to_dashboard
+    end
+  end
 
   @type pipeline_name :: :api | :browser | :authenticated_layout | :browser_no_layout | :require_authenticated_user
   @type route_scope :: String.t()
@@ -101,37 +106,26 @@ defmodule RivaAshWeb.Router do
   #     )
   #   end
 
-    # Storybook routes disabled (demo)
-    # if Mix.env() == :dev do
-    #   scope "/" do
-    #     storybook_assets()
-    #   end
-    #
-    #   scope "/", RivaAshWeb do
-    #     pipe_through(:browser)
-    #     live_storybook("/storybook", backend_module: RivaAshWeb.Storybook)
-    #   end
-    # end
 
-    # if Mix.env() == :dev and Code.ensure_loaded?(RivaAshWeb.Dev.Router) do
-    #   forward("/dev", RivaAshWeb.Dev.Router)
-    # end
+  # if Mix.env() == :dev and Code.ensure_loaded?(RivaAshWeb.Dev.Router) do
+  #   forward("/dev", RivaAshWeb.Dev.Router)
+  # end
   # end
 
   # Client-facing booking API (public)
-  scope "/api/booking", RivaAshWeb do
+  scope "/api/booking", RivaAshWeb.Controllers do
     pipe_through([:api])
 
     # Availability and items
-    get("/availability/:item_id", Controllers.BookingController, :availability)
-    get("/items", Controllers.BookingController, :items)
+    get("/availability/:item_id", BookingController, :availability)
+    get("/items", BookingController, :items)
 
     # Booking flow
-    post("/create", Controllers.BookingController, :create)
-    post("/confirm/:booking_id", Controllers.BookingController, :confirm)
+    post("/create", BookingController, :create)
+    post("/confirm/:booking_id", BookingController, :confirm)
 
     # Client lookup
-    get("/client/:email", Controllers.BookingController, :client_bookings)
+    get("/client/:email", BookingController, :client_bookings)
   end
 
   # Swagger UI - serves the OpenAPI documentation
@@ -156,7 +150,6 @@ defmodule RivaAshWeb.Router do
       live("/test-data-generator", RivaAshWeb.DevTools.TestDataGeneratorLive, :index)
       live("/performance-dashboard", RivaAshWeb.DevTools.PerformanceDashboardLive, :index)
     end
-
   end
 
   # ERD diagram (available at both /erd and /admin/erd)
@@ -167,23 +160,22 @@ defmodule RivaAshWeb.Router do
 
   # LiveView routes
   # Public routes (no authentication required)
-  scope "/", RivaAshWeb do
+  scope "/", RivaAshWeb.Controllers do
     pipe_through([:browser])
     # LiveView locale hook handled via plug in :browser pipeline
 
-    get("/", Controllers.AuthController, :redirect_to_dashboard)
+    get("/", AuthController, :redirect_to_dashboard)
 
     # Global search for unregistered users
-    live("/search", GlobalSearchLive, :index)
+    live("/search", RivaAshWeb.GlobalSearchLive, :index)
 
     # Authentication routes
-    live("/sign-in", Auth.SignInLive, :index)
-    get("/sign-in", Controllers.AuthController, :sign_in)
-    post("/sign-in", Controllers.AuthController, :sign_in_submit)
-    get("/auth/complete-sign-in", Controllers.AuthController, :complete_sign_in)
-    get("/register", Controllers.AuthController, :register)
-    post("/sign-out", Controllers.AuthController, :sign_out)
-    post("/register", Controllers.AuthController, :register_submit)
+    live("/sign-in", RivaAshWeb.Auth.SignInLive, :index)
+    post("/sign-in", AuthController, :sign_in_submit)
+    get("/auth/complete-sign-in", AuthController, :complete_sign_in)
+    get("/register", AuthController, :register)
+    post("/sign-out", AuthController, :sign_out)
+    post("/register", AuthController, :register_submit)
   end
 
   # Authenticated routes - User-Centric Workflow Design
