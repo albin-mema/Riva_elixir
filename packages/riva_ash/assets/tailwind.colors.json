@@ -24,13 +24,13 @@
     "foreground": "hsl(var(--popover-foreground))"
   },
   "primary": {
-    "DEFAULT": "hsl(var(--primary))",
-    "foreground": "hsl(var(--primary-foreground))"
+    "DEFAULT": "oklch(var(--primary))",
+    "foreground": "oklch(var(--primary-foreground))"
   },
   "ring": "hsl(var(--ring))",
   "secondary": {
-    "DEFAULT": "hsl(var(--secondary))",
-    "foreground": "hsl(var(--secondary-foreground))"
+    "DEFAULT": "oklch(var(--secondary))",
+    "foreground": "oklch(var(--secondary-foreground))"
   },
   "sidebar": {
     "DEFAULT": "hsl(var(--sidebar-background))",

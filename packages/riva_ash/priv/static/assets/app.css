@@ -2171,6 +2171,10 @@ body {
   border-radius: inherit;
 }
 
+.riva-ash-web :is(.rounded-\[var\(--radius-md\)\]) {
+  border-radius: var(--radius-md);
+}
+
 .riva-ash-web :is(.rounded-full) {
   border-radius: 9999px;
 }
@@ -2329,6 +2333,10 @@ body {
   border-color: var(--border);
 }
 
+.riva-ash-web :is(.border-current) {
+  border-color: currentColor;
+}
+
 .riva-ash-web :is(.border-destructive) {
   border-color: var(--destructive);
 }
@@ -2442,6 +2450,10 @@ body {
 .riva-ash-web :is(.border-l-blue-500) {
   --tw-border-opacity: 1;
   border-left-color: rgb(59 130 246 / var(--tw-border-opacity));
+}
+
+.riva-ash-web :is(.border-t-transparent) {
+  border-top-color: transparent;
 }
 
 .riva-ash-web :is(.bg-accent) {
@@ -3934,6 +3946,17 @@ body {
 
 .riva-ash-web :is(.checked\:text-primary-foreground:checked) {
   color: var(--primary-foreground);
+}
+
+.riva-ash-web :is(.hover\:rotate-6:hover) {
+  --tw-rotate: 6deg;
+  transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
+}
+
+.riva-ash-web :is(.hover\:scale-110:hover) {
+  --tw-scale-x: 1.1;
+  --tw-scale-y: 1.1;
+  transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
 }
 
 .riva-ash-web :is(.hover\:border-border:hover) {
