@@ -1,4 +1,4 @@
-alias RivaAshWeb.Plugs, as: Plugs
+# alias RivaAshWeb.Plugs, as: Plugs
 
 defmodule RivaAshWeb.Plugs.Locale do
   @moduledoc """
@@ -45,6 +45,9 @@ defmodule RivaAshWeb.Plugs.Locale do
     normalize_and_validate(l)
   end
 
+  # When there is no "locale" param, fall back to other resolution strategies
+  defp get_param_locale(_conn), do: nil
+
   defp get_unmatchedparam_unmatchedlocale(_unmatched), do: nil
 
   defp get_session_locale(conn) do
@@ -57,9 +60,11 @@ defmodule RivaAshWeb.Plugs.Locale do
   defp get_user_locale(%Plug.Conn{assigns: %{current_user: user}}) when is_map(user) do
     case Map.get(user, :locale) || Map.get(user, "locale") do
       l when is_binary(l) and l != "" -> normalize_and_validate(l)
-      _unmatchedunmatched -> nil
+      _ -> nil
     end
   end
+
+  defp get_user_locale(_), do: nil
 
   defp get_unmatcheduser_unmatchedlocale(_unmatched), do: nil
 

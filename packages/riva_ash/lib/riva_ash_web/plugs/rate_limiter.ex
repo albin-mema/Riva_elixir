@@ -3,7 +3,8 @@ defmodule RivaAshWeb.Plugs.RateLimiter do
   alias RivaAsh.Accounts.RateLimiter
 
   @max_requests 10
-  @interval 60 # seconds
+  # seconds
+  @interval 60
 
   def init(opts), do: opts
 
@@ -21,15 +22,18 @@ defmodule RivaAshWeb.Plugs.RateLimiter do
       {:error, :rate_limited} ->
         conn
         |> put_resp_header("retry-after", to_string(@interval))
-        |> send_resp(429, Jason.encode!(%{
-          errors: [
-            %{
-              status: "429",
-              title: "Rate Limit Exceeded",
-              detail: "Too many requests, please try again later"
-            }
-          ]
-        }))
+        |> send_resp(
+          429,
+          Jason.encode!(%{
+            errors: [
+              %{
+                status: "429",
+                title: "Rate Limit Exceeded",
+                detail: "Too many requests, please try again later"
+              }
+            ]
+          })
+        )
         |> halt()
     end
   end
@@ -43,8 +47,14 @@ defmodule RivaAshWeb.Plugs.RateLimiter do
   end
 
   defp get_user_id(conn) do
-    # Try to get user ID from authenticated session
-    case get_session(conn, :user_id) do
+    # Try to get user ID from authenticated session when session is available
+    user_id =
+      case conn.private[:plug_session_fetch] do
+        :done -> get_session(conn, :user_id)
+        _ -> nil
+      end
+
+    case user_id do
       nil ->
         # Try to get from token if available
         case get_req_header(conn, "authorization") do
@@ -53,9 +63,13 @@ defmodule RivaAshWeb.Plugs.RateLimiter do
               {:ok, user} -> user.id
               _ -> nil
             end
-          _ -> nil
+
+          _ ->
+            nil
         end
-      user_id -> user_id
+
+      id ->
+        id
     end
   end
 end
