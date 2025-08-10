@@ -1,6 +1,6 @@
-alias RivaAshWeb.Components.Molecules, as: Molecules
-alias RivaAshWeb.Components.UI, as: UI
-alias Phoenix.LiveView.Rendered, as: Rendered
+# alias RivaAshWeb.Components.Molecules, as: Molecules
+# alias RivaAshWeb.Components.UI, as: UI
+# alias Phoenix.LiveView.Rendered, as: Rendered
 
 defmodule RivaAshWeb.Components.Molecules.Card do
   @moduledoc """

@@ -1,6 +1,6 @@
-alias RivaAshWeb.Components.Navigation, as: Navigation
-alias RivaAshWeb.Components.Atoms, as: Atoms
-alias Phoenix.LiveView.Rendered, as: Rendered
+# alias RivaAshWeb.Components.Navigation, as: Navigation
+# alias RivaAshWeb.Components.Atoms, as: Atoms
+# alias Phoenix.LiveView.Rendered, as: Rendered
 
 defmodule RivaAshWeb.Components.Navigation.ExpandedSidebar do
   import RivaAshWeb.Gettext, only: [dgettext: 2]
@@ -214,19 +214,19 @@ defmodule RivaAshWeb.Components.Navigation.ExpandedSidebar do
 
   # Helper function to build header classes
   @spec build_header_class(boolean()) :: String.t()
-  defp build_header_class(collapsed) do
+  defp build_header_class(_collapsed) do
     "sidebar-header"
   end
 
   # Helper function to build content classes
   @spec build_content_class(boolean()) :: String.t()
-  defp build_content_class(collapsed) do
+  defp build_content_class(_collapsed) do
     "sidebar-content"
   end
 
   # Helper function to build footer classes
   @spec build_footer_class(boolean()) :: String.t()
-  defp build_footer_class(collapsed) do
+  defp build_footer_class(_collapsed) do
     "sidebar-footer"
   end
 

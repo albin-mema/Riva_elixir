@@ -1,6 +1,6 @@
-alias RivaAshWeb.Components.Interactive, as: Interactive
-alias Phoenix.LiveView.Rendered, as: Rendered
-alias Phoenix.LiveView, as: LiveView
+# alias RivaAshWeb.Components.Interactive, as: Interactive
+# alias Phoenix.LiveView.Rendered, as: Rendered
+# alias Phoenix.LiveView, as: LiveView
 
 defmodule RivaAshWeb.Components.Interactive.TimeSlotPicker do
   import RivaAshWeb.Gettext, only: [dgettext: 2, dngettext: 5]

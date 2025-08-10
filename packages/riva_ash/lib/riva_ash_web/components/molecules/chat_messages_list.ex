@@ -111,20 +111,36 @@ defmodule RivaAshWeb.Components.Molecules.ChatMessagesList do
 
   defp get_sender_name(message, current_user_id) do
     cond do
-      message.sender_user_id == current_user_id -> "You"
-      Map.has_key?(message, :sender_user) && message.sender_user && message.sender_user.name -> message.sender_user.name
-      Map.has_key?(message, :sender_user) && message.sender_user && message.sender_user.email -> message.sender_user.email
-      Map.has_key?(message, :sender_client) && message.sender_client && message.sender_client.name -> message.sender_client.name
-      Map.has_key?(message, :sender_client) && message.sender_client && message.sender_client.email -> message.sender_client.email
-      true -> "Unknown"
+      message.sender_user_id == current_user_id ->
+        "You"
+
+      Map.has_key?(message, :sender_user) && message.sender_user && message.sender_user.name ->
+        message.sender_user.name
+
+      Map.has_key?(message, :sender_user) && message.sender_user && message.sender_user.email ->
+        message.sender_user.email
+
+      Map.has_key?(message, :sender_client) && message.sender_client && message.sender_client.name ->
+        message.sender_client.name
+
+      Map.has_key?(message, :sender_client) && message.sender_client && message.sender_client.email ->
+        message.sender_client.email
+
+      true ->
+        "Unknown"
     end
   end
 
   defp get_sender_avatar(message) do
     cond do
-      Map.has_key?(message, :sender_user) && message.sender_user && Map.get(message.sender_user, :avatar_url) -> message.sender_user.avatar_url
-      Map.has_key?(message, :sender_client) && message.sender_client && Map.get(message.sender_client, :avatar_url) -> message.sender_client.avatar_url
-      true -> nil
+      Map.has_key?(message, :sender_user) && message.sender_user && Map.get(message.sender_user, :avatar_url) ->
+        message.sender_user.avatar_url
+
+      Map.has_key?(message, :sender_client) && message.sender_client && Map.get(message.sender_client, :avatar_url) ->
+        message.sender_client.avatar_url
+
+      true ->
+        nil
     end
   end
 

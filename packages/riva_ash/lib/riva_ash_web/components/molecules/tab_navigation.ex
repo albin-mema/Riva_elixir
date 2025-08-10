@@ -1,13 +1,13 @@
-alias RivaAshWeb.Components.Molecules, as: Molecules
-alias RivaAshWeb.Components.Atoms, as: Atoms
-alias Phoenix.LiveView.Rendered, as: Rendered
+# alias RivaAshWeb.Components.Molecules, as: Molecules
+# alias RivaAshWeb.Components.Atoms, as: Atoms
+# alias Phoenix.LiveView.Rendered, as: Rendered
 
 defmodule RivaAshWeb.Components.Molecules.TabNavigation do
   @moduledoc """
   Tab navigation component for switching between views with accessibility and keyboard navigation.
   """
   use Phoenix.Component
-  import RivaAshWeb.Components.Atoms.Button
+#  import RivaAshWeb.Components.Atoms.Button
   import RivaAshWeb.Components.Atoms.Icon
 
   @type assigns :: %{

@@ -1,6 +1,6 @@
-alias RivaAshWeb.Components.Interactive, as: Interactive
-alias Phoenix.LiveView.Rendered, as: Rendered
-alias Phoenix.LiveView, as: LiveView
+# alias RivaAshWeb.Components.Interactive, as: Interactive
+# alias Phoenix.LiveView.Rendered, as: Rendered
+# alias Phoenix.LiveView, as: LiveView
 
 defmodule RivaAshWeb.Components.Interactive.GridPositionPicker do
   @moduledoc """

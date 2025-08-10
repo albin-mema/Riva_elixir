@@ -3,6 +3,8 @@ alias RivaAshWeb.Components.Molecules, as: Molecules
 alias RivaAshWeb.Components.Atoms, as: Atoms
 alias Phoenix.LiveView.Rendered, as: Rendered
 alias RivaAshWeb.Components.UI.Select, as: Select
+import RivaAshWeb.Components.UI.Button
+import RivaAshWeb.Components.Atoms.Toggle
 
 defmodule RivaAshWeb.Components.Organisms.ItemForm do
   @moduledoc """
@@ -10,8 +12,8 @@ defmodule RivaAshWeb.Components.Organisms.ItemForm do
   """
   use Phoenix.Component
   import RivaAshWeb.Components.Molecules.FormField
-  import RivaAshWeb.Components.Atoms.Button
-  import RivaAshWeb.Components.Atoms.Toggle
+  alias RivaAshWeb.Components.UI.Button, as: UIButton
+  alias RivaAshWeb.Components.UI.Toggle, as: UIToggle
   # removed unused import to reduce warnings
 
   @doc """
@@ -77,8 +79,8 @@ defmodule RivaAshWeb.Components.Organisms.ItemForm do
 
       <!-- Public Search Settings -->
       <div class={@public_settings_class}>
-        <h3 class="text-lg font-medium text-green-900">Public Search Settings</h3>
-        <p class="text-sm text-green-700">Control how this item appears in global search for unregistered users.</p>
+        <h3 class="font-medium text-green-900 text-lg">Public Search Settings</h3>
+        <p class="text-green-700 text-sm">Control how this item appears in global search for unregistered users.</p>
 
         <.toggle field={@form[:is_public_searchable]} label="Make this item discoverable in global search" />
 

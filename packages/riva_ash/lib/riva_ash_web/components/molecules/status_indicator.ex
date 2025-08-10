@@ -1,4 +1,3 @@
-
 defmodule RivaAshWeb.Components.Molecules.StatusIndicator do
   @moduledoc """
   Status indicator component with colors and icons.
@@ -149,7 +148,6 @@ defmodule RivaAshWeb.Components.Molecules.StatusIndicator do
   defp validate_variant("info"), do: :ok
   defp validate_variant("secondary"), do: :ok
   defp validate_variant("default"), do: :ok
-
 
   @spec validate_class(String.t()) :: :ok | {:error, String.t()}
   defp validate_class(class) when is_binary(class), do: :ok

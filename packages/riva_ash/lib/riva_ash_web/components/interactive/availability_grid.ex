@@ -60,7 +60,7 @@ defmodule RivaAshWeb.Components.Interactive.AvailabilityGrid do
   />
   """
   use Phoenix.Component
-  import RivaAshWeb.Components.Atoms.Button
+  import RivaAshWeb.Components.UI.Button
   import RivaAshWeb.Components.Atoms.Toggle
 
   @doc """

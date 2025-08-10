@@ -1,5 +1,5 @@
-alias RivaAshWeb.Components.Molecules, as: Molecules
-alias Phoenix.LiveView.Rendered, as: Rendered
+# alias RivaAshWeb.Components.Molecules, as: Molecules
+# alias Phoenix.LiveView.Rendered, as: Rendered
 
 defmodule RivaAshWeb.Components.Molecules.ProgressBar do
   @moduledoc """

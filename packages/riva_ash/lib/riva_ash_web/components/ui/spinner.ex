@@ -1,5 +1,5 @@
-alias RivaAshWeb.Components.UI, as: UI
-alias Phoenix.LiveView.Rendered, as: Rendered
+# alias RivaAshWeb.Components.UI, as: UI
+# alias Phoenix.LiveView.Rendered, as: Rendered
 
 defmodule RivaAshWeb.Components.UI.Spinner do
   @moduledoc """

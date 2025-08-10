@@ -2,6 +2,8 @@ alias RivaAshWeb.Components.Interactive, as: Interactive
 alias RivaAshWeb.Components.Atoms, as: Atoms
 alias Phoenix.LiveView.Rendered, as: Rendered
 alias Phoenix.LiveView, as: LiveView
+import RivaAshWeb.Components.UI.Button
+import RivaAshWeb.Components.UI.Input
 
 defmodule RivaAshWeb.Components.Interactive.PlotLayoutDesigner do
   @moduledoc """
@@ -66,8 +68,8 @@ defmodule RivaAshWeb.Components.Interactive.PlotLayoutDesigner do
   />
   """
   use Phoenix.Component
-  import RivaAshWeb.Components.Atoms.Button
-  import RivaAshWeb.Components.Atoms.Input
+  alias RivaAshWeb.Components.UI.Button, as: UIButton
+  alias RivaAshWeb.Components.UI.Input, as: UIInput
 
   @doc """
   Renders a visual plot layout designer.

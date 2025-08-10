@@ -2,6 +2,8 @@ alias RivaAshWeb.Components.Organisms, as: Organisms
 alias RivaAshWeb.Components.Molecules, as: Molecules
 alias RivaAshWeb.Components.Atoms, as: Atoms
 alias Phoenix.LiveView.Rendered, as: Rendered
+import RivaAshWeb.Components.UI.Button
+import RivaAshWeb.Components.Atoms.Toggle
 
 defmodule RivaAshWeb.Components.Organisms.ClientForm do
   @moduledoc """
@@ -9,8 +11,8 @@ defmodule RivaAshWeb.Components.Organisms.ClientForm do
   """
   use Phoenix.Component
   import RivaAshWeb.Components.Molecules.FormField
-  import RivaAshWeb.Components.Atoms.Button
-  import RivaAshWeb.Components.Atoms.Toggle
+  alias RivaAshWeb.Components.UI.Button, as: UIButton
+  alias RivaAshWeb.Components.UI.Toggle, as: UIToggle
 
   @doc """
   Renders a client form for registration or editing.

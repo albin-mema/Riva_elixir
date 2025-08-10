@@ -1,6 +1,6 @@
-alias RivaAshWeb.Components.Molecules, as: Molecules
-alias RivaAshWeb.Components.UI, as: UI
-alias Phoenix.LiveView.Rendered, as: Rendered
+# alias RivaAshWeb.Components.Molecules, as: Molecules
+# alias RivaAshWeb.Components.UI, as: UI
+# alias Phoenix.LiveView.Rendered, as: Rendered
 
 defmodule RivaAshWeb.Components.Molecules.Pagination do
   @moduledoc """
@@ -242,7 +242,7 @@ defmodule RivaAshWeb.Components.Molecules.Pagination do
   end
 
   @spec calculate_page_range(integer(), integer()) :: list(integer() | atom())
-  defp calculate_page_range(current, total) when total <= 7 do
+  defp calculate_page_range(_current, total) when total <= 7 do
     1..total |> Enum.to_list()
   end
 

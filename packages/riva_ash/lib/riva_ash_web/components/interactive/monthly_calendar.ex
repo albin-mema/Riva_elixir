@@ -64,7 +64,7 @@ defmodule RivaAshWeb.Components.Interactive.MonthlyCalendar do
   />
   """
   use Phoenix.Component
-  import RivaAshWeb.Components.Atoms.Button
+  import RivaAshWeb.Components.UI.Button
 
   @doc """
   Renders a monthly calendar view.

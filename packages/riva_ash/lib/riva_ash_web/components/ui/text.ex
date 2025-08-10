@@ -1,5 +1,5 @@
-alias RivaAshWeb.Components.UI, as: UI
-alias Phoenix.LiveView.Rendered, as: Rendered
+# alias RivaAshWeb.Components.UI, as: UI
+# alias Phoenix.LiveView.Rendered, as: Rendered
 
 defmodule RivaAshWeb.Components.UI.Text do
   @moduledoc """
@@ -40,7 +40,7 @@ defmodule RivaAshWeb.Components.UI.Text do
   @spec render_text_component(assigns :: map(), String.t()) :: Phoenix.LiveView.Rendered.t()
   defp render_text_component(assigns, variant) do
     assigns = Map.put(assigns, :variant, variant)
-    tag = text_tag(variant)
+    _tag = text_tag(variant)
 
     ~H"""
     <#{tag} class={@text_class} {@rest}>

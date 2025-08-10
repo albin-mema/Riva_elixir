@@ -64,7 +64,7 @@ defmodule RivaAshWeb.Components.Interactive.WeeklyCalendar do
   />
   """
   use Phoenix.Component
-  import RivaAshWeb.Components.Atoms.Button
+  import RivaAshWeb.Components.UI.Button
 
   @doc """
   Renders a weekly calendar view with time slots.

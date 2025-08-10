@@ -1,6 +1,6 @@
-alias RivaAshWeb.Components.Organisms, as: Organisms
-alias RivaAshWeb.Components.Atoms, as: Atoms
-alias Phoenix.LiveView.Rendered, as: Rendered
+# alias RivaAshWeb.Components.Organisms, as: Organisms
+# alias RivaAshWeb.Components.Atoms, as: Atoms
+# alias Phoenix.LiveView.Rendered, as: Rendered
 
 defmodule RivaAshWeb.Components.Organisms.PermissionMatrix do
   @moduledoc """

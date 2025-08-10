@@ -1,4 +1,4 @@
-alias RivaAshWeb.Components.Atoms, as: Atoms
+# alias RivaAshWeb.Components.Atoms, as: Atoms
 
 defmodule RivaAshWeb.Components.Atoms.RoomListItem do
   @moduledoc """

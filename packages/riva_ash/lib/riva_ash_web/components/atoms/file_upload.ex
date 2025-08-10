@@ -229,6 +229,7 @@ defmodule RivaAshWeb.Components.Atoms.FileUpload do
   @spec render_file_preview(String.t() | list(), list(String.t())) :: Phoenix.LiveView.Rendered.t()
   defp render_file_preview(value, _accept) when is_binary(value) do
     assigns = %{value: value}
+
     ~H"""
     <div class="file-preview-item">
       <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
@@ -248,6 +249,7 @@ defmodule RivaAshWeb.Components.Atoms.FileUpload do
 
   defp render_file_preview(values, accept) when is_list(values) do
     assigns = %{values: values, accept: accept}
+
     ~H"""
     <div class="space-y-2">
       <%= for value <- @values do %>

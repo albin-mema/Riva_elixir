@@ -1,4 +1,3 @@
-
 defmodule RivaAshWeb.Components.Atoms.TextInput do
   @moduledoc """
   Deprecated wrapper around the canonical design-system input.

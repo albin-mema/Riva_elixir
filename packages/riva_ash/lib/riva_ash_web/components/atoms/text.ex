@@ -1,7 +1,7 @@
-alias RivaAshWeb.Components.Atoms, as: Atoms
-alias Phoenix.LiveView.Rendered, as: Rendered
-alias Phoenix.LiveView.TagEngine, as: TagEngine
-alias Phoenix.HTML, as: HTML
+# alias RivaAshWeb.Components.Atoms, as: Atoms
+# alias Phoenix.LiveView.Rendered, as: Rendered
+# alias Phoenix.LiveView.TagEngine, as: TagEngine
+# alias Phoenix.HTML, as: HTML
 
 defmodule RivaAshWeb.Components.Atoms.Text do
   @moduledoc """

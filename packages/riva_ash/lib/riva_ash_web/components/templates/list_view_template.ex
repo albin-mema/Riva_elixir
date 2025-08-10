@@ -1,7 +1,7 @@
-alias RivaAshWeb.Components.Templates, as: Templates
-alias RivaAshWeb.Components.Organisms, as: Organisms
-alias RivaAshWeb.Components.Molecules, as: Molecules
-alias Phoenix.LiveView.Rendered, as: Rendered
+# alias RivaAshWeb.Components.Templates, as: Templates
+# alias RivaAshWeb.Components.Organisms, as: Organisms
+# alias RivaAshWeb.Components.Molecules, as: Molecules
+# alias Phoenix.LiveView.Rendered, as: Rendered
 
 defmodule RivaAshWeb.Components.Templates.ListViewTemplate do
   @moduledoc """

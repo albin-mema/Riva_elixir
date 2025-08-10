@@ -65,7 +65,7 @@ defmodule RivaAshWeb.Components.Interactive.DailySchedule do
   />
   """
   use Phoenix.Component
-  import RivaAshWeb.Components.Atoms.Button
+  import RivaAshWeb.Components.UI.Button
 
   @doc """
   Renders a daily schedule view.
