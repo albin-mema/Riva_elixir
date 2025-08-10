@@ -112,9 +112,9 @@ defmodule RivaAshWeb.AuthenticationFlowTest do
       assert redirected_to(conn) == "/businesses"
       conn = get(conn, redirected_to(conn))
       assert get_flash(conn, :info) =~ "Successfully signed in"
-      end
+    end
 
-      @spec test_login_fails_with_invalid_email_via_controller :: :ok
+    @spec test_login_fails_with_invalid_email_via_controller :: :ok
     test "login fails with invalid email via controller", %{conn: conn} do
       conn =
         post(conn, "/sign-in", %{
@@ -343,6 +343,7 @@ defmodule RivaAshWeb.AuthenticationFlowTest do
       # Verify user was created in database
       require Ash.Query
       import Ash.Expr
+
       query =
         User |> Ash.Query.for_read(:read) |> Ash.Query.filter(expr(email == "newuser@example.com"))
 

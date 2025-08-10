@@ -8,7 +8,6 @@ defmodule RivaAshWeb.Components.UI.ButtonPropertyTest do
   import RivaAshWeb.Components.UI.Button
 
   describe "button/1 property-based tests" do
-
     property "renders button with any valid variant and size combination" do
       check all(
               variant <- member_of(~w(default destructive outline secondary ghost link)),
@@ -39,7 +38,7 @@ defmodule RivaAshWeb.Components.UI.ButtonPropertyTest do
 
         # Disabled/Loading state assertions: component adds disabled attr and opacity/pointer classes
         if disabled or loading do
-          assert (html =~ "disabled") or (html =~ "opacity-50") or (html =~ "pointer-events-none")
+          assert html =~ "disabled" or html =~ "opacity-50" or html =~ "pointer-events-none"
         end
 
         # Loading state assertions
@@ -48,7 +47,6 @@ defmodule RivaAshWeb.Components.UI.ButtonPropertyTest do
         end
       end
     end
-
 
     property "renders link button with valid navigation attributes" do
       check all(
@@ -95,7 +93,6 @@ defmodule RivaAshWeb.Components.UI.ButtonPropertyTest do
       end
     end
 
-
     property "handles custom classes and attributes correctly" do
       check all(
               custom_class <- string(:alphanumeric, min_length: 1, max_length: 20),
@@ -123,7 +120,6 @@ defmodule RivaAshWeb.Components.UI.ButtonPropertyTest do
         assert html =~ ~s(data-testid="#{data_value}")
       end
     end
-
 
     property "variant classes are applied correctly" do
       check all(variant <- member_of(~w(default destructive outline secondary ghost link))) do
@@ -159,7 +155,6 @@ defmodule RivaAshWeb.Components.UI.ButtonPropertyTest do
         end
       end
     end
-
 
     property "size classes are applied correctly" do
       check all(size <- member_of(~w(default sm lg))) do

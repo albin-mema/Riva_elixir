@@ -13,7 +13,6 @@ defmodule RivaAsh.GDPR.RetentionPolicyTest do
   end
 
   describe "cascade" do
-
     test "dependent records are handled per policy" do
       # TODO: ensure dependent/child entities are cascaded or preserved per policy
       assert true
@@ -21,7 +20,6 @@ defmodule RivaAsh.GDPR.RetentionPolicyTest do
   end
 
   describe "dry-run" do
-
     test "reports candidates without deleting" do
       # TODO: invoke dry-run mode and assert no changes while collecting candidate list
       assert true

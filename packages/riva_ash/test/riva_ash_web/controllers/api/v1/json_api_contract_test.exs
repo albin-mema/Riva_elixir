@@ -20,7 +20,6 @@ defmodule RivaAshWeb.Api.V1.JsonApiContractTest do
       assert_error_shape(body)
     end
 
-
     test "invalid sort returns JSON:API error", %{conn: conn} do
       conn = get(conn, "/api/unknown_type?sort=nonexistent_field")
 

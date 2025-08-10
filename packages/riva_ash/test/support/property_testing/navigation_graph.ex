@@ -23,11 +23,18 @@ defmodule RivaAsh.PropertyTesting.NavigationGraph do
     allow_redirects = Keyword.get(opts, :allow_redirects, true)
     endpoint = Keyword.fetch!(opts, :endpoint)
 
-    do_walk(conn, start_path, steps, %{
-      visited_paths: [],
-      visited_edges: [],
-      statuses: []
-    }, allow_redirects, endpoint)
+    do_walk(
+      conn,
+      start_path,
+      steps,
+      %{
+        visited_paths: [],
+        visited_edges: [],
+        statuses: []
+      },
+      allow_redirects,
+      endpoint
+    )
   end
 
   defp do_walk(_conn, _path, 0, acc, _redir, _endpoint), do: finalize(acc)
@@ -44,7 +51,7 @@ defmodule RivaAsh.PropertyTesting.NavigationGraph do
 
     acc2 = %{
       visited_paths: acc.visited_paths ++ [effective_path],
-      visited_edges: acc.visited_edges ++ (if next_path, do: [{effective_path, next_path}], else: []),
+      visited_edges: acc.visited_edges ++ if(next_path, do: [{effective_path, next_path}], else: []),
       statuses: acc.statuses ++ [{effective_path, status}]
     }
 
@@ -120,18 +127,29 @@ defmodule RivaAsh.PropertyTesting.NavigationGraph do
 
   def normalize_path(url) when is_binary(url) do
     cond do
-      url == "" -> nil
-      String.starts_with?(url, "#") -> nil
-      String.starts_with?(url, "mailto:") -> nil
-      String.starts_with?(url, "tel:") -> nil
+      url == "" ->
+        nil
+
+      String.starts_with?(url, "#") ->
+        nil
+
+      String.starts_with?(url, "mailto:") ->
+        nil
+
+      String.starts_with?(url, "tel:") ->
+        nil
+
       String.starts_with?(url, "http://") or String.starts_with?(url, "https://") ->
         case URI.parse(url) do
           %URI{path: path} when is_binary(path) -> path
           _ -> nil
         end
 
-      String.starts_with?(url, "/") -> url
-      true -> nil
+      String.starts_with?(url, "/") ->
+        url
+
+      true ->
+        nil
     end
   end
 
@@ -151,6 +169,7 @@ defmodule RivaAsh.PropertyTesting.NavigationGraph do
   def navigable_path?(_), do: false
 
   defp pick_next([]), do: nil
+
   defp pick_next(links) do
     idx = :rand.uniform(length(links)) - 1
     Enum.at(links, idx)
