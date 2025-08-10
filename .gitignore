@@ -65,3 +65,7 @@ packages/riva_ash/debug_*.exs
 packages/riva_ash/test_*.js
 packages/riva_ash/test_output.txt
 packages/riva_ash/test/simple_*.exs
+
+
+# AI local context (ignored)
+docs/_external/
