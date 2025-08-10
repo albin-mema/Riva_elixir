@@ -127,17 +127,20 @@ defmodule RivaAshWeb.ChatLive do
     # For now (dev), create internal rooms for the user's first business
     room_params =
       case get_user_default_business(socket.assigns.current_user) do
-        {:ok, business_id} -> %{
-          name: String.trim(name),
-          room_type: "internal",
-          business_id: business_id
-        }
-        {:error, _} -> %{
-          name: String.trim(name),
-          room_type: "internal",
-          # Fallback: let the create fail with a clear error
-          business_id: nil
-        }
+        {:ok, business_id} ->
+          %{
+            name: String.trim(name),
+            room_type: "internal",
+            business_id: business_id
+          }
+
+        {:error, _} ->
+          %{
+            name: String.trim(name),
+            room_type: "internal",
+            # Fallback: let the create fail with a clear error
+            business_id: nil
+          }
       end
 
     case Ash.create(ChatRoom, :create, room_params, actor: socket.assigns.current_user, domain: RivaAsh.Domain) do
@@ -271,7 +274,6 @@ defmodule RivaAshWeb.ChatLive do
     end
   end
 
-
   # Dev helper: get a default business for a user
   defp get_user_default_business(_user) do
     # TODO: replace with real query for user's businesses; for now, use first active room's business
@@ -280,6 +282,7 @@ defmodule RivaAshWeb.ChatLive do
       _ -> {:error, :no_business}
     end
   end
+
   defp load_room_messages(nil, _user), do: {:ok, []}
 
   defp load_room_messages(room, user) do

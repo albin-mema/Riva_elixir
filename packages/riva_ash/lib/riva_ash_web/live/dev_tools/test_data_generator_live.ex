@@ -1,8 +1,8 @@
-alias RivaAshWeb.DevTools, as: DevTools
-alias RivaAsh.Resources, as: Resources
-alias RivaAsh.Accounts, as: Accounts
-alias RivaAsh.Reactors, as: Reactors
-alias Ash.Changeset, as: Changeset
+# alias RivaAshWeb.DevTools, as: DevTools
+# alias RivaAsh.Resources, as: Resources
+# alias RivaAsh.Accounts, as: Accounts
+# alias RivaAsh.Reactors, as: Reactors
+# alias Ash.Changeset, as: Changeset
 
 defmodule RivaAshWeb.DevTools.TestDataGeneratorLive do
   @moduledoc """

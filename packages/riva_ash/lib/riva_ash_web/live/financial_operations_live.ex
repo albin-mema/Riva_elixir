@@ -1,4 +1,3 @@
-
 defmodule RivaAshWeb.FinancialOperationsLive do
   @moduledoc """
   Financial Operations - Unified financial interface.
@@ -17,6 +16,7 @@ defmodule RivaAshWeb.FinancialOperationsLive do
   # Explicitly set the authenticated layout
 
   alias RivaAsh.Financial
+  alias RivaAsh.Financial, as: Financial
 
   import RivaAshWeb.Components.Organisms.PageHeader
   import RivaAshWeb.Components.Molecules.Card
@@ -532,9 +532,6 @@ defmodule RivaAshWeb.FinancialOperationsLive do
 
   # Helper functions
 
-  @doc """
-  Formats currency values for display.
-  """
   defp format_currency(amount) when is_number(amount) do
     "$#{:erlang.float_to_binary(amount, decimals: 2)}"
   end
@@ -543,10 +540,6 @@ defmodule RivaAshWeb.FinancialOperationsLive do
     "$#{Decimal.to_string(decimal, :normal)}"
   end
 
-
-  @doc """
-  Determines the badge variant based on status.
-  """
   defp status_variant(:active), do: "default"
   defp status_variant(:pending), do: "secondary"
   defp status_variant(:completed), do: "default"

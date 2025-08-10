@@ -1,4 +1,3 @@
-
 defmodule RivaAshWeb.RecurringReservationLive do
   @moduledoc """
   LiveView for managing Recurring Reservations.

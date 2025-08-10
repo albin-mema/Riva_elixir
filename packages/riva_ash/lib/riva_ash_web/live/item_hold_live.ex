@@ -1,9 +1,9 @@
-alias RivaAshWeb.Components.Organisms, as: Organisms
-alias RivaAshWeb.Components.Atoms, as: Atoms
-alias RivaAsh.Resources, as: Resources
-alias RivaAsh.Hold, as: Hold
-alias RivaAsh.Live, as: Live
-alias Ash.Error, as: Error
+# alias RivaAshWeb.Components.Organisms, as: Organisms
+# alias RivaAshWeb.Components.Atoms, as: Atoms
+# alias RivaAsh.Resources, as: Resources
+# alias RivaAsh.Hold, as: Hold
+# alias RivaAsh.Live, as: Live
+# alias Ash.Error, as: Error
 
 defmodule RivaAshWeb.ItemHoldLive do
   @moduledoc """

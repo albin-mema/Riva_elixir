@@ -1,5 +1,5 @@
-alias RivaAshWeb.Components.Organisms, as: Organisms
-alias RivaAshWeb.Components.Molecules, as: Molecules
+# alias RivaAshWeb.Components.Organisms, as: Organisms
+# alias RivaAshWeb.Components.Molecules, as: Molecules
 alias RivaAshWeb.Components.Atoms, as: Atoms
 alias RivaAshWeb.Live, as: Live
 alias Ash.Error, as: Error

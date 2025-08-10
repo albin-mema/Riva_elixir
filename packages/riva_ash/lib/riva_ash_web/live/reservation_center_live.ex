@@ -469,6 +469,7 @@ defmodule RivaAshWeb.ReservationCenterLive do
 
   # Helpers used in templates
   defp format_current_period(%Date{} = date, "day"), do: Calendar.strftime(date, "%A, %B %d, %Y")
+
   defp format_current_period(%Date{} = date, "week") do
     # Show week range (Mon-Sun) around the date
     # Assuming week starts on Monday
@@ -477,6 +478,7 @@ defmodule RivaAshWeb.ReservationCenterLive do
     sunday = Date.add(monday, 6)
     Calendar.strftime(monday, "%b %d") <> " - " <> Calendar.strftime(sunday, "%b %d, %Y")
   end
+
   defp format_current_period(%Date{} = date, "month"), do: Calendar.strftime(date, "%B %Y")
   defp format_current_period(%Date{} = date, _), do: Calendar.strftime(date, "%B %Y")
 
@@ -488,7 +490,8 @@ defmodule RivaAshWeb.ReservationCenterLive do
   defp get_calendar_dates(%Date{} = current_date) do
     first_of_month = %Date{current_date | day: 1}
     first_day_of_week = Date.day_of_week(first_of_month)
-    start_offset = first_day_of_week - 1 # 0 for Monday, ...
+    # 0 for Monday, ...
+    start_offset = first_day_of_week - 1
     grid_start = Date.add(first_of_month, -start_offset)
 
     # 6 weeks view -> 42 days

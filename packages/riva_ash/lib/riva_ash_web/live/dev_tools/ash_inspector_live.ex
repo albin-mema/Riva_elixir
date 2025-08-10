@@ -1,4 +1,3 @@
-
 defmodule RivaAshWeb.DevTools.AshInspectorLive do
   @moduledoc """
   Development tool for inspecting Ash queries, policies, and authorization decisions in real-time.
@@ -18,7 +17,6 @@ defmodule RivaAshWeb.DevTools.AshInspectorLive do
       {:ok, redirect(socket, to: "/")}
     end
   else
-
     @impl true
     def mount(_params, _session, socket) do
       socket =

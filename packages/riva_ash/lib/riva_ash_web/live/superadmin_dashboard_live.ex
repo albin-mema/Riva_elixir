@@ -12,9 +12,9 @@ defmodule RivaAshWeb.SuperadminDashboardLive do
   """
 
   use RivaAshWeb, :live_view
-  alias RivaAsh.Accounts.User
-  alias RivaAsh.Accounts
-  alias RivaAsh.Domain
+  # alias RivaAsh.Accounts.User
+  # alias RivaAsh.Accounts
+  # alias RivaAsh.Domain
   alias RivaAsh.Accounts.UserService
   alias RivaAsh.ErrorHelpers
 
@@ -193,6 +193,7 @@ defmodule RivaAshWeb.SuperadminDashboardLive do
 
       {:error, error} ->
         error_message = ErrorHelpers.format_error(error)
+        error_message = if is_map(error_message), do: error_message.message, else: to_string(error_message)
 
         socket
         |> put_flash(:error, "Failed to load system stats: #{error_message}")

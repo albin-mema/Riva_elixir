@@ -28,7 +28,7 @@ defmodule RivaAshWeb.DashboardLive do
 
   import RivaAshWeb.Components.Organisms.PageHeader
   import RivaAshWeb.Components.Molecules.Card
-  import RivaAshWeb.Components.Atoms.Button
+  import RivaAshWeb.Components.UI.Button
   import RivaAshWeb.Components.Atoms.Badge
   import RivaAshWeb.Live.AuthHelpers
 

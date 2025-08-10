@@ -1,10 +1,8 @@
-
 defmodule RivaAshWeb.Error.AccessDeniedLive do
   @moduledoc """
   LiveView for 403 Access Denied errors.
   """
   use RivaAshWeb, :live_view
-
 
   @impl true
   def mount(_params, session, socket) do

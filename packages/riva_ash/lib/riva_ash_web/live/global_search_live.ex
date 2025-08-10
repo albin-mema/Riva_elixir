@@ -1,8 +1,8 @@
-alias RivaAshWeb.Components.Atoms, as: Atoms
-alias RivaAshWeb.Live, as: Live
-alias RivaAsh.Resources, as: Resources
-alias RivaAsh.Search, as: Search
-alias Ash.Error, as: Error
+# alias RivaAshWeb.Components.Atoms, as: Atoms
+# alias RivaAshWeb.Live, as: Live
+# alias RivaAsh.Resources, as: Resources
+# alias RivaAsh.Search, as: Search
+# alias Ash.Error, as: Error
 
 defmodule RivaAshWeb.GlobalSearchLive do
   @moduledoc """
@@ -12,7 +12,7 @@ defmodule RivaAshWeb.GlobalSearchLive do
 
   import RivaAshWeb.Components.Atoms.Button
   import RivaAshWeb.Components.Atoms.Input
-  import RivaAshWeb.Live.AuthHelpers
+#  import RivaAshWeb.Live.AuthHelpers
 
   alias RivaAsh.Resources.{Business, Item}
   alias RivaAsh.Search.SearchService

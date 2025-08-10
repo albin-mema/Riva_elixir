@@ -1,4 +1,3 @@
-
 defmodule RivaAshWeb.BusinessLive do
   @moduledoc """
   LiveView for managing Businesses.

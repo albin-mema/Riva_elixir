@@ -1,11 +1,11 @@
-alias RivaAshWeb.Components.Organisms, as: Organisms
-alias RivaAshWeb.Components.Atoms, as: Atoms
-alias RivaAshWeb.Components.Molecules, as: Molecules
-alias RivaAshWeb.Components.Forms, as: Forms
-alias RivaAshWeb.Live, as: Live
-alias RivaAsh.Resources, as: Resources
-alias RivaAsh.Reservation, as: Reservation
-alias AshPhoenix.Form, as: Form
+# alias RivaAshWeb.Components.Organisms, as: Organisms
+# alias RivaAshWeb.Components.Atoms, as: Atoms
+# alias RivaAshWeb.Components.Molecules, as: Molecules
+# alias RivaAshWeb.Components.Forms, as: Forms
+# alias RivaAshWeb.Live, as: Live
+# alias RivaAsh.Resources, as: Resources
+# alias RivaAsh.Reservation, as: Reservation
+# alias AshPhoenix.Form, as: Form
 
 defmodule RivaAshWeb.ReservationLive do
   @moduledoc """

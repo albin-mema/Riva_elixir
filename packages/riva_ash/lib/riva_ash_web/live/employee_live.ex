@@ -1,4 +1,3 @@
-
 defmodule RivaAshWeb.EmployeeLive do
   @moduledoc """
   LiveView for managing Employees.

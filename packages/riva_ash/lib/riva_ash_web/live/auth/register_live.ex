@@ -1,4 +1,3 @@
-
 defmodule RivaAshWeb.Auth.RegisterLive do
   @moduledoc """
   User registration LiveView.
@@ -224,6 +223,4 @@ defmodule RivaAshWeb.Auth.RegisterLive do
       _unmatchedunmatched -> "Registration failed due to invalid data."
     end
   end
-
-
 end

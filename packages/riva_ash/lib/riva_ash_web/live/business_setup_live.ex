@@ -1,4 +1,3 @@
-
 defmodule RivaAshWeb.BusinessSetupLive do
   @moduledoc """
   Business Setup Wizard - Guided multi-step setup flow.
@@ -18,6 +17,7 @@ defmodule RivaAshWeb.BusinessSetupLive do
   @layout {RivaAshWeb.Layouts, :authenticated}
 
   alias RivaAsh.BusinessSetup
+  alias RivaAsh.BusinessSetup, as: BusinessSetup
   alias RivaAsh.ErrorHelpers
 
   import RivaAshWeb.Components.Organisms.PageHeader
