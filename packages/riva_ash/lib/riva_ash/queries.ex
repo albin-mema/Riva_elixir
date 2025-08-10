@@ -446,9 +446,6 @@ defmodule RivaAsh.Queries do
     |> Ash.read(domain: RivaAsh.Domain)
   end
 
-  @doc """
-  Helper function to get date ranges for different periods.
-  """
   @spec get_period_range(atom()) :: {:ok, {DateTime.t(), DateTime.t()}} | {:error, any()}
   defp get_period_range(period) when is_atom(period) do
     case Timex.today() do

@@ -1,4 +1,4 @@
-alias RivaAsh.Repo, as: Repo
+# alias RivaAsh.Repo, as: Repo
 
 defmodule RivaAsh.DatabaseHealth do
   @moduledoc """
@@ -119,7 +119,7 @@ defmodule RivaAsh.DatabaseHealth do
   defp log_extension_success(required_extensions) do
     Logger.info("All required database extensions are installed: #{inspect(required_extensions)}")
 
-    {:ok, :ok}
+    :ok
   end
 
   @spec log_extension_error(any()) :: :ok
@@ -225,7 +225,7 @@ defmodule RivaAsh.DatabaseHealth do
   defp log_version_success(current_version, min_version) do
     Logger.info("PostgreSQL version #{current_version} meets minimum requirement #{min_version}")
 
-    {:ok, :ok}
+    :ok
   end
 
   @spec validate_postgres_version(Version.t(), Version.t()) :: :ok | {:error, String.t()}

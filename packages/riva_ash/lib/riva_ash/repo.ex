@@ -192,7 +192,7 @@ defmodule RivaAsh.Repo do
       [_, version_str] ->
         case Version.parse(version_str) do
           {:ok, version} -> {:ok, version}
-          {:error, reason} -> {:error, reason}
+          {:error, reason} -> {:error, "Unable to parse version string: #{reason}"}
         end
 
       nil ->

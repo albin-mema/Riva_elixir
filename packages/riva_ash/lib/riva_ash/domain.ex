@@ -15,14 +15,7 @@ defmodule RivaAsh.Domain do
       AshPaperTrail.Domain
     ]
 
-  # Configure domain-level settings and extensions
-  # Single level of abstraction: Keep domain configuration focused
-  @spec configure_domain() :: :ok
-  defp configure_domain do
-    configure_paper_trail()
-    configure_authorization()
-    configure_admin_interface()
-  end
+  
 
   # Configure AshPaperTrail to include version tables in the domain
   # Functional programming patterns: Use clear, declarative configuration
@@ -33,46 +26,136 @@ defmodule RivaAsh.Domain do
 
   resources do
     # Authentication and authorization resources
-    resource(RivaAsh.Accounts.User)
+    resource(RivaAsh.Accounts.User) do
+      define(:get_user_by_id, action: :seed_read, get_by: [:id])
+    end
+
     resource(RivaAsh.Accounts.Token)
 
     # Core business domain resources
-    resource(RivaAsh.Resources.Business)
-    resource(RivaAsh.Resources.Plot)
-    resource(RivaAsh.Resources.Section)
-    resource(RivaAsh.Resources.ItemType)
-    resource(RivaAsh.Resources.Item)
-    resource(RivaAsh.Resources.Layout)
-    resource(RivaAsh.Resources.ItemPosition)
-    resource(RivaAsh.Resources.ItemHold)
-    resource(RivaAsh.Resources.Client)
-    resource(RivaAsh.Resources.Employee)
-    resource(RivaAsh.Resources.Permission)
-    resource(RivaAsh.Resources.EmployeePermission)
+    resource(RivaAsh.Resources.Business) do
+      define(:list_businesses, action: :read)
+      define(:get_business_by_id, action: :read, get_by: [:id])
+    end
+
+    resource(RivaAsh.Resources.Plot) do
+      define(:list_plots, action: :read)
+      define(:get_plot_by_id, action: :read, get_by: [:id])
+    end
+
+    resource(RivaAsh.Resources.Section) do
+      define(:list_sections, action: :read)
+      define(:get_section_by_id, action: :read, get_by: [:id])
+    end
+
+    resource(RivaAsh.Resources.ItemType) do
+      define(:list_item_types, action: :read)
+      define(:get_item_type_by_id, action: :read, get_by: [:id])
+    end
+
+    resource(RivaAsh.Resources.Item) do
+      define(:list_items, action: :read)
+      define(:get_item_by_id, action: :read, get_by: [:id])
+    end
+
+    resource(RivaAsh.Resources.Layout) do
+      define(:list_layouts, action: :read)
+      define(:get_layout_by_id, action: :read, get_by: [:id])
+    end
+
+    resource(RivaAsh.Resources.ItemPosition) do
+      define(:list_item_positions, action: :read)
+      define(:get_item_position_by_id, action: :read, get_by: [:id])
+    end
+
+    resource(RivaAsh.Resources.ItemHold) do
+      define(:list_item_holds, action: :read)
+      define(:get_item_hold_by_id, action: :read, get_by: [:id])
+    end
+
+    resource(RivaAsh.Resources.Client) do
+      define(:list_clients, action: :read)
+      define(:get_client_by_id, action: :read, get_by: [:id])
+      define(:get_client_by_email, action: :read, get_by: [:email])
+    end
+
+    resource(RivaAsh.Resources.Employee) do
+      define(:list_employees, action: :read)
+      define(:get_employee_by_id, action: :read, get_by: [:id])
+    end
+
+    resource(RivaAsh.Resources.Permission) do
+      define(:list_permissions, action: :read)
+      define(:get_permission_by_id, action: :read, get_by: [:id])
+    end
+
+    resource(RivaAsh.Resources.EmployeePermission) do
+      define(:list_employee_permissions, action: :read)
+      define(:get_employee_permission_by_id, action: :read, get_by: [:id])
+    end
 
     # Reservation and booking resources
-    resource(RivaAsh.Resources.Reservation)
-    resource(RivaAsh.Resources.Pricing)
-    resource(RivaAsh.Resources.Payment)
-    resource(RivaAsh.Resources.ItemSchedule)
-    resource(RivaAsh.Resources.AvailabilityException)
-    resource(RivaAsh.Resources.RecurringReservation)
-    resource(RivaAsh.Resources.RecurringReservationInstance)
+    resource(RivaAsh.Resources.Reservation) do
+      define(:list_reservations, action: :read)
+      define(:get_reservation_by_id, action: :read, get_by: [:id])
+    end
 
+    resource(RivaAsh.Resources.Payment) do
+      define(:list_payments, action: :read)
+      define(:get_payment_by_id, action: :read, get_by: [:id])
+    end
+
+    resource(RivaAsh.Resources.Pricing) do
+      define(:list_pricings, action: :read)
+      define(:get_pricing_by_id, action: :read, get_by: [:id])
+    end
+
+    resource(RivaAsh.Resources.ItemSchedule) do
+      define(:list_item_schedules, action: :read)
+      define(:get_item_schedule_by_id, action: :read, get_by: [:id])
+    end
+
+    resource(RivaAsh.Resources.AvailabilityException) do
+      define(:list_availability_exceptions, action: :read)
+      define(:get_availability_exception_by_id, action: :read, get_by: [:id])
+    end
+
+    resource(RivaAsh.Resources.RecurringReservation) do
+      define(:list_recurring_reservations, action: :read)
+      define(:get_recurring_reservation_by_id, action: :read, get_by: [:id])
+    end
+
+    resource(RivaAsh.Resources.RecurringReservationInstance) do
+      define(:list_recurring_reservation_instances, action: :read)
+      define(:get_recurring_reservation_instance_by_id, action: :read, get_by: [:id])
+    end
 
     # Communication resources
-    resource(RivaAsh.Resources.ChatRoom)
-    resource(RivaAsh.Resources.ChatMessage)
-    resource(RivaAsh.Resources.ChatParticipant)
+    resource(RivaAsh.Resources.ChatRoom) do
+      define(:list_chat_rooms, action: :read)
+      define(:get_chat_room_by_id, action: :read, get_by: [:id])
+    end
+
+    resource(RivaAsh.Resources.ChatMessage) do
+      define(:list_chat_messages, action: :read)
+      define(:get_chat_message_by_id, action: :read, get_by: [:id])
+    end
+
+    resource(RivaAsh.Resources.ChatParticipant) do
+      define(:list_chat_participants, action: :read)
+      define(:get_chat_participant_by_id, action: :read, get_by: [:id])
+    end
 
     # PaperTrail version resources for communication
     resource(RivaAsh.Resources.ChatRoom.Version)
     resource(RivaAsh.Resources.ChatMessage.Version)
     resource(RivaAsh.Resources.ChatParticipant.Version)
 
-
     # GDPR compliance resources
-    resource(RivaAsh.GDPR.ConsentRecord)
+    resource(RivaAsh.GDPR.ConsentRecord) do
+      define(:list_consent_records, action: :read)
+      define(:get_consent_record_by_id, action: :read, get_by: [:id])
+    end
   end
 
   json_api do
@@ -118,73 +201,6 @@ defmodule RivaAsh.Domain do
 
   admin do
     show?(true)
-  end
-
-  # Domain validation and initialization
-  # Error handling: Use proper validation with result tuples
-  @spec validate_domain() :: :ok | {:error, term()}
-  defp validate_domain do
-    with :ok <- validate_resources(),
-         :ok <- validate_api_configurations(),
-         :ok <- validate_authorization() do
-      :ok
-    else
-      {:error, reason} -> {:error, reason}
-    end
-  end
-
-  @spec validate_resources() :: :ok | {:error, term()}
-  defp validate_resources do
-    # Validate that all required resources are properly configured
-    required_resources = [
-      RivaAsh.Accounts.User,
-      RivaAsh.Resources.Reservation,
-      RivaAsh.Resources.Business
-    ]
-
-    Enum.reduce_while(required_resources, :ok, fn resource, :ok ->
-      if resource_configured?(resource) do
-        {:cont, :ok}
-      else
-        {:halt, {:error, "Required resource #{inspect(resource)} is not properly configured"}}
-      end
-    end)
-  end
-
-  @spec validate_api_configurations() :: :ok | {:error, term()}
-  defp validate_api_configurations do
-    # Validate API configurations
-    :ok
-  end
-
-  @spec validate_authorization() :: :ok | {:error, term()}
-  defp validate_authorization do
-    # Validate authorization settings
-    :ok
-  end
-
-  @spec resource_configured?(module()) :: boolean()
-  defp resource_configured?(_resource) do
-    # Check if resource is properly configured
-    true
-  end
-
-  @spec configure_paper_trail() :: :ok
-  defp configure_paper_trail do
-    # Additional paper trail configuration
-    :ok
-  end
-
-  @spec configure_authorization() :: :ok
-  defp configure_authorization do
-    # Additional authorization configuration
-    :ok
-  end
-
-  @spec configure_admin_interface() :: :ok
-  defp configure_admin_interface do
-    # Additional admin interface configuration
-    :ok
   end
 
   # Public API functions for domain management

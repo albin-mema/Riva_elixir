@@ -1,8 +1,8 @@
-alias RivaAsh.Mermaid, as: Mermaid
-alias Ash.Domain, as: Domain
-alias Ash.Domain.Info, as: Info
-alias Ash.Resource, as: Resource
-alias Ash.Resource.Info, as: Info
+# alias RivaAsh.Mermaid, as: Mermaid
+# alias Ash.Domain, as: Domain
+# alias Ash.Domain.Info, as: Info
+# alias Ash.Resource, as: Resource
+# alias Ash.Resource.Info, as: Info
 
 defmodule RivaAsh.Mermaid do
   @moduledoc """

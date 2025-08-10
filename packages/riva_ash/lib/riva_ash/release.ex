@@ -12,7 +12,6 @@ defmodule RivaAsh.Release do
   @app :riva_ash
   @migrations_dir "priv/repo/migrations"
 
-
   @doc """
   Runs all pending database migrations.
 

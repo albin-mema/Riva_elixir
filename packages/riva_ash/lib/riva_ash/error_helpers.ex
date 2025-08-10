@@ -77,6 +77,16 @@ defmodule RivaAsh.ErrorHelpers do
     }
   end
 
+  # Implement String.Chars protocol for error maps
+  defimpl String.Chars, for: Map do
+    def to_string(%{code: _code, message: message}) when is_binary(message) do
+      message
+    end
+    def to_string(map) do
+      "#{inspect(map)}"
+    end
+  end
+
   @doc """
   Handles errors in a consistent way, logging them and returning a standardized error map.
   """
