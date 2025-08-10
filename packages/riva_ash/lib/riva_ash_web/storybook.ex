@@ -1,4 +1,4 @@
-if Mix.env() == :dev do
+if Mix.env() in [:dev, :test] and Code.ensure_loaded?(PhoenixStorybook) do
   defmodule RivaAshWeb.Storybook do
     @moduledoc """
     Phoenix Storybook configuration for component development and testing.

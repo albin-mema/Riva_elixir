@@ -25,7 +25,7 @@ defmodule RivaAshWeb.Components.Forms.LayoutForm do
   """
   use Phoenix.Component
   import RivaAshWeb.Components.Molecules.FormField
-  import RivaAshWeb.Components.Atoms.Button
+  import RivaAshWeb.Components.UI.Button
   import RivaAshWeb.Components.Atoms.Toggle
 
   @type assigns :: %{

@@ -393,24 +393,24 @@ defmodule RivaAshWeb.Components.Forms.ScheduleForm do
   # UI Helper functions
 
   @schedule_type_options Application.compile_env(:riva_ash, :schedule_type_options, [
-    {"Always Available", "always"},
-    {"Custom Schedule", "custom"},
-    {"Seasonal", "seasonal"}
-  ])
+                           {"Always Available", "always"},
+                           {"Custom Schedule", "custom"},
+                           {"Seasonal", "seasonal"}
+                         ])
 
   @slot_duration_options Application.compile_env(:riva_ash, :slot_duration_options, [
-    {"15 minutes", "15"},
-    {"30 minutes", "30"},
-    {"1 hour", "60"},
-    {"2 hours", "120"},
-    {"4 hours", "240"}
-  ])
+                           {"15 minutes", "15"},
+                           {"30 minutes", "30"},
+                           {"1 hour", "60"},
+                           {"2 hours", "120"},
+                           {"4 hours", "240"}
+                         ])
 
   @holiday_schedule_options Application.compile_env(:riva_ash, :holiday_schedule_options, [
-    {"Follow regular schedule", "regular"},
-    {"Closed on holidays", "closed"},
-    {"Custom holiday hours", "custom"}
-  ])
+                              {"Follow regular schedule", "regular"},
+                              {"Closed on holidays", "closed"},
+                              {"Custom holiday hours", "custom"}
+                            ])
 
   @schedule_start_hour Application.compile_env(:riva_ash, :schedule_start_hour, 8)
   @schedule_end_hour Application.compile_env(:riva_ash, :schedule_end_hour, 18)

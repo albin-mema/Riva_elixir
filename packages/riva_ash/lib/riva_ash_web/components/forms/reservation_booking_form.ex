@@ -509,10 +509,10 @@ defmodule RivaAshWeb.Components.Forms.ReservationBookingForm do
   defp format_date(_), do: ""
 
   @payment_method_options Application.compile_env(:riva_ash, :payment_method_options, [
-    {"Cash", "cash"},
-    {"Credit Card", "credit_card"},
-    {"Bank Transfer", "bank_transfer"}
-  ])
+                            {"Cash", "cash"},
+                            {"Credit Card", "credit_card"},
+                            {"Bank Transfer", "bank_transfer"}
+                          ])
 
   defp payment_method_options, do: @payment_method_options
 end

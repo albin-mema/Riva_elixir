@@ -127,11 +127,11 @@ defmodule RivaAshWeb.Components.AtomicComponents do
       import RivaAshWeb.Components.Atoms.Avatar
       import RivaAshWeb.Components.Atoms.DatePicker
       import RivaAshWeb.Components.Atoms.Icon
-      import RivaAshWeb.Components.Atoms.Radio
+      alias RivaAshWeb.Components.UI.Toggle, as: UIToggle
       import RivaAshWeb.Components.Atoms.Spinner
       import RivaAshWeb.Components.Atoms.Text
       import RivaAshWeb.Components.Atoms.TimePicker
-      import RivaAshWeb.Components.Atoms.Toggle
+      # import RivaAshWeb.Components.Atoms.Toggle
       import RivaAshWeb.Components.Atoms.Tooltip
     end
   end
