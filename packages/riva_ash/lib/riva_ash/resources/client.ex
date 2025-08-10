@@ -1,4 +1,3 @@
-
 defmodule RivaAsh.Resources.Client do
   @moduledoc """
   Represents a client who can make reservations.

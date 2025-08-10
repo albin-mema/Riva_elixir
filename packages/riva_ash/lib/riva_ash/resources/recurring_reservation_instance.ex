@@ -1,5 +1,5 @@
-alias RivaAsh.Resources, as: Resources
-alias RivaAsh.RecurringReservations, as: RecurringReservations
+# alias RivaAsh.Resources, as: Resources
+# alias RivaAsh.RecurringReservations, as: RecurringReservations
 
 defmodule RivaAsh.Resources.RecurringReservationInstance do
   @moduledoc """

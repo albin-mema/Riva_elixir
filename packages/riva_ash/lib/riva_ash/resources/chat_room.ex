@@ -1,7 +1,3 @@
-alias RivaAsh.Resources, as: Resources
-alias Ash.Policy, as: Policy
-alias RivaAsh.Accounts, as: Accounts
-
 defmodule RivaAsh.Resources.ChatRoom do
   @moduledoc """
   Chat room resource for organizing conversations.

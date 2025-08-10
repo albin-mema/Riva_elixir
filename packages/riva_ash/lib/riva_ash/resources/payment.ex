@@ -1,4 +1,3 @@
-
 defmodule RivaAsh.Resources.Payment do
   @moduledoc """
   Represents payment information for reservations.

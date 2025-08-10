@@ -1,7 +1,3 @@
-alias RivaAsh.Resources, as: Resources
-alias Ash.Changeset, as: Changeset
-alias Ash.Query, as: Query
-
 defmodule RivaAsh.Resources.ItemHold do
   @moduledoc """
   Represents a temporary hold on an item during the booking process.
@@ -401,10 +397,8 @@ defmodule RivaAsh.Resources.ItemHold do
   def remaining_time(item_hold) do
     case active?(item_hold) do
       true ->
-        case DateTime.diff(item_hold.expires_at, DateTime.utc_now()) do
-          {:ok, remaining} -> {:ok, remaining}
-          {:error, reason} -> {:error, reason}
-        end
+        remaining = DateTime.diff(item_hold.expires_at, DateTime.utc_now(), :second)
+        {:ok, remaining}
 
       false ->
         {:error, "Hold is not active"}
@@ -520,7 +514,7 @@ defmodule RivaAsh.Resources.ItemHold do
     end
   end
 
-  def extend(_item_hold, additional_minutes) do
+  def extend(_item_hold, _additional_minutes) do
     {:error, "Additional minutes must be positive"}
   end
 

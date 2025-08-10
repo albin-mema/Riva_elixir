@@ -19,7 +19,7 @@ defmodule RivaAsh.Reactors.ReservationReactor do
   require Logger
   alias RivaAsh.Resources.{Reservation, Client, Item, Employee}
   alias RivaAsh.Availability
-  alias RivaAsh.Config.AppConfig
+#  alias RivaAsh.Config.AppConfig
 
   @type client_id :: integer()
   @type employee_id :: integer()
@@ -47,7 +47,6 @@ defmodule RivaAsh.Reactors.ReservationReactor do
         }
 
   @type result :: Reservation.t()
-
 
   # Define the reactor inputs
   input(:client_id)

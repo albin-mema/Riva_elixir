@@ -723,14 +723,6 @@ defmodule RivaAsh.Resources.ItemPosition do
     end
   end
 
-  # Private helper functions
-
-  defp format_decimal(nil), do: "N/A"
-  defp format_decimal(decimal), do: Decimal.to_string(decimal)
-
-  defp format_rotation(0), do: "No rotation"
-  defp format_rotation(degrees), do: "#{Decimal.to_string(degrees)}°"
-
   # Helper function to get layout dimensions
   defp get_layout_dimensions(layout_id) do
     case Layout.by_id(layout_id) do

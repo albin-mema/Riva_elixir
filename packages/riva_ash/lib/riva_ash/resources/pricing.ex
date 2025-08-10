@@ -1,13 +1,12 @@
-
 defmodule RivaAsh.Resources.Pricing do
   @moduledoc """
-  Represents pricing rules for full-day reservations.
-  Pricing is generally constant but can have business-specific exceptions.
-
-  Pricing types:
-  - base: Standard pricing for an item type
-  - exception: Special pricing for specific dates or date ranges
-  - seasonal: Pricing for specific seasons or periods
+  Pricing resource for managing pricing rules and configurations.
+  
+  This resource handles various pricing strategies including:
+  - Base pricing
+  - Dynamic pricing
+  - Promotional pricing
+  - Tiered pricing
   """
 
   use Ash.Resource,
@@ -18,24 +17,54 @@ defmodule RivaAsh.Resources.Pricing do
       AshJsonApi.Resource,
       AshGraphql.Resource,
       AshPaperTrail.Resource,
-      AshArchival.Resource,
       AshAdmin.Resource
     ]
 
   import RivaAsh.ResourceHelpers
-  import RivaAsh.Authorization, except: [business_scoped_policies: 0]
 
-  standard_postgres("pricing")
-  standard_archive()
+  # Define the type at the module level
+  @type t :: %__MODULE__{
+          id: String.t(),
+          business_id: String.t(),
+          item_id: String.t(),
+          item_type_id: String.t(),
+          base_price: float(),
+          currency: String.t(),
+          pricing_type: :base | :dynamic | :promotional | :tiered,
+          name: String.t(),
+          description: String.t() | nil,
+          is_active: boolean(),
+          start_date: Date.t() | nil,
+          end_date: Date.t() | nil,
+          demand_factor: float() | nil,
+          time_factor: float() | nil,
+          seasonal_factor: float() | nil,
+          original_price: float() | nil,
+          discount_type: :percentage | :fixed | :buy_x_get_y | nil,
+          discount_value: float() | map() | nil,
+          tiers: [map()] | nil,
+          pricing_rules: [map()] | nil,
+          inserted_at: DateTime.t(),
+          updated_at: DateTime.t()
+        }
 
-  # Authorization policies
+  standard_postgres("pricings")
+  standard_paper_trail()
+
   policies do
-    business_scoped_policies()
-    employee_accessible_policies(:manage_pricing)
-
-    # Special restrictions for pricing management
+    # Business owners can manage their own pricing
     policy action_type([:create, :update, :destroy]) do
-      authorize_if(action_has_permission(:manage_pricing))
+      authorize_if(expr(business_id == ^actor(:business_id)))
+    end
+
+    # Business owners can read their own pricing
+    policy action_type(:read) do
+      authorize_if(expr(business_id == ^actor(:business_id)))
+    end
+
+    # Admins can access all pricing
+    policy action_type([:create, :read, :update, :destroy]) do
+      authorize_if(actor_attribute_equals(:role, :admin))
     end
   end
 
@@ -43,7 +72,7 @@ defmodule RivaAsh.Resources.Pricing do
     type("pricing")
 
     routes do
-      base("/pricing")
+      base("/pricings")
 
       get(:read)
       index(:read)
@@ -51,13 +80,10 @@ defmodule RivaAsh.Resources.Pricing do
       patch(:update)
       delete(:destroy)
 
-      # Additional routes for pricing specific actions
-      get(:by_business, route: "/by-business/:business_id")
-      get(:by_item_type, route: "/by-item-type/:item_type_id")
-      get(:base_pricing, route: "/base")
-      get(:exceptions, route: "/exceptions")
+      # Additional routes
       get(:active, route: "/active")
-      get(:for_date, route: "/for-date/:date")
+      get(:by_item_type, route: "/by-item-type")
+      get(:by_business, route: "/by-business")
     end
   end
 
@@ -66,13 +92,10 @@ defmodule RivaAsh.Resources.Pricing do
 
     queries do
       get(:get_pricing, :read)
-      list(:list_pricing, :read)
-      list(:pricing_by_business, :by_business)
+      list(:list_pricings, :read)
+      list(:active_pricings, :active)
       list(:pricing_by_item_type, :by_item_type)
-      list(:base_pricing, :base_pricing)
-      list(:pricing_exceptions, :exceptions)
-      list(:active_pricing, :active)
-      list(:pricing_for_date, :for_date)
+      list(:pricing_by_business, :by_business)
     end
 
     mutations do
@@ -88,60 +111,70 @@ defmodule RivaAsh.Resources.Pricing do
     define(:update, action: :update)
     define(:destroy, action: :destroy)
     define(:by_id, args: [:id], action: :by_id)
-    define(:by_business, args: [:business_id], action: :by_business)
-    define(:by_item_type, args: [:item_type_id], action: :by_item_type)
-    define(:base_pricing, action: :base_pricing)
-    define(:exceptions, action: :exceptions)
     define(:active, action: :active)
-    define(:for_date, args: [:date], action: :for_date)
+    define(:by_item_type, args: [:item_type_id], action: :by_item_type)
+    define(:by_business, args: [:business_id], action: :by_business)
   end
 
   actions do
     defaults([:read, :destroy])
 
-    update :update do
-      accept([
-        :pricing_type,
-        :price_per_day,
-        :weekday_price,
-        :weekend_price,
-        :has_day_type_pricing,
-        :currency,
-        :effective_from,
-        :effective_until,
-        :is_active,
-        :name,
-        :description
-      ])
-
-      primary?(true)
-
-      # Apply validations via change modules (arity 2 as required by Ash)
-      change(RivaAsh.Resources.Pricing.ApplyPricingValidations)
-    end
-
     create :create do
       accept([
         :business_id,
+        :item_id,
         :item_type_id,
-        :pricing_type,
-        :price_per_day,
-        :weekday_price,
-        :weekend_price,
-        :has_day_type_pricing,
+        :base_price,
         :currency,
-        :effective_from,
-        :effective_until,
-        :is_active,
+        :pricing_type,
         :name,
-        :description
+        :description,
+        :is_active,
+        :start_date,
+        :end_date,
+        :demand_factor,
+        :time_factor,
+        :seasonal_factor,
+        :original_price,
+        :discount_type,
+        :discount_value,
+        :tiers,
+        :pricing_rules
       ])
 
       primary?(true)
 
-      # Apply validations via change modules (arity 2)
-      change(RivaAsh.Resources.Pricing.ValidateCrossBusinessRelationship)
-      change(RivaAsh.Resources.Pricing.ApplyPricingValidations)
+      validate(present([:business_id, :item_id, :base_price, :pricing_type, :name]),
+        message: "Business ID, item ID, base price, pricing type, and name are required"
+      )
+
+
+      validate(one_of(:pricing_type, [:base, :dynamic, :promotional, :tiered]),
+        message: "Invalid pricing type"
+      )
+    end
+
+    update :update do
+      accept([
+        :base_price,
+        :currency,
+        :pricing_type,
+        :name,
+        :description,
+        :is_active,
+        :start_date,
+        :end_date,
+        :demand_factor,
+        :time_factor,
+        :seasonal_factor,
+        :original_price,
+        :discount_type,
+        :discount_value,
+        :tiers,
+        :pricing_rules
+      ])
+
+      primary?(true)
     end
 
     read :by_id do
@@ -150,128 +183,91 @@ defmodule RivaAsh.Resources.Pricing do
       filter(expr(id == ^arg(:id)))
     end
 
-    read :by_business do
-      argument(:business_id, :uuid, allow_nil?: false)
-      filter(expr(business_id == ^arg(:business_id)))
-    end
-
-    read :by_item_type do
-      argument(:item_type_id, :uuid, allow_nil?: false)
-      filter(expr(item_type_id == ^arg(:item_type_id)))
-    end
-
-    read :base_pricing do
-      filter(expr(pricing_type == :base))
-    end
-
-    read :exceptions do
-      filter(expr(pricing_type in [:exception, :seasonal]))
-    end
-
     read :active do
       filter(expr(is_active == true and is_nil(archived_at)))
     end
 
-    read :for_date do
-      argument(:date, :date, allow_nil?: false)
-
-      filter(
-        expr(
-          is_active == true and
-            is_nil(archived_at) and
-            (is_nil(effective_from) or effective_from <= ^arg(:date)) and
-            (is_nil(effective_until) or effective_until >= ^arg(:date))
-        )
-      )
+    read :by_item_type do
+      argument(:item_type_id, :uuid, allow_nil?: false)
+      filter(expr(item_type_id == ^arg(:item_type_id) and is_active == true and is_nil(archived_at)))
     end
 
-    # Action to get effective pricing for a specific item type and date
-    read :effective_pricing do
+    read :by_business do
       argument(:business_id, :uuid, allow_nil?: false)
-      argument(:item_type_id, :uuid, allow_nil?: false)
-      argument(:date, :date, allow_nil?: false)
+      filter(expr(business_id == ^arg(:business_id) and is_nil(archived_at)))
+    end
 
-      filter(
-        expr(
-          business_id == ^arg(:business_id) and
-            item_type_id == ^arg(:item_type_id) and
-            is_active == true and
-            is_nil(archived_at) and
-            (is_nil(effective_from) or effective_from <= ^arg(:date)) and
-            (is_nil(effective_until) or effective_until >= ^arg(:date))
-        )
-      )
+    # Custom action to validate pricing configuration
+    action :validate_pricing_config do
+      argument(:pricing_params, :map, allow_nil?: false)
+
+      run(fn input, _context ->
+        pricing_params = input.arguments.pricing_params
+        
+        case validate_pricing_configuration(pricing_params) do
+          :ok -> {:ok, input}
+          {:error, reason} -> {:error, reason}
+        end
+      end)
     end
   end
 
   attributes do
     uuid_primary_key(:id)
 
-    attribute :name, :string do
-      allow_nil?(true)
-      public?(true)
-      description("Optional name for this pricing rule")
-    end
-
-    attribute :description, :string do
-      allow_nil?(true)
-      public?(true)
-      description("Description of this pricing rule")
-    end
-
-    attribute :pricing_type, :atom do
-      constraints(one_of: [:base, :exception, :seasonal])
-      default(:base)
-      public?(true)
-      description("Type of pricing: base (standard), exception (special dates), or seasonal")
-    end
-
-    attribute :price_per_day, :decimal do
+    attribute :business_id, :uuid do
       allow_nil?(false)
       public?(true)
-      constraints(min: 0)
-      description("Default price for a full day reservation")
+      description("The ID of the business this pricing belongs to")
     end
 
-    attribute :weekday_price, :decimal do
-      allow_nil?(true)
-      public?(true)
-      constraints(min: 0)
-      description("Price for weekday reservations (Mon-Fri). If null, uses price_per_day")
-    end
-
-    attribute :weekend_price, :decimal do
-      allow_nil?(true)
-      public?(true)
-      constraints(min: 0)
-      description("Price for weekend reservations (Sat-Sun). If null, uses price_per_day")
-    end
-
-    attribute :has_day_type_pricing, :boolean do
+    attribute :item_id, :uuid do
       allow_nil?(false)
-      default(false)
       public?(true)
-      description("Whether this pricing uses different rates for weekdays vs weekends")
+      description("The ID of the item this pricing applies to")
+    end
+
+    attribute :item_type_id, :uuid do
+      allow_nil?(false)
+      public?(true)
+      description("The ID of the item type this pricing applies to")
+    end
+
+    attribute :base_price, :decimal do
+      allow_nil?(false)
+      public?(true)
+      description("The base price for this item")
+      constraints(scale: 2, precision: 10)
     end
 
     attribute :currency, :string do
       allow_nil?(false)
       default("USD")
       public?(true)
-      constraints(max_length: 3)
-      description("Currency code (ISO 4217, e.g., USD, EUR)")
+      description("Currency code for the pricing")
+      constraints(match: ~r/^[A-Z]{3}$/)
     end
 
-    attribute :effective_from, :date do
-      allow_nil?(true)
+    attribute :pricing_type, :atom do
+      allow_nil?(false)
+      default(:base)
       public?(true)
-      description("Date from which this pricing is effective (null means always)")
+      description("Type of pricing strategy")
+      constraints(one_of: [:base, :dynamic, :promotional, :tiered])
     end
 
-    attribute :effective_until, :date do
+    attribute :name, :string do
+      allow_nil?(false)
+      public?(true)
+      description("Name of the pricing rule")
+      constraints(max_length: 100, trim?: true)
+    end
+
+    attribute :description, :string do
       allow_nil?(true)
       public?(true)
-      description("Date until which this pricing is effective (null means indefinite)")
+      description("Description of the pricing rule")
+      constraints(max_length: 500, trim?: true)
     end
 
     attribute :is_active, :boolean do
@@ -281,125 +277,263 @@ defmodule RivaAsh.Resources.Pricing do
       description("Whether this pricing rule is currently active")
     end
 
+    attribute :start_date, :date do
+      allow_nil?(true)
+      public?(true)
+      description("Start date for this pricing rule")
+    end
+
+    attribute :end_date, :date do
+      allow_nil?(true)
+      public?(true)
+      description("End date for this pricing rule")
+    end
+
+    attribute :demand_factor, :decimal do
+      allow_nil?(true)
+      public?(true)
+      description("Demand factor for dynamic pricing")
+      constraints(scale: 2, precision: 5)
+    end
+
+    attribute :time_factor, :decimal do
+      allow_nil?(true)
+      public?(true)
+      description("Time factor for dynamic pricing")
+      constraints(scale: 2, precision: 5)
+    end
+
+    attribute :seasonal_factor, :decimal do
+      allow_nil?(true)
+      public?(true)
+      description("Seasonal factor for dynamic pricing")
+      constraints(scale: 2, precision: 5)
+    end
+
+    attribute :original_price, :decimal do
+      allow_nil?(true)
+      public?(true)
+      description("Original price before discount (for promotional pricing)")
+      constraints(scale: 2, precision: 10)
+    end
+
+    attribute :discount_type, :atom do
+      allow_nil?(true)
+      public?(true)
+      description("Type of discount for promotional pricing")
+      constraints(one_of: [:percentage, :fixed, :buy_x_get_y])
+    end
+
+    attribute :discount_value, :map do
+      allow_nil?(true)
+      public?(true)
+      description("Discount value for promotional pricing")
+    end
+
+    attribute :tiers, :map do
+      allow_nil?(true)
+      public?(true)
+      description("Tier configuration for tiered pricing")
+    end
+
+    attribute :pricing_rules, :map do
+      allow_nil?(true)
+      public?(true)
+      description("Additional pricing rules")
+    end
+
     create_timestamp(:inserted_at)
     update_timestamp(:updated_at)
   end
 
   relationships do
     belongs_to :business, RivaAsh.Resources.Business do
-      allow_nil?(false)
-      attribute_writable?(true)
+      domain(RivaAsh.Domain)
+      destination_attribute(:owner_id)
       public?(true)
-      description("The business this pricing belongs to")
+    end
+
+    belongs_to :item, RivaAsh.Resources.Item do
+      domain(RivaAsh.Domain)
+      destination_attribute(:id)
+      public?(true)
     end
 
     belongs_to :item_type, RivaAsh.Resources.ItemType do
-      allow_nil?(false)
-      attribute_writable?(true)
+      domain(RivaAsh.Domain)
+      destination_attribute(:id)
       public?(true)
-      description("The item type this pricing applies to")
     end
 
     has_many :payments, RivaAsh.Resources.Payment do
+      domain(RivaAsh.Domain)
       destination_attribute(:pricing_id)
       public?(true)
-      description("Payments that used this pricing")
-    end
-  end
-
-  calculations do
-    calculate :effective_weekday_price,
-              :decimal,
-              expr(
-                if(
-                  has_day_type_pricing and not is_nil(weekday_price),
-                  do: weekday_price,
-                  else: price_per_day
-                )
-              ) do
-      public?(true)
-      description("The effective price for weekday reservations")
-    end
-
-    calculate :effective_weekend_price,
-              :decimal,
-              expr(
-                if(
-                  has_day_type_pricing and not is_nil(weekend_price),
-                  do: weekend_price,
-                  else: price_per_day
-                )
-              ) do
-      public?(true)
-      description("The effective price for weekend reservations")
-    end
-
-    calculate :has_different_day_pricing,
-              :boolean,
-              expr(
-                has_day_type_pricing and
-                  not is_nil(weekday_price) and
-                  not is_nil(weekend_price) and
-                  weekday_price != weekend_price
-              ) do
-      public?(true)
-      description("Whether this pricing has different rates for weekdays vs weekends")
     end
   end
 
   identities do
-    # Prevent exact duplicates while allowing validation to handle business logic
-    identity(:unique_pricing_rule, [
-      :business_id,
-      :item_type_id,
-      :pricing_type,
-      :effective_from,
-      :effective_until
-    ])
+    identity(:unique_business_item, [:business_id, :item_id])
   end
 
-  validations do
-    validate(compare(:price_per_day, greater_than_or_equal_to: 0),
-      message: "Price per day must be non-negative"
-    )
-
-    validate(compare(:effective_until, greater_than_or_equal_to: :effective_from),
-      message: "Effective until date must be after effective from date"
-    )
-
-    validate(match(:currency, ~r/^[A-Z]{3}$/),
-      message: "Currency must be a valid 3-letter ISO code (e.g., USD, EUR)"
-    )
-
-    # Prevent overlapping pricing rules
-    validate(&RivaAsh.Validations.validate_pricing_date_overlap/2)
-
-    # Ensure only one active base pricing rule per business/item_type
-    validate(&RivaAsh.Validations.validate_single_active_base_pricing/2)
-  end
-
-  calculations do
-    calculate :is_currently_effective,
-              :boolean,
-              expr(
-                is_active == true and
-                  (is_nil(effective_from) or effective_from <= fragment("NOW()::date")) and
-                  (is_nil(effective_until) or effective_until >= fragment("NOW()::date"))
-              ) do
-      public?(true)
-      description("Whether this pricing is currently effective based on dates and active status")
+  # Validation functions
+  defp validate_pricing_configuration(changeset) do
+    pricing_type = Ash.Changeset.get_attribute(changeset, :pricing_type)
+    
+    case pricing_type do
+      :dynamic ->
+        validate_dynamic_pricing(changeset)
+      :promotional ->
+        validate_promotional_pricing(changeset)
+      :tiered ->
+        validate_tiered_pricing(changeset)
+      :base ->
+        :ok
+      _ ->
+        {:error, "Invalid pricing type"}
     end
   end
 
-  # Note: validations are handled via change modules configured in actions:
-  # - RivaAsh.Resources.Pricing.ApplyPricingValidations
-  # - RivaAsh.Resources.Pricing.ValidateCrossBusinessRelationship
+  defp validate_dynamic_pricing(changeset) do
+    demand_factor = Ash.Changeset.get_attribute(changeset, :demand_factor)
+    time_factor = Ash.Changeset.get_attribute(changeset, :time_factor)
+    
+    cond do
+      is_nil(demand_factor) or demand_factor < 0 ->
+        {:error, "Demand factor must be a non-negative number"}
+      is_nil(time_factor) or time_factor < 0 ->
+        {:error, "Time factor must be a non-negative number"}
+      true ->
+        :ok
+    end
+  end
 
-  # Removed helper: build_active_date_filter_expr/1
-  # Use expr(...) directly inside read/filter actions where arg/1 is valid.
+  defp validate_promotional_pricing(changeset) do
+    original_price = Ash.Changeset.get_attribute(changeset, :original_price)
+    discount_type = Ash.Changeset.get_attribute(changeset, :discount_type)
+    discount_value = Ash.Changeset.get_attribute(changeset, :discount_value)
+    
+    cond do
+      is_nil(original_price) or original_price <= 0 ->
+        {:error, "Original price must be a positive number"}
+      is_nil(discount_type) ->
+        {:error, "Discount type is required for promotional pricing"}
+      is_nil(discount_value) ->
+        {:error, "Discount value is required for promotional pricing"}
+      discount_type == :percentage and (discount_value < 0 or discount_value > 100) ->
+        {:error, "Percentage discount must be between 0 and 100"}
+      discount_type == :fixed and discount_value < 0 ->
+        {:error, "Fixed discount cannot be negative"}
+      true ->
+        :ok
+    end
+  end
 
-  # Removed helper: build_effective_pricing_expr/3
-  # Use expr(...) directly inside read/filter actions where arg/1 is valid.
+  defp validate_tiered_pricing(changeset) do
+    tiers = Ash.Changeset.get_attribute(changeset, :tiers)
+    
+    cond do
+      is_nil(tiers) or not is_list(tiers) ->
+        {:error, "Tiers must be a list"}
+      length(tiers) == 0 ->
+        {:error, "At least one tier is required"}
+      true ->
+        validate_tiers_structure(tiers)
+    end
+  end
 
-  # Removed unused calculation helpers; calculations are now defined inline with expr/1 above.
+  defp validate_tiers_structure(tiers) do
+    case Enum.all?(tiers, &validate_tier/1) do
+      true -> :ok
+      false -> {:error, "Invalid tier structure"}
+    end
+  end
+
+  defp validate_tier(tier) do
+    case tier do
+      %{min_quantity: min_quantity, price_per_unit: price_per_unit} 
+      when is_number(min_quantity) and is_number(price_per_unit) and min_quantity >= 0 and price_per_unit >= 0 ->
+        true
+      _ ->
+        false
+    end
+  end
+
+
+  @doc """
+  Validates pricing parameters.
+  
+  ## Parameters
+  - params: Parameters to validate
+  
+  ## Returns
+  :ok or {:error, reason}
+  """
+  @spec validate_pricing_params(map()) :: :ok | {:error, String.t()}
+  def validate_pricing_params(params) do
+    required_fields = [:business_id, :item_id, :base_price, :pricing_type, :name]
+    
+    case validate_required_fields(params, required_fields) do
+      :ok ->
+        with :ok <- validate_base_price(params),
+             :ok <- validate_currency(params),
+             :ok <- validate_pricing_type(params),
+             :ok <- validate_pricing_period(params) do
+          :ok
+        else
+          {:error, reason} -> {:error, reason}
+        end
+      
+      {:error, reason} -> {:error, reason}
+    end
+  end
+
+  # Private helper functions
+  defp validate_required_fields(params, required_fields) do
+    missing_fields = Enum.filter(required_fields, &(!Map.has_key?(params, &1)))
+    
+    case length(missing_fields) do
+      0 -> :ok
+      _ -> {:error, "Missing required fields: #{inspect(missing_fields)}"}
+    end
+  end
+
+  defp validate_base_price(params) do
+    case Map.get(params, :base_price) do
+      base_price when is_number(base_price) and base_price > 0 -> :ok
+      _ -> {:error, "Base price must be a positive number"}
+    end
+  end
+
+  defp validate_currency(params) do
+    case Map.get(params, :currency) do
+      currency when is_binary(currency) and byte_size(currency) == 3 -> :ok
+      nil -> :ok
+      _ -> {:error, "Currency must be a 3-letter code"}
+    end
+  end
+
+  defp validate_pricing_type(params) do
+    case Map.get(params, :pricing_type) do
+      type when type in [:base, :dynamic, :promotional, :tiered] -> :ok
+      _ -> {:error, "Invalid pricing type"}
+    end
+  end
+
+  defp validate_pricing_period(params) do
+    start_date = Map.get(params, :start_date)
+    end_date = Map.get(params, :end_date)
+    
+    case {start_date, end_date} do
+      {nil, nil} -> :ok
+      {start_date, end_date} when is_struct(start_date, Date) and is_struct(end_date, Date) ->
+        if Date.compare(start_date, end_date) in [:lt, :eq] do
+          :ok
+        else
+          {:error, "Start date must be before or equal to end date"}
+        end
+      _ ->
+        {:error, "Invalid date format"}
+    end
+  end
 end

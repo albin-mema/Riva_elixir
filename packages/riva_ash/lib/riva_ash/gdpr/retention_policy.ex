@@ -140,9 +140,12 @@ defmodule RivaAsh.GDPR.RetentionPolicy do
 
     expired_users =
       User
-      |> Ash.Query.unset([:filter])
       |> Ash.Query.filter(expr(not is_nil(archived_at) and archived_at < ^cutoff_date))
-      |> Ash.read!(domain: RivaAsh.Accounts)
+      |> Ash.read(domain: RivaAsh.Accounts)
+      |> case do
+        {:ok, users} -> users
+        {:error, _reason} -> []
+      end
 
     count = length(expired_users)
 
@@ -213,7 +216,11 @@ defmodule RivaAsh.GDPR.RetentionPolicy do
             withdrawal_date < ^cutoff_date
         )
       )
-      |> Ash.read!(domain: RivaAsh.Domain)
+      |> Ash.read(domain: RivaAsh.Domain)
+      |> case do
+        {:ok, consents} -> consents
+        {:error, _reason} -> []
+      end
 
     count = length(expired_consents)
 
@@ -366,21 +373,38 @@ defmodule RivaAsh.GDPR.RetentionPolicy do
 
   @spec count_active_users() :: integer()
   defp count_active_users do
-    User.read!(filter: expr(is_nil(archived_at)), domain: RivaAsh.Accounts) |> length()
+    User
+    |> Ash.Query.filter(expr(is_nil(archived_at)))
+    |> Ash.read(domain: RivaAsh.Accounts)
+    |> case do
+      {:ok, users} -> length(users)
+      {:error, _reason} -> 0
+    end
   rescue
     _unmatchedunmatched -> 0
   end
 
   @spec count_archived_users() :: integer()
   defp count_archived_users do
-    User.read!(filter: expr(not is_nil(archived_at)), domain: RivaAsh.Accounts) |> length()
+    User
+    |> Ash.Query.filter(expr(not is_nil(archived_at)))
+    |> Ash.read(domain: RivaAsh.Accounts)
+    |> case do
+      {:ok, users} -> length(users)
+      {:error, _reason} -> 0
+    end
   rescue
     _unmatchedunmatched -> 0
   end
 
   @spec count_consent_records() :: integer()
   defp count_consent_records do
-    ConsentRecord.read!() |> length()
+    ConsentRecord
+    |> Ash.read(domain: RivaAsh.Domain)
+    |> case do
+      {:ok, consents} -> length(consents)
+      {:error, _reason} -> 0
+    end
   rescue
     _unmatchedunmatched -> 0
   end

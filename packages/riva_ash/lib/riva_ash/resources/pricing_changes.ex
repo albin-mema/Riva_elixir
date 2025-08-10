@@ -1,4 +1,3 @@
-
 defmodule RivaAsh.Resources.Pricing.ApplyPricingValidations do
   @moduledoc false
   use Ash.Resource.Change

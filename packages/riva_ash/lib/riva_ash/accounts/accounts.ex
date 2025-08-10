@@ -6,7 +6,10 @@ defmodule RivaAsh.Accounts do
   use Ash.Domain
 
   resources do
-    resource(RivaAsh.Accounts.User)
+    resource(RivaAsh.Accounts.User) do
+      define(:get_user_by_id, action: :seed_read, get_by: [:id])
+    end
+
     resource(RivaAsh.Accounts.Token)
   end
 

@@ -1,4 +1,3 @@
-
 defmodule RivaAsh.Resources.Reservation do
   @moduledoc """
   Represents a reservation made by a client for an item.
@@ -580,64 +579,6 @@ defmodule RivaAsh.Resources.Reservation do
       {:ok, _reservation} -> get_business(reservation_id)
       {:error, reason} -> {:error, reason}
     end
-  end
-
-  # Private helper functions for filtering
-  @spec apply_client_filter(Ash.Query.t(), String.t() | nil) :: Ash.Query.t()
-  defp apply_client_filter(query, nil), do: query
-
-  defp apply_client_filter(query, _client_id) do
-    query
-  end
-
-  @spec apply_item_filter(Ash.Query.t(), String.t() | nil) :: Ash.Query.t()
-  defp apply_item_filter(query, nil), do: query
-
-  defp apply_item_filter(query, _item_id) do
-    query
-  end
-
-  @spec apply_business_filter(Ash.Query.t(), String.t() | nil) :: Ash.Query.t()
-  defp apply_business_filter(query, nil), do: query
-
-  defp apply_business_filter(query, _business_id) do
-    query
-  end
-
-  @spec apply_status_filter(Ash.Query.t(), atom() | nil) :: Ash.Query.t()
-  defp apply_status_filter(query, nil), do: query
-
-  defp apply_status_filter(query, _status) do
-    query
-  end
-
-  @spec apply_date_range_filter(Ash.Query.t(), DateTime.t() | nil, DateTime.t() | nil) :: Ash.Query.t()
-  defp apply_date_range_filter(query, nil, nil), do: query
-
-  defp apply_date_range_filter(query, _start_date, nil) do
-    query
-  end
-
-  defp apply_date_range_filter(query, nil, _end_date) do
-    query
-  end
-
-  defp apply_date_range_filter(query, _start_date, _end_date) do
-    query
-  end
-
-  @spec apply_paid_filter(Ash.Query.t(), boolean() | nil) :: Ash.Query.t()
-  defp apply_paid_filter(query, nil), do: query
-
-  defp apply_paid_filter(query, _is_paid) do
-    query
-  end
-
-  @spec apply_provisional_filter(Ash.Query.t(), boolean() | nil) :: Ash.Query.t()
-  defp apply_provisional_filter(query, nil), do: query
-
-  defp apply_provisional_filter(query, _is_provisional) do
-    query
   end
 
   # Private helper functions

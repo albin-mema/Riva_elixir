@@ -388,9 +388,6 @@ defmodule RivaAsh.Resources.EmployeePermission do
 
         {:error, reason} ->
           {:error, reason}
-
-        false ->
-          {:error, "Invalid permission assignment"}
       end
     end
 

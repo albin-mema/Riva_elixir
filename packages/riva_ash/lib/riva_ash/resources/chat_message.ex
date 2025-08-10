@@ -43,8 +43,10 @@ defmodule RivaAsh.Resources.ChatMessage do
         case context[:actor] do
           %RivaAsh.Accounts.User{id: _} ->
             Ash.Changeset.manage_relationship(changeset, :sender_user, context[:actor], type: :append_and_remove)
+
           %RivaAsh.Resources.Client{id: _} ->
             Ash.Changeset.manage_relationship(changeset, :sender_client, context[:actor], type: :append_and_remove)
+
           _ ->
             Ash.Changeset.add_error(changeset, "Invalid actor for sending message")
         end
@@ -56,8 +58,6 @@ defmodule RivaAsh.Resources.ChatMessage do
       filter(expr(room_id == ^arg(:room_id)))
       prepare(build(sort: [inserted_at: :asc], load: [:sender_user, :sender_client]))
     end
-
-
   end
 
   policies do

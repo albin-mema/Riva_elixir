@@ -1,4 +1,3 @@
-
 defmodule RivaAsh.Resources.ItemSchedule do
   @moduledoc """
   Represents recurring availability schedules for items.
@@ -553,7 +552,6 @@ defmodule RivaAsh.Resources.ItemSchedule do
         {:ok, next_datetime}
       else
         false -> {:error, "Invalid schedule"}
-        false -> {:error, "Schedule is not active"}
       end
     end
 

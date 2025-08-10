@@ -822,13 +822,6 @@ defmodule RivaAsh.Resources.Item do
     end
   end
 
-  # Private helper functions
-
-  defp format_minutes(minutes) when minutes < 60, do: "#{minutes} minutes"
-  defp format_minutes(minutes) when minutes == 60, do: "1 hour"
-  defp format_minutes(minutes) when minutes < 1440, do: "#{div(minutes, 60)} hours"
-  defp format_minutes(minutes), do: "#{div(minutes, 1440)} days"
-
   # Private helper functions for filtering
   @spec apply_availability_filter(Ash.Query.t(), Date.t()) :: Ash.Query.t()
   defp apply_availability_filter(query, _date), do: query

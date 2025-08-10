@@ -1,4 +1,4 @@
-alias RivaAsh.StorybookTesting, as: StorybookTesting
+# alias RivaAsh.StorybookTesting, as: StorybookTesting
 
 defmodule RivaAsh.StorybookTesting.PropertyGenerators do
   @moduledoc """
