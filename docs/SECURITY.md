@@ -8,6 +8,43 @@
 - **Passwords**: bcrypt hashing with configurable rounds
 - **Tokens**: JWT with expiration and refresh capability
 
+#### Authentication Strategies
+```elixir
+# Password strategy with security settings
+authentication do
+  strategies do
+    password :password do
+      identity_field :email
+      hashed_password_field :hashed_password
+      hash_provider AshAuthentication.BcryptProvider
+      confirmation_required? true
+      password_confirmation_required? true
+
+      resettable do
+        sender MyApp.AuthEmail
+        token_lifetime 24
+      end
+    end
+
+    # API key strategy for programmatic access
+    api_key :api_key do
+      identity_field :api_key
+      hashed_api_key_field :hashed_api_key
+      api_key_generator fn ->
+        "ak_" <> Base.url_encode64(:crypto.strong_rand_bytes(32), padding: false)
+      end
+    end
+
+    # Magic link for passwordless auth
+    magic_link :magic_link do
+      identity_field :email
+      sender MyApp.AuthEmail
+      token_lifetime 10
+    end
+  end
+end
+```
+
 ### Authorization
 - **Policies**: Declarative, resource-level access control
 - **Actor Context**: User vs Employee with different permissions
@@ -123,11 +160,11 @@ actions do
   read :export_personal_data do
     description("Export all personal data in portable format")
   end
-  
+
   update :request_data_deletion do
     description("Initiate GDPR deletion process")
   end
-  
+
   update :rectify_personal_data do
     description("Allow data subjects to correct their data")
   end
@@ -145,6 +182,11 @@ defmodule RivaAsh.Jobs.GDPRRetentionJob do
   end
 end
 ```
+
+### Operational Cadence
+- **Monthly**: Update data processing records, audit access logs, test backups, security patches
+- **Quarterly**: Privacy impact assessments for new features, retention policy review, breach response drills, staff training
+- **Annual**: Full GDPR compliance audit, privacy policy updates, third-party security assessments
 
 ### Security Best Practices
 

@@ -72,7 +72,7 @@ relationships do
   belongs_to :organization, MyApp.Organization do
     allow_nil? false
   end
-  
+
   has_many :reservations, MyApp.Reservation do
     destination_attribute :client_id
   end
@@ -88,6 +88,62 @@ aggregates do
   count :reservation_count, :reservations do
     filter expr(status == :confirmed)
   end
+end
+```
+
+### Critical Ash Patterns
+- **Code Interfaces**: Always expose via Domain code interfaces; avoid raw Ash calls in web modules
+- **Error Handling**: Use `!` versions when you expect success; handle `{:ok, result} | {:error, reason}` tuples
+- **Migrations**: Run `mix ash.codegen <name>` after resource changes; use `--dev` during development
+- **Authorization**: Set actor on query/changeset, not when calling action: `Ash.Query.for_read(:read, %{}, actor: user)`
+- **Testing**: Use globally unique values in tests to prevent deadlocks: `"user-#{System.unique_integer([:positive])}@example.com"`
+
+### Time Zone Handling (Critical)
+```elixir
+# ALWAYS store UTC in database, convert for display
+defmodule MyApp.TimeHelpers do
+  def to_organization_time(utc_datetime, organization) do
+    utc_datetime
+    |> Timex.to_datetime(organization.timezone || "UTC")
+  end
+
+  def from_organization_time(local_datetime, organization) do
+    local_datetime
+    |> Timex.to_datetime(organization.timezone || "UTC")
+    |> Timex.to_datetime("UTC")
+  end
+end
+
+# In resources - ALWAYS use :utc_datetime_usec
+attributes do
+  attribute :scheduled_at, :utc_datetime_usec
+  attribute :created_at, :utc_datetime_usec
+end
+
+# In LiveViews - convert for display
+def mount(_params, _session, socket) do
+  organization = get_organization(socket.assigns.current_user)
+
+  reservations =
+    list_reservations()
+    |> Enum.map(fn reservation ->
+      %{reservation |
+        scheduled_at: TimeHelpers.to_organization_time(reservation.scheduled_at, organization)
+      }
+    end)
+
+  {:ok, assign(socket, reservations: reservations, organization: organization)}
+end
+
+# Form handling - convert back to UTC
+def handle_event("save", %{"reservation" => params}, socket) do
+  utc_scheduled_at = TimeHelpers.from_organization_time(
+    params["scheduled_at"],
+    socket.assigns.organization
+  )
+
+  params = Map.put(params, "scheduled_at", utc_scheduled_at)
+  # ... continue with save
 end
 ```
 
@@ -161,10 +217,10 @@ defmodule MyApp.Repo.Migrations.CreateUsers do
       add :email, :citext, null: false
       add :name, :text, null: false
       add :organization_id, :binary_id, null: false
-      
+
       timestamps(type: :utc_datetime_usec)
     end
-    
+
     create unique_index(:users, [:email])
     create index(:users, [:organization_id])
   end
@@ -176,6 +232,31 @@ end
 - Use partial indexes for soft deletes: `where archived_at is null`
 - Use `citext` for case-insensitive text (emails)
 - Consider composite indexes for common filter combinations
+
+### Advanced PostgreSQL Features
+```elixir
+postgres do
+  # Foreign key actions (database-level, bypasses Ash logic)
+  references do
+    reference :user, on_delete: :delete, on_update: :update
+  end
+
+  # Check constraints
+  check_constraints do
+    check_constraint :positive_amount, check: "amount > 0"
+  end
+
+  # Custom indexes
+  custom_indexes do
+    index [:status, :created_at], where: "archived_at IS NULL"
+  end
+
+  # Custom SQL statements
+  custom_statements do
+    statement "CREATE EXTENSION IF NOT EXISTS \"uuid-ossp\""
+  end
+end
+```
 
 ## GraphQL (AshGraphql)
 
@@ -250,12 +331,24 @@ json_api do
 end
 ```
 
-### Request Examples
+### Advanced JSON:API Features
 ```bash
-# List with filtering
-GET /api/users?filter[archived_at][is_nil]=true&sort=-inserted_at
+# Sparse fieldsets
+GET /api/users?fields[users]=name,email
 
-# Create
+# Relationships and includes
+GET /api/users?include=organization,reservations.service
+
+# Filtering with operators
+GET /api/users?filter[created_at][gte]=2023-01-01&filter[status]=active
+
+# Pagination
+GET /api/users?page[limit]=20&page[offset]=40
+
+# Sorting
+GET /api/users?sort=name,-created_at
+
+# Create with relationships
 POST /api/users
 {
   "data": {
@@ -263,8 +356,30 @@ POST /api/users
     "attributes": {
       "email": "user@example.com",
       "name": "John Doe"
+    },
+    "relationships": {
+      "organization": {
+        "data": { "type": "organization", "id": "123" }
+      }
     }
   }
+}
+```
+
+### Error Response Format
+```json
+{
+  "errors": [
+    {
+      "id": "unique-error-id",
+      "status": "422",
+      "code": "validation_failed",
+      "title": "Validation Failed",
+      "detail": "Email has already been taken",
+      "source": { "pointer": "/data/attributes/email" },
+      "meta": { "field": "email", "constraint": "unique" }
+    }
+  ]
 }
 
 # Update

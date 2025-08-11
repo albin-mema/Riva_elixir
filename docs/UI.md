@@ -186,6 +186,58 @@ defmodule RivaAshWeb.Components.UI.ButtonPropertyTest do
 end
 ```
 
+### Accessibility Testing
+```elixir
+test "button has proper ARIA attributes" do
+  html = render_component(&RivaAshWeb.Components.UI.button/1, %{
+    disabled: true,
+    "aria-label": "Save document"
+  })
+
+  assert html =~ ~r/aria-disabled="true"/
+  assert html =~ ~r/aria-label="Save document"/
+  assert html =~ ~r/role="button"/
+end
+
+test "form field has proper labeling" do
+  html = render_component(&RivaAshWeb.Components.UI.input/1, %{
+    field: %Phoenix.HTML.FormField{id: "user_email", name: "user[email]"},
+    label: "Email Address",
+    required: true
+  })
+
+  assert html =~ ~r/aria-required="true"/
+  assert html =~ ~r/aria-describedby="user_email-error"/
+  assert html =~ ~r/for="user_email"/
+end
+```
+
+### LiveView Integration Testing
+```elixir
+test "component triggers correct events" do
+  {:ok, view, _html} = live(conn, "/test-page")
+
+  view
+  |> element("button[phx-click='save']")
+  |> render_click()
+
+  assert_receive {:save_triggered, _data}
+
+  # Test loading states
+  assert view |> element("button[disabled]") |> has_element?()
+end
+
+test "form validation displays errors" do
+  {:ok, view, _html} = live(conn, "/users/new")
+
+  view
+  |> form("#user-form", user: %{email: "invalid"})
+  |> render_submit()
+
+  assert view |> element(".error-message") |> render() =~ "must be a valid email"
+end
+```
+
 ## Accessibility
 
 ### Requirements
