@@ -1,75 +1,95 @@
-alias RivaAshWeb.Components.Organisms, as: Organisms
-alias RivaAshWeb.Components.Molecules, as: Molecules
-alias RivaAshWeb.Components.Atoms, as: Atoms
-alias Phoenix.LiveView.Rendered, as: Rendered
-
 defmodule RivaAshWeb.Components.Organisms.DashboardStats do
   @moduledoc """
-  Dashboard statistics widget component.
+  DashboardStats organism that combines multiple CardWithActions molecules.
+  
+  Provides a comprehensive dashboard statistics display with multiple stat cards.
   """
   use Phoenix.Component
-  import RivaAshWeb.Components.Molecules.Card
-  import RivaAshWeb.Components.Atoms.Icon
+
+  alias RivaAshWeb.Components.Molecules.CardWithActions
+  alias RivaAshWeb.Components.UIWrapped.Text
 
   @doc """
-  Renders dashboard statistics cards.
+  Renders a dashboard statistics section with multiple stat cards.
   """
-  attr(:stats, :list, required: true)
-  attr(:loading, :boolean, default: false)
-  attr(:class, :string, default: "")
-  attr(:rest, :global)
+  attr :stats, :list,
+    required: true,
+    doc: "List of stat cards with :title, :value, :change, :icon, and :variant keys"
+
+  attr :class, :string, default: ""
+  attr :rest, :global
 
   @spec dashboard_stats(assigns :: map()) :: Phoenix.LiveView.Rendered.t()
   def dashboard_stats(assigns) do
-    # Render dashboard stats using functional composition
     assigns
-    |> Map.put_new(:container_class, build_container_class(assigns.class))
-    |> Map.put_new(:stats_class, build_stats_class(assigns.loading))
-    |> Map.put_new(:card_class, build_card_class(assigns.loading))
-    |> render_dashboard_stats_component()
+    |> build_dashboard_stats_attrs()
+    |> validate_dashboard_stats_attrs()
+    |> render_dashboard_stats()
   end
 
-  # Private helper for dashboard stats rendering
-  @spec render_dashboard_stats_component(assigns :: map()) :: Phoenix.LiveView.Rendered.t()
-  defp render_dashboard_stats_component(assigns) do
+  @spec build_dashboard_stats_attrs(assigns :: map()) :: map()
+  defp build_dashboard_stats_attrs(assigns), do: assigns
+
+  @spec validate_dashboard_stats_attrs(assigns :: map()) :: map()
+  defp validate_dashboard_stats_attrs(assigns) do
+    with :ok <- validate_stats(assigns[:stats]) do
+      assigns
+    else
+      {:error, reason} -> raise ArgumentError, "Invalid dashboard stats attributes: #{reason}"
+    end
+  end
+
+  @spec validate_stats(list(map())) :: :ok | {:error, String.t()}
+  defp validate_stats(stats) when is_list(stats) do
+    case Enum.all?(stats, &valid_stat?/1) do
+      true -> :ok
+      false -> {:error, "All stats must be maps with :title, :value, and :icon keys"}
+    end
+  end
+
+  defp validate_unmatchedstats(_unmatched), do: {:error, "stats must be a list"}
+
+  @spec valid_stat?(map()) :: boolean()
+  defp valid_stat?(stat) do
+    is_map(stat) and
+      is_binary(stat[:title]) and
+      (is_binary(stat[:value]) or is_integer(stat[:value])) and
+      (is_atom(stat[:icon]) or is_nil(stat[:icon])) and
+      (is_binary(stat[:change]) or is_nil(stat[:change])) and
+      (is_binary(stat[:variant]) or is_nil(stat[:variant]))
+  end
+
+  @spec render_dashboard_stats(assigns :: map()) :: Phoenix.LiveView.Rendered.t()
+  defp render_dashboard_stats(assigns) do
     ~H"""
-    <!-- Dashboard stats implementation will go here -->
-    <div {@rest} class={@container_class}>
-      <div class={@stats_class}>
+    <div class={["dashboard-stats", @class]} {@rest}>
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <%= for stat <- @stats do %>
-          <.card class={@card_class}>
-            <:body>
-              <div>
-                <.icon name={stat.icon} />
-                <div>
-                  <h3><%= stat.value %></h3>
-                  <p><%= stat.label %></p>
-                  <span :if={stat.change}><%= stat.change %>%</span>
-                </div>
-              </div>
-            </:body>
-          </.card>
+          <CardWithActions.card_with_actions
+            title={stat.title}
+            icon={stat.icon}
+            variant={stat.variant || "default"}
+            class="stat-card"
+          >
+            <div class="flex items-baseline space-x-2">
+              <Text.text variant="lead" class="text-2xl font-bold">
+                <%= stat.value %>
+              </Text.text>
+              <%= if stat.change do %>
+                <Text.text variant="small" class={[
+                  case String.starts_with?(stat.change, "+") do
+                    true -> "text-green-600"
+                    false -> "text-red-600"
+                  end
+                ]}>
+                  <%= stat.change %>
+                </Text.text>
+              <% end %>
+            </div>
+          </CardWithActions.card_with_actions>
         <% end %>
       </div>
     </div>
     """
-  end
-
-  # Helper function to build container classes
-  @spec build_container_class(String.t()) :: String.t()
-  defp build_container_class(class) do
-    class
-  end
-
-  # Helper function to build stats classes
-  @spec build_stats_class(boolean()) :: String.t()
-  defp build_stats_class(loading) do
-    if loading, do: "opacity-50", else: ""
-  end
-
-  # Helper function to build card classes
-  @spec build_card_class(boolean()) :: String.t()
-  defp build_card_class(loading) do
-    if loading, do: "animate-pulse", else: ""
   end
 end
