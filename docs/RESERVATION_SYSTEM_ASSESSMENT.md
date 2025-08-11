@@ -1,6 +1,6 @@
-# Reservation System Assessment
+# Reservo Assessment
 
-## Implemented Reservation System Functionality
+## Implemented Reservo Functionality
 
 ### Core Domain Model
 
@@ -61,8 +61,7 @@ erDiagram
         String description
         Atom pricing_type
         Decimal price_per_day
-        Decimal weekday_price
-        Decimal weekend_price
+        -- Removed: weekday/weekend differential pricing per mission
         Boolean has_day_type_pricing
         String currency
         Date effective_from
@@ -92,7 +91,7 @@ erDiagram
         String address
         Decimal total_area
         String area_unit
-        Map coordinates
+        -- Positions modeled via grid (row/column) in Layout/ItemPosition; not x,y coordinates here
         Boolean is_active
         DateTime inserted_at
         DateTime updated_at
@@ -222,17 +221,17 @@ erDiagram
 
 ### Pricing System
 
--   Flexible pricing model with base pricing and exceptions
--   Support for weekday/weekend pricing differentials
+-   Constant base pricing with business-specific exceptions
+-   No weekday/weekend differentiation; all days treated equally
 -   Effective date ranges for pricing rules
 -   Currency support and validation
--   Calculations for effective pricing based on date and day type
+-   Clear calculations for total cost based on full-day counts
 -   User override capability for special cases with audit trail
 
-### Reservation System
+### Platform
 
 -   Full reservation lifecycle (create, confirm, cancel, complete)
--   Time slot validation and conflict detection
+-   Full-day validation and conflict detection (no hourly slots)
 -   Provisional reservations with 15-minute holds
 -   Denormalized organization_id for performance optimization
 -   Comprehensive status tracking (pending, provisional, confirmed, cancelled,

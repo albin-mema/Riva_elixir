@@ -1,5 +1,5 @@
 # GDPR Implementation Checklist
-## Riva Ash Reservation System
+## Reservo Platform
 
 **Status**: In Progress  
 **Target Completion**: 2025-10-24  

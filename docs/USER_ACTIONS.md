@@ -1,10 +1,10 @@
 # User Actions and Business Logic Documentation
 
-This document defines all business logic and user flows for the Riva Ash land plot reservation system using Reactor workflows.
+This document defines all business logic and user flows for the Reservo platform using Reactor workflows.
 
 ## System Overview
 
-Riva Ash is a reservation management system for land plots. The core functionality enables:
+Reservo is a universal reservation system. The core functionality enables:
 
 * **Businesses** to manage land plots, including visual layouts, item positioning, and pricing
 * **Customers** to search for available items and make full-day or multi-day reservations through a public interface
@@ -22,13 +22,13 @@ Riva Ash is a reservation management system for land plots. The core functionali
 * **Item**: The individual reservable unit (e.g., stall, space, spot) positioned on the plot layout
 * **Item Type**: A category for items (e.g., "Premium Stall," "Standard Spot") with a configurable base price per day
 
-### Reservation System
+### Platform
 
 * **Reservation**: A booking for a full-day or a series of consecutive full days. Supports:
   * **Provisional** status for online bookings awaiting payment
   * **Confirmed** status post-payment
 * **Multi-day Reservation**: A reservation spanning consecutive full days
-* **Pricing**: Determined by the base price of the selected item type and updated by a business employee if necessary
+* **Pricing**: Constant base price per item type with business exceptions; no weekday/weekend differentials
 * **Availability**: The real-time booking status for every item, updated instantly across the system
 
 ### Payment Tracking

@@ -14,7 +14,7 @@ This guide provides comprehensive instructions for setting up the Riva Elixir ap
 
 ```bash
 git clone https://github.com/albin-mema/Riva_elixir.git
-cd Riva_elixir
+cd Riva_Ash
 ```
 
 ### 2. Start PostgreSQL
@@ -54,13 +54,13 @@ If you have PostgreSQL installed locally:
 
 1. Create the database:
    ```bash
-   createdb riva_ash_dev
-   createdb riva_ash_test
+   createdb reserv0_dev
+   createdb reserv0_test
    ```
 
 2. Install required extensions:
    ```sql
-   \c riva_ash_dev
+   \c reserv0_dev
    CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
    CREATE EXTENSION IF NOT EXISTS "citext";
    ```
@@ -144,7 +144,7 @@ mix ecto.reset           # Reset database
 
 #### 3. Database Does Not Exist
 
-**Error:** `database "riva_ash_dev" does not exist`
+**Error:** `database "reserv0_dev" does not exist`
 
 **Solutions:**
 1. Reset the database:
@@ -315,7 +315,7 @@ Key variables:
 - `DB_HOSTNAME`: Database host (default: localhost)
 - `DB_USERNAME`: Database user (default: postgres)
 - `DB_PASSWORD`: Database password (default: postgres)
-- `DB_NAME`: Database name (default: riva_ash_dev)
+- `DB_NAME`: Database name (default: reserv0_dev)
 - `DB_PORT`: Database port (default: 5432)
 
 ## Performance Tips

@@ -10,8 +10,8 @@
 - **Frontend**: LiveView with React integration (live_react)
 - **Testing**: ExUnit with property-based testing (StreamData)
 - **Authentication**: AshAuthentication with role-based access
-- **Authorization**: Ash Policies with SimpleSat SAT solver
-- **UI**: Tailwind CSS with Atomic Design patterns and canonical UI system
+- **Authorization**: Ash Policies with SimpleSat SAT solver for permission management
+- **UI**: LiveView + Tailwind CSS with Atomic Design patterns and canonical UI system
 
 ## Architecture Patterns
 
@@ -100,20 +100,65 @@ import RivaAshWeb.Components.Molecules.FormField
 
 ### 4. Permission System
 
-**Centralized Permissions**: All permissions are defined in `RivaAsh.Permissions.Constants`:
+**Centralized Permissions**: All permissions are defined in `RivaAsh.Permissions.Constants` and integrated with Ash policies using the SimpleSat SAT solver for efficient permission resolution:
 ```elixir
-@can_create_reservations "can_create_reservations"
-def can_create_reservations, do: @can_create_reservations
-```
-
-**Policy Integration**: Permissions work with Ash policies and SimpleSat SAT solver:
-```elixir
-policy action_type(:create) do
-  authorize_if(RivaAsh.Policies.PermissionCheck.new(permission: :can_create_reservations))
+# Example permission constant definition
+defmodule RivaAsh.Permissions.Constants do
+  @moduledoc """
+  Centralized permission constants used across Ash policies and SimpleSat authorization.
+  """
+  
+  # Core permissions
+  @manage_all "manage:all"
+  @read_all "read:all"
+  @write_all "write:all"
+  
+  # Domain-specific permissions
+  @manage_reservations "manage:reservations"
+  @read_reservations "read:reservations"
+  @create_reservations "create:reservations"
+  
+  # Business-specific permissions
+  @manage_business "manage:business"
+  @read_business "read:business"
+  @update_business "update:business"
+  
+  @doc """
+  Get all available permissions.
+  """
+  def all_permissions, do: [
+    @manage_all, @read_all, @write_all,
+    @manage_reservations, @read_reservations, @create_reservations,
+    @manage_business, @read_business, @update_business
+  ]
 end
 ```
 
-**Never hardcode permission strings** - always use constants.
+**Policy Integration**: Permissions work with Ash policies and SimpleSat SAT solver for efficient and scalable authorization:
+```elixir
+# Example policy using SimpleSat for permission checking
+defmodule RivaAsh.Policies.BusinessPolicy do
+  use Ash.Policy
+
+  policies do
+    # Allow business owners to manage their own businesses
+    policy action_type(:read) do
+      authorize_if always()
+    end
+    
+    policy action_type(:update) do
+      authorize_if relates_to_actor_via(:business_owners)
+      authorize_if has_permission(@manage_business, :strict)
+    end
+    
+    policy action_type(:destroy) do
+      authorize_if has_permission(@manage_all, :strict)
+    end
+  end
+end
+```
+
+**Never hardcode permission strings** - always use constants. The SimpleSat SAT solver efficiently resolves complex permission combinations.
 
 ## Project Structure
 
@@ -141,11 +186,17 @@ packages/
 ### 1. Resource Development
 
 **Standard Extensions**: Every resource must include:
-- AshPaperTrail (audit trails)
-- AshArchival (soft delete)
+- AshPaperTrail (comprehensive audit trails for change tracking and compliance)
+- AshArchival (soft delete for data retention and audit purposes)
 - Proper policies with admin bypass
 - UUID primary keys
 - Timestamps (inserted_at, updated_at)
+
+**Audit and Retention Philosophy**:
+- AshPaperTrail and AshArchival are implemented as audit/retention features, not document management systems
+- All changes are tracked for compliance and regulatory requirements
+- Soft delete operations maintain data integrity for audit purposes
+- Archival focuses on retention policies and lifecycle management, not document storage
 
 **Relationships**: Use proper Ash relationships with foreign key constraints.
 
@@ -159,7 +210,7 @@ packages/
 
 ### 3. Business Logic Patterns
 
-**Reservation System**:
+**Platform**:
 - Full-day billing only
 - No weekend/weekday differentiation
 - Constant pricing with business exceptions
@@ -203,18 +254,27 @@ packages/
 
 ## API Design Patterns
 
-### 1. JSON API
-- All resources exposed via AshJsonApi
-- Follow JSON:API specification
-- Use proper HTTP status codes
-- Include relationship links
+### 1. GraphQL and JSON:API Support
 
-### 2. GraphQL
-- Available for complex queries
-- Use for frontend data fetching
-- Implement proper field selection
-- Handle errors gracefully
-- Authorization: GraphQL layer authorization is enabled and resource policies are enforced. The web layer must pass the authenticated actor into the Absinthe context for policy evaluation so policies can run consistently across transports.
+Reservo provides dual API support for maximum flexibility:
+
+**GraphQL**:
+- Available for complex queries and efficient data fetching
+- Proper field selection and error handling
+- Authorization enforced through Ash policies using SimpleSat SAT solver
+- Ideal for frontend applications requiring specific data shapes
+
+**JSON:API**:
+- RESTful API following JSON:API specification for standardized resource-oriented communication
+- Full support for filtering, sorting, pagination, and relationships
+- Consistent HTTP status codes and error responses
+- Ideal for third-party integrations and standardized API consumption
+
+**Dual API Support**: Both GraphQL and JSON:API are wired in router/domain docs and expose the same Ash resources through different transport mechanisms, ensuring consistent authorization and business logic enforcement across all API layers.
+
+### 2. Authorization Consistency
+
+Both API layers enforce authorization through Ash policies. The web layer must pass the authenticated actor into the context for policy evaluation so policies run consistently across all transports.
 
 ## Runtime and Secrets (Production)
 

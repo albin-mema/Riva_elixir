@@ -1,6 +1,6 @@
 # Production Deployment Guide
 
-This guide covers deploying the Reservation System to production with proper
+This guide covers deploying Reservo to production with proper
 security, monitoring, and scalability considerations.
 
 ## Required Environment Variables

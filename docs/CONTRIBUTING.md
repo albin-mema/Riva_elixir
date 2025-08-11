@@ -1,6 +1,6 @@
-# Contributing to Riva Ash
+# Contributing to Reservo
 
-Thank you for your interest in contributing to Riva Ash! This guide will help you get started with contributing to our business management system built with Elixir/Phoenix and Ash Framework.
+Thank you for your interest in contributing to Reservo! This guide will help you get started with contributing to our universal reservation platform built with Elixir/Phoenix and Ash Framework.
 
 ## Quick Start for Contributors
 
@@ -27,7 +27,7 @@ Thank you for your interest in contributing to Riva Ash! This guide will help yo
 ```bash
 # Clone your fork
 git clone https://github.com/YOUR_USERNAME/Riva_elixir.git
-cd Riva_elixir
+cd Riva_Ash
 
 # Start PostgreSQL
 ./docker-dev.sh start
@@ -114,17 +114,86 @@ cd packages/riva_ash
 # Run all tests
 mix test
 
-# Run with coverage
-mix test --cover
+# Run unit tests only
+mix test --unit
 
 # Run integration tests
 mix test --include integration
 
-# Run property-based tests
+# Run property-based tests with StreamData
 mix test --include property
+
+# Run LiveView/UI tests with phoenix_test
+mix test --include live_view
+
+# Run tests with coverage
+mix test --cover
 
 # Run specific test file
 mix test test/path/to/test_file.exs
+```
+
+#### Property-Based Testing with StreamData
+
+The project emphasizes property-based testing for finding edge cases and validating invariants:
+
+```elixir
+defmodule RivaAsh.ValidationsPropertyTest do
+  use ExUnit.Case
+  use ExUnitProperties
+  alias RivaAsh.Validations
+
+  property "validates email format" do
+    check all email <- string(:alphanumeric, 1..100) do
+      result = Validations.validate_email(email)
+      
+      if String.contains?(email, "@") do
+        assert {:ok, _} = result
+      else
+        assert {:error, _} = result
+      end
+    end
+  end
+end
+```
+
+#### LiveView/UI Testing with phoenix_test
+
+Use phoenix_test for testing LiveView components with authentication enabled:
+
+```elixir
+defmodule RivaAshWeb.DashboardLiveTest do
+  use RivaAshWeb.ConnCase
+  use RivaAshWeb.Testing.AuthHelper
+  import Phoenix.LiveViewTest
+
+  describe "Dashboard LiveView" do
+    test "renders dashboard with authentication", %{conn: conn} do
+      # Test with authentication enabled
+      authenticated_conn = authenticate_user(conn)
+      {:ok, _view, _html} = live(authenticated_conn, "/dashboard")
+    end
+
+    test "requires authentication for dashboard", %{conn: conn} do
+      # Test that unauthenticated users are redirected
+      {:error, {:redirect, %{to: "/sign-in"}}} = live(conn, "/dashboard")
+    end
+  end
+end
+```
+
+#### Authentication in Tests
+
+Tests are designed to run with authentication enabled rather than disabled. Use the provided authentication helpers to test both authenticated and unauthenticated scenarios:
+
+```elixir
+# In your test helper
+defmodule RivaAshWeb.Testing.AuthHelper do
+  def authenticate_user(conn) do
+    # Implementation that creates an authenticated user session
+    # This ensures tests run with real authentication scenarios
+  end
+end
 ```
 
 ### 6. Committing Changes
@@ -183,6 +252,57 @@ For contributing to architectural patterns, see the detailed guidelines in [../p
 - Implement proper authorization with Ash policies
 - Follow domain-driven design principles
 
+### Permission System Standards
+
+- **Always Use Constants**: Never hardcode permission strings - use `RivaAsh.Permissions.Constants`
+- **SAT Solver Integration**: Leverage SimpleSat for efficient permission resolution
+- **Auto-Admin for Business Owners**: Business creators automatically receive full business permissions
+- **Domain-Driven Permissions**: Align permissions with business domains and roles
+- **Policy Testing**: Include comprehensive permission tests in all resource tests
+- **Never Bypass Authorization**: Except for legitimate superadmin access with proper logging
+
+### Permission Constants Usage
+
+```elixir
+# Always import and use permission constants
+alias RivaAsh.Permissions.Constants
+
+# In policies - use constants, not strings
+policy action_type(:update) do
+  authorize_if(has_permission(Constants.can_update_pricing(), :strict))
+end
+
+# Never do this:
+# authorize_if(has_permission("can_update_pricing", :strict))
+```
+
+### Business Creation and Auto-Admin
+
+When creating business resources, ensure the creator automatically becomes the owner:
+
+```elixir
+# Business creation automatically sets owner as admin
+{:ok, business} = RivaAsh.Resources.Business.create(%{
+  name: "Business Name",
+  description: "Business description",
+  owner_id: current_user.id  # Creator gets automatic admin privileges
+}, domain: RivaAsh.Domain)
+```
+
+### Policy Matrix Alignment
+
+All new resources must include a policy matrix that aligns with domain roles:
+
+| Role | Permissions | Scope |
+|------|-------------|-------|
+| Superadmin | Full system access | System-wide |
+| Business Owner | Full business control | Business-specific |
+| Manager | Business management | Business-specific |
+| Staff | Operations access | Business-specific |
+| Client | Self-service access | Business-specific |
+
+See [PERMISSIONS_AND_POLICIES.md](./PERMISSIONS_AND_POLICIES.md) for complete documentation.
+
 ### Testing Standards
 
 - **Unit Tests**: Test individual functions and modules
@@ -236,6 +356,25 @@ Include in your PR description:
 3. **Generate Migration**: Run `mix ash_postgres.generate_migrations`
 4. **Add Tests**: Create comprehensive test coverage
 5. **Update Documentation**: Add to relevant documentation
+6. **Define Permissions**: Create appropriate permissions in `RivaAsh.Permissions.Constants`
+7. **Implement Policies**: Add Ash policies aligned with domain roles
+8. **Auto-Admin Setup**: Ensure business creators get appropriate permissions
+
+### Working with Permissions
+
+1. **Use Permission Constants**: Always import and use `RivaAsh.Permissions.Constants`
+2. **Implement Auto-Admin**: Business creators automatically get full business permissions
+3. **Policy Testing**: Test all permission scenarios in your resource tests
+4. **Domain Alignment**: Ensure permissions align with business domains
+5. **SAT Solver Integration**: Leverage SimpleSat for efficient permission resolution
+
+### Business Onboarding
+
+1. **First Business Creation**: Users creating their first business become automatic owners
+2. **Permission Inheritance**: Business owners inherit all business-related permissions
+3. **Employee Setup**: Add employees with appropriate role-based permissions
+4. **Configuration**: Set up business-specific settings and layouts
+5. **Testing**: Test the complete onboarding flow with permission verification
 
 ### Modifying Existing Resources
 
@@ -338,8 +477,8 @@ Riva_elixir/
 
 ## License
 
-By contributing to Riva Ash, you agree that your contributions will be licensed under the same license as the project.
+By contributing to Reservo, you agree that your contributions will be licensed under the same license as the project.
 
 ---
 
-Thank you for contributing to Riva Ash! Your contributions help make this project better for everyone.
+Thank you for contributing to Reservo! Your contributions help make this project better for everyone.

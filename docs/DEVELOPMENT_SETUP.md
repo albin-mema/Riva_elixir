@@ -1,6 +1,6 @@
 # Development Setup Guide
 
-This guide covers the complete development setup for the Riva Elixir project with pnpm and environment configuration.
+This guide covers the complete development setup for the Reservo project with pnpm and environment configuration.
 
 ## Prerequisites
 
@@ -15,7 +15,7 @@ This guide covers the complete development setup for the Riva Elixir project wit
 
 ```bash
 git clone <repository-url>
-cd Riva_elixir
+cd Riva_Ash
 
 # Copy environment configuration
 cp .env.example .env
@@ -49,7 +49,7 @@ DB_HOSTNAME=localhost
 DB_PORT=5433
 DB_USERNAME=postgres
 DB_PASSWORD=postgres
-DB_NAME=riva_ash_dev
+DB_NAME=reserv0_dev
 
 # Phoenix Configuration
 MIX_ENV=dev
@@ -112,7 +112,7 @@ The project uses Docker for PostgreSQL with the following configuration:
 
 - **Host**: localhost
 - **Port**: 5433 (to avoid conflicts with local PostgreSQL)
-- **Database**: riva_ash_dev
+- **Database**: reserv0_dev
 - **Username/Password**: postgres/postgres
 
 ### Docker Commands
@@ -174,7 +174,7 @@ If environment variables aren't loading:
 ## Project Structure
 
 ```
-Riva_elixir/
+Riva_Ash/
 ├── .env                    # Environment configuration
 ├── .env.example           # Environment template
 ├── docker-compose.yml     # Docker services
