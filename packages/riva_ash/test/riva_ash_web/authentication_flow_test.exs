@@ -2,6 +2,7 @@ defmodule RivaAshWeb.AuthenticationFlowTest do
   use RivaAshWeb.FeatureCase, async: true
   use RivaAshWeb, :verified_routes
   import Phoenix.LiveViewTest
+  import Phoenix.ConnTest
   alias RivaAsh.Accounts.User
   alias RivaAsh.Accounts
 

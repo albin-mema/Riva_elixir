@@ -113,7 +113,7 @@ defmodule RivaAsh.SecurityTest do
       # Client1 should be able to read clients from business1
       clients1 =
         Client
-        |> Ash.Query.filter(expr(business_id == ^business1.id))
+        |> Ash.Query.filter(business_id: business1.id)
         |> Ash.read!(actor: client1, domain: RivaAsh.Domain)
 
       assert length(clients1) >= 1
@@ -121,7 +121,7 @@ defmodule RivaAsh.SecurityTest do
       # Client1 should NOT be able to read clients from business2
       assert_raise Ash.Error.Forbidden, fn ->
         Client
-        |> Ash.Query.filter(expr(business_id == ^business2.id))
+        |> Ash.Query.filter(business_id: business2.id)
         |> Ash.read!(actor: client1, domain: RivaAsh.Domain)
       end
     end

@@ -3,7 +3,6 @@ defmodule RivaAsh.BookingTest do
   alias RivaAsh.Booking
 
   describe "create_booking/1" do
-    @spec test_creates_booking_with_valid_params :: :ok
     test "creates booking with valid params" do
       params = %{
         business_id: "business-123",
@@ -19,7 +18,6 @@ defmodule RivaAsh.BookingTest do
       assert booking.status == :pending
     end
 
-    @spec test_returns_error_with_invalid_params :: :ok
     test "returns error with invalid params" do
       params = %{
         business_id: nil,
@@ -34,7 +32,6 @@ defmodule RivaAsh.BookingTest do
   end
 
   describe "confirm_booking/1" do
-    @spec test_confirms_pending_booking :: :ok
     test "confirms pending booking" do
       booking_id = "booking-123"
       assert {:ok, booking} = Booking.confirm_booking(booking_id)
@@ -48,7 +45,6 @@ defmodule RivaAsh.BookingTest do
   end
 
   describe "cancel_booking/2" do
-    @spec test_cancels_booking_with_reason :: :ok
     test "cancels booking with reason" do
       booking_id = "booking-123"
       reason = "User requested cancellation"
@@ -58,7 +54,6 @@ defmodule RivaAsh.BookingTest do
       assert booking.cancellation_reason == reason
     end
 
-    @spec test_handles_cancellation_of_non_existent_booking :: :ok
     test "handles cancellation of non-existent booking" do
       booking_id = "nonexistent"
       reason = "Test reason"
@@ -68,7 +63,6 @@ defmodule RivaAsh.BookingTest do
   end
 
   describe "reschedule_booking/2" do
-    @spec test_reschedules_booking_to_new_time :: :ok
     test "reschedules booking to new time" do
       booking_id = "booking-123"
 
@@ -83,7 +77,6 @@ defmodule RivaAsh.BookingTest do
   end
 
   describe "get_booking/1" do
-    @spec test_returns_booking_by_id :: :ok
     test "returns booking by id" do
       booking_id = "booking-123"
 
@@ -91,8 +84,6 @@ defmodule RivaAsh.BookingTest do
       assert booking.id == booking_id
     end
 
-    @spec test_returns_error_for_non_existent_booking :: :ok
-    @spec test_returns_error_for_non_existent_booking :: :ok
     test "returns error for non-existent booking" do
       booking_id = "nonexistent"
 
@@ -101,7 +92,6 @@ defmodule RivaAsh.BookingTest do
   end
 
   describe "list_bookings/2" do
-    @spec test_returns_bookings_for_user :: :ok
     test "returns bookings for user" do
       user_id = "user-123"
       filters = %{status: :confirmed}
@@ -110,7 +100,6 @@ defmodule RivaAsh.BookingTest do
       assert is_list(bookings)
     end
 
-    @spec test_returns_empty_list_for_user_with_no_bookings :: :ok
     test "returns empty list for user with no bookings" do
       user_id = "user-no-bookings"
       filters = %{}
@@ -120,7 +109,6 @@ defmodule RivaAsh.BookingTest do
   end
 
   describe "list_business_bookings/2" do
-    @spec test_returns_bookings_for_business :: :ok
     test "returns bookings for business" do
       business_id = "business-123"
 
@@ -135,7 +123,6 @@ defmodule RivaAsh.BookingTest do
   end
 
   describe "check_booking_conflict/3" do
-    @spec test_detects_booking_conflicts :: :ok
     test "detects booking conflicts" do
       business_id = "business-123"
       start_time = ~N[2024-01-15 09:00:00]
@@ -147,7 +134,6 @@ defmodule RivaAsh.BookingTest do
   end
 
   describe "validate_booking_time/2" do
-    @spec test_validates_booking_time_against_business_hours :: :ok
     test "validates booking time against business hours" do
       business_id = "business-123"
 
@@ -159,7 +145,6 @@ defmodule RivaAsh.BookingTest do
       assert :ok = Booking.validate_booking_time(business_id, booking_time)
     end
 
-    @spec test_returns_error_for_booking_outside_business_hours :: :ok
     test "returns error for booking outside business hours" do
       business_id = "business-123"
 
@@ -173,7 +158,6 @@ defmodule RivaAsh.BookingTest do
   end
 
   describe "calculate_booking_price/2" do
-    @spec test_calculates_price_for_booking :: :ok
     test "calculates price for booking" do
       service_id = "service-123"
       duration = 60
@@ -185,7 +169,6 @@ defmodule RivaAsh.BookingTest do
   end
 
   describe "send_booking_confirmation/1" do
-    @spec test_sends_booking_confirmation :: :ok
     test "sends booking confirmation" do
       booking_id = "booking-123"
 
@@ -194,7 +177,6 @@ defmodule RivaAsh.BookingTest do
   end
 
   describe "get_booking_status/1" do
-    @spec test_returns_booking_status :: :ok
     test "returns booking status" do
       booking_id = "booking-123"
 

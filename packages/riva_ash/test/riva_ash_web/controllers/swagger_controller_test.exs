@@ -17,7 +17,7 @@ defmodule RivaAshWeb.SwaggerControllerTest do
     assert Map.has_key?(json, "components")
   end
 
-  @spec test_returns_404_for_missing_spec_chunk :: :ok
+  @spec test_returns_404_for_missing_spec_chunk(%{conn: Plug.Conn.t()}) :: :ok
   test "returns 404 for missing spec chunk", %{conn: conn} do
     conn = get(conn, ~p"/swagger/unknown.json")
     assert conn.status in [404, 400]

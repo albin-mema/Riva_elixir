@@ -14,7 +14,6 @@ defmodule RivaAsh.ArchivalTest do
   @doc """
   Tests that soft delete sets archived_at timestamp correctly.
   """
-  @spec test_soft_delete_sets_archived_at :: :ok
   test "soft delete sets archived_at timestamp" do
     # Create a user to act as the business owner
     user = create_user!(%{role: :admin})
@@ -46,7 +45,6 @@ defmodule RivaAsh.ArchivalTest do
   @doc """
   Tests that archived records are excluded from normal queries by default.
   """
-  @spec test_archived_records_excluded_from_normal_queries :: :ok
   test "archived records are excluded from normal queries by default" do
     # Create a user to act as the business owner
     user = create_user!(%{role: :admin})
@@ -84,7 +82,6 @@ defmodule RivaAsh.ArchivalTest do
   @doc """
   Tests that archived records can be queried explicitly.
   """
-  @spec test_can_query_archived_records_explicitly :: :ok
   test "can query archived records explicitly" do
     # Create a user to act as the business owner
     user = create_user!(%{role: :admin})
@@ -120,7 +117,6 @@ defmodule RivaAsh.ArchivalTest do
   @doc """
   Tests that hard delete removes record completely.
   """
-  @spec test_hard_delete_removes_record_completely :: :ok
   test "hard delete removes record completely" do
     # Create a user to act as the business owner
     user = create_user!(%{role: :admin})
