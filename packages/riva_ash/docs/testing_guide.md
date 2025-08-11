@@ -61,11 +61,24 @@ test/
 ## Running Tests
 
 ### Basic Commands
+
 ```bash
 # Run all tests
 mix test
 
-# Run with coverage
+# Run unit tests only
+mix test --unit
+
+# Run integration tests only
+mix test --include integration
+
+# Run property-based tests with StreamData
+mix test --include property
+
+# Run LiveView/UI tests with phoenix_test
+mix test --include live_view
+
+# Run tests with coverage
 mix test --cover
 
 # Run specific test file
@@ -73,9 +86,20 @@ mix test test/riva_ash/booking_test.exs
 
 # Run tests matching pattern
 mix test --include integration
-```
 
+# Run tests in parallel for faster execution
+mix test --parallel
+
+# Run tests with verbose output
+mix test --trace
+
+# Run tests and stop on first failure
+mix test --max-failures 1
+```
 ### Using the Test Runner
+
+The project includes a comprehensive test runner script for advanced testing scenarios:
+
 ```bash
 # Run all tests with coverage
 mix run scripts/test_runner.exs --coverage
@@ -83,8 +107,11 @@ mix run scripts/test_runner.exs --coverage
 # Run integration tests
 mix run scripts/test_runner.exs --integration
 
-# Run property-based tests
+# Run property-based tests with StreamData
 mix run scripts/test_runner.exs --property
+
+# Run LiveView/UI tests with phoenix_test
+mix run scripts/test_runner.exs --live_view
 
 # Run all test types
 mix run scripts/test_runner.exs --all
@@ -94,8 +121,126 @@ mix run scripts/test_runner.exs --parallel 4
 
 # Run in watch mode
 mix run scripts/test_runner.exs --watch
+
+# Run specific test category with custom options
+mix run scripts/test_runner.exs --property --max-failures 5 --timeout 30000
+
+# Generate test report
+mix run scripts/test_runner.exs --report
+
+# Run tests with specific seed for reproducible property tests
+mix run scripts/test_runner.exs --property --seed 12345
 ```
 
+### Test Categories and Commands
+
+#### Unit Tests
+Test individual functions and modules in isolation:
+```bash
+# Run unit tests only
+mix test --unit
+
+# Run specific unit test file
+mix test test/riva_ash/booking_test.exs
+
+# Run unit tests with coverage
+mix test --unit --cover
+```
+
+#### Integration Tests
+Test complete business flows and API endpoints:
+```bash
+# Run integration tests only
+mix test --include integration
+
+# Run integration tests for specific module
+mix test --include integration test/riva_ash_web/integration/
+
+# Run integration tests with verbose output
+mix test --include integration --trace
+```
+
+#### Property-Based Tests
+Test edge cases and validate invariants using StreamData:
+```bash
+# Run property-based tests only
+mix test --include property
+
+# Run property tests with specific seed for reproducibility
+mix test --include property --seed 12345
+
+# Run property tests with longer timeout for complex properties
+mix test --include property --timeout 60000
+
+# Run specific property test file
+mix test test/property/validation_property_test.exs
+```
+
+#### LiveView/UI Tests
+Test LiveView components with phoenix_test and authentication:
+```bash
+# Run LiveView/UI tests only
+mix test --include live_view
+
+# Run LiveView tests for specific component
+mix test test/riva_ash_web/live/dashboard_live_test.exs
+
+# Run LiveView tests with authentication enabled
+mix test --include live_view --auth-enabled
+```
+
+### Advanced Testing Options
+
+#### Parallel Test Execution
+```bash
+# Run tests in parallel with 4 workers
+mix test --parallel 4
+
+# Run specific test category in parallel
+mix test --include integration --parallel 4
+```
+
+#### Test Coverage
+```bash
+# Run tests with coverage report
+mix test --cover
+
+# Generate detailed coverage report
+mix test --cover --cover-report html
+
+# Run tests with minimum coverage threshold
+mix test --cover --minimum-coverages 90
+```
+
+#### Test Filtering and Selection
+```bash
+# Run tests matching specific pattern
+mix test --include integration
+
+# Run tests for specific module
+mix test test/riva_ash/booking_test.exs
+
+# Run tests with specific tag
+mix test --tag slow
+
+# Run tests excluding specific module
+mix test --exclude slow_tests
+```
+
+#### Test Output and Debugging
+```bash
+# Run tests with verbose output
+mix test --trace
+
+# Run tests and show seed for property tests
+mix test --include property --verbose
+
+# Run tests with colorized output
+mix test --color
+
+# Run tests and save failure screenshots
+mix test --screenshot-on-failure
+```
 ## Test Helpers
 
 The `RivaAsh.TestHelpers` module provides factory functions for creating test data:
@@ -113,6 +258,135 @@ service = RivaAsh.TestHelpers.create_service(business.id)
 # Create test booking
 booking = RivaAsh.TestHelpers.create_booking(user.id, business.id, service.id)
 ```
+
+## Authentication in Tests
+
+### Testing with Authentication Enabled
+
+Tests are designed to run with authentication enabled rather than disabled, ensuring realistic test scenarios. The testing framework provides authentication helpers for both authenticated and unauthenticated test scenarios.
+
+#### Authentication Helper Module
+
+```elixir
+defmodule RivaAshWeb.Testing.AuthHelper do
+  @moduledoc """
+  Helper functions for authentication in tests.
+  
+  This module provides utilities to create authenticated users and test
+  both authenticated and unauthenticated scenarios.
+  """
+
+  def authenticate_user(conn) do
+    # Create a test user and authenticate the connection
+    user = RivaAsh.TestHelpers.create_user()
+    conn
+    |> Plug.Test.init_test_session(%{})
+    |> RivaAshWeb.AuthPlug.current_user(user)
+  end
+
+  def create_admin_user(conn) do
+    # Create an admin user for testing admin-only features
+    user = RivaAsh.TestHelpers.create_admin_user()
+    conn
+    |> Plug.Test.init_test_session(%{})
+    |> RivaAshWeb.AuthPlug.current_user(user)
+  end
+
+  def unauthenticated_conn(conn) do
+    # Create an unauthenticated connection for testing access control
+    Plug.Test.init_test_session(conn, %{})
+  end
+end
+```
+
+#### Example Tests with Authentication
+
+```elixir
+defmodule RivaAshWeb.DashboardLiveTest do
+  use RivaAshWeb.ConnCase
+  import RivaAshWeb.Testing.AuthHelper
+  import Phoenix.LiveViewTest
+
+  describe "Dashboard LiveView" do
+    test "renders dashboard for authenticated users", %{conn: conn} do
+      # Test with authentication enabled
+      authenticated_conn = authenticate_user(conn)
+      {:ok, view, _html} = live(authenticated_conn, "/dashboard")
+      
+      # Verify dashboard content loads
+      assert has_element?(view, "h1", "Dashboard")
+    end
+
+    test "redirects unauthenticated users to sign in", %{conn: conn} do
+      # Test that unauthenticated users are redirected
+      unauthenticated_conn = unauthenticated_conn(conn)
+      {:error, {:redirect, %{to: "/sign-in"}}} = live(unauthenticated_conn, "/dashboard")
+    end
+
+    test "admin users see admin dashboard", %{conn: conn} do
+      # Test admin-specific features
+      admin_conn = create_admin_user(conn)
+      {:ok, view, _html} = live(admin_conn, "/admin/dashboard")
+      
+      assert has_element?(view, "h1", "Admin Dashboard")
+    end
+  end
+end
+```
+
+#### Integration Test with Authentication
+
+```elixir
+defmodule RivaAshWeb.ReservationsIntegrationTest do
+  use RivaAshWeb.ConnCase
+  import RivaAshWeb.Testing.AuthHelper
+
+  describe "reservation creation" do
+    test "allows authenticated users to create reservations", %{conn: conn} do
+      authenticated_conn = authenticate_user(conn)
+      
+      reservation_data = %{
+        "item_id" => UUID.generate(),
+        "start_date" => Date.to_string(Date.add(Date.utc_today(), 1)),
+        "end_date" => Date.to_string(Date.add(Date.utc_today(), 3))
+      }
+      
+      response = post(authenticated_conn, "/api/reservations", reservation_data)
+      assert response.status == 201
+    end
+
+    test "rejects unauthenticated reservation creation", %{conn: conn} do
+      unauthenticated_conn = unauthenticated_conn(conn)
+      
+      reservation_data = %{
+        "item_id" => UUID.generate(),
+        "start_date" => Date.to_string(Date.add(Date.utc_today(), 1)),
+        "end_date" => Date.to_string(Date.add(Date.utc_today(), 3))
+      }
+      
+      response = post(unauthenticated_conn, "/api/reservations", reservation_data)
+      assert response.status == 401
+    end
+  end
+end
+```
+
+### Testing Authentication Scenarios
+
+When writing tests, always consider both authenticated and unauthenticated scenarios:
+
+1. **Happy Path**: Test with proper authentication
+2. **Access Control**: Test that unauthenticated users are redirected
+3. **Permission Levels**: Test different user roles (user, admin, etc.)
+4. **Session Management**: Test session expiration and renewal
+
+### Best Practices for Authentication Testing
+
+- **Test Both Scenarios**: Always test both authenticated and unauthenticated paths
+- **Use Helper Functions**: Use the provided authentication helpers for consistency
+- **Clean Up Sessions**: Ensure proper session cleanup between tests
+- **Test Edge Cases**: Test session expiration, invalid tokens, etc.
+- **Mock External Auth**: Use Mox to mock external authentication services when needed
 
 ## Coverage Goals
 

@@ -1,6 +1,6 @@
-# Reservation System API
+# Reservo API (Ash + Phoenix)
 
-A RESTful API built with Elixir, Phoenix, and Ash Framework for managing organizations, sections, and items. This API provides full CRUD operations with OpenAPI/Swagger documentation and an admin interface.
+Elixir/Phoenix + Ash API for a universal reservation platform. Provides JSON:API and GraphQL endpoints, OpenAPI/Swagger documentation, and AshAdmin. Full-day reservations, cash-only payment tracking, grid-based layouts, and business-scoped permissions.
 
 ## Features
 
@@ -56,7 +56,8 @@ A RESTful API built with Elixir, Phoenix, and Ash Framework for managing organiz
 
 1. Clone and navigate to the project:
 ```bash
-cd reservation_system
+git clone https://github.com/albin-mema/Riva_elixir.git
+cd Riva_Ash/packages/riva_ash
 ```
 
 2. Install dependencies:
@@ -67,10 +68,10 @@ mix deps.get
 3. Configure database (update `config/dev.exs` if needed):
 ```elixir
 config :riva_ash, RivaAsh.Repo,
-  username: "postgres",
-  password: "postgres",
-  hostname: "localhost",
-  database: "reservation_system_dev"
+  username: System.get_env("DB_USERNAME", "postgres"),
+  password: System.get_env("DB_PASSWORD", "postgres"),
+  hostname: System.get_env("DB_HOSTNAME", "localhost"),
+  database: System.get_env("DB_NAME", "reserv0_dev")
 ```
 
 4. Setup database:
