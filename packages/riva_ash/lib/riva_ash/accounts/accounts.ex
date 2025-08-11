@@ -42,7 +42,7 @@ defmodule RivaAsh.Accounts do
         {:error, "Invalid email or password"}
 
       {:error, reason} ->
-        {:error, reason}
+        handle_sign_in_error(reason)
     end
   end
 
@@ -128,5 +128,60 @@ defmodule RivaAsh.Accounts do
   defp create_user(changeset) do
     changeset
     |> Ash.create(domain: RivaAsh.Domain)
+  end
+
+  defp handle_sign_in_error(:strategy_not_found) do
+    handle_timing_attack()
+    {:error, "Invalid email or password"}
+  end
+
+  defp handle_sign_in_error({:authentication_failed, _reason}) do
+    handle_timing_attack()
+    {:error, "Invalid email or password"}
+  end
+
+  defp handle_sign_in_error({:invalid_credentials, _details}) do
+    handle_timing_attack()
+    {:error, "Invalid email or password"}
+  end
+
+  defp handle_sign_in_error({:unauthorized, _details}) do
+    {:error, "Access denied"}
+  end
+
+  defp handle_sign_in_error({:forbidden, _details}) do
+    {:error, "Access denied"}
+  end
+
+  defp handle_sign_in_error({:validation_failed, changeset}) do
+    error_messages = Ash.Changeset.errors(changeset)
+    |> Enum.map(&format_validation_error/1)
+    {:error, "Validation failed: #{Enum.join(error_messages, ", ")}"}
+  end
+
+  defp handle_sign_in_error({:constraint_violation, constraint}) do
+    error_message = case constraint do
+      :unique_email -> "Email already exists"
+      :unique_username -> "Username already exists"
+      _ -> "Data integrity violation"
+    end
+    {:error, error_message}
+  end
+
+  defp handle_sign_in_error(error) do
+    Logger.error("Sign in error: #{inspect(error)}")
+    {:error, "An unexpected error occurred during authentication"}
+  end
+
+  defp format_validation_error({message, vars}) when is_list(vars) do
+    String.replace(message, "%{", "%%{") |> :io_lib.format(vars) |> IO.iodata_to_binary()
+  end
+
+  defp format_validation_error(message) when is_binary(message) do
+    message
+  end
+
+  defp format_validation_error(error) do
+    inspect(error)
   end
 end

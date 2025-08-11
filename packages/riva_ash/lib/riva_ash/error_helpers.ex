@@ -100,9 +100,31 @@ defmodule RivaAsh.ErrorHelpers do
     format_error(error)
   end
 
-  @spec log_error(any()) :: :ok
-  defp log_error(error) do
+  @spec log_error_internal(any()) :: :ok
+  defp log_error_internal(error) do
     Logger.error("Error in RivaAsh: #{inspect(error, pretty: true)}")
+  end
+
+  @doc """
+  Logs a message with optional context.
+
+  ## Examples
+
+      iex> RivaAsh.ErrorHelpers.log_error("Operation started")
+      :ok
+
+      iex> RivaAsh.ErrorHelpers.log_error("Database error", %{query: "SELECT * FROM users"})
+      :ok
+  """
+  @spec log_error(String.t(), map() | nil) :: :ok
+  def log_error(message, context \\ nil) do
+    require Logger
+    log_message = case context do
+      nil -> message
+      _ -> "#{message} - Context: #{inspect(context)}"
+    end
+    Logger.error(log_message)
+    :ok
   end
 
   @doc """
@@ -169,5 +191,138 @@ defmodule RivaAsh.ErrorHelpers do
       true -> failure(error_reason)
       false -> success(value)
     end
+  end
+
+  @doc """
+  Wraps an error with additional context.
+
+  ## Examples
+
+      iex> RivaAsh.ErrorHelpers.wrap_error({:error, :not_found}, "User lookup failed")
+      {:error, "User lookup failed: not found"}
+
+      iex> RivaAsh.ErrorHelpers.wrap_error({:error, "Original error"}, "Additional context")
+      {:error, "Additional context: Original error"}
+  """
+  @spec wrap_error({:error, any()}, String.t()) :: {:error, String.t()}
+  def wrap_error({:error, error}, context) when is_binary(context) do
+    error_message = case error do
+      atom when is_atom(atom) -> Atom.to_string(atom) |> String.replace("_", " ")
+      str when is_binary(str) -> str
+      _ -> inspect(error)
+    end
+    {:error, "#{context}: #{error_message}"}
+  end
+
+  @doc """
+  Handles database errors and returns appropriate user-friendly messages.
+
+  ## Examplessk-or-v1-8e019a1ddf3b6da52030a46031f95ef75eea9742d55f55778c7648be4f07052d
+
+      iex> RivaAsh.ErrorHelpers.handle_database_error(%Postgrex.Error{postgres: %{code: :unique_violation}})
+      {:error, "This record already exists"}
+
+      iex> RivaAsh.ErrorHelpers.handle_database_error(%Postgrex.Error{postgres: %{code: :foreign_key_violation}})
+      {:error, "Referenced record does not exist"}
+
+      iex> RivaAsh.ErrorHelpers.handle_database_error(%Postgrex.Error{postgres: %{code: :undefined_table}})
+      {:error, "Database error occurred"}
+  """
+  @spec handle_database_error(Postgrex.t() | any()) :: {:error, String.t()}
+  def handle_database_error(%Postgrex.Error{postgres: %{code: code}}) do
+    case code do
+      :unique_violation -> {:error, "This record already exists"}
+      :foreign_key_violation -> {:error, "Referenced record does not exist"}
+      _ -> {:error, "Database error occurred"}
+    end
+  end
+
+  def handle_database_error(_error) do
+    {:error, "Database error occurred"}
+  end
+
+  @doc """
+  Converts Ecto changeset errors to a map format.
+
+  ## Examples
+
+      iex> changeset = %Ecto.Changeset{errors: [name: {"can't be blank", [validation: :required]}]}
+      iex> RivaAsh.ErrorHelpers.validation_errors_to_map(changeset)
+      %{name: "can't be blank"}
+  """
+  @spec validation_errors_to_map(Ecto.Changeset.t()) :: map()
+  def validation_errors_to_map(%Ecto.Changeset{errors: errors}) do
+    Enum.reduce(errors, %{}, fn {field, {message, _opts}}, acc ->
+      Map.put(acc, field, message)
+    end)
+  end
+
+  @doc """
+  Translates an Ecto changeset error to a string.
+
+  ## Examples
+
+      iex> RivaAsh.ErrorHelpers.translate_error({:name, {"can't be blank", [validation: :required]}})
+      "name can't be blank"
+
+      iex> RivaAsh.ErrorHelpers.translate_error({:field, {"custom error", []}})
+      "field custom error"
+  """
+  @spec translate_error({atom(), {String.t(), list()}}) :: String.t()
+  def translate_error({field, {message, _opts}}) do
+    "#{field} #{message}"
+  end
+
+  @doc """
+  Formats changeset errors into a list of readable messages.
+
+  ## Examples
+
+      iex> changeset = %Ecto.Changeset{errors: [name: {"can't be blank", [validation: :required]}]}
+      iex> RivaAsh.ErrorHelpers.format_changeset_errors(changeset)
+      ["name can't be blank"]
+
+      iex> changeset = %Ecto.Changeset{errors: []}
+      iex> RivaAsh.ErrorHelpers.format_changeset_errors(changeset)
+      []
+  """
+  @spec format_changeset_errors(Ecto.Changeset.t()) :: [String.t()]
+  def format_changeset_errors(%Ecto.Changeset{errors: errors}) do
+    Enum.map(errors, &translate_error/1)
+  end
+
+  @doc """
+  Converts error tuples to strings.
+
+  ## Examples
+
+      iex> RivaAsh.ErrorHelpers.error_to_string({:error, "Something went wrong"})
+      "Something went wrong"
+
+      iex> RivaAsh.ErrorHelpers.error_to_string({:error, :not_found})
+      "not found"
+
+      iex> RivaAsh.ErrorHelpers.error_to_string({:error, :invalid_input})
+      "invalid input"
+  """
+  @spec error_to_string({:error, any()} | any()) :: String.t()
+  def error_to_string({:error, error}) do
+    case error do
+      atom when is_atom(atom) -> Atom.to_string(atom) |> String.replace("_", " ")
+      str when is_binary(str) -> str
+      _ -> inspect(error)
+    end
+  end
+
+  def error_to_string(error) when is_binary(error) do
+    error
+  end
+
+  def error_to_string(error) when is_atom(error) do
+    Atom.to_string(error) |> String.replace("_", " ")
+  end
+
+  def error_to_string(error) do
+    inspect(error)
   end
 end

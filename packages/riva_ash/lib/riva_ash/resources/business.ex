@@ -172,12 +172,12 @@ defmodule RivaAsh.Resources.Business do
     read :active do
       # For now, all non-archived businesses are considered active
       # This can be enhanced later with an is_active field if needed
-      filter(expr(is_nil(archived_at)))
+      filter(expr(is_active == true and is_nil(archived_at)))
     end
 
     read :inactive do
       # Archived businesses are considered inactive
-      filter(expr(not is_nil(archived_at)))
+      filter(expr(is_active == false or not is_nil(archived_at)))
     end
 
     read :with_sections do
