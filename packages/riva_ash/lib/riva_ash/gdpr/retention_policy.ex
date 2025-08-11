@@ -180,27 +180,121 @@ defmodule RivaAsh.GDPR.RetentionPolicy do
   defp cleanup_expired_employees do
     cutoff_date = calculate_cutoff_date(@retention_periods.employee_records)
 
-    # Placeholder implementation - needs actual Employee resource query
-    # Example: Employee |> Ash.Query.filter(expr(not is_nil(archived_at) and archived_at < ^cutoff_date)) |> Ash.read!()
-    Logger.info("GDPR: Employee cleanup placeholder - cutoff: #{inspect(cutoff_date)}")
-    0
+    case RivaAsh.Resources.Employee
+         |> Ash.Query.filter(
+           expr(
+             not is_nil(termination_date) and
+             termination_date < ^cutoff_date
+           )
+         )
+         |> Ash.read(domain: RivaAsh.Resources) do
+      {:ok, employees} ->
+        count = length(employees)
+        
+        employees
+        |> Enum.each(fn employee ->
+          case anonymize_employee(employee) do
+            {:ok, _anonymized} ->
+              Logger.info("GDPR: Anonymized expired employee #{employee.id}")
+            {:error, reason} ->
+              Logger.error("GDPR: Failed to anonymize employee #{employee.id}: #{inspect(reason)}")
+          end
+        end)
+        
+        Logger.info("GDPR: Processed #{count} expired employees")
+        count
+      {:error, reason} ->
+        Logger.error("GDPR: Failed to query expired employees: #{inspect(reason)}")
+        0
+    end
+  rescue
+    error in [Ash.Error.Forbidden, Ash.Error.Invalid] ->
+      Logger.error("GDPR: Authorization error in employee cleanup: #{inspect(error)}")
+      0
+
+    error ->
+      Logger.error("GDPR: Unexpected error in employee cleanup: #{inspect(error)}")
+      0
   end
 
   defp cleanup_expired_clients do
     cutoff_date = calculate_cutoff_date(@retention_periods.client_records)
 
-    # Placeholder implementation - needs actual Client resource query
-    # Example: Client |> Ash.Query.filter(expr(not is_nil(archived_at) and archived_at < ^cutoff_date)) |> Ash.read!()
-    Logger.info("GDPR: Client cleanup placeholder - cutoff: #{inspect(cutoff_date)}")
-    0
+    case RivaAsh.Resources.Client
+         |> Ash.Query.filter(
+           expr(
+             last_interaction_date < ^cutoff_date or
+             (not is_nil(created_at) and created_at < ^cutoff_date and last_interaction_date == nil)
+           )
+         )
+         |> Ash.read(domain: RivaAsh.Resources) do
+      {:ok, clients} ->
+        count = length(clients)
+        
+        clients
+        |> Enum.each(fn client ->
+          case anonymize_client(client) do
+            {:ok, _anonymized} ->
+              Logger.info("GDPR: Anonymized expired client #{client.id}")
+            {:error, reason} ->
+              Logger.error("GDPR: Failed to anonymize client #{client.id}: #{inspect(reason)}")
+          end
+        end)
+        
+        Logger.info("GDPR: Processed #{count} expired clients")
+        count
+      {:error, reason} ->
+        Logger.error("GDPR: Failed to query expired clients: #{inspect(reason)}")
+        0
+    end
+  rescue
+    error in [Ash.Error.Forbidden, Ash.Error.Invalid] ->
+      Logger.error("GDPR: Authorization error in client cleanup: #{inspect(error)}")
+      0
+
+    error ->
+      Logger.error("GDPR: Unexpected error in client cleanup: #{inspect(error)}")
+      0
   end
 
   defp cleanup_expired_reservations do
     cutoff_date = calculate_cutoff_date(@retention_periods.reservations)
 
-    # Reservations might need anonymization rather than deletion for business records
-    Logger.info("GDPR: Reservation cleanup placeholder - cutoff: #{inspect(cutoff_date)}")
-    0
+    case RivaAsh.Resources.Reservation
+         |> Ash.Query.filter(
+           expr(
+             created_at < ^cutoff_date and
+             status in ["completed", "cancelled", "no_show"]
+           )
+         )
+         |> Ash.read(domain: RivaAsh.Resources) do
+      {:ok, reservations} ->
+        count = length(reservations)
+        
+        reservations
+        |> Enum.each(fn reservation ->
+          case anonymize_reservation(reservation) do
+            {:ok, _anonymized} ->
+              Logger.info("GDPR: Anonymized expired reservation #{reservation.id}")
+            {:error, reason} ->
+              Logger.error("GDPR: Failed to anonymize reservation #{reservation.id}: #{inspect(reason)}")
+          end
+        end)
+        
+        Logger.info("GDPR: Processed #{count} expired reservations")
+        count
+      {:error, reason} ->
+        Logger.error("GDPR: Failed to query expired reservations: #{inspect(reason)}")
+        0
+    end
+  rescue
+    error in [Ash.Error.Forbidden, Ash.Error.Invalid] ->
+      Logger.error("GDPR: Authorization error in reservation cleanup: #{inspect(error)}")
+      0
+
+    error ->
+      Logger.error("GDPR: Unexpected error in reservation cleanup: #{inspect(error)}")
+      0
   end
 
   defp cleanup_expired_consent_records do
@@ -251,20 +345,71 @@ defmodule RivaAsh.GDPR.RetentionPolicy do
   defp cleanup_expired_audit_logs do
     cutoff_date = calculate_cutoff_date(@retention_periods.audit_logs)
 
-    # This would clean up paper trail records older than retention period
-    # Implementation depends on how you want to handle audit log retention
-    Logger.info("GDPR: Audit log cleanup placeholder - cutoff: #{inspect(cutoff_date)}")
-    0
+    case RivaAsh.Audit.AuditLog
+         |> Ash.Query.filter(expr(inserted_at < ^cutoff_date))
+         |> Ash.read(domain: RivaAsh.Audit) do
+      {:ok, audit_logs} ->
+        count = length(audit_logs)
+        
+        audit_logs
+        |> Enum.each(fn log ->
+          case Ash.destroy(log, domain: RivaAsh.Audit) do
+            :ok ->
+              Logger.info("GDPR: Deleted expired audit log #{log.id}")
+            {:error, reason} ->
+              Logger.error("GDPR: Failed to delete audit log #{log.id}: #{inspect(reason)}")
+          end
+        end)
+        
+        Logger.info("GDPR: Processed #{count} expired audit logs")
+        count
+      {:error, reason} ->
+        Logger.error("GDPR: Failed to query expired audit logs: #{inspect(reason)}")
+        0
+    end
+  rescue
+    error in [Ash.Error.Forbidden, Ash.Error.Invalid] ->
+      Logger.error("GDPR: Authorization error in audit log cleanup: #{inspect(error)}")
+      0
+
+    error ->
+      Logger.error("GDPR: Unexpected error in audit log cleanup: #{inspect(error)}")
+      0
   end
 
   defp cleanup_expired_sessions do
     cutoff_date = calculate_cutoff_date(@retention_periods.session_data)
 
-    # Clean up expired session tokens and authentication data
-    Logger.info("GDPR: Session cleanup placeholder - cutoff: #{inspect(cutoff_date)}")
+    case RivaAsh.Auth.Session
+         |> Ash.Query.filter(expr(inserted_at < ^cutoff_date or expires_at < ^DateTime.utc_now()))
+         |> Ash.read(domain: RivaAsh.Auth) do
+      {:ok, sessions} ->
+        count = length(sessions)
+        
+        sessions
+        |> Enum.each(fn session ->
+          case Ash.destroy(session, domain: RivaAsh.Auth) do
+            :ok ->
+              Logger.info("GDPR: Deleted expired session #{session.id}")
+            {:error, reason} ->
+              Logger.error("GDPR: Failed to delete session #{session.id}: #{inspect(reason)}")
+          end
+        end)
+        
+        Logger.info("GDPR: Processed #{count} expired sessions")
+        count
+      {:error, reason} ->
+        Logger.error("GDPR: Failed to query expired sessions: #{inspect(reason)}")
+        0
+    end
+  rescue
+    error in [Ash.Error.Forbidden, Ash.Error.Invalid] ->
+      Logger.error("GDPR: Authorization error in session cleanup: #{inspect(error)}")
+      0
 
-    # This would need to integrate with your authentication token cleanup
-    0
+    error ->
+      Logger.error("GDPR: Unexpected error in session cleanup: #{inspect(error)}")
+      0
   end
 
   defp hard_delete_user(user) do
@@ -411,8 +556,78 @@ defmodule RivaAsh.GDPR.RetentionPolicy do
 
   @spec count_expired_data() :: integer()
   defp count_expired_data do
-    # Count data that should be deleted but hasn't been yet
-    0
+    cutoff_date = DateTime.utc_now()
+    
+    # Count expired users
+    expired_users =
+      User
+      |> Ash.Query.filter(expr(not is_nil(archived_at) and archived_at < ^cutoff_date))
+      |> Ash.read(domain: RivaAsh.Accounts)
+      |> case do
+        {:ok, users} -> users
+        {:error, _reason} -> []
+      end
+    
+    # Count expired employees
+    expired_employees =
+      RivaAsh.Resources.Employee
+      |> Ash.Query.filter(expr(termination_date < ^cutoff_date))
+      |> Ash.read(domain: RivaAsh.Resources)
+      |> case do
+        {:ok, employees} -> employees
+        {:error, _reason} -> []
+      end
+    
+    # Count expired clients
+    expired_clients =
+      RivaAsh.Resources.Client
+      |> Ash.Query.filter(expr(last_interaction_date < ^cutoff_date))
+      |> Ash.read(domain: RivaAsh.Resources)
+      |> case do
+        {:ok, clients} -> clients
+        {:error, _reason} -> []
+      end
+    
+    # Count expired reservations
+    expired_reservations =
+      RivaAsh.Resources.Reservation
+      |> Ash.Query.filter(expr(created_at < ^cutoff_date and status in ["completed", "cancelled", "no_show"]))
+      |> Ash.read(domain: RivaAsh.Resources)
+      |> case do
+        {:ok, reservations} -> reservations
+        {:error, _reason} -> []
+      end
+    
+    # Count expired audit logs
+    expired_audit_logs =
+      RivaAsh.Audit.AuditLog
+      |> Ash.Query.filter(expr(inserted_at < ^cutoff_date))
+      |> Ash.read(domain: RivaAsh.Audit)
+      |> case do
+        {:ok, audit_logs} -> audit_logs
+        {:error, _reason} -> []
+      end
+    
+    # Count expired sessions
+    expired_sessions =
+      RivaAsh.Auth.Session
+      |> Ash.Query.filter(expr(inserted_at < ^cutoff_date or expires_at < ^DateTime.utc_now()))
+      |> Ash.read(domain: RivaAsh.Auth)
+      |> case do
+        {:ok, sessions} -> sessions
+        {:error, _reason} -> []
+      end
+    
+    length(expired_users) + length(expired_employees) + length(expired_clients) +
+    length(expired_reservations) + length(expired_audit_logs) + length(expired_sessions)
+  rescue
+    error in [Ash.Error.Forbidden, Ash.Error.Invalid] ->
+      Logger.error("GDPR: Authorization error in expired data counting: #{inspect(error)}")
+      0
+
+    error ->
+      Logger.error("GDPR: Unexpected error in expired data counting: #{inspect(error)}")
+      0
   end
 
   @spec next_cleanup_date() :: Date.t()

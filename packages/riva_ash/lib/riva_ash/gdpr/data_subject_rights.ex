@@ -54,11 +54,25 @@ defmodule RivaAsh.GDPR.DataSubjectRights do
 
   defp handle_export_success(data, user_id) do
     formatted_data = data
+    Logger.info("GDPR data export completed successfully for user #{user_id}",
+                user_id: user_id,
+                export_date: DateTime.utc_now(),
+                data_size: byte_size(formatted_data),
+                function: __ENV__.function,
+                module: __ENV__.module)
     log_data_subject_request(user_id, "data_export", "completed")
     {:ok, formatted_data}
   end
 
   defp handle_export_failure(user_id, reason) do
+    Logger.error("GDPR data export failed for user #{user_id}: #{inspect(reason)}",
+                 user_id: user_id,
+                 error_reason: inspect(reason),
+                 error_type: Exception.format_stacktrace(__STACKTRACE__),
+                 function: __ENV__.function,
+                 module: __ENV__.module,
+                 line: __ENV__.line,
+                 timestamp: DateTime.utc_now())
     log_data_subject_request(user_id, "data_export", "failed", reason)
     {:error, reason}
   end
@@ -236,23 +250,93 @@ defmodule RivaAsh.GDPR.DataSubjectRights do
       }
     end)
   rescue
-    _unmatchedunmatched -> []
+    _error -> []
   end
 
-  defp extract_employee_data(_user_id) do
-    # Get employee records where user is the business owner
-    # This is more complex and would need proper querying
-    []
+  defp extract_employee_data(user_id) do
+    business_ids = get_user_business_ids(user_id)
+    
+    case RivaAsh.Resources.Employee
+         |> Ash.Query.filter(expr(business_id in ^business_ids))
+         |> Ash.read(domain: RivaAsh.Resources) do
+      {:ok, employees} ->
+        employees
+        |> Enum.map(fn employee ->
+          %{
+            id: employee.id,
+            business_id: employee.business_id,
+            name: employee.name,
+            position: employee.position,
+            hire_date: employee.hire_date,
+            termination_date: employee.termination_date,
+            salary: employee.salary,
+            created_at: employee.inserted_at,
+            updated_at: employee.updated_at
+          }
+        end)
+      {:error, _reason} -> []
+    end
   end
 
-  defp extract_client_data(_user_id) do
-    # Get client records for businesses owned by user
-    []
+  defp get_user_business_ids(user_id) do
+    case Business
+         |> Ash.Query.filter(expr(owner_id == ^user_id))
+         |> Ash.read(domain: RivaAsh.Resources) do
+      {:ok, businesses} ->
+        businesses
+        |> Enum.map(& &1.id)
+      {:error, _reason} -> []
+    end
   end
 
-  defp extract_reservation_data(_user_id) do
-    # Get reservation data related to user's businesses
-    []
+  defp extract_client_data(user_id) do
+    business_ids = get_user_business_ids(user_id)
+    
+    case RivaAsh.Resources.Client
+         |> Ash.Query.filter(expr(business_id in ^business_ids))
+         |> Ash.read(domain: RivaAsh.Resources) do
+      {:ok, clients} ->
+        clients
+        |> Enum.map(fn client ->
+          %{
+            id: client.id,
+            business_id: client.business_id,
+            name: client.name,
+            email: client.email,
+            phone: client.phone,
+            address: client.address,
+            created_at: client.inserted_at,
+            last_interaction_date: client.last_interaction_date
+          }
+        end)
+      {:error, _reason} -> []
+    end
+  end
+
+  defp extract_reservation_data(user_id) do
+    business_ids = get_user_business_ids(user_id)
+    
+    case RivaAsh.Resources.Reservation
+         |> Ash.Query.filter(expr(business_id in ^business_ids))
+         |> Ash.read(domain: RivaAsh.Resources) do
+      {:ok, reservations} ->
+        reservations
+        |> Enum.map(fn reservation ->
+          %{
+            id: reservation.id,
+            business_id: reservation.business_id,
+            client_id: reservation.client_id,
+            client_name: reservation.client_name,
+            reservation_date: reservation.reservation_date,
+            service_type: reservation.service_type,
+            status: reservation.status,
+            amount: reservation.amount,
+            created_at: reservation.inserted_at,
+            updated_at: reservation.updated_at
+          }
+        end)
+      {:error, _reason} -> []
+    end
   end
 
   defp extract_consent_data(user_id) do
@@ -269,10 +353,29 @@ defmodule RivaAsh.GDPR.DataSubjectRights do
     _unmatchedunmatched -> []
   end
 
-  defp extract_audit_data(_user_id) do
-    # Extract relevant audit trail data
-    # This would query the paper trail tables
-    []
+  defp extract_audit_data(user_id) do
+    case RivaAsh.Audit.AuditLog
+         |> Ash.Query.filter(expr(user_id == ^user_id or target_user_id == ^user_id))
+         |> Ash.Query.sort(desc: :inserted_at)
+         |> Ash.read(domain: RivaAsh.Audit) do
+      {:ok, audit_logs} ->
+        audit_logs
+        |> Enum.map(fn log ->
+          %{
+            id: log.id,
+            action: log.action,
+            resource_type: log.resource_type,
+            resource_id: log.resource_id,
+            user_id: log.user_id,
+            target_user_id: log.target_user_id,
+            changes: log.changes,
+            ip_address: log.ip_address,
+            user_agent: log.user_agent,
+            inserted_at: log.inserted_at
+          }
+        end)
+      {:error, _reason} -> []
+    end
   end
 
   defp format_export_data(data, :json) do
@@ -356,6 +459,149 @@ defmodule RivaAsh.GDPR.DataSubjectRights do
 
     # This should also be stored in a dedicated audit table for GDPR requests
     # to maintain compliance records
+  end
+
+  # Additional helper functions for hard deletion
+
+  defp hard_delete_user(user) do
+    # This is a permanent deletion - use with extreme caution
+    # Should only be called after retention period has expired
+
+    try do
+      # Delete related data first (foreign key constraints)
+      with :ok <- delete_user_businesses(user.id),
+           :ok <- delete_user_consent_records(user.id),
+           :ok <- delete_user_activity_logs(user.id),
+           :ok <- delete_user_sessions(user.id),
+           :ok <- delete_user_audit_logs(user.id) do
+        # Finally delete the user record
+        case Ash.destroy(user, domain: RivaAsh.Accounts) do
+          :ok ->
+            Logger.info("GDPR: Hard deleted user #{user.id} and all related data")
+            :ok
+          {:error, reason} ->
+            Logger.error("GDPR: Failed to delete user #{user.id}: #{inspect(reason)}")
+            {:error, reason}
+        end
+      else
+        {:error, reason} ->
+          Logger.error("GDPR: Failed to delete user #{user.id} related data: #{inspect(reason)}")
+          {:error, reason}
+      end
+    rescue
+      error in [Ash.Error.Forbidden, Ash.Error.Invalid] ->
+        Logger.error("GDPR: Authorization error deleting user #{user.id}: #{inspect(error)}")
+        {:error, "Authorization error: #{inspect(error)}"}
+
+      error ->
+        Logger.error("GDPR: Unexpected error deleting user #{user.id}: #{inspect(error)}")
+        {:error, error}
+    end
+  end
+
+  defp delete_user_businesses(user_id) do
+    case Business
+         |> Ash.Query.filter(expr(owner_id == ^user_id))
+         |> Ash.read(domain: RivaAsh.Resources) do
+      {:ok, businesses} ->
+        businesses
+        |> Enum.each(fn business ->
+          case Ash.destroy(business, domain: RivaAsh.Resources) do
+            :ok -> :ok
+            {:error, reason} ->
+              Logger.error("GDPR: Failed to delete business #{business.id}: #{inspect(reason)}")
+              {:error, reason}
+          end
+        end)
+        :ok
+      {:error, reason} ->
+        Logger.error("GDPR: Failed to query user businesses: #{inspect(reason)}")
+        {:error, reason}
+    end
+  end
+
+  defp delete_user_consent_records(user_id) do
+    case ConsentRecord
+         |> Ash.Query.filter(expr(user_id == ^user_id))
+         |> Ash.read(domain: RivaAsh.Domain) do
+      {:ok, consents} ->
+        consents
+        |> Enum.each(fn consent ->
+          case Ash.destroy(consent, domain: RivaAsh.Domain) do
+            :ok -> :ok
+            {:error, reason} ->
+              Logger.error("GDPR: Failed to delete consent #{consent.id}: #{inspect(reason)}")
+              {:error, reason}
+          end
+        end)
+        :ok
+      {:error, reason} ->
+        Logger.error("GDPR: Failed to query user consent records: #{inspect(reason)}")
+        {:error, reason}
+    end
+  end
+
+  defp delete_user_activity_logs(user_id) do
+    case RivaAsh.Activity.ActivityLog
+         |> Ash.Query.filter(expr(user_id == ^user_id))
+         |> Ash.read(domain: RivaAsh.Activity) do
+      {:ok, activity_logs} ->
+        activity_logs
+        |> Enum.each(fn log ->
+          case Ash.destroy(log, domain: RivaAsh.Activity) do
+            :ok -> :ok
+            {:error, reason} ->
+              Logger.error("GDPR: Failed to delete activity log #{log.id}: #{inspect(reason)}")
+              {:error, reason}
+          end
+        end)
+        :ok
+      {:error, reason} ->
+        Logger.error("GDPR: Failed to query user activity logs: #{inspect(reason)}")
+        {:error, reason}
+    end
+  end
+
+  defp delete_user_sessions(user_id) do
+    case RivaAsh.Auth.Session
+         |> Ash.Query.filter(expr(user_id == ^user_id))
+         |> Ash.read(domain: RivaAsh.Auth) do
+      {:ok, sessions} ->
+        sessions
+        |> Enum.each(fn session ->
+          case Ash.destroy(session, domain: RivaAsh.Auth) do
+            :ok -> :ok
+            {:error, reason} ->
+              Logger.error("GDPR: Failed to delete session #{session.id}: #{inspect(reason)}")
+              {:error, reason}
+          end
+        end)
+        :ok
+      {:error, reason} ->
+        Logger.error("GDPR: Failed to query user sessions: #{inspect(reason)}")
+        {:error, reason}
+    end
+  end
+
+  defp delete_user_audit_logs(user_id) do
+    case RivaAsh.Audit.AuditLog
+         |> Ash.Query.filter(expr(user_id == ^user_id or target_user_id == ^user_id))
+         |> Ash.read(domain: RivaAsh.Audit) do
+      {:ok, audit_logs} ->
+        audit_logs
+        |> Enum.each(fn log ->
+          case Ash.destroy(log, domain: RivaAsh.Audit) do
+            :ok -> :ok
+            {:error, reason} ->
+              Logger.error("GDPR: Failed to delete audit log #{log.id}: #{inspect(reason)}")
+              {:error, reason}
+          end
+        end)
+        :ok
+      {:error, reason} ->
+        Logger.error("GDPR: Failed to query user audit logs: #{inspect(reason)}")
+        {:error, reason}
+    end
   end
 
   # Type specifications for internal functions
