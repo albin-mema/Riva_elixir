@@ -1,16 +1,12 @@
 # Rules for working with Ash
 
-## Understanding Ash
+Prefer the condensed guide: [ash_usage_rules_compact.md](./ash_usage_rules_compact.md)
 
-Ash is an opinionated, composable framework for building applications in Elixir. It provides a declarative approach to modeling your domain with resources at the center. Read documentation  *before* attempting to use its features. Do not assume that you have prior knowledge of the framework or its conventions.
-
-## Code Structure & Organization
-
-- Organize code around domains and resources
-- Each resource should be focused and well-named
-- Create domain-specific actions rather than generic CRUD operations
-- Put business logic inside actions rather than in external modules
-- Use resources to model your domain entities
+## Core principles (summary)
+- Organize around Domains/Resources; focused, well-named resources
+- Expose via Domain code interfaces; avoid raw Ash calls in web modules
+- Use DB-level filters with `expr(...)`; avoid in-memory filtering
+- Prefer pipelines/pattern-matching; single abstraction level per function
 
 ## Code Interfaces
 
