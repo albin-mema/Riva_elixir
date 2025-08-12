@@ -44,7 +44,7 @@ jobs:
           elixir-version: ${{matrix.elixir}}
 
       - name: Cache dependencies
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: |
             deps
@@ -80,7 +80,7 @@ jobs:
           mix test --cover --trace
 
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v3
+        uses: codecov/codecov-action@v4
         with:
           file: ./packages/riva_ash/cover/excoveralls.json
           flags: unittests
@@ -117,7 +117,7 @@ jobs:
           elixir-version: '1.19.0'
 
       - name: Cache dependencies
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: |
             deps
@@ -167,7 +167,7 @@ jobs:
           elixir-version: '1.19.0'
 
       - name: Cache dependencies
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: |
             deps
