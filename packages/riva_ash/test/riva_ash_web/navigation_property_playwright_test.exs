@@ -1,9 +1,11 @@
 defmodule RivaAshWeb.NavigationPropertyPlaywrightTest do
   @moduledoc """
-  Real-browser property test using Phoenix Test + Playwright.
+  Real-browser route smoke testing with PhoenixTest + Playwright.
 
-  It randomly visits several public, parameterless routes to ensure pages render
-  without server errors. This opens a visible browser when PLAYWRIGHT_HEADLESS=false.
+  Improvements:
+  - Cover public, authenticated, and admin parameterless GET routes
+  - Property test samples across all categories
+  - Deterministic enumerator test reports all crashing pages with their paths
   """
 
   use RivaAshWeb.FeatureCase, async: false
@@ -17,48 +19,107 @@ defmodule RivaAshWeb.NavigationPropertyPlaywrightTest do
 
   @moduletag browser: :chromium
 
-  defp public_start_paths do
-    base =
-      RouteEnumerator.public_routes()
-      |> Enum.reject(& &1.requires_params)
-      |> Enum.map(& &1.path)
+  # --- Helpers
 
-    # Include Storybook entry path if available
-    storybook = ["/storybook", "/storybook/ui/button"]
+  # Collect all parameterless GET routes across public/authenticated/admin
+  defp parameterless_paths do
+    routes = RouteEnumerator.enumerate_routes()
 
-    (base ++ storybook)
+    [:public, :authenticated, :admin]
+    |> Enum.flat_map(fn cat -> Map.get(routes, cat, []) end)
+    |> Enum.filter(&(not &1.requires_params and &1.verb == :get))
+    |> Enum.map(& &1.path)
     |> Enum.uniq()
   end
 
-  property "public pages render without server errors in a real browser", %{conn: conn} do
-    start_paths = public_start_paths()
+  # Log in as an admin using real browser interactions so cookies are set in Playwright
+  defp ensure_admin_logged_in(session) do
+    admin = create_user!(%{role: :admin, password: "password123"})
 
-    # Ensure we have at least the root path
-    start_paths = if "/" in start_paths, do: start_paths, else: ["/" | start_paths]
+    session
+    |> visit("/sign-in")
+    # Use exact labels from the sign-in form
+    |> fill_in("Email address", with: to_string(admin.email))
+    |> fill_in("Password", with: "password123")
+    |> click_button("Sign In")
+  end
 
-    max_runs_env =
+  defp visit_and_check(session, path) do
+    try do
+      session = visit(session, path)
+      # Negative assertions for obvious server errors
+      refute_has(session, ~s(text="Internal Server Error"))
+      refute_has(session, ~s(text="Server Error"))
+      refute_has(session, ~s(text="Exception"))
+      {:ok, session}
+    rescue
+      e -> {:error, Exception.message(e)}
+    end
+  end
+
+  # --- Deterministic enumerator: reports ALL crashing pages in one run
+  @tag :browser
+  test "enumerates all parameterless GET routes and reports crashing pages", %{conn: conn} do
+    # Start from unauthenticated session, then promote to admin once to unlock authed/admin pages
+    session = conn |> ensure_admin_logged_in()
+
+    # Build set of paths and tack on Storybook examples if present
+    storybook = ["/storybook", "/storybook/ui/button"]
+    paths =
+      parameterless_paths()
+      |> Enum.concat(storybook)
+      |> Enum.uniq()
+
+    {_, failures} =
+      paths
+      |> Enum.sort() # stable order
+      |> Enum.reduce({session, []}, fn path, {sess, fails} ->
+        case visit_and_check(sess, path) do
+          {:ok, new_sess} -> {new_sess, fails}
+          {:error, reason} -> {sess, [{path, reason} | fails]}
+        end
+      end)
+
+    if failures != [] do
+      IO.puts("\n❌ Crashing pages detected:")
+      failures
+      |> Enum.reverse()
+      |> Enum.each(fn {path, reason} ->
+        IO.puts("  #{path} -> #{reason}")
+      end)
+    end
+
+    assert failures == [],
+           "Some routes crashed in the browser. See failures above. Count: #{length(failures)}"
+  end
+
+  # --- Property: sample random sequences
+  property "random parameterless GET pages render without server errors", %{conn: conn} do
+    # Log in as admin once so both public and protected routes are accessible
+    session = conn |> ensure_admin_logged_in()
+
+    paths =
+      parameterless_paths()
+      |> then(fn ps -> if "/" in ps, do: ps, else: ["/" | ps] end)
+
+    runs =
       case System.get_env("NAV_PROP_MAX_RUNS") do
-        nil -> min(20, max(length(start_paths), 1))
-        str ->
-          case Integer.parse(str) do
-            {n, _} when n > 0 -> n
-            _ -> min(5, max(length(start_paths), 1))
-          end
+        nil -> min(30, max(length(paths), 1))
+        str -> case Integer.parse(str) do
+          {n, _} when n > 0 -> n
+          _ -> min(10, max(length(paths), 1))
+        end
       end
 
     check all(
-            # Pick 3..5 routes to visit in sequence
-            paths <- list_of(member_of(start_paths), length: 3..5),
-            max_runs: max_runs_env
+            sample <- list_of(member_of(paths), length: 3..6),
+            max_runs: runs
           ) do
-      # Visit each route in the real browser
-      Enum.reduce(paths, conn, fn path, session ->
-        session = visit(session, path)
-        # Lightweight smoke assertions
-        refute_has(session, ~s(text="Internal Server Error"))
-        refute_has(session, ~s(text="Server Error"))
-        refute_has(session, ~s(text="Exception"))
-        session
+      Enum.reduce(sample, session, fn path, sess ->
+        case visit_and_check(sess, path) do
+          {:ok, new_sess} -> new_sess
+          {:error, reason} -> flunk("Crash on #{path}: #{reason}")
+        end
       end)
     end
   end

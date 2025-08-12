@@ -5,7 +5,7 @@ defmodule RivaAsh.MixProject do
   def project do
     [
       app: :riva_ash,
-      version: "0.1.0",
+      version: "0.2.0",
       elixir: "~> 1.18",
       start_permanent: Mix.env() == :prod,
       deps: deps(),
@@ -15,7 +15,7 @@ defmodule RivaAsh.MixProject do
         plt_file: {:no_warn, "priv/plts/dialyzer.plt"},
         flags: [:error_handling, :underspecs, :unknown],
         ignore_warnings: ".dialyzer_ignore.exs",
-        plt_add_apps: [:mix, :eex, :iex, :ex_unit],
+        plt_add_apps: [:mix, :eex, :iex, :ex_unit, :ash, :phoenix],
         plt_core_path: "priv/plts",
         check_plt: true
       ],
@@ -33,14 +33,21 @@ defmodule RivaAsh.MixProject do
       homepage_url: "https://github.com/your-org/riva_ash",
       docs: [
         main: "readme",
-        extras: ["README.md", "docs/README.md"],
+        extras: ["README.md", "docs/README.md", "docs/configuration.md", "docs/api.md"],
         groups_for_modules: [
           Ash: ~r/^Ash/,
           RivaAsh: ~r/^RivaAsh/,
           Web: ~r/^RivaAshWeb/,
           Auth: ~r/^RivaAsh.*Auth/,
           Components: ~r/^RivaAshWeb.*Component/,
-          Live: ~r/^RivaAshWeb.*Live/
+          Live: ~r/^RivaAshWeb.*Live/,
+          Resources: ~r/^RivaAsh\.Resources\./,
+          Accounts: ~r/^RivaAsh\.Accounts\./
+        ],
+        nest_modules_by_prefix: [
+          RivaAshWeb,
+          RivaAsh.Resources,
+          RivaAsh.Accounts
         ]
       ],
       # Build configuration
@@ -51,7 +58,7 @@ defmodule RivaAsh.MixProject do
         plt_file: {:no_warn, "priv/plts/dialyzer.plt"},
         flags: [:error_handling, :underspecs, :unknown],
         ignore_warnings: ".dialyzer_ignore.exs",
-        plt_add_apps: [:mix, :eex, :iex, :ex_unit],
+        plt_add_apps: [:mix, :eex, :iex, :ex_unit, :ash, :phoenix],
         plt_core_path: "priv/plts",
         check_plt: true
       ]
@@ -266,14 +273,19 @@ defmodule RivaAsh.MixProject do
   defp package do
     [
       name: :riva_ash,
-      description: "A reservation management system built with Elixir, Phoenix, and Ash",
+      description: "A comprehensive reservation management system built with Elixir, Phoenix, and Ash Framework",
       licenses: ["MIT"],
       links: %{
         "GitHub" => "https://github.com/your-org/riva_ash",
-        "Documentation" => "https://hexdocs.pm/riva_ash"
+        "Documentation" => "https://hexdocs.pm/riva_ash",
+        "Changelog" => "https://github.com/your-org/riva_ash/blob/main/CHANGELOG.md",
+        "Issues" => "https://github.com/your-org/riva_ash/issues"
       },
-      files: ~w(lib priv mix.exs README.md LICENSE CHANGELOG.md),
-      maintainers: ["Your Name"],
+      files: ~w(lib priv mix.exs README.md LICENSE CHANGELOG.md docs),
+      maintainers: [
+        "Your Name <your.email@example.com>",
+        "Team Member <team.member@example.com>"
+      ],
       build_embedded: Mix.env() == :prod,
       elixir: "~> 1.18",
       start_permanent: Mix.env() == :prod,
@@ -282,15 +294,57 @@ defmodule RivaAsh.MixProject do
       homepage_url: "https://github.com/your-org/riva_ash",
       docs: [
         main: "readme",
-        extras: ["README.md", "docs/README.md"],
+        extras: ["README.md", "docs/README.md", "docs/configuration.md", "docs/api.md"],
         groups_for_modules: [
           Ash: ~r/^Ash/,
           RivaAsh: ~r/^RivaAsh/,
           Web: ~r/^RivaAshWeb/,
           Auth: ~r/^RivaAsh.*Auth/,
           Components: ~r/^RivaAshWeb.*Component/,
-          Live: ~r/^RivaAshWeb.*Live/
-        ]
+          Live: ~r/^RivaAshWeb.*Live/,
+          Resources: ~r/^RivaAsh\.Resources\./,
+          Accounts: ~r/^RivaAsh\.Accounts\./
+        ],
+        nest_modules_by_prefix: [
+          RivaAshWeb,
+          RivaAsh.Resources,
+          RivaAsh.Accounts
+        ],
+        source_ref: "main",
+        output: "docs"
+      ],
+      # Hex.pm specific configuration
+      source_url_pattern: "https://github.com/your-org/riva_ash/blob/main/%{path}#L%{line}",
+      # Build tools
+      compilers: Mix.compilers(),
+      # Test coverage
+      test_coverage: [tool: ExCoveralls],
+      # Dialyzer configuration
+      dialyzer: [
+        plt_file: {:no_warn, "priv/plts/dialyzer.plt"},
+        flags: [:error_handling, :underspecs, :unknown],
+        ignore_warnings: ".dialyzer_ignore.exs",
+        plt_add_apps: [:mix, :eex, :iex, :ex_unit, :ash, :phoenix],
+        plt_core_path: "priv/plts",
+        check_plt: true
+      ],
+      # Additional metadata
+      keywords: [
+        "elixir",
+        "phoenix",
+        "ash",
+        "reservation",
+        "booking",
+        "api",
+        "graphql",
+        "json-api",
+        "admin"
+      ],
+      # Requirements
+      requirements: [
+        {"elixir", "~> 1.18", ">= 1.18.0"},
+        {"phoenix", "~> 1.7", ">= 1.7.0"},
+        {"ash", "~> 3.5", ">= 3.5.0"}
       ]
     ]
   end

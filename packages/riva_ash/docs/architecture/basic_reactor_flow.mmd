@@ -1,0 +1,23 @@
+flowchart TD
+    %% Basic Reactor Workflow Diagram
+    
+    Start([Start: BasicReactor]) --> InputName[Input: name]
+    Start --> InputCount[Input: count]
+    
+    InputName --> TransformName[Step: transform_name<br/>String.upcase/1]
+    InputCount --> CalculateValue[Step: calculate_value<br/>String.length * count]
+    TransformName --> CalculateValue
+    
+    TransformName --> CreateResult[Step: create_result<br/>Build final map]
+    CalculateValue --> CreateResult
+    
+    CreateResult --> Return([Return: Final Result])
+    
+    %% Styling
+    classDef inputClass fill:#e1f5fe,stroke:#0277bd,stroke-width:2px
+    classDef stepClass fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px
+    classDef returnClass fill:#e8f5e8,stroke:#2e7d32,stroke-width:2px
+    
+    class InputName,InputCount inputClass
+    class TransformName,CalculateValue,CreateResult stepClass
+    class Start,Return returnClass

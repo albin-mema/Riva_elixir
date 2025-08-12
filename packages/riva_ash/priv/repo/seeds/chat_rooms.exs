@@ -2,9 +2,9 @@
 alias RivaAsh.Resources.{ChatRoom, Business}
 alias RivaAsh.Accounts.User
 
-case Ash.read(Business, :read, domain: RivaAsh.Domain) do
+case Ash.read(Business, domain: RivaAsh.Domain) do
   {:ok, businesses} when length(businesses) > 0 ->
-    case Ash.read(User, :read, domain: RivaAsh.Accounts) do
+    case Ash.read(User, domain: RivaAsh.Accounts) do
       {:ok, [user | _]} ->
         Enum.each(businesses, fn business ->
           rooms = [
@@ -15,8 +15,9 @@ case Ash.read(Business, :read, domain: RivaAsh.Domain) do
           ]
 
           Enum.each(rooms, fn room_data ->
-            case Ash.create(ChatRoom, :create, Map.put(room_data, :business_id, business.id),
-                            actor: user, domain: RivaAsh.Domain) do
+            case ChatRoom
+                 |> Ash.Changeset.for_create(:create, Map.put(room_data, :business_id, business.id), actor: user)
+                 |> Ash.create() do
               {:ok, _room} -> IO.puts("✓ Created #{room_data.name} room for #{business.name}")
               {:error, _} -> IO.puts("✗ Failed to create #{room_data.name} room for #{business.name}")
             end

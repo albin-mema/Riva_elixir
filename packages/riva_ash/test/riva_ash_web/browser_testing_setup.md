@@ -131,8 +131,8 @@ jobs:
       - uses: actions/checkout@v4
       - uses: erlef/setup-beam@v1
         with:
-          otp-version: '26.0'
-          elixir-version: '1.15.0'
+          otp-version: '27.0'
+          elixir-version: '1.19.0'
       
       - name: Install dependencies
         run: mix deps.get

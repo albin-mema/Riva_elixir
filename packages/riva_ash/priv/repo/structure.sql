@@ -236,7 +236,8 @@ CREATE TABLE public.businesses (
     public_description text,
     city text,
     country text,
-    address text
+    address text,
+    is_active boolean DEFAULT true NOT NULL
 );
 
 
@@ -2364,3 +2365,4 @@ INSERT INTO public."schema_migrations" (version) VALUES (20250727224917);
 INSERT INTO public."schema_migrations" (version) VALUES (20250728130926);
 INSERT INTO public."schema_migrations" (version) VALUES (20250809120000);
 INSERT INTO public."schema_migrations" (version) VALUES (20250809121000);
+INSERT INTO public."schema_migrations" (version) VALUES (20250811195500);
