@@ -16,7 +16,7 @@ defmodule RivaAshWeb.Layouts do
   alias Phoenix.LiveView
 
   # Struct for layout configuration
-  defstruct [:page_title, :app_name, :css_class, :body_class]
+  defstruct [:page_title, :app_name, :css_class, :body_class, :inner_content, :flash]
 
   # Type specifications
   @type assigns :: map()
@@ -24,7 +24,9 @@ defmodule RivaAshWeb.Layouts do
           page_title: String.t() | nil,
           app_name: String.t(),
           css_class: String.t(),
-          body_class: String.t()
+          body_class: String.t(),
+          inner_content: any(),
+          flash: map()
         }
   @type result :: {:ok, String.t()} | {:error, String.t()}
 
@@ -83,7 +85,9 @@ defmodule RivaAshWeb.Layouts do
       page_title: get_page_title(assigns),
       app_name: @default_app_name,
       css_class: @default_css_class,
-      body_class: @default_body_class
+      body_class: @default_body_class,
+      inner_content: Map.get(assigns, :inner_content),
+      flash: Map.get(assigns, :flash, %{})
     }
   end
 

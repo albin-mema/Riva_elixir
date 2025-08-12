@@ -29,7 +29,7 @@ defmodule RivaAshWeb.Router do
     scope "/", RivaAshWeb do
       pipe_through(:browser_no_layout)
       live "/storybook/ui/button", StorybookStub.ButtonLive, :index
-      get "/storybook", Controllers.AuthController, :redirect_to_dashboard
+      get "/storybook", AuthController, :redirect_to_dashboard
     end
   end
 
@@ -84,11 +84,11 @@ defmodule RivaAshWeb.Router do
     plug(AuthHelpers, :require_authenticated_user)
   end
 
-  # API routes for JSON:API interface
-  scope "/api" do
-    pipe_through([:api])
-    forward("/", RivaAshWeb.JsonApiRouter)
-  end
+  # JSON:API disabled for now (LiveView-only)
+  # scope "/api" do
+  #   pipe_through([:api])
+  #   forward("/", RivaAshWeb.JsonApiRouter)
+  # end
 
   # GraphQL API routes disabled (demo)
   # scope "/" do
@@ -114,7 +114,7 @@ defmodule RivaAshWeb.Router do
   # end
 
   # Client-facing booking API (public)
-  scope "/api/booking", RivaAshWeb.Controllers do
+  scope "/api/booking", RivaAshWeb do
     pipe_through([:api])
 
     # Availability and items
@@ -150,6 +150,9 @@ defmodule RivaAshWeb.Router do
       live("/reactor-visualizer", RivaAshWeb.DevTools.ReactorVisualizerLive, :index)
       live("/test-data-generator", RivaAshWeb.DevTools.TestDataGeneratorLive, :index)
       live("/performance-dashboard", RivaAshWeb.DevTools.PerformanceDashboardLive, :index)
+      live("/user-session", RivaAshWeb.DevTools.UserSessionLive, :index)
+      post("/impersonate/:user_id", RivaAshWeb.DevTools.DevAuthController, :impersonate)
+      post("/sign_out", RivaAshWeb.DevTools.DevAuthController, :sign_out)
     end
   end
 
@@ -161,17 +164,20 @@ defmodule RivaAshWeb.Router do
 
   # LiveView routes
   # Public routes (no authentication required)
-  scope "/", RivaAshWeb.Controllers do
+  scope "/", RivaAshWeb do
     pipe_through([:browser])
     # LiveView locale hook handled via plug in :browser pipeline
 
     get("/", AuthController, :redirect_to_dashboard)
 
     # Global search for unregistered users
-    live("/search", RivaAshWeb.GlobalSearchLive, :index)
+    live("/search", GlobalSearchLive, :index)
+
+    # Backwards-compat redirects
+    get("/sign-in", AuthController, :redirect_to_sign_in)
 
     # Authentication routes
-    live("/auth/sign-in", RivaAshWeb.Auth.SignInLive, :index)
+    live("/auth/sign-in", Auth.SignInLive, :index)
     post("/auth/sign-in", AuthController, :sign_in_submit)
     get("/auth/complete-sign-in", AuthController, :complete_sign_in)
     get("/auth/register", AuthController, :register)

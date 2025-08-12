@@ -43,7 +43,7 @@ defmodule RivaAshWeb.Error.NotFoundLive do
         <!-- Action Buttons -->
         <div class="space-y-4">
           <.link
-            navigate="/dashboard"
+            navigate="/app/dashboard"
             class="flex justify-center bg-blue-600 hover:bg-blue-700 shadow-sm px-4 py-3 border border-transparent rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 w-full font-medium text-white text-sm transition-colors"
           >
             <svg xmlns="http://www.w3.org/2000/svg" class="mr-2 w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -63,7 +63,7 @@ defmodule RivaAshWeb.Error.NotFoundLive do
           </button>
 
           <.link
-            navigate="/businesses"
+            navigate="/app/dashboard"
             class="flex justify-center bg-white hover:bg-gray-50 shadow-sm px-4 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 w-full font-medium text-gray-700 text-sm transition-colors"
           >
             <svg xmlns="http://www.w3.org/2000/svg" class="mr-2 w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">

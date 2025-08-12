@@ -1032,6 +1032,10 @@ body {
   z-index: 50;
 }
 
+.riva-ash-web :is(.col-span-1) {
+  grid-column: span 1 / span 1;
+}
+
 .riva-ash-web :is(.col-span-2) {
   grid-column: span 2 / span 2;
 }
@@ -1631,6 +1635,10 @@ body {
   width: 100%;
 }
 
+.riva-ash-web :is(.w-px) {
+  width: 1px;
+}
+
 .riva-ash-web :is(.min-w-0) {
   min-width: 0px;
 }
@@ -1904,6 +1912,10 @@ body {
   grid-template-columns: repeat(1, minmax(0, 1fr));
 }
 
+.riva-ash-web :is(.grid-cols-12) {
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+}
+
 .riva-ash-web :is(.grid-cols-2) {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
@@ -1958,6 +1970,10 @@ body {
 
 .riva-ash-web :is(.items-center) {
   align-items: center;
+}
+
+.riva-ash-web :is(.items-baseline) {
+  align-items: baseline;
 }
 
 .riva-ash-web :is(.justify-start) {
@@ -4170,6 +4186,10 @@ body {
 
 .riva-ash-web :is(.hover\:text-muted-foreground:hover) {
   color: var(--muted-foreground);
+}
+
+.riva-ash-web :is(.hover\:text-primary:hover) {
+  color: var(--primary);
 }
 
 .riva-ash-web :is(.hover\:text-red-800:hover) {
