@@ -4,7 +4,6 @@ defmodule RivaAshWeb.AuthControllerCsrfTest do
 
   describe "CSRF guard for login" do
     @describetag :controller
-    @spec test_post_sign_in_without_csrf_token_is_rejected :: :ok
     test "POST /sign-in without CSRF token is rejected", %{conn: conn} do
       # Build a bare connection without fetching CSRF token
       params = %{"email" => "user@example.com", "password" => "badpass"}
@@ -16,7 +15,6 @@ defmodule RivaAshWeb.AuthControllerCsrfTest do
       assert conn.status in [400, 403]
     end
 
-    @spec test_post_sign_in_with_csrf_token_succeeds_with_valid_credentials :: :ok
     test "POST /sign-in with CSRF token succeeds with valid credentials", %{conn: conn} do
       # Create a valid user via Accounts/Ash
       user =

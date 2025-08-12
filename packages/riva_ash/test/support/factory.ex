@@ -284,15 +284,22 @@ defmodule RivaAsh.Factory do
     bind(string(:alphanumeric, min_length: 2, max_length: 50), fn name ->
       bind(description(), fn desc ->
         bind(uuid(), fn business_id ->
-          bind(string(:alphanumeric, min_length: 5, max_length: 100), fn location ->
-            %{
-              name: name,
-              description: desc,
-              business_id: business_id,
-              location: location
-            }
-            |> Map.merge(overrides)
-            |> constant()
+          bind(string(:alphanumeric, min_length: 5, max_length: 100), fn address ->
+            bind(integer(100..10000), fn total_area ->
+              bind(member_of(["sqft", "sqm", "acres"]), fn area_unit ->
+                %{
+                  name: name,
+                  description: desc,
+                  business_id: business_id,
+                  address: address,
+                  total_area: Decimal.new(total_area),
+                  area_unit: area_unit,
+                  is_active: true
+                }
+                |> Map.merge(overrides)
+                |> constant()
+              end)
+            end)
           end)
         end)
       end)
@@ -356,6 +363,161 @@ defmodule RivaAsh.Factory do
     end)
   end
 
+  @doc "Generate attributes for Payment resource"
+  def payment_attrs(overrides \\ %{}) do
+    bind(uuid(), fn reservation_id ->
+      bind(uuid(), fn client_id ->
+        bind(integer(10..1000), fn amount ->
+          bind(member_of([:pending, :completed, :failed, :refunded]), fn status ->
+            bind(future_datetime(), fn paid_at ->
+              %{
+                reservation_id: reservation_id,
+                client_id: client_id,
+                amount: amount,
+                status: status,
+                paid_at: paid_at
+              }
+              |> Map.merge(overrides)
+              |> constant()
+            end)
+          end)
+        end)
+      end)
+    end)
+  end
+
+  @doc "Generate attributes for Pricing resource"
+  def pricing_attrs(overrides \\ %{}) do
+    bind(uuid(), fn item_id ->
+      bind(integer(10..500), fn price ->
+        bind(member_of([:hourly, :daily, :weekly, :fixed]), fn pricing_type ->
+          bind(boolean(), fn is_active ->
+            %{
+              item_id: item_id,
+              price: price,
+              pricing_type: pricing_type,
+              is_active: is_active
+            }
+            |> Map.merge(overrides)
+            |> constant()
+          end)
+        end)
+      end)
+    end)
+  end
+
+  @doc "Generate attributes for ItemPosition resource"
+  def item_position_attrs(overrides \\ %{}) do
+    bind(uuid(), fn item_id ->
+      bind(uuid(), fn section_id ->
+        bind(integer(0..100), fn x ->
+          bind(integer(0..100), fn y ->
+            bind(integer(0..360), fn rotation ->
+              %{
+                item_id: item_id,
+                section_id: section_id,
+                x: x,
+                y: y,
+                rotation: rotation
+              }
+              |> Map.merge(overrides)
+              |> constant()
+            end)
+          end)
+        end)
+      end)
+    end)
+  end
+
+  @doc "Generate attributes for Layout resource"
+  def layout_attrs(overrides \\ %{}) do
+    bind(string(:alphanumeric, min_length: 2, max_length: 50), fn name ->
+      bind(description(), fn desc ->
+        bind(uuid(), fn business_id ->
+          bind(integer(800..1920), fn width ->
+            bind(integer(600..1080), fn height ->
+              %{
+                name: name,
+                description: desc,
+                business_id: business_id,
+                width: width,
+                height: height
+              }
+              |> Map.merge(overrides)
+              |> constant()
+            end)
+          end)
+        end)
+      end)
+    end)
+  end
+
+  @doc "Generate attributes for AvailabilityException resource"
+  def availability_exception_attrs(overrides \\ %{}) do
+    bind(uuid(), fn item_id ->
+      bind(future_datetime(), fn start_time ->
+        bind(future_datetime(), fn end_time ->
+          bind(string(:alphanumeric, min_length: 10, max_length: 200), fn reason ->
+            %{
+              item_id: item_id,
+              start_time: start_time,
+              end_time: end_time,
+              reason: reason
+            }
+            |> Map.merge(overrides)
+            |> constant()
+          end)
+        end)
+      end)
+    end)
+  end
+
+  @doc "Generate attributes for RecurringReservation resource"
+  def recurring_reservation_attrs(overrides \\ %{}) do
+    bind(uuid(), fn client_id ->
+      bind(uuid(), fn item_id ->
+        bind(future_datetime(), fn start_time ->
+          bind(future_datetime(), fn end_time ->
+            bind(member_of([:daily, :weekly, :monthly]), fn frequency ->
+              bind(integer(1..52), fn occurrences ->
+                %{
+                  client_id: client_id,
+                  item_id: item_id,
+                  start_time: start_time,
+                  end_time: end_time,
+                  frequency: frequency,
+                  occurrences: occurrences
+                }
+                |> Map.merge(overrides)
+                |> constant()
+              end)
+            end)
+          end)
+        end)
+      end)
+    end)
+  end
+
+  @doc "Generate attributes for RecurringReservationInstance resource"
+  def recurring_reservation_instance_attrs(overrides \\ %{}) do
+    bind(uuid(), fn recurring_reservation_id ->
+      bind(future_datetime(), fn reserved_from ->
+        bind(future_datetime(), fn reserved_until ->
+          bind(member_of([:pending, :confirmed, :cancelled]), fn status ->
+            %{
+              recurring_reservation_id: recurring_reservation_id,
+              reserved_from: reserved_from,
+              reserved_until: reserved_until,
+              status: status
+            }
+            |> Map.merge(overrides)
+            |> constant()
+          end)
+        end)
+      end)
+    end)
+  end
+
   # =============================================================================
   # Minimal Builders for Core Phase 1 resources (non-persistent generators already exist)
   # =============================================================================
@@ -374,6 +536,13 @@ defmodule RivaAsh.Factory do
         :section -> section_attrs(overrides) |> Enum.take(1) |> hd()
         :item_type -> item_type_attrs(overrides) |> Enum.take(1) |> hd()
         :employee -> employee_attrs(overrides) |> Enum.take(1) |> hd()
+        :payment -> payment_attrs(overrides) |> Enum.take(1) |> hd()
+        :pricing -> pricing_attrs(overrides) |> Enum.take(1) |> hd()
+        :item_position -> item_position_attrs(overrides) |> Enum.take(1) |> hd()
+        :layout -> layout_attrs(overrides) |> Enum.take(1) |> hd()
+        :availability_exception -> availability_exception_attrs(overrides) |> Enum.take(1) |> hd()
+        :recurring_reservation -> recurring_reservation_attrs(overrides) |> Enum.take(1) |> hd()
+        :recurring_reservation_instance -> recurring_reservation_instance_attrs(overrides) |> Enum.take(1) |> hd()
       end
 
     case resource_type do
@@ -385,6 +554,13 @@ defmodule RivaAsh.Factory do
       :section -> Section.create(attrs)
       :item_type -> ItemType.create(attrs)
       :employee -> Employee.create(attrs)
+      :payment -> Payment.create(attrs)
+      :pricing -> Pricing.create(attrs)
+      :item_position -> ItemPosition.create(attrs)
+      :layout -> Layout.create(attrs)
+      :availability_exception -> AvailabilityException.create(attrs)
+      :recurring_reservation -> RecurringReservation.create(attrs)
+      :recurring_reservation_instance -> RecurringReservationInstance.create(attrs)
     end
   end
 
@@ -407,6 +583,13 @@ defmodule RivaAsh.Factory do
       :section -> section_attrs(overrides) |> Enum.take(count)
       :item_type -> item_type_attrs(overrides) |> Enum.take(count)
       :employee -> employee_attrs(overrides) |> Enum.take(count)
+      :payment -> payment_attrs(overrides) |> Enum.take(count)
+      :pricing -> pricing_attrs(overrides) |> Enum.take(count)
+      :item_position -> item_position_attrs(overrides) |> Enum.take(count)
+      :layout -> layout_attrs(overrides) |> Enum.take(count)
+      :availability_exception -> availability_exception_attrs(overrides) |> Enum.take(count)
+      :recurring_reservation -> recurring_reservation_attrs(overrides) |> Enum.take(count)
+      :recurring_reservation_instance -> recurring_reservation_instance_attrs(overrides) |> Enum.take(count)
     end
   end
 
@@ -414,33 +597,82 @@ defmodule RivaAsh.Factory do
   Generate sample data for testing with proper relationships.
   """
   def sample_data do
+    # Create a business first as it's the root entity
     business_attrs = business_attrs() |> Enum.take(1) |> hd()
     {:ok, business} = Business.create(business_attrs)
 
+    # Create plot associated with business
     plot_attrs = plot_attrs(%{business_id: business.id}) |> Enum.take(1) |> hd()
     {:ok, plot} = Plot.create(plot_attrs)
 
+    # Create section associated with plot
     section_attrs = section_attrs(%{plot_id: plot.id}) |> Enum.take(1) |> hd()
     {:ok, section} = Section.create(section_attrs)
 
+    # Create item type associated with business
     item_type_attrs = item_type_attrs(%{business_id: business.id}) |> Enum.take(1) |> hd()
     {:ok, item_type} = ItemType.create(item_type_attrs)
 
-    item_attrs =
-      item_attrs(%{section_id: section.id, item_type_id: item_type.id}) |> Enum.take(1) |> hd()
+    # Create layout associated with business
+    layout_attrs = layout_attrs(%{business_id: business.id}) |> Enum.take(1) |> hd()
+    {:ok, layout} = Layout.create(layout_attrs)
 
+    # Create item associated with section and item type
+    item_attrs = item_attrs(%{section_id: section.id, item_type_id: item_type.id}) |> Enum.take(1) |> hd()
     {:ok, item} = Item.create(item_attrs)
 
+    # Create item position for the item
+    item_position_attrs = item_position_attrs(%{item_id: item.id, section_id: section.id}) |> Enum.take(1) |> hd()
+    {:ok, item_position} = ItemPosition.create(item_position_attrs)
+
+    # Create pricing for the item
+    pricing_attrs = pricing_attrs(%{item_id: item.id}) |> Enum.take(1) |> hd()
+    {:ok, pricing} = Pricing.create(pricing_attrs)
+
+    # Create client
     client_attrs = client_attrs() |> Enum.take(1) |> hd()
     {:ok, client} = Client.create(client_attrs)
+
+    # Create employee associated with business
+    employee_attrs = employee_attrs(%{business_id: business.id}) |> Enum.take(1) |> hd()
+    {:ok, employee} = Employee.create(employee_attrs)
+
+    # Create reservation
+    reservation_attrs = reservation_attrs(%{client_id: client.id, item_id: item.id, employee_id: employee.id}) |> Enum.take(1) |> hd()
+    {:ok, reservation} = Reservation.create(reservation_attrs)
+
+    # Create payment for the reservation
+    payment_attrs = payment_attrs(%{reservation_id: reservation.id, client_id: client.id}) |> Enum.take(1) |> hd()
+    {:ok, payment} = Payment.create(payment_attrs)
+
+    # Create availability exception
+    availability_exception_attrs = availability_exception_attrs(%{item_id: item.id}) |> Enum.take(1) |> hd()
+    {:ok, availability_exception} = AvailabilityException.create(availability_exception_attrs)
+
+    # Create recurring reservation
+    recurring_reservation_attrs = recurring_reservation_attrs(%{client_id: client.id, item_id: item.id}) |> Enum.take(1) |> hd()
+    {:ok, recurring_reservation} = RecurringReservation.create(recurring_reservation_attrs)
+
+    # Create recurring reservation instance
+    recurring_reservation_instance_attrs = recurring_reservation_instance_attrs(%{recurring_reservation_id: recurring_reservation.id}) |> Enum.take(1) |> hd()
+    {:ok, recurring_reservation_instance} = RecurringReservationInstance.create(recurring_reservation_instance_attrs)
 
     %{
       business: business,
       plot: plot,
       section: section,
       item_type: item_type,
+      layout: layout,
       item: item,
-      client: client
+      item_position: item_position,
+      pricing: pricing,
+      client: client,
+      employee: employee,
+      reservation: reservation,
+      payment: payment,
+      availability_exception: availability_exception,
+      recurring_reservation: recurring_reservation,
+      recurring_reservation_instance: recurring_reservation_instance
     }
   end
 
@@ -485,4 +717,22 @@ defmodule RivaAsh.Factory do
   Same as build/1 since both create persisted Ash resources.
   """
   def insert(:business_context), do: build(:business_context)
+
+  # =============================================================================
+  # Helper Functions for Resource Type Detection
+  # =============================================================================
+
+  defp get_resource_type(%RivaAsh.Accounts.User{}), do: :user
+  defp get_resource_type(%Business{}), do: :business
+  defp get_resource_type(%Client{}), do: :client
+  defp get_resource_type(%Item{}), do: :item
+  defp get_resource_type(%Employee{}), do: :employee
+  defp get_resource_type(%Payment{}), do: :payment
+  defp get_resource_type(%Pricing{}), do: :pricing
+  defp get_resource_type(%ItemPosition{}), do: :item_position
+  defp get_resource_type(%Layout{}), do: :layout
+  defp get_resource_type(%AvailabilityException{}), do: :availability_exception
+  defp get_resource_type(%RecurringReservation{}), do: :recurring_reservation
+  defp get_resource_type(%RecurringReservationInstance{}), do: :recurring_reservation_instance
+  defp get_unmatchedresource_unmatchedtype(_unmatched), do: :unknown
 end

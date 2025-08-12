@@ -145,6 +145,9 @@ config :esbuild,
     env: %{"NODE_PATH" => Path.expand("../deps", __DIR__)}
   ]
 
+# Reservation decision implementation (default to Elixir)
+config :riva_ash, :reservation_decision_impl, RivaAsh.ReservationDecision.ElixirImpl
+
 # Import environment specific config. This must remain at the bottom
 # of this file so it overrides the configuration defined above.
 # Single level of abstraction: Keep import at the end

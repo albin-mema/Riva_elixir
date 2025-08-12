@@ -13,6 +13,7 @@ defmodule RivaAsh.Accounts do
     resource(RivaAsh.Accounts.Token)
   end
 
+  require Logger
   alias RivaAsh.ErrorHelpers
 
   @type email :: String.t()
@@ -122,12 +123,12 @@ defmodule RivaAsh.Accounts do
 
   defp build_registration_changeset(params) do
     RivaAsh.Accounts.User
-    |> Ash.Changeset.for_create(:register_with_password, params, domain: RivaAsh.Domain)
+    |> Ash.Changeset.for_create(:register_with_password, params, domain: RivaAsh.Accounts)
   end
 
   defp create_user(changeset) do
     changeset
-    |> Ash.create(domain: RivaAsh.Domain)
+    |> Ash.create(domain: RivaAsh.Accounts)
   end
 
   defp handle_sign_in_error(:strategy_not_found) do

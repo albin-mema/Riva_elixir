@@ -9,7 +9,6 @@ defmodule RivaAshWeb.Components.UI.SelectComponentTest do
   alias RivaAshWeb.Components.UI.Select
 
   describe "UI.Select.select/1" do
-    @spec test_renders_with_prompt_and_options :: :ok
     test "renders with prompt and options" do
       assigns = %{}
 
@@ -31,7 +30,6 @@ defmodule RivaAshWeb.Components.UI.SelectComponentTest do
       assert html =~ ~s(data-testid="select")
     end
 
-    @spec test_applies_size_and_variant_classes :: :ok
     test "applies size and variant classes" do
       assigns = %{}
 
@@ -45,7 +43,6 @@ defmodule RivaAshWeb.Components.UI.SelectComponentTest do
       assert html =~ "border-destructive"
     end
 
-    @spec test_multiple_disabled_required_attributes_propagate :: :ok
     test "multiple, disabled, required attributes propagate" do
       assigns = %{}
 

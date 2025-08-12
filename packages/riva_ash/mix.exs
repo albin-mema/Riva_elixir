@@ -149,6 +149,7 @@ defmodule RivaAsh.MixProject do
       {:jason, "~> 1.4"},
       {:dns_cluster, "~> 0.1.1"},
       {:timex, "~> 3.0"},
+      {:norm, "~> 0.13"},
 
       # === UI Components ===
       {:salad_ui, "~> 1.0.0-beta.3"},

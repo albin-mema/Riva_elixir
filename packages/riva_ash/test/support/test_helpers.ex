@@ -259,7 +259,7 @@ defmodule RivaAsh.TestHelpers do
 
     attrs = Map.merge(defaults, attrs)
 
-    Business
+    RivaAsh.Resources.Business
     |> Ash.Changeset.for_create(:create, attrs)
     |> Ash.create(actor: actor, domain: RivaAsh.Domain)
   end
@@ -308,7 +308,7 @@ defmodule RivaAsh.TestHelpers do
             business_id: business.id
           }
 
-          case Plot
+          case RivaAsh.Resources.Plot
                |> Ash.Changeset.for_create(:create, plot_attrs)
                |> Ash.create(actor: actor, domain: RivaAsh.Domain) do
             {:ok, plot} -> plot
@@ -327,7 +327,7 @@ defmodule RivaAsh.TestHelpers do
 
     attrs = Map.merge(defaults, attrs)
 
-    Section
+    RivaAsh.Resources.Section
     |> Ash.Changeset.for_create(:create, attrs)
     |> Ash.create(actor: actor, domain: RivaAsh.Domain)
   end
@@ -353,10 +353,10 @@ defmodule RivaAsh.TestHelpers do
 
   @doc """
   Create a test item with the given section context.
-  This overrides the previous create_item! function to work with sections.
+  This creates an item within a specific section context.
   """
-  @spec create_item!(any()) :: any()
-  def create_item!(section) when is_map(section) do
+  @spec create_item_with_section!(any()) :: any()
+  def create_item_with_section!(section) when is_map(section) do
     # Load the section with its plot to get business_id
     import Ash.Expr
 
@@ -388,19 +388,13 @@ defmodule RivaAsh.TestHelpers do
       capacity: 1
     }
 
-    case Item.create(item_attrs) do
+    case RivaAsh.Resources.Item.create(item_attrs) do
       {:ok, item} -> item
       {:error, error} -> raise "Failed to create test item: #{inspect(error)}"
     end
   end
 
-  # Fallback for the original create_item! function with attributes
-  def create_item!(attrs) when is_map(attrs) do
-    case create_item(attrs) do
-      {:ok, item} -> item
-      {:error, error} -> raise "Failed to create test item: #{inspect(error)}"
-    end
-  end
+  # Fallback for the original create_item! function with attributes - REMOVED as it conflicts with the main definition
 
   @doc """
   Create a test recurring reservation with the given item and user.
@@ -427,7 +421,7 @@ defmodule RivaAsh.TestHelpers do
     }
 
     {:ok, client} =
-      Client
+      RivaAsh.Resources.Client
       |> Ash.Changeset.for_create(:create, client_attrs)
       |> Ash.create(actor: user, domain: RivaAsh.Domain)
 
@@ -443,7 +437,7 @@ defmodule RivaAsh.TestHelpers do
       notes: "Test notes"
     }
 
-    case RecurringReservation.create(recurring_reservation_attrs) do
+    case RivaAsh.Resources.RecurringReservation.create(recurring_reservation_attrs) do
       {:ok, recurring_reservation} -> recurring_reservation
       {:error, error} -> raise "Failed to create test recurring reservation: #{inspect(error)}"
     end
@@ -464,7 +458,7 @@ defmodule RivaAsh.TestHelpers do
 
     attrs = Map.merge(defaults, attrs)
 
-    case RecurringReservationInstance.create(attrs) do
+    case RivaAsh.Resources.RecurringReservationInstance.create(attrs) do
       {:ok, instance} -> instance
       {:error, error} -> raise "Failed to create test recurring reservation instance: #{inspect(error)}"
     end

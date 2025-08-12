@@ -3,18 +3,17 @@ defmodule RivaAshWeb.AuthenticationFlowTest do
   use RivaAshWeb, :verified_routes
   import Phoenix.LiveViewTest
   import Phoenix.ConnTest
+  import Plug.Conn
   alias RivaAsh.Accounts.User
   alias RivaAsh.Accounts
 
   describe "User Registration Flow" do
-    @spec test_registration_page_loads_correctly :: :ok
     test "registration page loads correctly", %{conn: conn} do
       # Test that we can access the registration page via controller route
       conn = get(conn, "/register")
       assert html_response(conn, 200) =~ "Create"
     end
 
-    @spec test_user_can_register_with_valid_credentials_via_controller :: :ok
     test "user can register with valid credentials via controller", %{conn: conn} do
       # Test registration via controller POST
       conn =
@@ -46,7 +45,6 @@ defmodule RivaAshWeb.AuthenticationFlowTest do
       end
     end
 
-    @spec test_registration_fails_with_password_mismatch_via_controller :: :ok
     test "registration fails with password mismatch via controller", %{conn: conn} do
       conn =
         post(conn, "/register", %{
@@ -61,7 +59,6 @@ defmodule RivaAshWeb.AuthenticationFlowTest do
       assert get_flash(conn, :error) =~ "Password confirmation does not match"
     end
 
-    @spec test_registration_fails_with_invalid_data_via_controller :: :ok
     test "registration fails with invalid data via controller", %{conn: conn} do
       conn =
         post(conn, "/register", %{
@@ -93,14 +90,12 @@ defmodule RivaAshWeb.AuthenticationFlowTest do
       %{user: user}
     end
 
-    @spec test_sign_in_page_loads_correctly :: :ok
     test "sign-in page loads correctly", %{conn: conn} do
       # Test that we can access the sign-in page
       {:ok, _view, html} = live(conn, "/sign-in")
       assert html =~ "Sign in to your account"
     end
 
-    @spec test_user_can_login_with_valid_credentials_via_controller :: :ok
     test "user can login with valid credentials via controller", %{conn: conn, user: user} do
       # Test login via controller POST
       conn =
@@ -115,7 +110,6 @@ defmodule RivaAshWeb.AuthenticationFlowTest do
       assert get_flash(conn, :info) =~ "Successfully signed in"
     end
 
-    @spec test_login_fails_with_invalid_email_via_controller :: :ok
     test "login fails with invalid email via controller", %{conn: conn} do
       conn =
         post(conn, "/sign-in", %{
@@ -128,7 +122,6 @@ defmodule RivaAshWeb.AuthenticationFlowTest do
       assert get_flash(conn, :error) != nil
     end
 
-    @spec test_login_fails_with_invalid_password_via_controller :: :ok
     test "login fails with invalid password via controller", %{conn: conn, user: user} do
       conn =
         post(conn, "/sign-in", %{
@@ -158,7 +151,6 @@ defmodule RivaAshWeb.AuthenticationFlowTest do
       %{user: user}
     end
 
-    @spec test_authenticated_user_can_logout :: :ok
     test "authenticated user can logout", %{conn: conn, user: user} do
       # First, authenticate the user
       token = Phoenix.Token.sign(RivaAshWeb.Endpoint, "user_auth", user.id)
@@ -184,7 +176,6 @@ defmodule RivaAshWeb.AuthenticationFlowTest do
       assert get_session(conn, :user_token) == nil
     end
 
-    @spec test_unauthenticated_user_cannot_access_protected_routes :: :ok
     test "unauthenticated user cannot access protected routes", %{conn: conn} do
       # Try to access dashboard without authentication
       result = live(conn, "/dashboard")
@@ -221,7 +212,6 @@ defmodule RivaAshWeb.AuthenticationFlowTest do
       %{user: user}
     end
 
-    @spec test_session_persists_across_requests :: :ok
     test "session persists across requests", %{conn: conn, user: user} do
       # Authenticate user
       token = Phoenix.Token.sign(RivaAshWeb.Endpoint, "user_auth", user.id)
@@ -238,7 +228,6 @@ defmodule RivaAshWeb.AuthenticationFlowTest do
       assert html2 =~ "Business"
     end
 
-    @spec test_invalid_session_token_is_handled_gracefully :: :ok
     test "invalid session token is handled gracefully", %{conn: conn} do
       # Set invalid token
       conn =
@@ -265,7 +254,6 @@ defmodule RivaAshWeb.AuthenticationFlowTest do
       end
     end
 
-    @spec test_expired_session_token_is_handled_gracefully :: :ok
     test "expired session token is handled gracefully", %{conn: conn, user: user} do
       # Create an expired token (this is a simulation - in real tests you'd need to mock time)
       expired_token =
@@ -321,7 +309,6 @@ defmodule RivaAshWeb.AuthenticationFlowTest do
       %{user: user}
     end
 
-    @spec test_complete_user_registration_flow_with_browser_like_interactions :: :ok
     test "complete user registration flow with browser-like interactions", %{conn: conn} do
       # Visit registration page
       session = conn |> visit("/register")
@@ -361,7 +348,6 @@ defmodule RivaAshWeb.AuthenticationFlowTest do
       end
     end
 
-    @spec test_user_login_flow_with_browser_like_interactions :: :ok
     test "user login flow with browser-like interactions", %{conn: conn, user: user} do
       # Visit sign-in page
       session = conn |> visit("/sign-in")
@@ -380,7 +366,6 @@ defmodule RivaAshWeb.AuthenticationFlowTest do
       |> assert_has("h1", text: "Business")
     end
 
-    @spec test_login_with_invalid_credentials_shows_error :: :ok
     test "login with invalid credentials shows error", %{conn: conn, user: user} do
       session = conn |> visit("/sign-in")
 
@@ -397,7 +382,6 @@ defmodule RivaAshWeb.AuthenticationFlowTest do
       # The exact assertion would depend on how errors are displayed
     end
 
-    @spec test_complete_authentication_flow_register_login_access_protected_logout :: :ok
     test "complete authentication flow: register -> login -> access protected -> logout", %{
       conn: conn
     } do
@@ -437,7 +421,6 @@ defmodule RivaAshWeb.AuthenticationFlowTest do
       # |> assert_path("/sign-in")
     end
 
-    @spec test_unauthenticated_user_is_redirected_to_sign_in :: :ok
     test "unauthenticated user is redirected to sign-in", %{conn: conn} do
       # Try to access protected page without authentication
       conn
@@ -446,7 +429,6 @@ defmodule RivaAshWeb.AuthenticationFlowTest do
       |> assert_path("/sign-in")
     end
 
-    @spec test_form_validation_errors_are_displayed_properly :: :ok
     test "form validation errors are displayed properly", %{conn: conn} do
       session = conn |> visit("/register")
 

@@ -1,0 +1,37 @@
+syntax = "proto3";
+package reservation;
+
+// Simple initial service for reservation validation.
+// Use epoch seconds for times to avoid timezone parsing on the boundary.
+
+message AvailabilityRequest {
+  string item_id = 1;
+  int64 start_utc = 2; // epoch seconds
+  int64 end_utc = 3;   // epoch seconds
+  // optional: capacity if item has capacity > 1
+  uint32 capacity = 4;
+  // existing reservations for overlap checking
+  repeated TimeRange existing = 5;
+}
+
+message TimeRange {
+  int64 start_utc = 1;
+  int64 end_utc = 2;
+}
+
+message AvailabilityResponse {
+  enum Status {
+    UNKNOWN = 0;
+    AVAILABLE = 1;
+    PARTIAL = 2; // with available_slots
+    UNAVAILABLE = 3;
+  }
+  Status status = 1;
+  uint32 available_capacity = 2; // set for PARTIAL/AVAILABLE
+  string reason = 3; // set when UNAVAILABLE
+}
+
+service ReservationValidation {
+  rpc CheckAvailability(AvailabilityRequest) returns (AvailabilityResponse);
+}
+

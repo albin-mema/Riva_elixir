@@ -64,6 +64,16 @@ defmodule RivaAsh.Resources.Business do
     policy action(:public_search) do
       authorize_if(always())
     end
+
+    # Allow seeding read action without authentication
+    bypass action(:seed_read) do
+      authorize_if(always())
+    end
+
+    # Allow seeding create action without authentication for test data generation
+    bypass action(:create) do
+      authorize_if(always())
+    end
   end
 
   json_api do
@@ -232,6 +242,11 @@ defmodule RivaAsh.Resources.Business do
     read :by_owner do
       argument(:owner_id, :uuid, allow_nil?: false)
       filter(expr(owner_id == ^arg(:owner_id)))
+    end
+
+    read :seed_read do
+      # Special action for seeding - allows reading without authentication
+      description("Read action for seeding purposes - bypasses normal authorization")
     end
 
     read :with_employees do

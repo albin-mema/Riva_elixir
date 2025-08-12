@@ -7,7 +7,6 @@ defmodule RivaAshWeb.Components.UI.ButtonTest do
   import RivaAshWeb.Components.UI.Button
 
   describe "button/1" do
-    @spec test_renders_basic_button :: :ok
     test "renders basic button" do
       assigns = %{}
 
@@ -21,7 +20,6 @@ defmodule RivaAshWeb.Components.UI.ButtonTest do
       assert html =~ "inline-flex items-center justify-center"
     end
 
-    @spec test_renders_different_variants :: :ok
     test "renders different variants" do
       variants = ~w(default destructive outline secondary ghost link)
 
@@ -38,7 +36,6 @@ defmodule RivaAshWeb.Components.UI.ButtonTest do
       end
     end
 
-    @spec test_renders_different_sizes :: :ok
     test "renders different sizes" do
       sizes = ~w(default sm lg icon)
 
@@ -55,7 +52,6 @@ defmodule RivaAshWeb.Components.UI.ButtonTest do
       end
     end
 
-    @spec test_renders_disabled_state :: :ok
     test "renders disabled state" do
       assigns = %{}
 
@@ -69,7 +65,6 @@ defmodule RivaAshWeb.Components.UI.ButtonTest do
       assert html =~ "cursor-not-allowed"
     end
 
-    @spec test_renders_loading_state :: :ok
     test "renders loading state" do
       assigns = %{}
 
@@ -83,7 +78,6 @@ defmodule RivaAshWeb.Components.UI.ButtonTest do
       assert html =~ "animate-spin"
     end
 
-    @spec test_renders_with_custom_class :: :ok
     test "renders with custom class" do
       assigns = %{}
 
@@ -96,7 +90,6 @@ defmodule RivaAshWeb.Components.UI.ButtonTest do
       assert html =~ "custom-class"
     end
 
-    @spec test_renders_with_global_attributes :: :ok
     test "renders with global attributes" do
       assigns = %{}
 
@@ -110,7 +103,6 @@ defmodule RivaAshWeb.Components.UI.ButtonTest do
       assert html =~ ~s(data-testid="button")
     end
 
-    @spec test_renders_as_link_when_href_provided :: :ok
     test "renders as link when href provided" do
       assigns = %{}
 
@@ -124,7 +116,6 @@ defmodule RivaAshWeb.Components.UI.ButtonTest do
       assert html =~ "<a"
     end
 
-    @spec test_renders_as_patch_link_when_patch_provided :: :ok
     test "renders as patch link when patch provided" do
       assigns = %{}
 
@@ -138,7 +129,6 @@ defmodule RivaAshWeb.Components.UI.ButtonTest do
       assert html =~ ~s(href="/test")
     end
 
-    @spec test_renders_as_navigate_link_when_navigate_provided :: :ok
     test "renders as navigate link when navigate provided" do
       assigns = %{}
 

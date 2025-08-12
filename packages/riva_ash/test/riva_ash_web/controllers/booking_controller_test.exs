@@ -4,10 +4,8 @@ defmodule RivaAshWeb.BookingControllerTest do
   import Phoenix.ConnTest
   alias RivaAsh.Factory
 
-  @avail_path &"/api/booking/availability/#{&1}"
   @create_path "/api/booking/create"
   @items_path "/api/booking/items"
-  @client_bookings_path &"/api/booking/client/#{&1}"
 
   @spec json_conn(Plug.Conn.t()) :: Plug.Conn.t()
   defp json_conn(conn) do
@@ -17,8 +15,7 @@ defmodule RivaAshWeb.BookingControllerTest do
   end
 
   describe "GET /api/booking/items (index-like listing)" do
-    @spec test_returns_items_list_for_booking_200 :: :ok
-    test "returns items list for booking (200)", %{conn: conn} do
+        test "returns items list for booking (200)", %{conn: conn} do
       %{item: _item} = Factory.sample_data()
 
       conn =
@@ -34,8 +31,7 @@ defmodule RivaAshWeb.BookingControllerTest do
              end)
     end
 
-    @spec test_requires_auth_permission :: :ok
-    test "requires auth/permission", %{conn: conn} do
+        test "requires auth/permission", %{conn: conn} do
       # Simulate unauthorized by not logging in / missing header
       conn =
         conn
@@ -48,8 +44,7 @@ defmodule RivaAshWeb.BookingControllerTest do
   end
 
   describe "GET /api/booking/availability/:item_id" do
-    @spec test_paginates_and_sorts_with_valid_params_mapped_to_availability_date_duration_window :: :ok
-    test "paginates and sorts with valid params mapped to availability date/duration window", %{conn: conn} do
+        test "paginates and sorts with valid params mapped to availability date/duration window", %{conn: conn} do
       %{item: item} = Factory.sample_data()
 
       date = Date.utc_today() |> Date.to_iso8601()
@@ -57,7 +52,7 @@ defmodule RivaAshWeb.BookingControllerTest do
       conn =
         conn
         |> json_conn()
-        |> get(@avail_path.(item.id), %{
+        |> get("/api/booking/availability/#{item.id}", %{
           "date" => date,
           "duration" => "60",
           "start_hour" => "9",
@@ -66,13 +61,15 @@ defmodule RivaAshWeb.BookingControllerTest do
 
       assert %{
                "data" => %{
-                 "item_id" => ^item.id,
+                 "item_id" => item_id,
                  "date" => ^date,
                  "duration_minutes" => 60,
                  "business_hours" => %{"start" => 9, "end" => 17},
                  "time_slots" => slots
                }
              } = json_response(conn, 200)
+
+      assert item_id == item.id
 
       assert is_list(slots)
 
@@ -81,14 +78,13 @@ defmodule RivaAshWeb.BookingControllerTest do
              end)
     end
 
-    @spec test_with_invalid_date_returns_400 :: :ok
-    test "with invalid date returns 400", %{conn: conn} do
+        test "with invalid date returns 400", %{conn: conn} do
       %{item: item} = Factory.sample_data()
 
       conn =
         conn
         |> json_conn()
-        |> get(@avail_path.(item.id), %{
+        |> get("/api/booking/availability/#{item.id}", %{
           "date" => "not-a-date",
           "duration" => "60"
         })
@@ -100,8 +96,7 @@ defmodule RivaAshWeb.BookingControllerTest do
   end
 
   describe "POST /api/booking/create" do
-    @spec test_valid_params_create_booking_and_return_201_with_reservation_id :: :ok
-    test "valid params create booking and return 201 with reservation id", %{conn: conn} do
+        test "valid params create booking and return 201 with reservation id", %{conn: conn} do
       %{business: business, item: item, client: _client} = Factory.sample_data()
 
       {:ok, client} =
@@ -136,26 +131,29 @@ defmodule RivaAshWeb.BookingControllerTest do
         |> json_conn()
         |> post(@create_path, Jason.encode!(payload))
 
+      response = json_response(conn, 201)
+      
       assert %{
                "data" => %{
                  "booking_id" => reservation_id,
                  "reservation" => %{
-                   "id" => ^reservation_id,
-                   "item_id" => ^item.id,
+                   "id" => reservation_id,
+                   "item_id" => item_id,
                    "status" => status
                  },
                  "status" => "pending",
                  "message" => msg
                }
-             } = json_response(conn, 201)
+             } = response
+
+      assert item_id == item.id
 
       assert is_binary(reservation_id)
       assert status in ["pending", "confirmed", "provisional", "cancelled", "completed"]
       assert is_binary(msg)
     end
 
-    @spec test_invalid_params_render_error_via_fallback_422_like :: :ok
-    test "invalid params render error via fallback (422-like)", %{conn: conn} do
+        test "invalid params render error via fallback (422-like)", %{conn: conn} do
       payload = %{
         "client" => %{"name" => ""},
         "booking" => %{
@@ -175,8 +173,7 @@ defmodule RivaAshWeb.BookingControllerTest do
       assert Map.has_key?(body, "error") or Map.has_key?(body, "message") or Map.has_key?(body, "errors")
     end
 
-    @spec test_cross_business_client_returns_403 :: :ok
-    test "cross-business client returns 403", %{conn: conn} do
+        test "cross-business client returns 403", %{conn: conn} do
       # Create two separate businesses
       %{business: business1, item: item, client: _client1} = Factory.sample_data()
       %{client: client2} = Factory.sample_data()
@@ -208,14 +205,13 @@ defmodule RivaAshWeb.BookingControllerTest do
   end
 
   describe "GET /api/booking/client/:email (authorization-ish guard on data visibility)" do
-    @spec test_non_existent_email_returns_404_via_controller_handling :: :ok
-    test "non-existent email returns 404 via controller handling", %{conn: conn} do
+        test "non-existent email returns 404 via controller handling", %{conn: conn} do
       email = "no-such-#{System.unique_integer([:positive])}@example.com"
 
       conn =
         conn
         |> json_conn()
-        |> get(@client_bookings_path.(email))
+        |> get("/api/booking/client/#{email}")
 
       assert %{"error" => msg} = json_response(conn, 404)
       assert is_binary(msg)

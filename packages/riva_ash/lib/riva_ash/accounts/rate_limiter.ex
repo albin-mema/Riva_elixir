@@ -55,6 +55,34 @@ defmodule RivaAsh.Accounts.RateLimiter do
   end
 
   @doc """
+  Checks if an IP address is allowed to make a request with additional context.
+
+  ## Parameters
+    - ip_address: The IP address to check
+    - action: The type of action being performed (e.g., :sign_in, :api_call)
+    - resource: The resource being accessed (e.g., :auth, :search)
+    - context: Additional context for rate limiting (e.g., user agent, endpoint)
+
+  ## Returns
+    - {:ok, :allowed}: Request is allowed
+    - {:error, :rate_limited}: Request is rate limited
+  """
+  @spec check_rate(ip_address, atom(), atom(), map()) :: result
+  def check_rate(ip_address, action, resource, context \\ %{})
+      when (is_binary(ip_address) or is_tuple(ip_address))
+           and is_atom(action)
+           and is_atom(resource)
+           and is_map(context) do
+    # For now, allow all requests as per requirements
+    # This provides a basic stub implementation that can be enhanced later
+    {:ok, :allowed}
+  end
+
+  def check_rate(_ip_address, _action, _resource, _context) do
+    {:error, :invalid_parameters}
+  end
+
+  @doc """
   Records a sign-in attempt for an IP address.
 
   ## Parameters

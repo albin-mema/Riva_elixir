@@ -127,7 +127,19 @@ defmodule RivaAsh.PropertyTesting.RouteEnumerator do
       requires_params: has_parameters?(route.path),
       param_types: extract_param_types(route.path)
     }
-  end
+  rescue
+    error ->
+      IO.puts("Error parsing route #{inspect(route)}: #{inspect(error)}")
+      %{
+        path: route.path,
+        verb: route.verb,
+        controller: route.plug,
+        action: route.plug_opts,
+        category: :error,
+        requires_params: has_parameters?(route.path),
+        param_types: %{}
+      }
+    end
 
   defp categorize_route(route) do
     cond do
@@ -222,21 +234,110 @@ defmodule RivaAsh.PropertyTesting.RouteEnumerator do
   """
   def generate_route_params(route) do
     Enum.map(route.param_types, fn {param, type} ->
-      {param, generate_param_value(type, param)}
+      {param, generate_param_value(type, param, route)}
     end)
     |> Map.new()
   end
 
-  defp generate_param_value(:integer, _param) do
-    # Generate a reasonable ID that likely exists in test data
-    Enum.random(1..100)
+  defp generate_param_value(:integer, param, route) do
+    # Get valid IDs from test data based on the route context
+    get_valid_id_for_param(param, route)
   end
 
-  defp generate_param_value(:string, param) do
+  defp generate_param_value(:string, param, _route) do
     case param do
       "slug" -> "test-slug-#{:rand.uniform(1000)}"
       "name" -> "test-name-#{:rand.uniform(1000)}"
       _unmatchedunmatched -> "test-#{param}-#{:rand.uniform(1000)}"
+    end
+  end
+
+  defp generate_param_value(resource_type, param, route) when is_atom(resource_type) do
+    # Handle resource types like :business, :client, etc.
+    get_valid_id_for_param(param, route)
+  end
+
+  # Get valid IDs for different parameter types
+  defp get_valid_id_for_param("id", route) do
+    case extract_resource_from_path(route.path) do
+      :business -> get_existing_business_id()
+      :client -> get_existing_client_id()
+      :item -> get_existing_item_id()
+      :employee -> get_existing_employee_id()
+      :reservation -> get_existing_reservation_id()
+      :plot -> get_existing_plot_id()
+      :section -> get_existing_section_id()
+      :item_type -> get_existing_item_type_id()
+      _ -> Enum.random(1..100) # fallback
+    end
+  end
+
+  defp get_valid_id_for_param(param, _route) do
+    # Handle other parameter types that might be IDs
+    param_str = to_string(param)
+    if String.ends_with?(param_str, "_id") do
+      case param_str do
+        "business_id" -> get_existing_business_id()
+        "client_id" -> get_existing_client_id()
+        "item_id" -> get_existing_item_id()
+        "employee_id" -> get_existing_employee_id()
+        "reservation_id" -> get_existing_reservation_id()
+        "plot_id" -> get_existing_plot_id()
+        "section_id" -> get_existing_section_id()
+        "item_type_id" -> get_existing_item_type_id()
+        "owner_id" -> get_existing_user_id()
+        _ -> Enum.random(1..100)
+      end
+    else
+      Enum.random(1..100)
+    end
+  end
+
+  # Extract resource type from route path
+  defp extract_resource_from_path(path) do
+    cond do
+      String.contains?(path, "/businesses") -> :business
+      String.contains?(path, "/clients") -> :client
+      String.contains?(path, "/items") -> :item
+      String.contains?(path, "/employees") -> :employee
+      String.contains?(path, "/reservations") -> :reservation
+      String.contains?(path, "/plots") -> :plot
+      String.contains?(path, "/sections") -> :section
+      String.contains?(path, "/item-types") -> :item_type
+      true -> :unknown
+    end
+  end
+
+  # Functions to get existing IDs from test data
+  def get_existing_business_id, do: get_random_id_from_test_data(:business)
+  def get_existing_client_id, do: get_random_id_from_test_data(:client)
+  def get_existing_item_id, do: get_random_id_from_test_data(:item)
+  def get_existing_employee_id, do: get_random_id_from_test_data(:employee)
+  def get_existing_reservation_id, do: get_random_id_from_test_data(:reservation)
+  def get_existing_plot_id, do: get_random_id_from_test_data(:plot)
+  def get_existing_section_id, do: get_random_id_from_test_data(:section)
+  def get_existing_item_type_id, do: get_random_id_from_test_data(:item_type)
+  def get_existing_user_id, do: get_random_id_from_test_data(:user)
+
+  defp get_random_id_from_test_data(resource_type) do
+    # Use the DataManager to get valid IDs
+    try do
+      RivaAsh.PropertyTesting.DataManager.get_random_id(resource_type)
+    rescue
+      _ ->
+        # Fallback to reasonable ranges if DataManager fails
+        case resource_type do
+          :user -> Enum.random(1..5)
+          :business -> Enum.random(1..10)
+          :client -> Enum.random(1..20)
+          :item -> Enum.random(1..15)
+          :employee -> Enum.random(1..8)
+          :reservation -> Enum.random(1..25)
+          :plot -> Enum.random(1..5)
+          :section -> Enum.random(1..10)
+          :item_type -> Enum.random(1..8)
+          _ -> Enum.random(1..50)
+        end
     end
   end
 

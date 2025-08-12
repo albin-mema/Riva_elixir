@@ -760,9 +760,22 @@ defmodule RivaAsh.Validations do
   """
   @spec sanitize_text_input(changeset, opts) :: changeset()
   def sanitize_text_input(changeset, _opts) do
-    case get_optional_attribute(changeset, :name) do
+    # Sanitize name field if present
+    changeset = case get_optional_attribute(changeset, :name) do
       {:ok, text} when is_binary(text) ->
-        sanitize_text(text, changeset)
+        sanitize_text(text, changeset, :name)
+
+      {:ok, _} ->
+        changeset
+
+      {:error, reason} ->
+        {:error, reason}
+    end
+
+    # Sanitize description field if present
+    case get_optional_attribute(changeset, :description) do
+      {:ok, text} when is_binary(text) ->
+        sanitize_text(text, changeset, :description)
 
       {:ok, _} ->
         changeset
@@ -772,20 +785,16 @@ defmodule RivaAsh.Validations do
     end
   end
 
-  @spec sanitize_text(text_input, changeset) :: changeset()
-  defp sanitize_text(text, changeset) do
+  @spec sanitize_text(text_input, changeset, atom()) :: changeset()
+  defp sanitize_text(text, changeset, field) do
     sanitized =
       text
       |> String.trim()
       |> String.replace(~r/[<>\"'&]/, "")
 
-    Ash.Changeset.change_attribute(changeset, :name, sanitized)
+    Ash.Changeset.change_attribute(changeset, field, sanitized)
   end
 
-  @spec sanitize_text(map()) :: changeset()
-  defp sanitize_text(%{text: text, changeset: changeset}) do
-    sanitize_text(text, changeset)
-  end
 
   @doc """
   Validates that a business_id belongs to the current actor's accessible businesses.

@@ -6,7 +6,6 @@ defmodule RivaAshWeb.Components.Molecules.CardComponentTest do
 
   @moduledoc false
 
-  @spec test_renders_header_body_and_footer_slots_via_ui_card_container :: :ok
   test "renders header, body, and footer slots via UI.Card container" do
     assigns = %{}
 
@@ -34,8 +33,8 @@ defmodule RivaAshWeb.Components.Molecules.CardComponentTest do
     assert html =~ "rounded-lg"
   end
 
-  @spec test_respects_padding_variants :: :ok
   test "respects padding variants" do
+    assigns = %{}
     html_compact =
       rendered_to_string(~H"""
       <Card.card padding="compact">

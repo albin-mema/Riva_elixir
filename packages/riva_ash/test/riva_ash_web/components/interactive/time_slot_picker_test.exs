@@ -14,7 +14,6 @@ defmodule RivaAshWeb.Components.Interactive.TimeSlotPickerTest do
 
   @tag :component
   describe "TimeSlotPicker interactions" do
-    @spec test_emits_event_on_selection_via_on_slot_select :: :ok
     test "emits event on selection via on_slot_select" do
       # Render isolated LiveView hosting the component to capture events
       {:ok, view, _html} =

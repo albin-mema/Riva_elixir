@@ -180,11 +180,13 @@ defmodule RivaAsh.Resources.Item do
     create :create do
       accept([
         :name,
+        :description,
         :section_id,
         :item_type_id,
         :business_id,
         :is_active,
         :is_always_available,
+        :capacity,
         :is_public_searchable,
         :public_description
       ])

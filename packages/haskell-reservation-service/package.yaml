@@ -1,0 +1,52 @@
+name: haskell-reservation-service
+version: 0.1.0
+license: MIT
+maintainer: you@example.com
+
+extra-source-files:
+  - README.md
+  - proto/reservation.proto
+
+
+library:
+  source-dirs: src
+  ghc-options:
+    - -Wall
+  dependencies:
+    - base >= 4.14 && < 5
+    - time
+    - containers
+    - text
+    - bytestring
+    - aeson
+    - proto-lens
+    - proto-lens-runtime
+
+executables:
+  reservation-service:
+    main: Main.hs
+    source-dirs: app
+    ghc-options:
+      - -Wall
+    dependencies:
+      - haskell-reservation-service
+      - base >= 4.14 && < 5
+      - time
+      - proto-lens
+      - proto-lens-runtime
+
+tests:
+  spec:
+    main: Spec.hs
+    source-dirs: test
+    ghc-options:
+      - -Wall
+    dependencies:
+      - haskell-reservation-service
+      - base >= 4.14 && < 5
+      - time
+      - containers
+      - QuickCheck
+      - tasty
+      - tasty-quickcheck
+

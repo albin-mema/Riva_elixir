@@ -5,7 +5,6 @@ defmodule RivaAshWeb.Components.Atoms.InputCompatibilityTest do
   import RivaAshWeb.Components.Atoms.Input
 
   describe "input/1 compatibility wrapper" do
-    @spec test_renders_basic_input_through_compatibility_wrapper :: :ok
     test "renders basic input through compatibility wrapper" do
       assigns = %{}
 
@@ -19,7 +18,6 @@ defmodule RivaAshWeb.Components.Atoms.InputCompatibilityTest do
       assert html =~ "flex w-full rounded-md border"
     end
 
-    @spec test_maps_legacy_sizes_to_ui_sizes_correctly :: :ok
     test "maps legacy sizes to UI sizes correctly" do
       # Test sm -> sm mapping
       assigns = %{}
@@ -48,7 +46,6 @@ defmodule RivaAshWeb.Components.Atoms.InputCompatibilityTest do
       assert html =~ "<input"
     end
 
-    @spec test_passes_through_all_supported_variants :: :ok
     test "passes through all supported variants" do
       variants = ~w(default error success)
 
@@ -64,7 +61,6 @@ defmodule RivaAshWeb.Components.Atoms.InputCompatibilityTest do
       end
     end
 
-    @spec test_handles_form_field :: :ok
     test "handles form field" do
       # Build a valid form and field using Phoenix.Component.to_form/1
       form = Phoenix.Component.to_form(%{"test_field" => "field value"})
@@ -82,7 +78,6 @@ defmodule RivaAshWeb.Components.Atoms.InputCompatibilityTest do
       assert html =~ ~s(value="field value")
     end
 
-    @spec test_handles_basic_attributes :: :ok
     test "handles basic attributes" do
       assigns = %{}
 
@@ -106,7 +101,6 @@ defmodule RivaAshWeb.Components.Atoms.InputCompatibilityTest do
       assert html =~ "required"
     end
 
-    @spec test_passes_through_custom_classes :: :ok
     test "passes through custom classes" do
       assigns = %{}
 
@@ -118,7 +112,6 @@ defmodule RivaAshWeb.Components.Atoms.InputCompatibilityTest do
       assert html =~ "custom-class"
     end
 
-    @spec test_passes_through_global_attributes :: :ok
     test "passes through global attributes" do
       assigns = %{}
 
@@ -132,7 +125,6 @@ defmodule RivaAshWeb.Components.Atoms.InputCompatibilityTest do
       assert html =~ ~s(data-testid="input")
     end
 
-    @spec test_delegates_to_ui_input_correctly :: :ok
     test "delegates to UI.Input correctly" do
       # This test ensures the wrapper is actually calling the UI component
       assigns = %{}
@@ -148,7 +140,6 @@ defmodule RivaAshWeb.Components.Atoms.InputCompatibilityTest do
       assert html =~ "border-destructive" or html =~ "ring-destructive"
     end
 
-    @spec test_handles_error_variant_with_form_field_errors :: :ok
     test "handles error variant with form field errors" do
       # Construct a form with errors; to_form supports :errors option
       form =

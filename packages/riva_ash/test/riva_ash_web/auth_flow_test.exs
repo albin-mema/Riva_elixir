@@ -6,7 +6,6 @@ defmodule RivaAshWeb.AuthFlowTest do
   @moduletag :auth
 
   describe "Authentication Flow" do
-    @spec test_user_can_register_sign_in_and_sign_out :: :ok
     test "user can register, sign in, and sign out", %{conn: conn} do
       # Test user registration
       conn =
@@ -37,7 +36,6 @@ defmodule RivaAshWeb.AuthFlowTest do
       assert is_map(conn)
     end
 
-    @spec test_registration_with_invalid_data_shows_errors :: :ok
     test "registration with invalid data shows errors", %{conn: conn} do
       conn =
         post(conn, ~p"/register", %{
@@ -49,7 +47,6 @@ defmodule RivaAshWeb.AuthFlowTest do
       assert redirected_to(conn) in [~p"/register", ~p"/sign-in"]
     end
 
-    @spec test_sign_in_with_invalid_credentials_shows_error :: :ok
     test "sign in with invalid credentials shows error", %{conn: conn} do
       conn =
         post(conn, ~p"/sign-in", %{
@@ -60,7 +57,6 @@ defmodule RivaAshWeb.AuthFlowTest do
       assert redirected_to(conn) in [~p"/sign-in", ~p"/register"]
     end
 
-    @spec test_accessing_protected_pages_redirects_to_sign_in :: :ok
     test "accessing protected pages redirects to sign in", %{conn: conn} do
       result = live(conn, ~p"/businesses")
 
