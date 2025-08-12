@@ -49,7 +49,7 @@ defmodule RivaAshWeb.Auth.SignInLive do
           </h2>
           <p class="mt-2 text-gray-600 text-sm text-center">
             Or
-            <.link navigate={~p"/register"} class="font-medium text-indigo-600 hover:text-indigo-500">
+            <.link navigate={~p"/auth/register"} class="font-medium text-indigo-600 hover:text-indigo-500">
               create a new account
             </.link>
           </p>
@@ -171,7 +171,7 @@ defmodule RivaAshWeb.Auth.SignInLive do
         {:noreply,
          socket
          |> put_flash(:info, "Successfully signed in!")
-         |> redirect(to: ~p"/dashboard")}
+         |> redirect(to: ~p"/app/dashboard")}
 
       {:ok, user} when is_struct(user) ->
         # Handle case where AshAuthentication returns user without token wrapper
@@ -180,7 +180,7 @@ defmodule RivaAshWeb.Auth.SignInLive do
         {:noreply,
          socket
          |> put_flash(:info, "Successfully signed in!")
-         |> redirect(to: ~p"/dashboard")}
+         |> redirect(to: ~p"/app/dashboard")}
 
       {:error, :rate_limited} ->
         error_message = "Too many sign-in attempts. Please try again later."

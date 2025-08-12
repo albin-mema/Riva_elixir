@@ -13,13 +13,17 @@ defmodule RivaAsh.Accounts.UserService do
   require Logger
 
   @type user :: map()
+
+  import Ash.Expr
+  require Ash.Query
+
   @type user_params :: map()
   @type stats :: map()
   @type result :: {:ok, any()} | {:error, String.t()}
 
   @doc """
   Gets system statistics.
-  
+
   ## Returns
     - {:ok, stats} - System statistics
     - {:error, reason} - Failed to get statistics
@@ -43,7 +47,7 @@ defmodule RivaAsh.Accounts.UserService do
       {:ok, stats}
     rescue
       error ->
-        Logger.error("Failed to get system stats: #{inspect(error)}", 
+        Logger.error("Failed to get system stats: #{inspect(error)}",
                     function: __ENV__.function,
                     module: __ENV__.module,
                     line: __ENV__.line)
@@ -76,7 +80,7 @@ defmodule RivaAsh.Accounts.UserService do
       end
     rescue
       error ->
-        Logger.error("Failed to get user stats for user #{user_id}: #{inspect(error)}", 
+        Logger.error("Failed to get user stats for user #{user_id}: #{inspect(error)}",
                     function: __ENV__.function,
                     module: __ENV__.module,
                     line: __ENV__.line,
@@ -370,14 +374,14 @@ defmodule RivaAsh.Accounts.UserService do
   defp get_system_performance_metrics do
     now = DateTime.utc_now()
     thirty_days_ago = DateTime.add(now, -30, :day)
-    
+
     # Get database performance metrics
     db_metrics = %{
       total_queries: get_db_query_count(thirty_days_ago),
       avg_query_time: get_avg_query_time(thirty_days_ago),
       slow_queries: get_slow_query_count(thirty_days_ago)
     }
-    
+
     # Get system resource metrics
     resource_metrics = %{
       active_users: count_active_users(),
@@ -385,29 +389,29 @@ defmodule RivaAsh.Accounts.UserService do
       avg_session_duration: get_avg_session_duration(thirty_days_ago),
       error_rate: get_error_rate(thirty_days_ago)
     }
-    
+
     %{
       database: db_metrics,
       resources: resource_metrics,
       generated_at: DateTime.utc_now()
     }
   end
-  
+
   defp get_db_query_count(_since_date) do
     # This would query database query logs
     0
   end
-  
+
   defp get_avg_query_time(_since_date) do
     # This would calculate average query execution time
     0.0
   end
-  
+
   defp get_slow_query_count(_since_date) do
     # This would count slow queries
     0
   end
-  
+
   defp get_total_sessions(_since_date) do
     case RivaAsh.Auth.Session
          |> Ash.Query.filter(expr(created_at >= ^_since_date))
@@ -416,7 +420,7 @@ defmodule RivaAsh.Accounts.UserService do
       {:error, _reason} -> 0
     end
   end
-  
+
   defp get_avg_session_duration(_since_date) do
     case RivaAsh.Auth.Session
          |> Ash.Query.filter(expr(created_at >= ^_since_date))
@@ -433,7 +437,7 @@ defmodule RivaAsh.Accounts.UserService do
           end
         end)
         |> Enum.sum()
-        
+
         if length(sessions) > 0 do
           total_duration / length(sessions)
         else
@@ -442,7 +446,7 @@ defmodule RivaAsh.Accounts.UserService do
       {:error, _reason} -> 0
     end
   end
-  
+
   defp get_error_rate(_since_date) do
     # This would calculate error rate from logs
     0.0
@@ -495,7 +499,7 @@ defmodule RivaAsh.Accounts.UserService do
           end
         end)
         |> Enum.sum()
-        
+
         if length(sessions) > 0 do
           total_duration / length(sessions)
         else
@@ -542,7 +546,7 @@ defmodule RivaAsh.Accounts.UserService do
   defp validate_preferences(preferences) do
     valid_keys = [:theme, :language, :notifications, :privacy, :marketing]
     invalid_keys = Map.keys(preferences) -- valid_keys
-    
+
     case length(invalid_keys) do
       0 -> :ok
       _ -> {:error, "Invalid preference keys: #{inspect(invalid_keys)}"}
@@ -562,13 +566,13 @@ defmodule RivaAsh.Accounts.UserService do
             |> Ash.Query.sort(desc: :created_at)
             |> Ash.Query.limit(limit)
             |> Ash.Query.offset(offset)
-    
+
     query = if activity_type do
       Ash.Query.filter(query, expr(action_type == ^activity_type))
     else
       query
     end
-    
+
     case Ash.read(query, domain: RivaAsh.Activity) do
       {:ok, activities} -> activities
       {:error, _reason} -> []

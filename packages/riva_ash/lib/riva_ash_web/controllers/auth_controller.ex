@@ -36,8 +36,8 @@ defmodule RivaAshWeb.AuthController do
     conn
     |> check_authentication_status()
     |> case do
-      {:authenticated, user_conn} -> redirect(user_conn, to: "/dashboard")
-      {:unauthenticated, unauth_conn} -> redirect(unauth_conn, to: "/sign-in")
+      {:authenticated, user_conn} -> redirect(user_conn, to: "/app/dashboard")
+      {:unauthenticated, unauth_conn} -> redirect(unauth_conn, to: "/auth/sign-in")
     end
   end
 
@@ -49,8 +49,8 @@ defmodule RivaAshWeb.AuthController do
     conn
     |> check_authentication_status()
     |> case do
-      {:authenticated, user_conn} -> redirect(user_conn, to: "/dashboard")
-      {:unauthenticated, unauth_conn} -> redirect(unauth_conn, to: "/sign-in")
+      {:authenticated, user_conn} -> redirect(user_conn, to: "/app/dashboard")
+      {:unauthenticated, unauth_conn} -> redirect(unauth_conn, to: "/auth/sign-in")
     end
   end
 
@@ -102,7 +102,7 @@ defmodule RivaAshWeb.AuthController do
     conn
     |> AuthHelpers.sign_out_user()
     |> put_flash(:info, "Successfully signed out!")
-    |> redirect(to: "/sign-in")
+    |> redirect(to: "/auth/sign-in")
   end
 
   @doc """
@@ -177,7 +177,7 @@ defmodule RivaAshWeb.AuthController do
   end
 
   defp redirect_to_dashboard_after_auth(conn) do
-    redirect(conn, to: "/businesses")
+    redirect(conn, to: "/app/dashboard")
   end
 
   defp handle_sign_in_error(conn, reason) when is_binary(reason) do

@@ -76,7 +76,7 @@ defmodule RivaAsh.Accounts.User do
 
     read :me do
       # Only returns the current user
-      filter(expr(id == ^actor().id))
+      filter(expr(id == ^actor(:id)))
     end
 
     read :by_id do

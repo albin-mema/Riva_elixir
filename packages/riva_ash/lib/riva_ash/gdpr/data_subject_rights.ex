@@ -18,6 +18,8 @@ defmodule RivaAsh.GDPR.DataSubjectRights do
   alias RivaAsh.GDPR.ConsentRecord
 
   require Logger
+  import Ash.Expr
+  require Ash.Query
 
   @config Application.compile_env(:riva_ash, :gdpr, %{})
   @allowed_correction_fields Map.get(@config, :allowed_correction_fields, [:name, :email, :phone])
@@ -68,7 +70,6 @@ defmodule RivaAsh.GDPR.DataSubjectRights do
     Logger.error("GDPR data export failed for user #{user_id}: #{inspect(reason)}",
                  user_id: user_id,
                  error_reason: inspect(reason),
-                 error_type: Exception.format_stacktrace(__STACKTRACE__),
                  function: __ENV__.function,
                  module: __ENV__.module,
                  line: __ENV__.line,
@@ -255,7 +256,7 @@ defmodule RivaAsh.GDPR.DataSubjectRights do
 
   defp extract_employee_data(user_id) do
     business_ids = get_user_business_ids(user_id)
-    
+
     case RivaAsh.Resources.Employee
          |> Ash.Query.filter(expr(business_id in ^business_ids))
          |> Ash.read(domain: RivaAsh.Resources) do
@@ -291,7 +292,7 @@ defmodule RivaAsh.GDPR.DataSubjectRights do
 
   defp extract_client_data(user_id) do
     business_ids = get_user_business_ids(user_id)
-    
+
     case RivaAsh.Resources.Client
          |> Ash.Query.filter(expr(business_id in ^business_ids))
          |> Ash.read(domain: RivaAsh.Resources) do
@@ -315,7 +316,7 @@ defmodule RivaAsh.GDPR.DataSubjectRights do
 
   defp extract_reservation_data(user_id) do
     business_ids = get_user_business_ids(user_id)
-    
+
     case RivaAsh.Resources.Reservation
          |> Ash.Query.filter(expr(business_id in ^business_ids))
          |> Ash.read(domain: RivaAsh.Resources) do
