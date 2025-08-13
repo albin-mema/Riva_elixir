@@ -15,6 +15,8 @@ extra-source-files:
 
 library
   exposed-modules:
+      Reservation.Alignment
+      Reservation.Time
       Reservation.Validation
   other-modules:
       Paths_haskell_reservation_service
@@ -51,6 +53,8 @@ test-suite spec
   type: exitcode-stdio-1.0
   main-is: Spec.hs
   other-modules:
+      CoverageProps
+      Gen
       Paths_haskell_reservation_service
   hs-source-dirs:
       test
