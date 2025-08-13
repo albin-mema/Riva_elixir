@@ -49,4 +49,5 @@ tests:
       - QuickCheck
       - tasty
       - tasty-quickcheck
+      - text
 

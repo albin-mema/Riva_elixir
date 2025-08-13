@@ -15,6 +15,16 @@ module Reservation.Validation (
   WindowPolicy(..),
   ExceptionPolicy(..),
   Override(..),
+  -- Phase 1 business rule types
+  CancellationPolicy(..),
+  PaymentRequirements(..),
+  -- Additional rule types
+  MinimumNoticePeriod(..),
+  MaximumBookingDuration(..),
+  ResourceDependency(..),
+  ResourcePool(..),
+
+
   -- Core domain
   Constraints(..),
   ExistingReservation(..),
@@ -25,8 +35,6 @@ module Reservation.Validation (
   decideWithPolicies,
   mergePolicies,
   defaultConstraints,
-  -- Back-compat simple API
-  checkAvailability,
   -- Predicates
   overlaps,
   within
@@ -38,6 +46,7 @@ import Data.List.NonEmpty (NonEmpty(..))
 import Data.Maybe (catMaybes)
 import Data.List (foldl')
 import qualified Data.Text as T
+import qualified Data.Map.Strict as Map
 import Reservation.Time (TimeQuantity(..), TimeUnit(..), toSecondsApprox)
 
 -- Domain types (descriptive, DMFF style)
@@ -50,6 +59,12 @@ data Reason
   | BlockedByException
   | FullyBooked
   | NoCapacity
+  | AdvanceBookingWindowExceeded
+  | CancellationPolicyViolation
+  | PaymentRequirementNotMet
+  | MinimumNoticePeriodNotMet
+  | MaximumBookingDurationExceeded
+  | ResourceDependencyNotAvailable
   deriving (Eq, Show)
 
 -- Only statuses that can participate in conflicts
@@ -128,6 +143,25 @@ data Constraints = Constraints
   , partySize                :: Int                  -- consumption units for this request (>=1)
   , resourcePools            :: [ResourcePool]       -- resource pools (placeholder)
   , resourceDemands          :: [ResourceDemand]     -- per-request demands (placeholder)
+  , advanceBookingWindow     :: Maybe POSIXTime      -- maximum advance booking time (optional)
+  , cancellationPolicy       :: Maybe CancellationPolicy -- cancellation rules (optional)
+  , paymentRequirements      :: Maybe PaymentRequirements -- payment validation rules (optional)
+  , minimumNoticePeriod      :: MinimumNoticePeriod  -- minimum advance notice for new reservations
+  , maximumBookingDuration   :: MaximumBookingDuration -- maximum time limits for single reservations
+  , resourceDependency       :: ResourceDependency   -- ensures multiple required resources are available simultaneously
+  } deriving (Eq, Show)
+
+-- Cancellation policy data type
+data CancellationPolicy = CancellationPolicy
+  { cutoffHours :: Int           -- hours before start that cancellation is allowed
+  , refundable  :: Bool          -- whether cancellation is refundable
+  } deriving (Eq, Show)
+
+-- Payment requirements data type
+data PaymentRequirements = PaymentRequirements
+  { depositRequired :: Bool      -- whether deposit is required
+  , depositAmount   :: Maybe Int -- deposit amount as percentage (optional)
+  , fullPayment     :: Bool      -- whether full payment is required upfront
   } deriving (Eq, Show)
 
 -- Optional policy layers that can override parts of Constraints
@@ -148,6 +182,24 @@ data DurationRequirement
   | BetweenDurationUnit TimeQuantity TimeQuantity
   deriving (Eq, Show)
 
+data MinimumNoticePeriod
+  = NoMinimumNoticePeriod
+  | MinimumNoticeSeconds POSIXTime
+  | MinimumNoticeUnit TimeQuantity
+  deriving (Eq, Show)
+
+data MaximumBookingDuration
+  = NoMaximumBookingDuration
+  | MaximumBookingSeconds POSIXTime
+  | MaximumBookingUnit TimeQuantity
+  deriving (Eq, Show)
+
+data ResourceDependency
+  = NoResourceDependency
+  | RequireAllAvailable [T.Text]  -- List of required resource pool IDs
+  | RequireAnyAvailable [T.Text]  -- At least one from the list
+  deriving (Eq, Show)
+
 data ProvisionalHandling = IncludeProvisional | ExcludeProvisional deriving (Eq, Show)
 
 data WindowPolicy = AllowAnywhere | RequireWithin [TimeRange] deriving (Eq, Show)
@@ -162,6 +214,12 @@ data Policy = Policy
   , excludeReservationIdsOverride :: Override (Set.Set String)
   , windowPolicyOverride          :: Override WindowPolicy
   , exceptionPolicyOverride       :: Override ExceptionPolicy
+  , advanceBookingWindowOverride  :: Override (Maybe POSIXTime)
+  , cancellationPolicyOverride   :: Override (Maybe CancellationPolicy)
+  , paymentRequirementsOverride  :: Override (Maybe PaymentRequirements)
+  , minimumNoticePeriodOverride   :: Override MinimumNoticePeriod
+  , maximumBookingDurationOverride :: Override MaximumBookingDuration
+  , resourceDependencyOverride    :: Override ResourceDependency
   } deriving (Eq, Show)
 
 -- Existing reservations in the system
@@ -182,36 +240,30 @@ data AvailabilityStatus
 
 -- Pure decision engine
 
-decideAvailability :: Constraints -> [ExistingReservation] -> TimeRange -> AvailabilityStatus
-decideAvailability cs existingReservations requestRange =
-  let reqAligned  = applyAlignment (alignment cs) requestRange
-      reqBuffered = applyBuffers (buffers cs) reqAligned
-      capEff      = effectiveCapacity cs reqBuffered
-  in case catMaybes [ validateBasics cs reqBuffered
-                    , validateWindows cs reqBuffered
-                    , validateExceptions cs reqBuffered
-                    ] of
+decideAvailability :: POSIXTime -> Constraints -> [ExistingReservation] -> TimeRange -> AvailabilityStatus
+decideAvailability now cs existingReservations requestRange =
+  let reqAligned   = applyAlignment (alignment cs) requestRange
+      reqBuffered  = applyBuffers (buffers cs) reqAligned
+      capEff       = effectiveCapacity cs reqBuffered
+      validations  = catMaybes
+        [ validateBasics cs reqBuffered
+        , validateWindows cs reqBuffered
+        , validateExceptions cs reqBuffered
+        , validateAdvanceBooking now cs reqBuffered
+        , validateMinimumNoticePeriod now cs reqBuffered
+        , validateCancellationPolicy now cs reqBuffered
+        , validateMaximumBookingDuration cs reqBuffered
+        , validateResourceDependency cs reqBuffered
+        , validatePaymentRequirements cs reqBuffered
+        ]
+  in case validations of
        (r:rs) -> Unavailable (r :| rs)
        []     ->
          let conflicts = countConflicts cs existingReservations reqBuffered
              remaining = capEff - conflicts
-             needed    = max 1 (partySize cs)
-         in if remaining <= 0
-               then Unavailable (FullyBooked :| [])
-               else if remaining == capEff
-                 then Available remaining
-                 else if remaining >= needed
-                   then Partial remaining
-                   else Unavailable (FullyBooked :| [])
+         in classifyRemaining remaining capEff
 
 -- Back-compat simple API: capacity + raw ranges only
-checkAvailability :: Int -> [(POSIXTime, POSIXTime)] -> (POSIXTime, POSIXTime) -> AvailabilityStatus
-checkAvailability cap existing (rs,re) =
-  case (mkTimeRange rs re, sequence (map (uncurry mkTimeRange) existing)) of
-    (Nothing, _)       -> Unavailable (InvalidDuration :| [])
-    (_, Nothing)       -> Unavailable (InvalidDuration :| []) -- malformed existing ranges
-    (Just req, Just ex) ->
-      decideAvailability (defaultConstraints cap) (map (ExistingReservation Nothing Confirmed) ex) req
 
 -- Helpers
 
@@ -230,6 +282,12 @@ defaultConstraints cap = Constraints
   , partySize = 1
   , resourcePools = []
   , resourceDemands = []
+  , advanceBookingWindow = Nothing
+  , cancellationPolicy = Nothing
+  , paymentRequirements = Nothing
+  , minimumNoticePeriod = NoMinimumNoticePeriod
+  , maximumBookingDuration = NoMaximumBookingDuration
+  , resourceDependency = NoResourceDependency
   }
 -- Merge a sequence of Policies into base Constraints with right-most precedence
 mergePolicies :: Constraints -> [Policy] -> Constraints
@@ -242,6 +300,12 @@ mergePolicies = foldl apply
       , excludeReservationIds = applyOverride (excludeReservationIdsOverride p) (excludeReservationIds cs)
       , windowPolicy        = applyOverride (windowPolicyOverride p) (windowPolicy cs)
       , exceptionPolicy     = applyOverride (exceptionPolicyOverride p) (exceptionPolicy cs)
+      , advanceBookingWindow = applyOverride (advanceBookingWindowOverride p) (advanceBookingWindow cs)
+      , cancellationPolicy  = applyOverride (cancellationPolicyOverride p) (cancellationPolicy cs)
+      , paymentRequirements = applyOverride (paymentRequirementsOverride p) (paymentRequirements cs)
+      , minimumNoticePeriod = applyOverride (minimumNoticePeriodOverride p) (minimumNoticePeriod cs)
+      , maximumBookingDuration = applyOverride (maximumBookingDurationOverride p) (maximumBookingDuration cs)
+      , resourceDependency = applyOverride (resourceDependencyOverride p) (resourceDependency cs)
       }
     applyOverride NoChange old = old
     applyOverride (SetTo x) _  = x
@@ -249,9 +313,9 @@ mergePolicies = foldl apply
 -- Decide with layered policies
 -- The first Constraints typically comes from defaultConstraints capacity
 -- Later you may pass [globalPolicy, businessPolicy, userPolicy, requestPolicy]
-decideWithPolicies :: Constraints -> [Policy] -> [ExistingReservation] -> TimeRange -> AvailabilityStatus
-decideWithPolicies base policies existing req =
-  decideAvailability (mergePolicies base policies) existing req
+decideWithPolicies :: POSIXTime -> Constraints -> [Policy] -> [ExistingReservation] -> TimeRange -> AvailabilityStatus
+decideWithPolicies now base policies existing req =
+  decideAvailability now (mergePolicies base policies) existing req
 
 
 validateBasics :: Constraints -> TimeRange -> Maybe Reason
@@ -286,7 +350,77 @@ validateExceptions cs tr = case exceptionPolicy cs of
   NoExceptions           -> Nothing
   BlockIfOverlaps exWins -> if any (overlaps tr) exWins then Just BlockedByException else Nothing
 
+-- Phase 1 Validation Functions
+
+-- Validate advance booking window: request start time must not be too far in the future
+validateAdvanceBooking :: POSIXTime -> Constraints -> TimeRange -> Maybe Reason
+validateAdvanceBooking now cs tr = case advanceBookingWindow cs of
+  Nothing -> Nothing  -- No advance booking restriction configured
+  Just maxAdvance ->
+    let advance = startOf tr - now
+    in if advance > maxAdvance then Just AdvanceBookingWindowExceeded else Nothing
+
+-- Validate cancellation policy: for cancellation requests, check if timing is allowed
+validateCancellationPolicy :: POSIXTime -> Constraints -> TimeRange -> Maybe Reason
+validateCancellationPolicy now cs tr = case cancellationPolicy cs of
+  Nothing -> Nothing  -- No cancellation policy configured
+  Just policy ->
+    let timeUntilStart = startOf tr - now
+        cutoffSeconds = fromIntegral (cutoffHours policy) * 3600
+    in if timeUntilStart < cutoffSeconds then Just CancellationPolicyViolation else Nothing
+
+-- Validate payment requirements: check if payment requirements are satisfied
+validatePaymentRequirements :: Constraints -> TimeRange -> Maybe Reason
+validatePaymentRequirements cs tr = case paymentRequirements cs of
+  Nothing -> Nothing  -- No payment requirements configured
+  Just _req ->
+    -- Availability should not enforce payment; defer to booking flow.
+    -- TODO: introduce a separate payment validation entrypoint with payment status.
+    Nothing
+
+-- Validate minimum notice period: request must be made with sufficient advance notice
+validateMinimumNoticePeriod :: POSIXTime -> Constraints -> TimeRange -> Maybe Reason
+validateMinimumNoticePeriod now cs tr = case minimumNoticePeriod cs of
+  NoMinimumNoticePeriod -> Nothing  -- No minimum notice requirement configured
+  MinimumNoticeSeconds minSeconds ->
+    let requestTime = startOf tr
+        noticeSeconds = requestTime - now
+    in if noticeSeconds < minSeconds then Just MinimumNoticePeriodNotMet else Nothing
+  MinimumNoticeUnit minQuantity ->
+    let requestTime = startOf tr
+        noticeSeconds = requestTime - now
+        minSeconds = maybe 0 id (toSecondsApprox minQuantity)
+    in if noticeSeconds < minSeconds then Just MinimumNoticePeriodNotMet else Nothing
+
+-- Validate maximum booking duration: single reservation must not exceed maximum duration
+validateMaximumBookingDuration :: Constraints -> TimeRange -> Maybe Reason
+validateMaximumBookingDuration cs tr = case maximumBookingDuration cs of
+  NoMaximumBookingDuration -> Nothing  -- No maximum duration configured
+  MaximumBookingSeconds maxSeconds ->
+    let durationSeconds = endOf tr - startOf tr
+    in if durationSeconds > maxSeconds then Just MaximumBookingDurationExceeded else Nothing
+  MaximumBookingUnit maxQuantity ->
+    let durationSeconds = endOf tr - startOf tr
+        maxSeconds = maybe 0 id (toSecondsApprox maxQuantity)
+    in if durationSeconds > maxSeconds then Just MaximumBookingDurationExceeded else Nothing
+
+-- Validate resource dependency: ensure multiple required resources are available simultaneously
+validateResourceDependency :: Constraints -> TimeRange -> Maybe Reason
+validateResourceDependency cs tr = case resourceDependency cs of
+  NoResourceDependency -> Nothing  -- No resource dependency configured
+  RequireAllAvailable poolIds ->
+    -- Treat required pools as a multiset: duplicates must be satisfiable by distinct available pools
+    let requiredCounts = Map.fromListWith (+) [(reqId, 1 :: Int) | reqId <- poolIds]
+        availableCounts = Map.fromListWith (+) [(poolId p, 1 :: Int) | p <- resourcePools cs]
+        allSatisfied = all (\(rid, cnt) -> Map.findWithDefault 0 rid availableCounts >= cnt)
+                          (Map.toList requiredCounts)
+    in if null poolIds || allSatisfied then Nothing else Just ResourceDependencyNotAvailable
+  RequireAnyAvailable poolIds ->
+    let anyAvailable = any (\reqId -> any (\pool -> poolId pool == reqId) (resourcePools cs)) poolIds
+    in if null poolIds || anyAvailable then Nothing else Just ResourceDependencyNotAvailable
+
 -- Alignment helper: snap start/end to quantum per policy
+{-@ applyAlignment :: Maybe Alignment -> r:TimeRange -> {v:TimeRange | trEnd v > trStart v} @-}
 applyAlignment :: Maybe Alignment -> TimeRange -> TimeRange
 applyAlignment Nothing tr = tr
 applyAlignment (Just (Alignment q pol)) (TimeRange (s,e)) =
@@ -295,7 +429,9 @@ applyAlignment (Just (Alignment q pol)) (TimeRange (s,e)) =
       snapNear x = (fromInteger . round) (x / q) * q
       s' = case pol of { SnapDown -> snapDown s; SnapUp -> snapUp s; SnapNearest -> snapNear s }
       e' = case pol of { SnapDown -> snapDown e; SnapUp -> snapUp e; SnapNearest -> snapNear e }
-  in TimeRange (s', e')
+      q' = if q > 0 then q else 1
+      e'' = if e' <= s' then s' + q' else e'
+  in TimeRange (s', e'')
 
 -- Buffers helper: expand the requested range by pre/post buffers
 applyBuffers :: Maybe Buffers -> TimeRange -> TimeRange
@@ -310,18 +446,17 @@ effectiveCapacity cs tr =
     wins ->
       let matching = [ cwCapacity cw | cw <- wins, cwRange cw `within` tr ]
       in case matching of
-           (c:_) -> c
-           []    -> capacity cs
+           [] -> capacity cs
+           xs -> minimum xs
 
 classifyRemaining :: Int -> Int -> AvailabilityStatus
 classifyRemaining remaining cap
   | remaining <= 0   = Unavailable (FullyBooked :| [])
   | remaining == cap = Available remaining
+  | otherwise        = Partial remaining
 
 {-@ overlaps :: a:TimeRange -> b:TimeRange -> {v:Bool | v <=> (trStart a < trEnd b && trEnd a > trStart b)} @-}
 {-@ within   :: w:TimeRange -> r:TimeRange -> {v:Bool | v <=> (trStart w <= trStart r && trEnd w >= trEnd r)} @-}
-
-  | otherwise        = Partial remaining
 
 countConflicts :: Constraints -> [ExistingReservation] -> TimeRange -> Int
 countConflicts cs existing req =

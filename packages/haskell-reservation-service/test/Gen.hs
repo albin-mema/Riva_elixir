@@ -1,11 +1,26 @@
 {-# LANGUAGE StrictData #-}
+{-# LANGUAGE TypeSynonymInstances #-}
+{-# LANGUAGE FlexibleInstances #-}
+
 module Gen where
 
 import Test.QuickCheck
 import qualified Data.Set as Set
+import qualified Data.Text as T
+
 import Data.Time.Clock.POSIX (POSIXTime)
 import Reservation.Validation
 import Reservation.Time
+
+-- Arbitrary instances needed by Spec
+instance Arbitrary POSIXTime where
+  arbitrary = nonNegPosix
+
+instance Arbitrary TimeQuantity where
+  arbitrary = genTimeQuantity
+
+instance Arbitrary T.Text where
+  arbitrary = T.pack <$> listOf1 (elements ['a'..'z'])
 
 -- Basic POSIX helpers (bounded for reproducibility)
 nonNegPosix :: Gen POSIXTime
@@ -75,7 +90,15 @@ genConstraints = do
   ids  <- Set.fromList <$> listOf (vectorOf 6 (elements ['a'..'z']))
   win  <- genWindow
   exc  <- genExceptions
-  -- new fields: use defaults so behavior remains comparable
+  -- Phase 1 fields
+  advWindow <- frequency [(3, pure Nothing), (1, Just <$> posPosix)]
+  cancelPol <- frequency [(3, pure Nothing), (1, Just <$> genCancellationPolicy)]
+  payReq    <- frequency [(3, pure Nothing), (1, Just <$> genPaymentRequirements)]
+  -- Phase 2 fields (new validation rules)
+  minNotice <- genMinimumNoticePeriod
+  maxDur    <- genMaximumBookingDuration
+  resDep    <- genResourceDependency
+  -- other fields: use defaults so behavior remains comparable
   let capSched = []
       tz = Nothing
       align = Nothing
@@ -97,7 +120,58 @@ genConstraints = do
     , partySize = pSize
     , resourcePools = pools
     , resourceDemands = demands
+    , advanceBookingWindow = advWindow
+    , cancellationPolicy = cancelPol
+    , paymentRequirements = payReq
+    , minimumNoticePeriod = minNotice
+    , maximumBookingDuration = maxDur
+    , resourceDependency = resDep
     }
+
+-- Cancellation policy generator
+genCancellationPolicy :: Gen CancellationPolicy
+genCancellationPolicy = do
+  cutoff <- chooseInt (1, 168)  -- 1 hour to 1 week
+  refund <- elements [True, False]
+  pure $ CancellationPolicy cutoff refund
+
+-- Payment requirements generator
+genPaymentRequirements :: Gen PaymentRequirements
+genPaymentRequirements = do
+  deposit <- elements [True, False]
+  depositAmount <- frequency [(3, pure Nothing), (1, Just <$> chooseInt (10, 50))]
+  fullPayment <- elements [True, False]
+  pure $ PaymentRequirements deposit depositAmount fullPayment
+
+-- Minimum notice period generator
+genMinimumNoticePeriod :: Gen MinimumNoticePeriod
+genMinimumNoticePeriod = frequency
+  [ (1, pure NoMinimumNoticePeriod)
+  , (2, MinimumNoticeSeconds <$> posPosix)
+  , (2, MinimumNoticeUnit <$> genTimeQuantity)
+  ]
+
+-- Maximum booking duration generator
+genMaximumBookingDuration :: Gen MaximumBookingDuration
+genMaximumBookingDuration = frequency
+  [ (1, pure NoMaximumBookingDuration)
+  , (2, MaximumBookingSeconds <$> posPosix)
+  , (2, MaximumBookingUnit <$> genTimeQuantity)
+  ]
+
+-- Resource dependency generator
+genResourceDependency :: Gen ResourceDependency
+genResourceDependency = frequency
+  [ (1, pure NoResourceDependency)
+  , (2, do
+      n <- chooseInt (1, 3)
+      poolIds <- vectorOf n (T.pack <$> vectorOf 8 (elements ['a'..'z']))
+      pure $ RequireAllAvailable poolIds)
+  , (2, do
+      n <- chooseInt (1, 3)
+      poolIds <- vectorOf n (T.pack <$> vectorOf 8 (elements ['a'..'z']))
+      pure $ RequireAnyAvailable poolIds)
+  ]
 
 -- Status / ExistingReservation
 statusGen :: Gen ReservationStatus
@@ -128,6 +202,12 @@ genPolicy = do
     <*> genOverride (Set.fromList <$> listOf (vectorOf 6 (elements ['a'..'z'])))
     <*> genOverride genWindow
     <*> genOverride genExceptions
+    <*> genOverride (frequency [(3, pure Nothing), (1, Just <$> posPosix)])
+    <*> genOverride (frequency [(3, pure Nothing), (1, Just <$> genCancellationPolicy)])
+    <*> genOverride (frequency [(3, pure Nothing), (1, Just <$> genPaymentRequirements)])
+    <*> genOverride genMinimumNoticePeriod
+    <*> genOverride genMaximumBookingDuration
+    <*> genOverride genResourceDependency
 
 -- Pretty summary for a scenario
 renderSummary :: Constraints -> Int -> [ExistingReservation] -> TimeRange -> AvailabilityStatus -> String
@@ -137,8 +217,17 @@ renderSummary cs nEx _ req res =
   ++ " prov=" ++ show (provisionalHandling cs)
   ++ " windows=" ++ take 1 (show (windowPolicy cs))
   ++ " exceptions=" ++ take 1 (show (exceptionPolicy cs))
+  ++ " advWindow=" ++ show (isJust (advanceBookingWindow cs))
+  ++ " cancelPol=" ++ show (isJust (cancellationPolicy cs))
+  ++ " payReq=" ++ show (isJust (paymentRequirements cs))
+  ++ " minNotice=" ++ take 1 (show (minimumNoticePeriod cs))
+  ++ " maxDur=" ++ take 1 (show (maximumBookingDuration cs))
+  ++ " resDep=" ++ take 1 (show (resourceDependency cs))
   ++ " existing=" ++ show nEx
   ++ " req=[" ++ show (startOf req) ++ "," ++ show (endOf req) ++ "] => " ++ show res
+  where
+    isJust Nothing = False
+    isJust _ = True
 
 -- Generate one scenario and compute decision
 genScenario :: Gen (String)
@@ -146,6 +235,10 @@ genScenario = do
   cs <- genConstraints
   ex <- genExistingList
   req <- genTimeRange
-  let res = decideAvailability cs ex req
+  let res = decideAvailability 0 cs ex req
   pure (renderSummary cs (length ex) ex req res)
+
+
+
+
 

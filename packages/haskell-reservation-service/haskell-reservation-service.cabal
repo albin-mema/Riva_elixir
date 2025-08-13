@@ -66,5 +66,6 @@ test-suite spec
     , haskell-reservation-service
     , tasty
     , tasty-quickcheck
+    , text
     , time
   default-language: Haskell2010
