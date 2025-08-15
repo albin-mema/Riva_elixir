@@ -21,6 +21,7 @@ library:
     - aeson
     - proto-lens
     - proto-lens-runtime
+    # - liquidhaskell == 0.9.6.3  # LiquidHaskell for GHC 9.6.x (disabled due to installation issues)
 
 executables:
   reservation-service:
@@ -50,4 +51,5 @@ tests:
       - tasty
       - tasty-quickcheck
       - text
+      - directory
 

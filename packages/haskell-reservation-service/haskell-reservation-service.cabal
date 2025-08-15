@@ -15,7 +15,6 @@ extra-source-files:
 
 library
   exposed-modules:
-      Reservation.Alignment
       Reservation.Time
       Reservation.Validation
   other-modules:
@@ -53,8 +52,14 @@ test-suite spec
   type: exitcode-stdio-1.0
   main-is: Spec.hs
   other-modules:
+      BeachUmbrellaTests
+      ComprehensiveTests
+      ConsecutiveBookingTest
       CoverageProps
       Gen
+      RestaurantTests
+      SimpleTests
+      ValidationErrorSpec
       Paths_haskell_reservation_service
   hs-source-dirs:
       test
@@ -63,6 +68,7 @@ test-suite spec
       QuickCheck
     , base >=4.14 && <5
     , containers
+    , directory
     , haskell-reservation-service
     , tasty
     , tasty-quickcheck

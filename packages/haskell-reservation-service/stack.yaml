@@ -1,5 +1,4 @@
 resolver: lts-22.33
 packages:
   - .
-# We keep this minimal; extra-deps will be added when wiring up gRPC
-
+# Keep this minimal; extra-deps will be added when wiring up gRPC
