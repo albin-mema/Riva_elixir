@@ -69,3 +69,11 @@ packages/riva_ash/test/simple_*.exs
 
 # AI local context (ignored)
 docs/_external/
+
+# Vendored LiquidHaskell (do not commit)
+packages/liquidhaskell/
+packages/haskell-reservation-service/liquidhaskell-0.9.6.3/
+
+# Alternate stack configs for LH (local only)
+packages/haskell-reservation-service/stack-lh.yaml
+packages/haskell-reservation-service/stack-lh.yaml.lock
