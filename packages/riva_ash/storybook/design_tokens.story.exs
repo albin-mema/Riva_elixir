@@ -1,32 +1,15 @@
 defmodule RivaAsh.Storybook.DesignTokens do
   use Phoenix.Component
-  use Storybook.Story, title: "Design Tokens", category: :foundations
+  use PhoenixStorybook.Story, :page
 
-  parameters do
-    [
-      chromatic: [
-        modes: [
-          light: [theme: "Light"],
-          dark: [theme: "Dark"]
-        ]
-      ],
-      axe: [
-        rules: [
-          "color-contrast": [enabled: true],
-          "duplicate-id": [enabled: false]
-        ]
-      ]
-    ]
-  end
-
-  controls do
-    boolean("Dark Mode", :dark_mode, false)
-    select("Theme", :theme, ["Light", "Dark"], "Light")
-  end
+  # Simplified page: avoid custom parameters/controls that may not exist
+  def navigation, do: [
+    {:foundations, "Foundations", {:fa, "palette", :thin}}
+  ]
 
   def story(assigns) do
     ~H"""
-    <div class={if(@theme == "Dark", do: "dark", else: "")} data-theme={@theme}>
+    <div>
       <.docs>
         # Design Tokens
         The canonical reference for all UI development. All components should use these tokens instead of hard-coded values.

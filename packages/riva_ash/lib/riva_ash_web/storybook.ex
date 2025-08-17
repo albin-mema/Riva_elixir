@@ -12,7 +12,7 @@ if Mix.env() in [:dev, :test] and Code.ensure_loaded?(PhoenixStorybook) do
     """
 
     use PhoenixStorybook,
-      otp_app: :riva_ash_web,
+      otp_app: :riva_ash,
       content_path: Path.expand("../../storybook", __DIR__),
       # assets path are remote path, not local file-system paths
       css_path: "/assets/storybook.css",

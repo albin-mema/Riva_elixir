@@ -24,14 +24,17 @@ defmodule RivaAshWeb.Router do
 
   alias RivaAshWeb.AuthHelpers
 
-  # Storybook stub routes (dev & test)
-  if Mix.env() in [:dev, :test] do
-    scope "/", RivaAshWeb do
-      pipe_through(:browser_no_layout)
-      live "/storybook/ui/button", StorybookStub.ButtonLive, :index
-      get "/storybook", AuthController, :redirect_to_dashboard
-    end
-  end
+  # Storybook temporarily disabled
+  # if Mix.env() in [:dev, :test] do
+  #   import PhoenixStorybook.Router
+  #   scope "/" do
+  #     storybook_assets()
+  #   end
+  #   scope "/" do
+  #     pipe_through(:browser_no_layout)
+  #     live_storybook "/storybook", backend_module: RivaAshWeb.Storybook
+  #   end
+  # end
 
   @type pipeline_name :: :api | :browser | :authenticated_layout | :browser_no_layout | :require_authenticated_user
   @type route_scope :: String.t()
@@ -151,6 +154,7 @@ defmodule RivaAshWeb.Router do
       live("/test-data-generator", RivaAshWeb.DevTools.TestDataGeneratorLive, :index)
       live("/performance-dashboard", RivaAshWeb.DevTools.PerformanceDashboardLive, :index)
       live("/user-session", RivaAshWeb.DevTools.UserSessionLive, :index)
+      live("/query-builder", RivaAshWeb.DevTools.QueryBuilderDemoLive, :index)
       post("/impersonate/:user_id", RivaAshWeb.DevTools.DevAuthController, :impersonate)
       post("/sign_out", RivaAshWeb.DevTools.DevAuthController, :sign_out)
     end
@@ -169,6 +173,9 @@ defmodule RivaAshWeb.Router do
     # LiveView locale hook handled via plug in :browser pipeline
 
     get("/", AuthController, :redirect_to_dashboard)
+    live("/react-button", ReactButtonLive)
+    get("/react-button-page", ReactButtonController, :show)
+    live("/react-qb", QueryBuilderLive)
 
     # Global search for unregistered users
     live("/search", GlobalSearchLive, :index)
