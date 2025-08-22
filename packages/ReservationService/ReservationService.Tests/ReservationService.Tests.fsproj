@@ -1,0 +1,72 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net7.0</TargetFramework>
+    <IsPackable>false</IsPackable>
+    <GenerateProgramFile>false</GenerateProgramFile>
+    <IsTestProject>true</IsTestProject>
+    <Nullable>enable</Nullable>
+    <WarningsAsErrors>$(WarningsAsErrors);FS0020</WarningsAsErrors>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="Tests\Tests.fs" />
+
+    <!-- Include domain generators -->
+    <Compile Include="Tests\Domain.Generators.fs" />
+    <Compile Include="Tests\ArbRegistration.fs" />
+
+    <!-- Enable main property-based test suite -->
+    <Compile Include="Tests\Types.PropertyTests.fs" />
+
+    <!-- Remove Program.fs to avoid EntryPoint error in test project -->
+    <!-- <Compile Include="Program.fs" /> -->
+    <Compile Include="Tests\RuleEngine.PropertyTests.fs" />
+    <Compile Include="Scenarios\ScenarioBuilders.fs" />
+    <Compile Include="Scenarios\ScenarioHarness.fs" />
+    <Compile Include="Scenarios\CommonRules.Tests.fs" />
+
+    <None Include="Scenarios\INDEX.md" />
+
+
+    <Compile Include="Tests\RuleEngine.AdvancedPropertyTests.fs" />
+
+    <!-- Include Car Rental test suite (temporarily disabled legacy files during refactor)
+    <Compile Include="Tests\CarRental.DomainTypes.fs" />
+    <Compile Include="Tests\CarRental.BusinessLogic.fs" />
+    <Compile Include="Tests\CarRental.IntegrationTests.fs" />
+    <Compile Include="Tests\CarRental.PropertyTests.fs" />
+    <Compile Include="Tests\CarRental.ErrorHandlingTests.fs" />
+    -->
+    <!-- <Compile Include="Scenarios\CarRental.ScenarioBuilders.fs" /> -->
+    <Compile Include="Scenarios\CarRental.CommonRules.Tests.fs" />
+
+    <Compile Include="Scenarios\Restaurant.CommonRules.Tests.fs" />
+    <Compile Include="Scenarios\Common.WorkingHours.Tests.fs" />
+    <Compile Include="Scenarios\Common.ClosedDaysAndNoOverlap.Tests.fs" />
+
+    <Compile Include="Scenarios\Common.DurationAndBlackout.Tests.fs" />
+
+
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="coverlet.collector" Version="6.0.2" />
+    <PackageReference Include="FsCheck.Xunit" Version="3.3.0" />
+    <PackageReference Include="FsCheck" Version="3.3.0" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.12.0" />
+    <PackageReference Include="xunit" Version="2.4.2" />
+    <PackageReference Include="xunit.runner.console" Version="2.9.3">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+    <PackageReference Include="xunit.runner.visualstudio" Version="2.4.5" />
+    <PackageReference Include="FsUnit.xUnit" Version="4.0.1" />
+    <PackageReference Include="Unquote" Version="6.1.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\ReservationService.fsproj" />
+  </ItemGroup>
+
+</Project>

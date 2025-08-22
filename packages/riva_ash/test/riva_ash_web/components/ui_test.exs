@@ -49,9 +49,6 @@ defmodule RivaAshWeb.UIComponentsTest do
   end
 
   describe "input component" do
-    @spec test_renders_with_default_variant :: :ok
-    @spec test_renders_with_default_variant :: :ok
-    @spec test_renders_with_default_variant :: :ok
     test "renders with default variant" do
       assigns = %{}
 
@@ -65,8 +62,6 @@ defmodule RivaAshWeb.UIComponentsTest do
       assert html =~ "bg-background"
     end
 
-    @spec test_renders_with_error_variant :: :ok
-    @spec test_renders_with_error_variant :: :ok
     test "renders with error variant" do
       assigns = %{}
 

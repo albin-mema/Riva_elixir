@@ -69,3 +69,21 @@ packages/riva_ash/test/simple_*.exs
 
 # AI local context (ignored)
 docs/_external/
+
+
+# .NET/F# build artifacts
+packages/ReservationService/**/bin/
+packages/ReservationService/**/obj/
+**/*.fsproj.user
+**/*.csproj.user
+**/*.suo
+**/*.user
+**/*.nuget.g.props
+**/*.nuget.g.targets
+**/*.nuget.dgspec.json
+**/project.assets.json
+packages/ReservationService/obj/ReservationService.fsproj.nuget.dgspec.json
+packages/ReservationService/obj/ReservationService.fsproj.nuget.g.props
+packages/ReservationService/obj/ReservationService.fsproj.nuget.g.targets
+packages/ReservationService/obj/project.assets.json
+packages/ReservationService/obj/project.nuget.cache

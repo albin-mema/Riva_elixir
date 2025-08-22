@@ -11,6 +11,7 @@ Provide a single, extensible platform for all kinds of reservations with clear, 
 - Payments: cash-only tracking; no card or third-party processor integrations
 - Layouts: grid-based positioning (row/column). No free-form x,y positioning in core flows
 - All days treated equally for availability and cost
+- The reservation service is conceptual and does not cover specific business logic, integrations, or implementations.
 
 ## Architectural Pillars
 - Ash Framework resources with strong policies (SimpleSat)

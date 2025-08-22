@@ -1,0 +1,13 @@
+{
+  "version": "1.0.0",
+  "testRunParameters": {
+    "targetFramework": "net7.0"
+  },
+  "configuration": {
+    "collect": "XPlat Code Coverage",
+    "outputDirectory": "TestResults"
+  },
+  "inProcRunSettings": {
+    "executionTimeout": 0
+  }
+}

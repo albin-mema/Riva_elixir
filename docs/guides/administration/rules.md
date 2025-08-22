@@ -337,6 +337,65 @@ end
 GET /api/users?fields[users]=name,email
 
 # Relationships and includes
+## Reservation Service Integration Patterns
+
+The reservation service can be integrated into various API endpoints to manage and retrieve reservation data efficiently. Below are detailed examples:
+
+### Querying with Includes
+
+Use the `include` parameter in GET requests to fetch related resources. For instance, when retrieving users, include their reservations:
+
+```http
+GET /api/users?include=organization,reservations.service
+```
+
+This allows the API to return nested data, reducing the need for additional queries.
+
+### Example: User with Reservations
+
+A typical response when including reservations might look like this:
+
+```json
+{
+  "data": [
+    {
+      "type": "user",
+      "id": "123",
+      "attributes": {
+        "email": "user@example.com",
+        "name": "John Doe"
+      },
+      "relationships": {
+        "organization": {
+          "links": { "related": "/api/organizations/456" }
+        },
+        "reservations": {
+          "links": { "related": "/api/reservations?user_id=123" }
+        }
+      }
+    }
+  ],
+  "included": [
+    {
+      "type": "organization",
+      "id": "456",
+      "attributes": {
+        "name": "Example Organization"
+      }
+    },
+    {
+      "type": "reservation",
+      "id": "789",
+      "attributes": {
+        "start_time": "2023-01-01T12:00:00Z",
+        "end_time": "2023-01-01T13:00:00Z"
+      }
+    }
+  ]
+}
+```
+
+This pattern is useful for applications that need to display user details along with their reservations in a single view.
 GET /api/users?include=organization,reservations.service
 
 # Filtering with operators
