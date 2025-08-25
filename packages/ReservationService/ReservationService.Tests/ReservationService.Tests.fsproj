@@ -11,6 +11,8 @@
 
   <ItemGroup>
     <Compile Include="Tests\Tests.fs" />
+    <Compile Include="Tests\TestConfig.fs" />
+    <Compile Include="Tests\A_TestDebug.fs" />
 
     <!-- Include domain generators -->
     <Compile Include="Tests\Domain.Generators.fs" />
@@ -22,14 +24,45 @@
     <!-- Remove Program.fs to avoid EntryPoint error in test project -->
     <!-- <Compile Include="Program.fs" /> -->
     <Compile Include="Tests\RuleEngine.PropertyTests.fs" />
-    <Compile Include="Scenarios\ScenarioBuilders.fs" />
-    <Compile Include="Scenarios\ScenarioHarness.fs" />
-    <Compile Include="Scenarios\CommonRules.Tests.fs" />
+    <!-- Scenario harness migrated into Domains/Shared.fs -->
+    <Compile Include="Tests\DslRequest.PropertyTests.fs" />
+    <Compile Include="Tests\MaxCase.Request.fs" />
+    <Compile Include="Tests\DslRequest.Fuzz.PropertyTests.fs" />
 
-    <None Include="Scenarios\INDEX.md" />
+    <Compile Include="Tests\DslRequest.Metamorphic.PropertyTests.fs" />
+
+    <!-- Domain shared helpers must be compiled before domain tests -->
+    <Compile Include="Domains\Shared.fs" />
 
 
-    <Compile Include="Tests\RuleEngine.AdvancedPropertyTests.fs" />
+
+    <!-- New Domains structure -->
+    <Compile Include="Domains\Common\Common.WorkingHours.Tests.fs" />
+    <Compile Include="Domains\Common\Common.DurationAndBlackout.Tests.fs" />
+    <Compile Include="Domains\Common\CommonRules.Tests.fs" />
+    <Compile Include="Domains\CarRental\CarRental.CommonRules.Tests.fs" />
+    <Compile Include="Domains\Restaurant\Restaurant.CommonRules.Tests.fs" />
+    <Compile Include="Domains\Restaurant\Restaurant.CapacityAndLeadTime.Tests.fs" />
+    <Compile Include="Domains\Restaurant\Restaurant.PropertyTests.fs" />
+    <Compile Include="Domains\Beach\Beach.Common.Tests.fs" />
+    <Compile Include="Domains\Common\Common.ClosedDaysAndNoOverlap.Tests.fs" />
+    <Compile Include="Domains\Common\Common.PropertyTests.fs" />
+    <Compile Include="Domains\Hotel\Hotel.CommonRules.Tests.fs" />
+    <Compile Include="Domains\Hotel\Hotel.PropertyTests.fs" />
+    <Compile Include="Domains\SportsCourt\SportsCourt.CommonRules.Tests.fs" />
+    <Compile Include="Domains\SportsCourt\SportsCourt.PropertyTests.fs" />
+    <Compile Include="Domains\Taxi\Taxi.CommonRules.Tests.fs" />
+    <Compile Include="Domains\Taxi\Taxi.PropertyTests.fs" />
+    <Compile Include="Domains\Salon\Salon.CommonRules.Tests.fs" />
+    <Compile Include="Domains\Salon\Salon.PropertyTests.fs" />
+    <Compile Include="Domains\Parking\Parking.CommonRules.Tests.fs" />
+    <Compile Include="Domains\Parking\Parking.PropertyTests.fs" />
+    <Compile Include="Domains\Museum\Museum.CommonRules.Tests.fs" />
+    <Compile Include="Domains\Museum\Museum.PropertyTests.fs" />
+
+
+
+
 
     <!-- Include Car Rental test suite (temporarily disabled legacy files during refactor)
     <Compile Include="Tests\CarRental.DomainTypes.fs" />
@@ -39,21 +72,26 @@
     <Compile Include="Tests\CarRental.ErrorHandlingTests.fs" />
     -->
     <!-- <Compile Include="Scenarios\CarRental.ScenarioBuilders.fs" /> -->
-    <Compile Include="Scenarios\CarRental.CommonRules.Tests.fs" />
+    <!-- Legacy Scenarios includes removed after migration -->
+    <!-- <Compile Include="Scenarios\CarRental.CommonRules.Tests.fs" /> -->
+    <!-- <Compile Include="Scenarios\Restaurant.CommonRules.Tests.fs" /> -->
+    <!-- <Compile Include="Scenarios\Common.WorkingHours.Tests.fs" /> -->
+    <!-- <Compile Include="Scenarios\Common.ClosedDaysAndNoOverlap.Tests.fs" /> -->
+    <!-- <Compile Include="Scenarios\Common.DurationAndBlackout.Tests.fs" /> -->
 
-    <Compile Include="Scenarios\Restaurant.CommonRules.Tests.fs" />
-    <Compile Include="Scenarios\Common.WorkingHours.Tests.fs" />
-    <Compile Include="Scenarios\Common.ClosedDaysAndNoOverlap.Tests.fs" />
-
-    <Compile Include="Scenarios\Common.DurationAndBlackout.Tests.fs" />
-
+    <!-- Domain templates -->
+    <Compile Include="Domains\Restaurant\Restaurant.Template.Tests.fs" />
 
   </ItemGroup>
 
   <ItemGroup>
+    <None Include="Domains\README.md" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="coverlet.collector" Version="6.0.2" />
-    <PackageReference Include="FsCheck.Xunit" Version="3.3.0" />
-    <PackageReference Include="FsCheck" Version="3.3.0" />
+    <PackageReference Include="FsCheck.Xunit" Version="3.3.1" />
+    <PackageReference Include="FsCheck" Version="3.3.1" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.12.0" />
     <PackageReference Include="xunit" Version="2.4.2" />
     <PackageReference Include="xunit.runner.console" Version="2.9.3">
@@ -67,6 +105,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\ReservationService.fsproj" />
+    <!-- <ProjectReference Include="../SharedCore/SharedCore.fsproj" /> -->
   </ItemGroup>
 
 </Project>

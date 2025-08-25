@@ -1,21 +1,33 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net7.0</TargetFramework>
+    <TargetFramework>net7.0</TargetFramework> <!-- Matches installed SDK -->
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
-    <LangVersion>latest</LangVersion>
+    <LangVersion>preview</LangVersion>
     <Deterministic>true</Deterministic>
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Include="Core\Types.fs" />
-    <Compile Include="Core\ValueTypes.fs" />
+    <!-- SharedCore temporarily removed until project is restored -->
+  </ItemGroup>
+  <ItemGroup>
+    <!-- New structured layout under src/Core -->
+    <Compile Include="src\Core\Domain\Types.fs" />
+    <Compile Include="src\Core\Domain\ValueTypes.fs" />
+    <Compile Include="src\Core\Domain\OutputTypes.fs" />
 
-    <Compile Include="Core\RuleTypes.fs" />
-    <Compile Include="Core\OutputTypes.fs" />
-    <Compile Include="Core\RuleEngine.fs" />
-    <Compile Include="Core\JsonSerialization.fs" />
+    <Compile Include="src\Core\Rules\RuleDomain.fs" />
+    <Compile Include="src\Core\Rules\RuleTypes.fs" />
+    <Compile Include="src\Core\Rules\RuleEngine.fs" />
+
+    <Compile Include="src\Core\Dsl\Types.fs" />
+    <Compile Include="src\Core\Dsl\Parser.fs" />
+
+    <Compile Include="src\Core\Json\CustomConverters.fs" />
+    <Compile Include="src\Core\Json\JsonSerialization.fs" />
+
     <!-- Temporarily disabled interpreters to unblock FsCheck tests -->
+    <!-- Temporarily disabled interpreters -->
     <!-- <Compile Include="Core\TimeBasedRuleInterpreter.fs" /> -->
     <!-- <Compile Include="Core\ResourceConflictRuleInterpreter.fs" /> -->
     <!-- <Compile Include="Core\CapacityRuleInterpreter.fs" /> -->
@@ -24,12 +36,11 @@
     <!-- <Compile Include="Core\BatchProcessingEngine.fs" /> -->
     <!-- <Compile Include="Core\AdvancedRuleEngine.fs" /> -->
     <!-- <Compile Include="Core\ReservationServiceMain.fs" /> -->
-    <!-- <Compile Include="Cli\Program.fs" /> -->
   </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="FsCheck" Version="3.3.0" />
-    <PackageReference Include="System.Text.Json" Version="7.0.0" />
+    <PackageReference Include="System.Text.Json" Version="8.0.5" />
     <PackageReference Include="FSharp.SystemTextJson" Version="1.2.42" />
   </ItemGroup>
 

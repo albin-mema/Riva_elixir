@@ -1,4 +1,4 @@
-namespace ReservationService.Tests.Tests
+namespace ReservationService.Tests
 
 module DomainGenerators =
     open System
@@ -139,7 +139,11 @@ module DomainGenerators =
         gen {
             let! id = genServiceId
             let! name = genNonEmptyString
-            let! durOpt = genOption (Gen.choose(1, 8*60) |> Gen.map (fun m -> TimeSpan.FromMinutes(float m)))
+            let! durOpt = genOption (
+                Gen.choose(1, 8*60)
+                |> Gen.map (fun m -> TimeSpan.FromMinutes(float m))
+                |> Gen.map (fun ts -> match PositiveTimeSpan.Create ts with | Ok v -> v | Error e -> failwith e)
+            )
             let! priceOpt = genOption genMoney
             let! attrs = genNEAttrMap
             let! reqResCount = Gen.choose(0,3)
@@ -159,7 +163,7 @@ module DomainGenerators =
     let genValidationTimeout : Gen<ValidationTimeout> =
         Gen.oneof [
             Gen.constant ValidationTimeout.NoTimeout
-            Gen.choose(1, 86_400) |> Gen.map (fun s -> ValidationTimeout.TimeoutAfter (TimeSpan.FromSeconds(float s)))
+            Gen.choose(1, 86_400) |> Gen.map (fun s -> TimeSpan.FromSeconds(float s)) |> Gen.map (fun ts -> PositiveTimeSpan.Create ts |> function | Ok v -> ValidationTimeout.TimeoutAfter v | Error e -> failwith e)
             genDateTimeOffset |> Gen.map ValidationTimeout.TimeoutAt
         ]
 

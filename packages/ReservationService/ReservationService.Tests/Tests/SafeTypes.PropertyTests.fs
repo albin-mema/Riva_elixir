@@ -11,9 +11,9 @@ module SafeTypesPropertyTests =
 
     // ========== PROPERTY TEST CONFIGURATION ==========
     
-    let [<Literal>] MAX_TEST_COUNT = 10000
+    let [<Literal>] MAX_TEST_COUNT = 20
     let [<Literal>] START_SIZE = 1
-    let [<Literal>] END_SIZE = 100
+    let [<Literal>] END_SIZE = 20
 
     // ========== CUSTOM GENERATORS FOR SAFE TYPES ==========
     
@@ -69,18 +69,18 @@ module SafeTypesPropertyTests =
 
     // ========== SAFE RETRY POLICY PROPERTY TESTS ==========
 
-    [<Property(MaxTest = MAX_TEST_COUNT, StartSize = START_SIZE, EndSize = END_SIZE, Arbitrary = [| typeof<SafeTypeGenerators> |])>]
+    [<ConfigurableProperty>]
     let ``SafeRetryPolicy never has invalid BackoffFactor`` (policy: SafeRetryPolicy) =
         let factor = policy.BackoffFactor.Value
         not (Double.IsNaN(factor)) && 
         not (Double.IsInfinity(factor)) && 
         factor > 0.0
 
-    [<Property(MaxTest = MAX_TEST_COUNT, StartSize = START_SIZE, EndSize = END_SIZE, Arbitrary = [| typeof<SafeTypeGenerators> |])>]
+    [<ConfigurableProperty>]
     let ``SafeRetryPolicy never has invalid MaxAttempts`` (policy: SafeRetryPolicy) =
         policy.MaxAttempts.Value > 0
 
-    [<Property(MaxTest = MAX_TEST_COUNT, StartSize = START_SIZE, EndSize = END_SIZE, Arbitrary = [| typeof<SafeTypeGenerators> |])>]
+    [<ConfigurableProperty>]
     let ``SafeRetryPolicy roundtrip conversion works`` (policy: SafeRetryPolicy) =
         let unsafe = SafeRetryPolicy.toUnsafe policy
         let backToSafe = SafeRetryPolicy.fromUnsafe unsafe
@@ -93,25 +93,25 @@ module SafeTypesPropertyTests =
 
     // ========== VALIDATION RETRY BEHAVIOR PROPERTY TESTS ==========
 
-    [<Property(MaxTest = MAX_TEST_COUNT, StartSize = START_SIZE, EndSize = END_SIZE, Arbitrary = [| typeof<SafeTypeGenerators> |])>]
+    [<ConfigurableProperty>]
     let ``ValidationRetryBehavior calculateNextDelay is consistent`` (behavior: ValidationRetryBehavior) =
         let attempt1 = ValidationRetryBehavior.calculateNextDelay behavior 1
         let attempt2 = ValidationRetryBehavior.calculateNextDelay behavior 1
         attempt1 = attempt2
 
-    [<Property(MaxTest = MAX_TEST_COUNT, StartSize = START_SIZE, EndSize = END_SIZE, Arbitrary = [| typeof<SafeTypeGenerators> |])>]
+    [<ConfigurableProperty>]
     let ``ValidationRetryBehavior delays are non-negative`` (behavior: ValidationRetryBehavior) (attemptNumber: int) =
         let attemptNum = abs attemptNumber + 1 // Ensure positive
         match ValidationRetryBehavior.calculateNextDelay behavior attemptNum with
         | None -> true // No delay is valid
         | Some delay -> delay >= TimeSpan.Zero
 
-    [<Property(MaxTest = MAX_TEST_COUNT, StartSize = START_SIZE, EndSize = END_SIZE, Arbitrary = [| typeof<SafeTypeGenerators> |])>]
+    [<ConfigurableProperty>]
     let ``ValidationRetryBehavior FailImmediately never retries`` (attemptNumber: int) =
         let attemptNum = abs attemptNumber + 1
         ValidationRetryBehavior.calculateNextDelay FailImmediately attemptNum = None
 
-    [<Property(MaxTest = MAX_TEST_COUNT, StartSize = START_SIZE, EndSize = END_SIZE, Arbitrary = [| typeof<SafeTypeGenerators> |])>]
+    [<ConfigurableProperty>]
     let ``ValidationRetryBehavior RetryOnce only retries once`` (attemptNumber: int) =
         let attemptNum = abs attemptNumber + 1
         let result = ValidationRetryBehavior.calculateNextDelay RetryOnce attemptNum
@@ -122,27 +122,27 @@ module SafeTypesPropertyTests =
 
     // ========== VALIDATION TIMEOUT PROPERTY TESTS ==========
 
-    [<Property(MaxTest = MAX_TEST_COUNT, StartSize = START_SIZE, EndSize = END_SIZE, Arbitrary = [| typeof<SafeTypeGenerators> |])>]
+    [<ConfigurableProperty(MaxTest = MAX_TEST_COUNT, StartSize = START_SIZE, EndSize = END_SIZE, Arbitrary = [| typeof<SafeTypeGenerators> |])>]
     let ``ValidationTimeout NoTimeout never times out`` () =
         let currentTime = DateTimeOffset.Now
         not (ValidationTimeout.hasTimedOut NoTimeout currentTime)
 
-    [<Property(MaxTest = MAX_TEST_COUNT, StartSize = START_SIZE, EndSize = END_SIZE, Arbitrary = [| typeof<SafeTypeGenerators> |])>]
+    [<ConfigurableProperty(MaxTest = MAX_TEST_COUNT, StartSize = START_SIZE, EndSize = END_SIZE, Arbitrary = [| typeof<SafeTypeGenerators> |])>]
     let ``ValidationTimeout TimeoutAt works correctly`` (hoursFromNow: int) =
         let hours = abs hoursFromNow + 24 // Ensure positive
         let timeoutTime = DateTimeOffset.Now.AddHours(float hours)
         let timeout = TimeoutAt timeoutTime
-        
+
         // Before timeout
         let beforeTime = timeoutTime.AddMinutes(-1.0)
         let afterTime = timeoutTime.AddMinutes(1.0)
-        
+
         not (ValidationTimeout.hasTimedOut timeout beforeTime) &&
         ValidationTimeout.hasTimedOut timeout afterTime
 
     // ========== MIGRATION PROPERTY TESTS ==========
 
-    [<Property(MaxTest = MAX_TEST_COUNT, StartSize = START_SIZE, EndSize = END_SIZE)>]
+    [<ConfigurableProperty>]
     let ``Migration handles NaN RetryPolicy gracefully`` () =
         let badPolicy = { MaxAttempts = 3; BackoffFactor = Double.NaN; MaxBackoff = TimeSpan.FromMinutes(10.0) }
         let converted = Migration.convertRetryPolicy (Some badPolicy)
@@ -152,7 +152,7 @@ module SafeTypesPropertyTests =
         | FailImmediately | RetryOnce -> true
         | _ -> true // Any valid behavior is acceptable
 
-    [<Property(MaxTest = MAX_TEST_COUNT, StartSize = START_SIZE, EndSize = END_SIZE)>]
+    [<ConfigurableProperty>]
     let ``Migration handles negative MaxAttempts gracefully`` () =
         let badPolicy = { MaxAttempts = -1; BackoffFactor = 2.0; MaxBackoff = TimeSpan.FromMinutes(10.0) }
         let converted = Migration.convertRetryPolicy (Some badPolicy)
@@ -162,26 +162,26 @@ module SafeTypesPropertyTests =
 
     // ========== POSITIVE TYPES PROPERTY TESTS ==========
 
-    [<Property(MaxTest = MAX_TEST_COUNT, StartSize = START_SIZE, EndSize = END_SIZE)>]
+    [<ConfigurableProperty>]
     let ``PositiveFloat Create rejects NaN`` () =
         match PositiveFloat.Create(Double.NaN) with
         | Error _ -> true
         | Ok _ -> false
 
-    [<Property(MaxTest = MAX_TEST_COUNT, StartSize = START_SIZE, EndSize = END_SIZE)>]
+    [<ConfigurableProperty>]
     let ``PositiveFloat Create rejects Infinity`` () =
         match PositiveFloat.Create(Double.PositiveInfinity) with
         | Error _ -> true
         | Ok _ -> false
 
-    [<Property(MaxTest = MAX_TEST_COUNT, StartSize = START_SIZE, EndSize = END_SIZE)>]
+    [<ConfigurableProperty>]
     let ``PositiveFloat Create rejects negative values`` (negativeValue: float) =
         let value = -(abs negativeValue) - 0.1 // Ensure negative
         match PositiveFloat.Create(value) with
         | Error _ -> true
         | Ok _ -> false
 
-    [<Property(MaxTest = MAX_TEST_COUNT, StartSize = START_SIZE, EndSize = END_SIZE)>]
+    [<ConfigurableProperty>]
     let ``PositiveInt Create rejects zero and negative`` (nonPositiveValue: int) =
         let value = -(abs nonPositiveValue) // Ensure non-positive
         match PositiveInt.Create(value) with

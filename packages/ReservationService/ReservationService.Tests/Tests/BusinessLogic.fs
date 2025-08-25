@@ -7,6 +7,7 @@ open Swensen.Unquote
 open ReservationService.Core
 open ReservationService.Core.Types
 open ReservationService.Core.Configuration
+open CommonBuilders
 
 // ---------- Test Configuration Parameters ----------
 // Instead of using hardcoded config, create test parameters that would come from Elixir
@@ -23,43 +24,6 @@ let private createTestConfigurationParameters () = {
     Message = { ErrorMessages = Map.empty; SuccessMessages = Map.empty; WarningMessages = Map.empty }
 }
 
-// ---------- Helper Functions for Test Data Generation ----------
-// Updated to not rely on hardcoded configuration
-let private createTestReservationId () = ReservationId(Guid.NewGuid())
-let private createTestCustomerId () = CustomerId(Guid.NewGuid())
-let private createTestResourceId () = ResourceId.Create("test-resource-001") |> Result.defaultWith (fun _ -> failwith "Could not create test resource ID")
-let private createTestBusinessId () = BusinessId.Create("test-business-001") |> Result.defaultWith (fun _ -> failwith "Could not create test business ID")
-let private createTestServiceId () = ServiceId("test-service-001")
-let private createTestRuleId () = RuleId(Guid.NewGuid())
-let private createTestCommandId () = CommandId(Guid.NewGuid())
-let private createTestValidationId () = ValidationId.Create("test-validation-001") |> Result.defaultWith (fun _ -> failwith "Could not create test validation ID")
-
-let private createTestMoney currency amount = { Amount = amount; Currency = currency }
-let private createTestTimeRange start (``end``) = { Start = start; End = ``end`` }
-let private createTestZonedTimeRange start (``end``) tz = { Range = createTestTimeRange start ``end``; TimeZoneId = Some tz }
-
-let private createTestParticipant id name role =
-    { Id = Some id; Name = Some name; Role = role; ContactInfo = None }
-
-let private createTestResourceDescriptor id type' capacity attributes =
-    { Id = id; Type = type'; Capacity = capacity; Attributes = attributes; AvailabilityConstraints = [] }
-
-let private createTestServiceDescriptor id name duration basePrice requiredResources =
-    { Id = id; Name = name; Duration = duration; BasePrice = basePrice; Attributes = Map.empty; RequiredResources = requiredResources }
-
-let private createTestValidationState id kind isRequired status deps desc timeout retryPolicy createdAt updatedAt =
-    { Id = id; Kind = kind; IsRequired = isRequired; Status = status; Dependencies = deps;
-      Description = desc; Timeout = timeout; RetryPolicy = retryPolicy; CreatedAt = createdAt; UpdatedAt = updatedAt }
-
-let private createTestCommandMetadata commandId correlationId userId source =
-    { CommandId = commandId; CorrelationId = correlationId; Timestamp = DateTimeOffset.UtcNow; UserId = userId; Source = source }
-
-let private createTestEventMetadata eventId commandId correlationId version =
-    { EventId = eventId; CommandId = commandId; CorrelationId = correlationId; Timestamp = DateTimeOffset.UtcNow; Version = version }
-
-let private createTestReservation id request finalTime finalPrice status version validationHistory events =
-    { Id = id; Request = request; FinalTime = finalTime; FinalPrice = finalPrice; CreatedAt = request.CreatedAt;
-      CreatedBy = request.CreatedBy; Status = status; Version = version; ValidationHistory = validationHistory; Events = events }
 
 // ---------- updateValidationState Tests [<Class>] type UpdateValidationStateTests =
 [<Fact>]

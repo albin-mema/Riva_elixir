@@ -86,7 +86,7 @@ module RuleEngineAdvancedPropertyTests =
 
     let private chooseComparablePair op : Gen<SimpleValue * SimpleValue> =
         match op with
-        | LessThan | LessThanOrEqual | GreaterThan | GreaterThanOrEqual ->
+        | RuleDomain.LessThan | RuleDomain.LessThanOrEqual | RuleDomain.GreaterThan | RuleDomain.GreaterThanOrEqual ->
             Gen.oneof [
                 Gen.map2 (fun a b -> (SInt a, SInt b)) (Gen.choose(-1000, 1000)) (Gen.choose(-1000, 1000))
                 Gen.map2 (fun a b -> (SDecimal a, SDecimal b)) (Gen.choose(-1000, 1000) |> Gen.map decimal) (Gen.choose(-1000, 1000) |> Gen.map decimal)
@@ -127,25 +127,25 @@ module RuleEngineAdvancedPropertyTests =
         gen {
             let! fieldL = genFieldName
             let! fieldR = genFieldName
-            let! op = Gen.elements [ LessThan; LessThanOrEqual; GreaterThan; GreaterThanOrEqual; Equals; NotEquals ]
+            let! op = Gen.elements [ RuleDomain.LessThan; RuleDomain.LessThanOrEqual; RuleDomain.GreaterThan; RuleDomain.GreaterThanOrEqual; RuleDomain.Equal; NotRuleDomain.Equal ]
             let! (lv, rv) = chooseComparablePair op
             // Decide expected based on concrete values
             let expected =
                 match op, lv, rv with
-                | Equals, l, r -> l = r
-                | NotEquals, l, r -> l <> r
-                | LessThan, SInt a, SInt b -> a < b
-                | LessThan, SDecimal a, SDecimal b -> a < b
-                | LessThan, SDateTime a, SDateTime b -> a < b
-                | LessThanOrEqual, SInt a, SInt b -> a <= b
-                | LessThanOrEqual, SDecimal a, SDecimal b -> a <= b
-                | LessThanOrEqual, SDateTime a, SDateTime b -> a <= b
-                | GreaterThan, SInt a, SInt b -> a > b
-                | GreaterThan, SDecimal a, SDecimal b -> a > b
-                | GreaterThan, SDateTime a, SDateTime b -> a > b
-                | GreaterThanOrEqual, SInt a, SInt b -> a >= b
-                | GreaterThanOrEqual, SDecimal a, SDecimal b -> a >= b
-                | GreaterThanOrEqual, SDateTime a, SDateTime b -> a >= b
+                | RuleDomain.Equal, l, r -> l = r
+                | NotRuleDomain.Equal, l, r -> l <> r
+                | RuleDomain.LessThan, SInt a, SInt b -> a < b
+                | RuleDomain.LessThan, SDecimal a, SDecimal b -> a < b
+                | RuleDomain.LessThan, SDateTime a, SDateTime b -> a < b
+                | RuleDomain.LessThanOrEqual, SInt a, SInt b -> a <= b
+                | RuleDomain.LessThanOrEqual, SDecimal a, SDecimal b -> a <= b
+                | RuleDomain.LessThanOrEqual, SDateTime a, SDateTime b -> a <= b
+                | RuleDomain.GreaterThan, SInt a, SInt b -> a > b
+                | RuleDomain.GreaterThan, SDecimal a, SDecimal b -> a > b
+                | RuleDomain.GreaterThan, SDateTime a, SDateTime b -> a > b
+                | RuleDomain.GreaterThanOrEqual, SInt a, SInt b -> a >= b
+                | RuleDomain.GreaterThanOrEqual, SDecimal a, SDecimal b -> a >= b
+                | RuleDomain.GreaterThanOrEqual, SDateTime a, SDateTime b -> a >= b
                 | _ -> false
             let jsonMap = Map [ fieldL, lv; fieldR, rv ]
             let json = JsonDocument.Parse(jsonOfMap jsonMap)
@@ -170,14 +170,14 @@ module RuleEngineAdvancedPropertyTests =
 
     // ---------- Properties: condition and composition semantics ----------
 
-    [<Property(MaxTest = 400, Arbitrary = [| typeof<Generators> |], Skip = "WIP: stabilizing generators")>]
+    [<Property(MaxTest = 20, Arbitrary = [| typeof<Generators> |], Skip = "WIP: stabilizing generators")>]
     let ``evaluateCondition agrees with constructed JSON`` (fixture: ConditionFixture) =
-        let ctx = { Timestamp = DateTimeOffset.UtcNow; ExecutedBy = None; ContextData = Map.empty; Parameters = Map.empty; TraceEnabled = false }
+        let ctx = { Timestamp = DateTimeOffset.UtcNow; ExecutedBy = None; ContextData = Map.empty; Parameters = Map.empty; TraceEnabled = false; ServiceProvider = null }
         evaluateCondition fixture.Condition fixture.Json ctx = fixture.Expected
 
-    [<Property(MaxTest = 300, Arbitrary = [| typeof<Generators> |], Skip = "WIP: stabilizing generators")>]
+    [<Property(MaxTest = 20, Arbitrary = [| typeof<Generators> |], Skip = "WIP: stabilizing generators")>]
     let ``Composite And behaves as conjunction`` (f1: ConditionFixture, f2: ConditionFixture) =
-        let ctx = { Timestamp = DateTimeOffset.UtcNow; ExecutedBy = None; ContextData = Map.empty; Parameters = Map.empty; TraceEnabled = false }
+        let ctx = { Timestamp = DateTimeOffset.UtcNow; ExecutedBy = None; ContextData = Map.empty; Parameters = Map.empty; TraceEnabled = false; ServiceProvider = null }
         // Merge JSON maps (right-biased for collisions)
         let mergeJson (a:JsonDocument) (b:JsonDocument) =
             let toMap (jd:JsonDocument) =
@@ -189,9 +189,9 @@ module RuleEngineAdvancedPropertyTests =
         let expected = f1.Expected && f2.Expected
         evaluateComplexCondition cond json ctx = expected
 
-    [<Property(MaxTest = 300, Arbitrary = [| typeof<Generators> |], Skip = "WIP: stabilizing generators")>]
+    [<Property(MaxTest = 20, Arbitrary = [| typeof<Generators> |], Skip = "WIP: stabilizing generators")>]
     let ``Composite Or behaves as disjunction`` (f1: ConditionFixture, f2: ConditionFixture) =
-        let ctx = { Timestamp = DateTimeOffset.UtcNow; ExecutedBy = None; ContextData = Map.empty; Parameters = Map.empty; TraceEnabled = false }
+        let ctx = { Timestamp = DateTimeOffset.UtcNow; ExecutedBy = None; ContextData = Map.empty; Parameters = Map.empty; TraceEnabled = false; ServiceProvider = null }
         let mergeJson (a:JsonDocument) (b:JsonDocument) =
             let toMap (jd:JsonDocument) =
                 jd.RootElement.EnumerateObject() |> Seq.map (fun p -> p.Name, SimpleValueOps.ofJsonElement p.Value) |> Map.ofSeq
@@ -202,9 +202,9 @@ module RuleEngineAdvancedPropertyTests =
         let expected = f1.Expected || f2.Expected
         evaluateComplexCondition cond json ctx = expected
 
-    [<Property(MaxTest = 300, Arbitrary = [| typeof<Generators> |], Skip = "WIP: stabilizing generators")>]
+    [<Property(MaxTest = 20, Arbitrary = [| typeof<Generators> |], Skip = "WIP: stabilizing generators")>]
     let ``Composite Not inverts`` (fixture: ConditionFixture) =
-        let ctx = { Timestamp = DateTimeOffset.UtcNow; ExecutedBy = None; ContextData = Map.empty; Parameters = Map.empty; TraceEnabled = false }
+        let ctx = { Timestamp = DateTimeOffset.UtcNow; ExecutedBy = None; ContextData = Map.empty; Parameters = Map.empty; TraceEnabled = false; ServiceProvider = null }
         let cond = Composite (Not, [ Simple fixture.Condition ])
         evaluateComplexCondition cond fixture.Json ctx = not fixture.Expected
 
@@ -214,20 +214,20 @@ module RuleEngineAdvancedPropertyTests =
         { Id = id; Name = name; Description = None; Priority = prio; Enabled = true; Tags = [||]; Condition = Some cond; Actions = actions }
 
     let private mkRuleEval (cond:ComplexCondition) (json:JsonDocument) (trace:bool) : RuleEvaluationResult =
-        let ctx = { Timestamp = DateTimeOffset.UtcNow; ExecutedBy = None; ContextData = Map.empty; Parameters = Map.empty; TraceEnabled = trace }
+        let ctx = { Timestamp = DateTimeOffset.UtcNow; ExecutedBy = None; ContextData = Map.empty; Parameters = Map.empty; TraceEnabled = trace; ServiceProvider = null }
         let rule = baseRule "R1" "test" 10 cond [| { ActionType = Reject; Severity = Error; Message = Some "x"; Parameters = Map.empty; PropertyUpdates = None; Suggestions = None } |]
         let res = evaluateRule rule json ctx
         res
 
-    [<Property(MaxTest = 200, Arbitrary = [| typeof<Generators> |], Skip = "WIP: stabilizing generators")>]
+    [<Property(MaxTest = 20, Arbitrary = [| typeof<Generators> |], Skip = "WIP: stabilizing generators")>]
     let ``evaluateRule emits actions iff condition matches`` (fixture: ConditionFixture) =
         let cond = Simple fixture.Condition
         let res = mkRuleEval cond fixture.Json false
         if fixture.Expected then res.Matched && res.Actions.Length = 1 else (not res.Matched) && res.Actions.Length = 0
 
-    [<Property(MaxTest = 200, Arbitrary = [| typeof<Generators> |], Skip = "WIP: stabilizing generators")>]
+    [<Property(MaxTest = 20, Arbitrary = [| typeof<Generators> |], Skip = "WIP: stabilizing generators")>]
     let ``interpretRules flags HasCriticalErrors when any Critical action`` (fixture: ConditionFixture) =
-        let ctx = { Timestamp = DateTimeOffset.UtcNow; ExecutedBy = None; ContextData = Map.empty; Parameters = Map.empty; TraceEnabled = false }
+        let ctx = { Timestamp = DateTimeOffset.UtcNow; ExecutedBy = None; ContextData = Map.empty; Parameters = Map.empty; TraceEnabled = false; ServiceProvider = null }
         let critAction = { ActionType = Reject; Severity = Critical; Message = Some "crit"; Parameters = Map.empty; PropertyUpdates = None; Suggestions = None }
         let okAction = { ActionType = AddInfo; Severity = Info; Message = Some "info"; Parameters = Map.empty; PropertyUpdates = None; Suggestions = None }
         let ruleCrit = { Rule = baseRule "RC" "critical" 100 (Simple fixture.Condition) [| critAction |]; ValidationScope = "x"; IsRequired = true; Dependencies = [||] }
@@ -237,7 +237,7 @@ module RuleEngineAdvancedPropertyTests =
         // If condition true, then HasCriticalErrors must be true; otherwise false
         (fixture.Expected && res.HasCriticalErrors) || ((not fixture.Expected) && (not res.HasCriticalErrors))
 
-    [<Property(MaxTest = 150, Arbitrary = [| typeof<Generators> |], Skip = "WIP: stabilizing generators")>]
+    [<Property(MaxTest = 20, Arbitrary = [| typeof<Generators> |], Skip = "WIP: stabilizing generators")>]
     let ``Trace emits text when enabled`` (fixture: ConditionFixture) =
         let cond = Simple fixture.Condition
         let res = mkRuleEval cond fixture.Json true
@@ -245,7 +245,7 @@ module RuleEngineAdvancedPropertyTests =
 
     // ---------- End-to-end via JsonSerialization.processJsonRequest ----------
 
-    [<Property(MaxTest = 100, Arbitrary = [| typeof<Generators> |], Skip = "WIP: stabilizing generators")>]
+    [<Property(MaxTest = 20, Arbitrary = [| typeof<Generators> |], Skip = "WIP: stabilizing generators")>]
     let ``processJsonRequest returns success=false when a critical rule matches`` (fixture: ConditionFixture) =
         // Build a minimal JSON request using the DTOs
         let dtoReq = {
@@ -273,7 +273,7 @@ module RuleEngineAdvancedPropertyTests =
         let doc = JsonDocument.Parse(baseJson)
         // Merge root with the fixture's JSON under a synthetic root name "data"
         // Then create a rule that targets those fields (already in fixture)
-        let ctx = { Timestamp = DateTimeOffset.UtcNow; ExecutedBy = None; ContextData = Map.empty; Parameters = Map.empty; TraceEnabled = false }
+        let ctx = { Timestamp = DateTimeOffset.UtcNow; ExecutedBy = None; ContextData = Map.empty; Parameters = Map.empty; TraceEnabled = false; ServiceProvider = null }
         let critAction = { ActionType = Reject; Severity = Critical; Message = Some "crit"; Parameters = Map.empty; PropertyUpdates = None; Suggestions = None }
         let rule = { Rule = baseRule "RC" "critical" 100 (Simple fixture.Condition) [| critAction |]; ValidationScope = "data"; IsRequired = true; Dependencies = [||] }
         let ruleSet = { ValidationRules = [| rule |]; BusinessRules = [||]; ConflictRules = [||]; PricingRules = [||]; ApprovalRules = [||]; Metadata = Map.empty }
